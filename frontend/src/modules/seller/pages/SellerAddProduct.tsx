@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { uploadImage, uploadImages } from "../../../services/api/uploadService";
 import {
@@ -969,10 +969,10 @@ export default function SellerAddProduct() {
                         className="flex items-center justify-between p-3 bg-white border border-neutral-200 rounded-lg">
                         <div className="flex-1">
                           <span className="font-medium">{variation.title}</span>{" "}
-                          - ₹{variation.price}
+                          - ?{variation.price}
                           {variation.discPrice > 0 && (
                             <span className="text-green-600 ml-2">
-                              (₹{variation.discPrice})
+                              (?{variation.discPrice})
                             </span>
                           )}
                           <span className="ml-4 text-sm text-neutral-600">

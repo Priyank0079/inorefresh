@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { uploadImage } from "../../../services/api/uploadService";
 import {
   validateImageFile,
@@ -209,7 +209,7 @@ export default function AdminCoupon() {
 
   const SortIcon = ({ column }: { column: string }) => (
     <span className="text-neutral-400 text-xs ml-1">
-      {sortColumn === column ? (sortDirection === "asc" ? "â†‘" : "â†“") : "â‡…"}
+      {sortColumn === column ? (sortDirection === "asc" ? "↑" : "↓") : "⇅"}
     </span>
   );
 
@@ -651,12 +651,12 @@ export default function AdminCoupon() {
                       <td className="p-4 align-middle">
                         {coupon.discountType === "Percentage"
                           ? `${coupon.discountValue}%`
-                          : `₹${coupon.discountValue}`}
+                          : `?${coupon.discountValue}`}
                       </td>
                       <td className="p-4 align-middle">{coupon.discountType}</td>
                       <td className="p-4 align-middle">
                         {coupon.minimumPurchase
-                          ? `₹${coupon.minimumPurchase}`
+                          ? `?${coupon.minimumPurchase}`
                           : "N/A"}
                       </td>
                       <td className="p-4 align-middle">
@@ -763,9 +763,9 @@ export default function AdminCoupon() {
 
       {/* Footer */}
       <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
-        Copyright Â© 2025. Developed By{" "}
+        Copyright © 2025. Developed By{" "}
         <a href="#" className="text-blue-600 hover:underline">
-          Dhakad Snazzy - 10 Minute App
+          Zeto Mart - 10 Minute App
         </a>
       </footer>
     </div>

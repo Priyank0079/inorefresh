@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   getCashCollections,
   createCashCollection,
@@ -559,10 +559,10 @@ export default function AdminCashCollection() {
                       {collection.orderId}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900">
-                      ₹{collection.total.toFixed(2)}
+                      ?{collection.total.toFixed(2)}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900 font-medium">
-                      ₹{collection.amount.toFixed(2)}
+                      ?{collection.amount.toFixed(2)}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-sm text-neutral-600">
                       {collection.remark || '-'}
@@ -639,9 +639,9 @@ export default function AdminCashCollection() {
 
       {/* Footer */}
       <div className="bg-neutral-800 text-white text-center text-sm py-4">
-        Copyright Â© 2025. Developed By{" "}
+        Copyright © 2025. Developed By{" "}
         <a href="#" className="text-blue-400 hover:text-blue-300">
-          Dhakad Snazzy - 10 Minute App
+          Zeto Mart - 10 Minute App
         </a>
       </div>
     </div>

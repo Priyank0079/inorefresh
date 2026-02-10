@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getAllSellers, Seller as SellerType } from '../../../services/api/sellerService';
 import SellerServiceMap from '../components/SellerServiceMap';
 
@@ -227,7 +227,7 @@ export default function AdminSellerLocation() {
                     </div>
                     {seller.address && (
                       <p className="text-xs text-neutral-500 mt-2 line-clamp-2">
-                        ðŸ“ {seller.address}
+                        📍 {seller.address}
                         {seller.city && `, ${seller.city}`}
                       </p>
                     )}
@@ -237,8 +237,8 @@ export default function AdminSellerLocation() {
                       </p>
                     )}
                     <div className="mt-2 flex items-center gap-2 text-xs text-neutral-500">
-                      <span>ðŸ“ž {seller.phone}</span>
-                      {seller.email && <span>âœ‰ï¸ {seller.email}</span>}
+                      <span>📞 {seller.phone}</span>
+                      {seller.email && <span>✉️ {seller.email}</span>}
                     </div>
                   </div>
                 ))}
@@ -250,9 +250,9 @@ export default function AdminSellerLocation() {
 
       {/* Footer */}
       <div className="text-center text-sm text-neutral-500 py-4">
-        Copyright Â© 2025. Developed By{' '}
+        Copyright © 2025. Developed By{' '}
         <a href="#" className="text-teal-600 hover:text-teal-700">
-          Dhakad Snazzy - 10 Minute App
+          Zeto Mart - 10 Minute App
         </a>
       </div>
     </div>

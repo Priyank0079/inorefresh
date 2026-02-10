@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import DashboardCard from "../components/DashboardCard";
 import OrderChart from "../components/OrderChart";
 import SalesLineChart from "../components/SalesLineChart";
@@ -515,16 +515,16 @@ export default function AdminDashboard() {
           </h3>
           <div className="mb-4">
             <p className="text-3xl font-bold text-neutral-900">
-              ₹{salesToday.toFixed(2)}
+              ?{salesToday.toFixed(2)}
             </p>
             {salesDifference >= 0 ? (
               <p className="text-sm text-green-600 mt-1">
-                â–² ₹{Math.abs(salesDifference).toFixed(2)} (+{salesPercentChange}%)
+                ▲ ?{Math.abs(salesDifference).toFixed(2)} (+{salesPercentChange}%)
                 vs same day last week
               </p>
             ) : (
               <p className="text-sm text-red-600 mt-1">
-                â–¼ ₹{Math.abs(salesDifference).toFixed(2)} ({salesPercentChange}%)
+                ▼ ?{Math.abs(salesDifference).toFixed(2)} ({salesPercentChange}%)
                 vs same day last week
               </p>
             )}
@@ -553,7 +553,7 @@ export default function AdminDashboard() {
                       {location.location}
                     </span>
                     <span className="text-sm font-semibold text-neutral-900">
-                      ₹{(location.amount / 1000).toFixed(1)}K
+                      ?{(location.amount / 1000).toFixed(1)}K
                     </span>
                   </div>
                 ))
@@ -743,7 +743,7 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900">
-                        ₹ {order.amount.toFixed(2)}
+                        ? {order.amount.toFixed(2)}
                       </td>
                       <td className="px-4 sm:px-6 py-3">
                         <button
@@ -944,7 +944,7 @@ export default function AdminDashboard() {
                         {seller.storeName}
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900">
-                        ₹ {seller.totalRevenue.toFixed(2)}
+                        ? {seller.totalRevenue.toFixed(2)}
                       </td>
                       <td className="px-4 sm:px-6 py-3">
                         <button
@@ -1049,9 +1049,9 @@ export default function AdminDashboard() {
 
       {/* Footer */}
       <div className="text-center text-sm text-neutral-500 py-4">
-        Copyright Â© 2025. Developed By{" "}
+        Copyright © 2025. Developed By{" "}
         <a href="#" className="text-teal-600 hover:text-teal-700">
-          Dhakad Snazzy - 10 Minute App
+          Zeto Mart - 10 Minute App
         </a>
       </div>
     </div>

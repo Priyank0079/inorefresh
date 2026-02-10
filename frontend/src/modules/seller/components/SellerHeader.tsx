@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import dhakadSnazzyLogo from '@assets/dhakadsnazzy1.png';
+import zetoMartLogo from '@assets/zeto-mart.jpeg';
 import { useAuth } from '../../../context/AuthContext';
 
 interface SellerHeaderProps {
@@ -88,14 +88,14 @@ export default function SellerHeader({ onMenuClick, isSidebarOpen }: SellerHeade
               </svg>
             )}
           </button>
-          {/* Dhakad Snazzy Logo */}
+          {/* Zeto Mart Logo */}
           <button
             onClick={handleLogoClick}
             className="hover:opacity-80 transition-opacity"
           >
             <img
-              src={dhakadSnazzyLogo}
-              alt="Dhakad Snazzy"
+              src={zetoMartLogo}
+              alt="Zeto Mart"
               className="h-10 sm:h-12 w-auto object-contain cursor-pointer"
               style={{ maxWidth: '200px' }}
             />

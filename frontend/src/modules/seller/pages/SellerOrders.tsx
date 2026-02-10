@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getOrders, Order, GetOrdersParams } from '../../../services/api/orderService';
 
@@ -502,7 +502,7 @@ export default function SellerOrders() {
                           </span>
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-3 text-xs sm:text-sm text-neutral-900 font-medium">
-                          ₹{order.amount.toFixed(2)}
+                          ?{order.amount.toFixed(2)}
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-3">
                           <button
@@ -584,9 +584,9 @@ export default function SellerOrders() {
       {/* Footer */}
       <footer className="px-3 sm:px-4 md:px-6 text-center py-4 sm:py-6">
         <p className="text-xs sm:text-sm text-neutral-600">
-          Copyright Â© 2025. Developed By{' '}
+          Copyright © 2025. Developed By{' '}
           <Link to="/seller" className="text-blue-600 hover:text-blue-700">
-            Dhakad Snazzy
+            Zeto Mart
           </Link>
         </p>
       </footer>

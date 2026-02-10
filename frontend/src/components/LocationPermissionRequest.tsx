@@ -85,79 +85,65 @@ export default function LocationPermissionRequest({
     let isResolved = false;
 
     try {
-      const geocoder = new window.google.maps.Geocoder();
+      // If we already have coordinates and an address from the Autocomplete selection, 
+      // use them directly. DO NOT reverse geocode, as it might convert a generic 
+      // city selection (e.g., "Indore") into a specific street address at the city center.
+      if (lat && lng && finalAddress) {
+        console.log("Using selected location directly:", { lat, lng, finalAddress });
 
-      // Strategy 1: If we have coordinates, try valid REVERSE geocoding first
-      if (lat && lng) {
-        try {
-          const result = await new Promise<any>((resolve, reject) => {
-            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-              if (status === 'OK' && results && results[0]) {
-                resolve(results[0]);
-              } else {
-                reject(status);
-              }
-            });
-          });
+        // Save manual location directly
+        await updateLocation({
+          latitude: lat,
+          longitude: lng,
+          address: finalAddress,
+          city: city,
+          state: state,
+          pincode: pincode
+        });
 
-          if (result && result.formatted_address) {
-            finalAddress = result.formatted_address;
-
-            // Update components
-            if (result.address_components) {
-              city = ''; state = ''; pincode = '';
-              result.address_components.forEach((comp: any) => {
-                if (comp.types.includes('locality')) city = comp.long_name;
-                if (comp.types.includes('administrative_area_level_1')) state = comp.long_name;
-                if (comp.types.includes('postal_code')) pincode = comp.long_name;
-              });
-            }
-            isResolved = true;
-          }
-        } catch (error) {
-          console.warn('Strategy 1 (Reverse Geocode) failed:', error);
-          // If this fails (e.g. invalid coords), we continue to Strategy 2 (Text Geocode)
-        }
+        // Close modal
+        onLocationGranted();
+        return;
       }
 
-      // Strategy 2: If Strategy 1 failed or we didn't have coords, Geocode the TEXT
-      if (!isResolved) {
-        try {
-          const result = await new Promise<any>((resolve, reject) => {
-            // Constrain to India to match Autocomplete behavior and prevent weird matches
-            geocoder.geocode({
-              address: manualAddress,
-              componentRestrictions: { country: 'in' }
-            }, (results, status) => {
-              if (status === 'OK' && results && results[0]) {
-                resolve(results[0]);
-              } else {
-                reject(status);
-              }
-            });
+      const geocoder = new window.google.maps.Geocoder();
+
+      // Strategy 2: If we don't have coords (e.g. user typed text but didn't select), Geocode the TEXT
+      try {
+        const result = await new Promise<any>((resolve, reject) => {
+          // Constrain to India to match Autocomplete behavior and prevent weird matches
+          geocoder.geocode({
+            address: manualAddress,
+            componentRestrictions: { country: 'in' }
+          }, (results, status) => {
+            if (status === 'OK' && results && results[0]) {
+              resolve(results[0]);
+            } else {
+              reject(status);
+            }
           });
+        });
 
-          if (result && result.geometry && result.geometry.location) {
-            lat = result.geometry.location.lat();
-            lng = result.geometry.location.lng();
+        if (result && result.geometry && result.geometry.location) {
+          lat = result.geometry.location.lat();
+          lng = result.geometry.location.lng();
 
-            if (result.formatted_address) {
-              finalAddress = result.formatted_address;
-            }
-
-            if (result.address_components) {
-              city = ''; state = ''; pincode = '';
-              result.address_components.forEach((comp: any) => {
-                if (comp.types.includes('locality')) city = comp.long_name;
-                if (comp.types.includes('administrative_area_level_1')) state = comp.long_name;
-                if (comp.types.includes('postal_code')) pincode = comp.long_name;
-              });
-            }
-            isResolved = true;
+          if (result.formatted_address) {
+            finalAddress = result.formatted_address;
           }
-        } catch (error) {
-          console.error('Strategy 2 (Text Geocode) failed:', error);
+
+          if (result.address_components) {
+            city = ''; state = ''; pincode = '';
+            result.address_components.forEach((comp: any) => {
+              if (comp.types.includes('locality')) city = comp.long_name;
+              if (comp.types.includes('administrative_area_level_1')) state = comp.long_name;
+              if (comp.types.includes('postal_code')) pincode = comp.long_name;
+            });
+          }
+          isResolved = true;
         }
+      } catch (error) {
+        console.error('Strategy 2 (Text Geocode) failed:', error);
       }
 
       // Final Check: Do we have coordinates?

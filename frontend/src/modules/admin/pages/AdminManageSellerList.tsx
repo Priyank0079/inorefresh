@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getAllSellers, updateSellerStatus, deleteSeller, Seller as SellerType, updateSeller } from '../../../services/api/sellerService';
 import SellerServiceMap from '../components/SellerServiceMap';
 
@@ -151,7 +151,7 @@ export default function AdminManageSellerList() {
 
     const SortIcon = ({ column }: { column: string }) => (
         <span className="text-neutral-400 text-xs ml-1">
-            {sortColumn === column ? (sortDirection === 'asc' ? 'â†‘' : 'â†“') : 'â‡…'}
+            {sortColumn === column ? (sortDirection === 'asc' ? '↑' : '↓') : '⇅'}
         </span>
     );
 
@@ -380,7 +380,7 @@ export default function AdminManageSellerList() {
                                 className="text-red-700 hover:text-red-900 ml-4 text-lg font-bold"
                                 type="button"
                             >
-                                Ã—
+                                ×
                             </button>
                         </div>
                     )}
@@ -393,7 +393,7 @@ export default function AdminManageSellerList() {
                                 className="text-green-700 hover:text-green-900 ml-4 text-lg font-bold"
                                 type="button"
                             >
-                                Ã—
+                                ×
                             </button>
                         </div>
                     )}
@@ -686,8 +686,8 @@ export default function AdminManageSellerList() {
 
             {/* Footer */}
             <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
-                Copyright Â© 2025. Developed By{' '}
-                <a href="#" className="text-blue-600 hover:underline">Dhakad Snazzy - 10 Minute App</a>
+                Copyright © 2025. Developed By{' '}
+                <a href="#" className="text-blue-600 hover:underline">Zeto Mart - 10 Minute App</a>
             </footer>
 
             {/* Categories Modal */}
@@ -1017,7 +1017,7 @@ export default function AdminManageSellerList() {
                                         </div>
                                         <div>
                                             <label className="text-xs text-neutral-500">Balance</label>
-                                            <p className="text-sm font-medium text-neutral-900">₹{editingSeller.balance.toFixed(2)}</p>
+                                            <p className="text-sm font-medium text-neutral-900">?{editingSeller.balance.toFixed(2)}</p>
                                         </div>
                                         <div>
                                             <label className="text-xs text-neutral-500">Categories Count</label>

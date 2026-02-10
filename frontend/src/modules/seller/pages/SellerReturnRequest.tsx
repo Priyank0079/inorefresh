@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getReturnRequests, ReturnRequest, GetReturnRequestsParams } from '../../../services/api/returnService';
 
@@ -77,7 +77,7 @@ export default function SellerReturnRequest() {
 
     const SortIcon = ({ column }: { column: string }) => (
         <span className="text-neutral-300 text-[10px]">
-            {sortColumn === column ? (sortDirection === 'asc' ? 'â†‘' : 'â†“') : 'â‡…'}
+            {sortColumn === column ? (sortDirection === 'asc' ? '↑' : '↓') : '⇅'}
         </span>
     );
 
@@ -361,16 +361,16 @@ export default function SellerReturnRequest() {
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.orderItemId}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.product}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.variant}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">₹{request.price.toFixed(2)}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">₹{request.discPrice.toFixed(2)}</td>
+                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">?{request.price.toFixed(2)}</td>
+                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">?{request.discPrice.toFixed(2)}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.quantity}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">₹{request.total.toFixed(2)}</td>
+                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">?{request.total.toFixed(2)}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.status}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.date}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">
                                                     <button
                                                         onClick={() => {
-                                                            alert(`Return Request Details:\n\nOrder Item ID: ${request.orderItemId}\nProduct: ${request.product}\nVariant: ${request.variant}\nPrice: ₹${request.price.toFixed(2)}\nDiscounted Price: ₹${request.discPrice.toFixed(2)}\nQuantity: ${request.quantity}\nTotal: ₹${request.total.toFixed(2)}\nStatus: ${request.status}\nDate: ${request.date}`);
+                                                            alert(`Return Request Details:\n\nOrder Item ID: ${request.orderItemId}\nProduct: ${request.product}\nVariant: ${request.variant}\nPrice: ?${request.price.toFixed(2)}\nDiscounted Price: ?${request.discPrice.toFixed(2)}\nQuantity: ${request.quantity}\nTotal: ?${request.total.toFixed(2)}\nStatus: ${request.status}\nDate: ${request.date}`);
                                                         }}
                                                         className="text-green-600 hover:text-green-700 text-xs font-medium transition-colors"
                                                     >
@@ -417,8 +417,8 @@ export default function SellerReturnRequest() {
             {/* Footer */}
             <footer className="px-4 sm:px-6 py-4 text-center bg-white border-t border-neutral-200">
                 <p className="text-xs sm:text-sm text-neutral-600">
-                    Copyright Â© 2025. Developed By{' '}
-                    <span className="font-semibold text-teal-600">Dhakad Snazzy - 10 Minute App</span>
+                    Copyright © 2025. Developed By{' '}
+                    <span className="font-semibold text-teal-600">Zeto Mart - 10 Minute App</span>
                 </p>
             </footer>
         </div>

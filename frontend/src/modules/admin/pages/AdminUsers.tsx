@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getUsers, updateUserStatus, type User as UserType } from '../../../services/api/admin/adminMiscService';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -178,7 +178,7 @@ export default function AdminUsers() {
 
         return (
             <span className="text-neutral-400 text-xs ml-1">
-                {sortColumn === backendColumn ? (sortDirection === 'asc' ? 'â†‘' : 'â†“') : 'â‡…'}
+                {sortColumn === backendColumn ? (sortDirection === 'asc' ? '↑' : '↓') : '⇅'}
             </span>
         );
     };
@@ -341,9 +341,9 @@ export default function AdminUsers() {
                                                 </span>
                                             </td>
                                             <td className="p-4 align-middle">{user.refCode || '-'}</td>
-                                            <td className="p-4 align-middle">₹{user.walletAmount.toFixed(2)}</td>
+                                            <td className="p-4 align-middle">?{user.walletAmount.toFixed(2)}</td>
                                             <td className="p-4 align-middle">{user.totalOrders}</td>
-                                            <td className="p-4 align-middle">₹{user.totalSpent.toFixed(2)}</td>
+                                            <td className="p-4 align-middle">?{user.totalSpent.toFixed(2)}</td>
                                             <td className="p-4 align-middle">
                                                 <div className="flex items-center gap-2">
                                                     <button
@@ -464,8 +464,8 @@ export default function AdminUsers() {
 
             {/* Footer */}
             <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
-                Copyright Â© 2025. Developed By{' '}
-                <a href="#" className="text-blue-600 hover:underline">Dhakad Snazzy - 10 Minute App</a>
+                Copyright © 2025. Developed By{' '}
+                <a href="#" className="text-blue-600 hover:underline">Zeto Mart - 10 Minute App</a>
             </footer>
         </div>
     );

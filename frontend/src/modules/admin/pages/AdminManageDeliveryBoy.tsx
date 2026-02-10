@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     getDeliveryBoys,
     updateDeliveryBoyStatus,
@@ -282,7 +282,7 @@ export default function AdminManageDeliveryBoy() {
 
         return (
             <span className="text-neutral-400 text-xs ml-1">
-                {sortColumn === backendColumn ? (sortDirection === 'asc' ? 'â†‘' : 'â†“') : 'â‡…'}
+                {sortColumn === backendColumn ? (sortDirection === 'asc' ? '↑' : '↓') : '⇅'}
             </span>
         );
     };
@@ -311,7 +311,7 @@ export default function AdminManageDeliveryBoy() {
                                 className="text-red-700 hover:text-red-900 ml-4 text-lg font-bold"
                                 type="button"
                             >
-                                Ã—
+                                ×
                             </button>
                         </div>
                     )}
@@ -325,7 +325,7 @@ export default function AdminManageDeliveryBoy() {
                                 className="text-green-700 hover:text-green-900 ml-4 text-lg font-bold"
                                 type="button"
                             >
-                                Ã—
+                                ×
                             </button>
                         </div>
                     )}
@@ -541,8 +541,8 @@ export default function AdminManageDeliveryBoy() {
                                                     <span className="text-xs">Fixed</span>
                                                 )}
                                             </td>
-                                            <td className="p-4 align-middle">₹{deliveryBoy.balance.toFixed(2)}</td>
-                                            <td className="p-4 align-middle">₹{deliveryBoy.cashCollected.toFixed(2)}</td>
+                                            <td className="p-4 align-middle">?{deliveryBoy.balance.toFixed(2)}</td>
+                                            <td className="p-4 align-middle">?{deliveryBoy.cashCollected.toFixed(2)}</td>
                                             <td className="p-4 align-middle">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${deliveryBoy.status === 'Active'
                                                     ? 'bg-green-100 text-green-800'
@@ -705,8 +705,8 @@ export default function AdminManageDeliveryBoy() {
 
             {/* Footer */}
             <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
-                Copyright Â© 2025. Developed By{' '}
-                <a href="#" className="text-blue-600 hover:underline">Dhakad Snazzy - 10 Minute App</a>
+                Copyright © 2025. Developed By{' '}
+                <a href="#" className="text-blue-600 hover:underline">Zeto Mart - 10 Minute App</a>
             </footer>
         </div>
     );

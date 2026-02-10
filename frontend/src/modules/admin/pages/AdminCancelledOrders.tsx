@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getOrdersByStatus, type Order } from '../../../services/api/admin/adminOrderService';
 import { useAuth } from '../../../context/AuthContext';
@@ -99,7 +99,7 @@ export default function AdminCancelledOrders() {
           order.orderDate ? new Date(order.orderDate).toLocaleDateString() : '',
           order.status || '',
           order.deliveryBoyStatus || 'Not Assigned',
-          `₹${order.total?.toFixed(2) || '0.00'}`
+          `?${order.total?.toFixed(2) || '0.00'}`
         ].join(',')
       )
     ].join('\n');
@@ -657,7 +657,7 @@ export default function AdminCancelledOrders() {
                           {order.deliveryBoyStatus || 'Not Assigned'}
                         </span>
                       </td>
-                      <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900 font-medium">₹{order.total?.toFixed(2) || '0.00'}</td>
+                      <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900 font-medium">?{order.total?.toFixed(2) || '0.00'}</td>
                       <td className="px-4 sm:px-6 py-3">
                         <Link to={`/admin/orders/${order._id}`}>
                           <button className="bg-teal-600 hover:bg-teal-700 text-white p-2 rounded transition-colors" aria-label="View order">
@@ -708,9 +708,9 @@ export default function AdminCancelledOrders() {
 
       {/* Footer */}
       <div className="text-center py-4 text-xs sm:text-sm text-neutral-600">
-        Copyright Â© 2025. Developed By{' '}
+        Copyright © 2025. Developed By{' '}
         <Link to="/" className="text-blue-600 hover:text-blue-700">
-          Dhakad Snazzy - 10 Minute App
+          Zeto Mart - 10 Minute App
         </Link>
       </div>
     </div>

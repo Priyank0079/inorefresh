@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   getSellerTransactions,
   type SellerTransaction,
@@ -748,7 +748,7 @@ export default function AdminSellerTransaction() {
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900 font-medium">
-                      ₹{transaction.amount.toFixed(2)}
+                      ?{transaction.amount.toFixed(2)}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-sm text-neutral-600">
                       {transaction.remark || transaction.status}
@@ -825,9 +825,9 @@ export default function AdminSellerTransaction() {
 
       {/* Footer */}
       <div className="text-center text-sm text-neutral-500 py-4">
-        Copyright Â© 2025. Developed By{" "}
+        Copyright © 2025. Developed By{" "}
         <a href="#" className="text-teal-600 hover:text-teal-700">
-          Dhakad Snazzy - 10 Minute App
+          Zeto Mart - 10 Minute App
         </a>
       </div>
     </div>

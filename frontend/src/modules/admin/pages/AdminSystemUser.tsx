@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   getAllSystemUsers,
   createSystemUser,
@@ -329,7 +329,7 @@ export default function AdminSystemUser() {
                   className="text-red-700 hover:text-red-900 ml-4 text-lg font-bold"
                   type="button"
                 >
-                  Ã—
+                  ×
                 </button>
               </div>
             )}
@@ -343,7 +343,7 @@ export default function AdminSystemUser() {
                   className="text-green-700 hover:text-green-900 ml-4 text-lg font-bold"
                   type="button"
                 >
-                  Ã—
+                  ×
                 </button>
               </div>
             )}
@@ -698,9 +698,9 @@ export default function AdminSystemUser() {
 
       {/* Footer */}
       <div className="text-center text-sm text-neutral-500 py-4 px-6">
-        Copyright Â© 2025. Developed By{' '}
+        Copyright © 2025. Developed By{' '}
         <a href="#" className="text-teal-600 hover:text-teal-700">
-          Dhakad Snazzy - 10 Minute App
+          Zeto Mart - 10 Minute App
         </a>
       </div>
     </div>

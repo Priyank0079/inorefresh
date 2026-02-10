@@ -54,32 +54,24 @@ export default function GoogleMapsAutocomplete({
     libraries: libraries,
   });
 
+  // Store the latest onChange in a ref to avoid re-initializing the autocomplete listener
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   // Update local input value when prop changes
   useEffect(() => {
-    setInputValue(value);
+    if (value !== inputValue) {
+      setInputValue(value);
+    }
   }, [value]);
 
-  useEffect(() => {
-    if (loadError) {
-      setError(`Failed to load Google Maps API: ${loadError.message}`);
-    }
-  }, [loadError]);
-
   const initializeAutocomplete = useCallback(() => {
-    if (!inputRef.current || !window.google?.maps?.places) return;
-
-    // Clean up any existing autocomplete
-    if (autocompleteRef.current) {
-      try {
-        window.google?.maps?.event?.clearInstanceListeners?.(autocompleteRef.current);
-      } catch {
-        // Ignore cleanup errors
-      }
-      autocompleteRef.current = null;
-    }
+    if (!inputRef.current || !window.google?.maps?.places || autocompleteRef.current) return;
 
     try {
-      const places = window.google.maps.places as any;
+      const places = window.google.maps.places;
 
       if (!places.Autocomplete) {
         setError('Google Maps Places Autocomplete not available');
@@ -98,13 +90,15 @@ export default function GoogleMapsAutocomplete({
         const place = autocomplete.getPlace();
 
         if (!place.geometry || !place.geometry.location) {
-          setError('No location details found for this place');
+          // User entered the name of a Place that was not suggested and
+          // pressed the Enter key, or the Place Details request failed.
+          // In this case, we keep the current input value but don't have coords.
           return;
         }
 
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
-        const rawAddress = place.formatted_address || place.name || value;
+        const rawAddress = place.formatted_address || place.name || '';
         const address = cleanAddress(rawAddress);
         const placeName = place.name || address;
 
@@ -124,7 +118,8 @@ export default function GoogleMapsAutocomplete({
         }
 
         setInputValue(address);
-        onChange(address, lat, lng, placeName, { city, state });
+        // Use the ref to call the latest onChange handler
+        onChangeRef.current(address, lat, lng, placeName, { city, state });
         setError('');
       });
     } catch (err: unknown) {
@@ -132,21 +127,11 @@ export default function GoogleMapsAutocomplete({
       console.error('Autocomplete initialization error:', err);
       setError(`Failed to initialize autocomplete: ${errorMessage}`);
     }
-  }, [onChange, value]);
+  }, []); // Empty dependency array ensures this only runs once
 
   useEffect(() => {
     if (isLoaded && inputRef.current && !autocompleteRef.current) {
       initializeAutocomplete();
-    }
-
-    return () => {
-       if (autocompleteRef.current) {
-        try {
-          window.google?.maps?.event?.clearInstanceListeners?.(autocompleteRef.current);
-        } catch {
-           // Ignore
-        }
-       }
     }
   }, [isLoaded, initializeAutocomplete]);
 

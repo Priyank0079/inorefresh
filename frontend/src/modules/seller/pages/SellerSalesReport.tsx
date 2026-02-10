@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getSalesReport, SalesReport } from '../../../services/api/reportService';
 
@@ -80,7 +80,7 @@ export default function SellerSalesReport() {
 
     const SortIcon = ({ column }: { column: string }) => (
         <span className="text-neutral-300 text-[10px]">
-            {sortColumn === column ? (sortDirection === 'asc' ? 'â†‘' : 'â†“') : 'â‡…'}
+            {sortColumn === column ? (sortDirection === 'asc' ? '↑' : '↓') : '⇅'}
         </span>
     );
 
@@ -370,8 +370,8 @@ export default function SellerSalesReport() {
             {/* Footer */}
             <footer className="px-4 sm:px-6 py-4 text-center bg-white border-t border-neutral-200">
                 <p className="text-xs sm:text-sm text-neutral-600">
-                    Copyright Â© 2025. Developed By{' '}
-                    <span className="font-semibold text-teal-600">Dhakad Snazzy - 10 Minute App</span>
+                    Copyright © 2025. Developed By{' '}
+                    <span className="font-semibold text-teal-600">Zeto Mart - 10 Minute App</span>
                 </p>
             </footer>
         </div>
