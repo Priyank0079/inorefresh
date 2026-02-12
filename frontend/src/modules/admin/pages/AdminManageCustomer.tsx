@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   getAllCustomers,
+  addWalletBalance,
+  updateCustomer,
   type Customer,
 } from "../../../services/api/admin/adminCustomerService";
 import { useAuth } from "../../../context/AuthContext";
@@ -30,6 +32,25 @@ export default function AdminManageCustomer() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Wallet Modal State
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [selectedCustomerForWallet, setSelectedCustomerForWallet] = useState<Customer | null>(null);
+  const [walletAmountToAdd, setWalletAmountToAdd] = useState<string>("");
+  const [walletDescription, setWalletDescription] = useState<string>("");
+  const [isAddingWallet, setIsAddingWallet] = useState(false);
+
+  // View/Edit Modal State
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    status: "Active"
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Fetch customers on component mount
   useEffect(() => {
@@ -221,6 +242,83 @@ export default function AdminManageCustomer() {
     document.body.removeChild(link);
   };
 
+  const handleOpenWalletModal = (customer: Customer) => {
+    setSelectedCustomerForWallet(customer);
+    setWalletAmountToAdd("");
+    setWalletDescription("");
+    setShowWalletModal(true);
+  };
+
+  const handleAddWalletBalance = async () => {
+    if (!selectedCustomerForWallet || !walletAmountToAdd) return;
+
+    const amount = Number(walletAmountToAdd);
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid amount");
+      return;
+    }
+
+    try {
+      setIsAddingWallet(true);
+      const response = await addWalletBalance(
+        selectedCustomerForWallet._id,
+        amount,
+        walletDescription || "Added by Admin"
+      );
+
+      if (response.success) {
+        // Update local state
+        setCustomers(prev => prev.map(c =>
+          c._id === selectedCustomerForWallet._id
+            ? { ...c, walletAmount: (c.walletAmount || 0) + amount }
+            : c
+        ));
+        setShowWalletModal(false);
+        // Could show toast here if toast context is available
+        alert("Wallet balance updated successfully");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to update wallet");
+    } finally {
+      setIsAddingWallet(false);
+    }
+  };
+
+  const handleOpenViewModal = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setShowViewModal(true);
+  };
+
+  const handleOpenEditModal = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setEditFormData({
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      status: customer.status
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateCustomer = async () => {
+    if (!selectedCustomer) return;
+    try {
+      setIsUpdating(true);
+      const response = await updateCustomer(selectedCustomer._id, editFormData);
+      if (response.success) {
+        setCustomers(prev => prev.map(c => c._id === selectedCustomer._id ? response.data : c));
+        setShowEditModal(false);
+        alert("Customer updated successfully");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to update customer");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const SortIcon = ({ field }: { field: SortField }) => (
     <span className="text-neutral-300 text-[10px]">
       {sortField === field ? (sortDirection === "asc" ? "↑" : "↓") : "⇅"}
@@ -382,13 +480,8 @@ export default function AdminManageCustomer() {
                     </div>
                   </th>
                   <th className="p-4 border border-neutral-200">Ref Code</th>
-                  <th
-                    className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
-                    onClick={() => handleSort("totalOrders")}>
-                    <div className="flex items-center justify-between">
-                      Total Orders <SortIcon field="totalOrders" />
-                    </div>
-                  </th>
+                  <th className="p-4 border border-neutral-200">Wallet</th>
+                  {/* Total Orders column removed as requested */}
                   <th
                     className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
                     onClick={() => handleSort("totalSpent")}>
@@ -459,14 +552,19 @@ export default function AdminManageCustomer() {
                         {customer.refCode}
                       </td>
                       <td className="p-4 border border-neutral-200">
-                        {customer.totalOrders}
+                        ₹{(customer.walletAmount || 0).toFixed(2)}
                       </td>
+                      {/* Total Orders Removed 
+                      <td className="p-4 border border-neutral-200">
+                        {customer.totalOrders}
+                      </td> */}
                       <td className="p-4 border border-neutral-200">
                         ₹{customer.totalSpent.toFixed(2)}
                       </td>
                       <td className="p-4 border border-neutral-200">
                         <div className="flex items-center gap-2">
                           <button
+                            onClick={() => handleOpenViewModal(customer)}
                             className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
                             title="View Details">
                             <svg
@@ -481,6 +579,7 @@ export default function AdminManageCustomer() {
                             </svg>
                           </button>
                           <button
+                            onClick={() => handleOpenEditModal(customer)}
                             className="p-1.5 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
                             title="Edit">
                             <svg
@@ -492,6 +591,20 @@ export default function AdminManageCustomer() {
                               strokeWidth="2">
                               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleOpenWalletModal(customer)}
+                            className="p-1.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded transition-colors"
+                            title="Add Wallet Balance">
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2">
+                              <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                             </svg>
                           </button>
                         </div>
@@ -554,6 +667,198 @@ export default function AdminManageCustomer() {
           </div>
         </div>
       </div>
+
+      {/* Wallet Modal */}
+      {showWalletModal && selectedCustomerForWallet && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-neutral-200 flex justify-between items-center">
+              <h3 className="font-bold text-lg text-neutral-900">Add Wallet Balance</h3>
+              <button
+                onClick={() => setShowWalletModal(false)}
+                className="text-neutral-500 hover:text-neutral-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-sm text-neutral-600 mb-2">
+                  Adding balance for: <span className="font-bold">{selectedCustomerForWallet.name}</span>
+                </p>
+                <p className="text-sm text-neutral-600">
+                  Current Balance: ₹{(selectedCustomerForWallet.walletAmount || 0).toFixed(2)}
+                </p>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Amount (₹)</label>
+                <input
+                  type="number"
+                  value={walletAmountToAdd}
+                  onChange={(e) => setWalletAmountToAdd(e.target.value)}
+                  placeholder="Enter amount"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                  min="1"
+                />
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Description (Optional)</label>
+                <input
+                  type="text"
+                  value={walletDescription}
+                  onChange={(e) => setWalletDescription(e.target.value)}
+                  placeholder="Reason for adding context"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowWalletModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded hover:bg-neutral-200"
+                  disabled={isAddingWallet}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddWalletBalance}
+                  className="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded hover:bg-teal-700 disabled:bg-teal-400"
+                  disabled={isAddingWallet || !walletAmountToAdd}
+                >
+                  {isAddingWallet ? "Adding..." : "Add Balance"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+      }
+
+      {/* View Modal */}
+      {showViewModal && selectedCustomer && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-neutral-200 flex justify-between items-center bg-neutral-50">
+              <h3 className="font-bold text-lg text-neutral-900">Customer Details</h3>
+              <button onClick={() => setShowViewModal(false)} className="text-neutral-500 hover:text-neutral-700">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-neutral-500 mb-1">Name</p>
+                  <p className="font-medium">{selectedCustomer.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-500 mb-1">Status</p>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${selectedCustomer.status === "Active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                    {selectedCustomer.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-500 mb-1">Email</p>
+                  <p className="font-medium break-all">{selectedCustomer.email}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-500 mb-1">Phone</p>
+                  <p className="font-medium">{selectedCustomer.phone}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-500 mb-1">Wallet Balance</p>
+                  <p className="font-medium text-teal-600">₹{(selectedCustomer.walletAmount || 0).toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-500 mb-1">Total Spent</p>
+                  <p className="font-medium">₹{selectedCustomer.totalSpent.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-500 mb-1">Ref Code</p>
+                  <p className="font-medium">{selectedCustomer.refCode}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-500 mb-1">Registered On</p>
+                  <p className="font-medium">{new Date(selectedCustomer.registrationDate).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              {selectedCustomer.address && (
+                <div className="mt-4 pt-4 border-t border-neutral-100">
+                  <p className="font-semibold mb-2">Location</p>
+                  <p className="text-sm text-neutral-600">
+                    {selectedCustomer.address}, {selectedCustomer.city}, {selectedCustomer.state} - {selectedCustomer.pincode}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="px-6 py-4 bg-neutral-50 border-t border-neutral-200 flex justify-end">
+              <button onClick={() => setShowViewModal(false)} className="px-4 py-2 bg-neutral-200 text-neutral-800 rounded hover:bg-neutral-300 text-sm font-medium">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && selectedCustomer && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-neutral-200 flex justify-between items-center bg-neutral-50">
+              <h3 className="font-bold text-lg text-neutral-900">Edit Customer</h3>
+              <button onClick={() => setShowEditModal(false)} className="text-neutral-500 hover:text-neutral-700">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={editFormData.email}
+                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Phone</label>
+                <input
+                  type="text"
+                  value={editFormData.phone}
+                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
+                <select
+                  value={editFormData.status}
+                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div className="px-6 py-4 bg-neutral-50 border-t border-neutral-200 flex justify-end gap-3">
+              <button onClick={() => setShowEditModal(false)} className="px-4 py-2 bg-neutral-100 text-neutral-700 rounded hover:bg-neutral-200 text-sm font-medium">Cancel</button>
+              <button
+                onClick={handleUpdateCustomer}
+                disabled={isUpdating}
+                className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 text-sm font-medium disabled:opacity-50"
+              >
+                {isUpdating ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

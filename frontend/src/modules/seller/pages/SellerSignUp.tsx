@@ -230,7 +230,7 @@ export default function SellerSignUp() {
         <div className="px-6 py-4 text-center border-b border-green-700" style={{ backgroundColor: 'rgb(21 178 74 / var(--tw-bg-opacity, 1))' }}>
           <div className="mb-0 -mt-4">
             <img
-              src="/assets/zeto-mart.jpeg"
+              src="/assets/Zeto-mart.png"
               alt="Zeto Mart"
               className="h-44 w-full max-w-xs mx-auto object-fill object-bottom"
             />

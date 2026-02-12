@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import zetoMartLogo from '@assets/zeto-mart.jpeg';
+import zetoMartLogo from '@assets/Zeto-mart.png';
 import { useAuth } from '../../../context/AuthContext';
 
 interface SellerHeaderProps {

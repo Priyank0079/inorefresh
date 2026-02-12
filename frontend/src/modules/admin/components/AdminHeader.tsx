@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
-import zetoMartLogo from '@assets/zeto-mart.jpeg';
+import zetoMartLogo from '@assets/Zeto-mart.png';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;

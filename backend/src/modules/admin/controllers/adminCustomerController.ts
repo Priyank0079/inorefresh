@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import Customer from "../../../models/Customer";
 import Order from "../../../models/Order";
+import WalletTransaction from "../../../models/WalletTransaction";
 
 /**
  * Get all customers with filters
@@ -148,6 +149,91 @@ export const getCustomerOrders = asyncHandler(
         limit: parseInt(limit as string),
         total,
         pages: Math.ceil(total / parseInt(limit as string)),
+      },
+    });
+  }
+);
+
+/**
+ * Update customer details
+ */
+export const updateCustomer = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { name, email, phone, status } = req.body;
+
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (phone) updateData.phone = phone;
+    if (status) updateData.status = status;
+
+    const customer = await Customer.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Customer updated successfully",
+      data: customer,
+    });
+  }
+);
+
+
+/**
+ * Add wallet balance to customer
+ */
+export const addWalletBalance = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { amount, description } = req.body;
+
+    if (!amount || isNaN(amount) || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid amount",
+      });
+    }
+
+    const customer = await Customer.findById(id);
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
+    }
+
+    // Add balance
+    customer.walletAmount = (customer.walletAmount || 0) + Number(amount);
+    await customer.save();
+
+    // Create wallet transaction
+    await WalletTransaction.create({
+      userId: customer._id,
+      userType: "CUSTOMER",
+      amount: Number(amount),
+      type: "Credit",
+      description: description,
+      status: "Completed",
+      reference: `WLT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Wallet balance added successfully",
+      data: {
+        walletAmount: customer.walletAmount,
       },
     });
   }

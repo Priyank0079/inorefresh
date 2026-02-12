@@ -164,7 +164,9 @@ router.patch("/returns/:id/process", orderController.processReturnRequest);
 // ==================== Customer Routes ====================
 router.get("/customers", customerController.getAllCustomers);
 router.get("/customers/:id", customerController.getCustomerById);
+router.post("/customers/:id/add-wallet", customerController.addWalletBalance);
 router.patch("/customers/:id/status", customerController.updateCustomerStatus);
+router.put("/customers/:id", customerController.updateCustomer);
 router.get("/customers/:id/orders", customerController.getCustomerOrders);
 
 // ==================== Delivery Routes ====================

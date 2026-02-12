@@ -103,3 +103,31 @@ export const getCustomerOrders = async (
   return response.data;
 };
 
+/**
+ * Add wallet balance to customer
+ */
+export const addWalletBalance = async (
+  id: string,
+  amount: number,
+  description?: string
+): Promise<ApiResponse<{ walletAmount: number }>> => {
+  const response = await api.post<ApiResponse<{ walletAmount: number }>>(
+    `/admin/customers/${id}/add-wallet`,
+    { amount, description }
+  );
+  return response.data;
+};
+
+/**
+ * Update customer details
+ */
+export const updateCustomer = async (
+  id: string,
+  data: Partial<Customer>
+): Promise<ApiResponse<Customer>> => {
+  const response = await api.put<ApiResponse<Customer>>(
+    `/admin/customers/${id}`,
+    data
+  );
+  return response.data;
+};

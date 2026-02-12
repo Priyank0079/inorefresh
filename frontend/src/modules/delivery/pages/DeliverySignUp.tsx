@@ -279,7 +279,7 @@ export default function DeliverySignUp() {
           }}>
           <div className="mb-0 -mt-4">
             <img
-              src="/assets/zeto-mart.jpeg"
+              src="/assets/Zeto-mart.png"
               alt="Zeto Mart Delivery"
               className="h-44 w-full max-w-xs mx-auto object-fill object-bottom"
             />

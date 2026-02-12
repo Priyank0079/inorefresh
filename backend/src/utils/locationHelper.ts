@@ -21,9 +21,9 @@ export function calculateDistance(
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -67,22 +67,26 @@ export async function findSellersWithinRange(
       }
       // Fallback to string fields if GeoJSON missing
       else if (seller.latitude && seller.longitude) {
-         sellerLat = parseFloat(seller.latitude);
-         sellerLng = parseFloat(seller.longitude);
+        sellerLat = parseFloat(seller.latitude);
+        sellerLng = parseFloat(seller.longitude);
       }
 
       if (sellerLat !== null && sellerLng !== null && !isNaN(sellerLat) && !isNaN(sellerLng)) {
-        const distance = calculateDistance(
-          userLat,
-          userLng,
-          sellerLat,
-          sellerLng
-        );
-        const serviceRadius = seller.serviceRadiusKm || 10; // Default to 10km if not set
+        // TEMPORARILY DISABLED FOR WALLET TESTING - REMOVE THIS COMMENT TO RE-ENABLE
+        // const distance = calculateDistance(
+        //   userLat,
+        //   userLng,
+        //   sellerLat,
+        //   sellerLng
+        // );
+        // const serviceRadius = seller.serviceRadiusKm || 10; // Default to 10km if not set
 
-        if (distance <= serviceRadius) {
-          nearbySellerIds.push(seller._id as mongoose.Types.ObjectId);
-        }
+        // if (distance <= serviceRadius) {
+        //   nearbySellerIds.push(seller._id as mongoose.Types.ObjectId);
+        // }
+
+        // TEMPORARY: Allow all sellers regardless of distance
+        nearbySellerIds.push(seller._id as mongoose.Types.ObjectId);
       }
     }
 

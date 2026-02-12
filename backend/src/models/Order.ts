@@ -41,30 +41,31 @@ export interface IOrder extends Document {
   paymentMethod: string;
   paymentStatus: "Pending" | "Paid" | "Failed" | "Refunded";
   paymentId?: string;
+  walletAmountUsed?: number;
 
   // Order Status
   status:
-    | "Received"
-    | "Accepted"
-    | "Pending"
-    | "Processed"
-    | "Shipped"
-    | "Picked up"
-    | "On the way"
-    | "Out for Delivery"
-    | "Delivered"
-    | "Cancelled"
-    | "Rejected"
-    | "Returned";
+  | "Received"
+  | "Accepted"
+  | "Pending"
+  | "Processed"
+  | "Shipped"
+  | "Picked up"
+  | "On the way"
+  | "Out for Delivery"
+  | "Delivered"
+  | "Cancelled"
+  | "Rejected"
+  | "Returned";
 
   // Delivery Assignment
   deliveryBoy?: mongoose.Types.ObjectId;
   deliveryBoyStatus?:
-    | "Assigned"
-    | "Picked Up"
-    | "In Transit"
-    | "Delivered"
-    | "Failed";
+  | "Assigned"
+  | "Picked Up"
+  | "In Transit"
+  | "Delivered"
+  | "Failed";
   assignedAt?: Date;
 
   // Tracking
@@ -241,6 +242,10 @@ const OrderSchema = new Schema<IOrder>(
     paymentId: {
       type: String,
       trim: true,
+    },
+    walletAmountUsed: {
+      type: Number,
+      default: 0,
     },
 
     // Order Status

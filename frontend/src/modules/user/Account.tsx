@@ -156,7 +156,40 @@ export default function Account() {
         </div>
       </div>
 
-      <div className="px-4 md:px-6 lg:px-8 -mt-4 md:-mt-6 mb-4 md:mb-6">
+      {/* Wallet Balance Card */}
+      <div className="px-4 md:px-6 lg:px-8 -mt-4 md:-mt-6 mb-4">
+        <div className="max-w-2xl md:mx-auto">
+          <div className="bg-gradient-to-r from-teal-600 to-green-600 rounded-xl p-4 md:p-5 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white md:w-7 md:h-7">
+                    <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M1 10h22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs md:text-sm text-white/80 font-medium mb-0.5">Wallet Balance</p>
+                  <p className="text-2xl md:text-3xl font-bold text-white">
+                    ₹{(profile?.walletAmount || user?.walletAmount || 0).toLocaleString('en-IN')}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <button
+                  onClick={() => navigate('/checkout')}
+                  className="px-3 py-1.5 md:px-4 md:py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg text-white text-xs md:text-sm font-semibold transition-colors border border-white/30"
+                >
+                  Use Wallet
+                </button>
+                <p className="text-[10px] md:text-xs text-white/60 mt-1">Use at checkout</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 md:px-6 lg:px-8 mb-4 md:mb-6">
         <div className="grid grid-cols-2 md:grid-cols-2 gap-2.5 md:gap-6 max-w-2xl md:mx-auto">
           <button onClick={() => navigate('/orders')} className="bg-white rounded-lg border border-neutral-200 p-3 md:p-4 hover:shadow-md transition-shadow text-center outline-none">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="mx-auto mb-1.5 md:mb-2 text-neutral-700 md:w-6 md:h-6"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>

@@ -278,6 +278,12 @@ export default function AdminOrderDetail() {
                   <span className="font-medium">-₹{order.discount.toFixed(2)}</span>
                 </div>
               )}
+              {order.walletAmountUsed && order.walletAmountUsed > 0 && (
+                <div className="flex justify-between text-teal-600">
+                  <span>Wallet Used:</span>
+                  <span className="font-medium">-₹{order.walletAmountUsed.toFixed(2)}</span>
+                </div>
+              )}
               <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
                 <span>Total:</span>
                 <span>₹{order.total?.toFixed(2) || '0.00'}</span>
@@ -326,6 +332,12 @@ export default function AdminOrderDetail() {
                 <div>
                   <span className="text-neutral-600">Payment ID:</span>
                   <span className="ml-2 font-medium text-xs">{order.paymentId}</span>
+                </div>
+              )}
+              {order.walletAmountUsed && order.walletAmountUsed > 0 && (
+                <div>
+                  <span className="text-neutral-600">Paid from Wallet:</span>
+                  <span className="ml-2 font-medium">₹{order.walletAmountUsed.toFixed(2)}</span>
                 </div>
               )}
             </div>

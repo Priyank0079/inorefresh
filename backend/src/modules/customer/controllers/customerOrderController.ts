@@ -12,6 +12,8 @@ import AppSettings from "../../../models/AppSettings";
 import { getRoadDistances } from "../../../services/mapService";
 import { Server as SocketIOServer } from "socket.io";
 import { getOrderItemCommissionRate } from "../../../services/commissionService";
+import WalletTransaction from "../../../models/WalletTransaction";
+
 
 // Create a new order
 export const createOrder = async (req: Request, res: Response) => {
@@ -27,7 +29,7 @@ export const createOrder = async (req: Request, res: Response) => {
             session = null;
         }
 
-        const { items, address, paymentMethod, fees } = req.body;
+        const { items, address, paymentMethod, fees, useWallet } = req.body;
         const userId = req.user!.userId;
 
         // Log incoming request for debugging
@@ -416,12 +418,95 @@ export const createOrder = async (req: Request, res: Response) => {
 
         const finalTotal = calculatedSubtotal + platformFee + deliveryFee;
 
+        // --- Wallet Logic ---
+        let walletAmountUsed = 0;
+        let payableAmount = finalTotal;
+
+        if (useWallet) {
+            // Find customer again to get latest balance (and lock if in transaction)
+            const customerData = session
+                ? await Customer.findById(userId).session(session)
+                : await Customer.findById(userId);
+
+            if (customerData && customerData.walletAmount > 0) {
+                // Calculate amount to use
+                walletAmountUsed = Math.min(finalTotal, customerData.walletAmount);
+                if (walletAmountUsed > 0) {
+                    payableAmount = finalTotal - walletAmountUsed;
+
+                    // Deduct from wallet
+                    customerData.walletAmount -= walletAmountUsed;
+                    // Stats update moved to the end to be universal
+
+                    if (session) {
+                        await customerData.save({ session });
+                    } else {
+                        await customerData.save();
+                    }
+
+                    // Create Wallet Transaction
+                    const walletTxn = new WalletTransaction({
+                        userId: customerData._id,
+                        userType: 'CUSTOMER',
+                        amount: walletAmountUsed,
+                        type: 'Debit',
+                        description: `Used for order payment`,
+                        status: 'Completed',
+                        reference: `TXN-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                        relatedOrder: newOrder._id
+                    });
+
+                    if (session) {
+                        await walletTxn.save({ session });
+                    } else {
+                        await walletTxn.save();
+                    }
+
+                    // If fully paid by wallet
+                    if (payableAmount === 0) {
+                        newOrder.paymentStatus = 'Paid';
+                        newOrder.paymentMethod = 'Wallet';
+                    }
+                }
+            }
+        }
+
+        // Always update Customer Stats (totalSpent, totalOrders)
+        // This ensures stats are updated regardless of wallet usage or payment method
+        const customerToUpdate = session
+            ? await Customer.findById(userId).session(session)
+            : await Customer.findById(userId);
+
+        if (customerToUpdate) {
+            // If wallet was used, we already deducted balance in the 'if (useWallet)' block above
+            // But we need to make sure we don't double count or miss the stats update.
+            // Since we moved stats update here, we should REMOVE it from the wallet block above to avoid confusion,
+            // OR just ensure we are using the freshly fetched 'customerToUpdate' here.
+
+            // Wait, the previous block might have modified 'customerData' and saved it.
+            // If we fetch again here, we get the updated wallet balance.
+
+            // Let's Simplify: 
+            // 1. Remove stats update from the wallet block.
+            // 2. Perform stats update HERE for everyone.
+
+            customerToUpdate.totalSpent = (customerToUpdate.totalSpent || 0) + finalTotal;
+            customerToUpdate.totalOrders = (customerToUpdate.totalOrders || 0) + 1;
+
+            if (session) {
+                await customerToUpdate.save({ session });
+            } else {
+                await customerToUpdate.save();
+            }
+        }
+
         // Update Order with calculated values and items
         newOrder.subtotal = Number(calculatedSubtotal.toFixed(2));
         newOrder.total = Number(finalTotal.toFixed(2));
         newOrder.items = orderItemIds;
         newOrder.shipping = deliveryFee; // Update with calculated fee
         newOrder.deliveryDistanceKm = deliveryDistanceKm; // Store distance for commission calc
+        newOrder.walletAmountUsed = walletAmountUsed;
 
 
         if (session) {

@@ -109,6 +109,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
           longitude: order.address.longitude ?? 0,
         },
         paymentMethod: order.paymentMethod || "COD",
+        useWallet: order.useWallet,
         items: order.items.map((item) => ({
           product: {
             id: item.product.id || (item.product as { _id?: string })._id || '',

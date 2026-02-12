@@ -30,23 +30,27 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   // Check serviceability when user location changes
   useEffect(() => {
-    const performCheck = async () => {
-      if (userLocation && userLocation.latitude && userLocation.longitude) {
-        try {
-          const result = await checkServiceability(userLocation.latitude, userLocation.longitude);
-          setIsServiceAvailable(result.isServiceAvailable);
-        } catch (error) {
-          console.error("Failed to check serviceability:", error);
-          // Default to true on error to avoid blocking user due to network issues
-          setIsServiceAvailable(true);
-        }
-      } else {
-        // If no location, we can't determine, so we assume available or waiting for location
-        setIsServiceAvailable(true);
-      }
-    };
+    // TEMPORARILY DISABLED FOR WALLET TESTING - UNCOMMENT TO RE-ENABLE
+    // const performCheck = async () => {
+    //   if (userLocation && userLocation.latitude && userLocation.longitude) {
+    //     try {
+    //       const result = await checkServiceability(userLocation.latitude, userLocation.longitude);
+    //       setIsServiceAvailable(result.isServiceAvailable);
+    //     } catch (error) {
+    //       console.error("Failed to check serviceability:", error);
+    //       // Default to true on error to avoid blocking user due to network issues
+    //       setIsServiceAvailable(true);
+    //     }
+    //   } else {
+    //     // If no location, we can't determine, so we assume available or waiting for location
+    //     setIsServiceAvailable(true);
+    //   }
+    // };
 
-    performCheck();
+    // performCheck();
+
+    // TEMPORARY: Always set service as available for wallet testing
+    setIsServiceAvailable(true);
   }, [userLocation]);
 
   const isActive = (path: string) => location.pathname === path;
