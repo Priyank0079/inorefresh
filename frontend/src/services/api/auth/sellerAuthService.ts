@@ -38,6 +38,10 @@ export interface RegisterData {
   latitude?: string;
   longitude?: string;
   serviceRadiusKm?: string | number;
+  serviceAreaGeo?: {
+    type: string;
+    coordinates: number[][][];
+  } | null;
 }
 
 export interface RegisterResponse {

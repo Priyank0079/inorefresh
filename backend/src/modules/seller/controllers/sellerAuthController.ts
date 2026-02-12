@@ -189,9 +189,9 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   const location =
     longitude && latitude
       ? {
-          type: "Point" as const,
-          coordinates: [longitude, latitude],
-        }
+        type: "Point" as const,
+        coordinates: [longitude, latitude],
+      }
       : undefined;
 
   // Create new seller with GeoJSON location (password not required during signup)
@@ -210,6 +210,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     longitude: req.body.longitude,
     location, // GeoJSON location for geospatial queries
     serviceRadiusKm, // Service radius in kilometers
+    serviceAreaGeo: req.body.serviceAreaGeo, // Custom polygon area
     status: "Pending",
     requireProductApproval: false,
     viewCustomerDetails: false,
@@ -320,6 +321,18 @@ export const updateProfile = asyncHandler(
     ) {
       // If empty string or null is sent, remove it from updates to keep existing value
       delete updates.serviceRadiusKm;
+    }
+
+    // Handle serviceAreaGeo update
+    if (updates.serviceAreaGeo) {
+      // It is an object, ensure it has type 'Polygon'
+      if (!updates.serviceAreaGeo.type) updates.serviceAreaGeo.type = 'Polygon';
+    } else if (updates.serviceAreaGeo === null) {
+      // If explicitly null, user wants to remove the Polygon (switch to Radius)
+      // We use $unset for this field
+      // Note: findByIdAndUpdate with flattened object including $unset
+      updates.$unset = { ...updates.$unset, serviceAreaGeo: 1 };
+      delete updates.serviceAreaGeo;
     }
 
     const seller = await Seller.findByIdAndUpdate(sellerId, updates, {

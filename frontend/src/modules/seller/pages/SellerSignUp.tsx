@@ -6,6 +6,7 @@ import GoogleMapsAutocomplete from '../../../components/GoogleMapsAutocomplete';
 import { useAuth } from '../../../context/AuthContext';
 import { getHeaderCategoriesPublic, HeaderCategory } from '../../../services/api/headerCategoryService';
 import LocationPickerMap from '../../../components/LocationPickerMap';
+import ServiceAreaMap from '../../../components/ServiceAreaMap';
 import { useEffect } from 'react';
 
 export default function SellerSignUp() {
@@ -26,7 +27,9 @@ export default function SellerSignUp() {
     searchLocation: '',
     latitude: '',
     longitude: '',
-    serviceRadiusKm: '10', // Default 10km
+    serviceRadiusKm: '10',
+    serviceAreaType: 'radius',
+    serviceAreaCoordinates: [] as number[][], // Coordinates for custom polygon
     accountName: '',
     bankName: '',
     branch: '',
@@ -61,12 +64,9 @@ export default function SellerSignUp() {
         [name]: value.replace(/\D/g, '').slice(0, 10),
       }));
     } else if (name === 'serviceRadiusKm') {
-      // Allow only numbers and a single decimal point
       const cleanedValue = value.replace(/[^0-9.]/g, '');
-      // Ensure only one decimal point
       const parts = cleanedValue.split('.');
       const finalValue = parts.length > 2 ? `${parts[0]}.${parts[1]}` : cleanedValue;
-
       setFormData(prev => ({
         ...prev,
         [name]: finalValue,
@@ -141,10 +141,14 @@ export default function SellerSignUp() {
         return;
       }
 
-      // Validate service radius
-      const radius = parseFloat(formData.serviceRadiusKm);
-      if (isNaN(radius) || radius < 0.1 || radius > 100) {
-        setError('Service radius must be between 0.1 and 100 kilometers');
+      // Validate service area
+      if (formData.serviceAreaType === 'polygon' && formData.serviceAreaCoordinates.length === 0) {
+        setError('Please draw your service area on the map');
+        return;
+      }
+
+      if (formData.serviceAreaType === 'radius' && !formData.serviceRadiusKm) {
+        setError('Please select a service radius');
         return;
       }
 
@@ -160,7 +164,11 @@ export default function SellerSignUp() {
         searchLocation: formData.searchLocation,
         latitude: formData.latitude,
         longitude: formData.longitude,
-        serviceRadiusKm: formData.serviceRadiusKm,
+        serviceRadiusKm: formData.serviceAreaType === 'radius' ? parseFloat(formData.serviceRadiusKm) : 10,
+        serviceAreaGeo: formData.serviceAreaType === 'polygon' && formData.serviceAreaCoordinates.length > 0 ? {
+          type: 'Polygon',
+          coordinates: [formData.serviceAreaCoordinates]
+        } : null,
       });
 
       if (response.success) {
@@ -417,7 +425,7 @@ export default function SellerSignUp() {
                     </button>
                   </div>
 
-                  {formData.latitude && formData.longitude ? (
+                  {formData.latitude && formData.longitude && formData.serviceAreaType === 'radius' ? (
                     <div className="mt-4 animate-fadeIn">
                       <p className="text-sm font-medium text-neutral-700 mb-2">
                         Exact Location <span className="text-teal-600 text-xs font-normal">(Move the map to place the pin on your store's entrance)</span>
@@ -444,32 +452,99 @@ export default function SellerSignUp() {
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Delivery/Service Radius (KM) <span className="text-red-500">*</span>
-                    <span className="text-xs font-normal text-neutral-500 ml-1">(Distance you can deliver)</span>
+                <div className="my-8 border-t border-gray-200 pt-6 animate-fadeIn">
+                  <h3 className="text-lg font-semibold text-neutral-800 mb-2">2. Delivery Service Area</h3>
+
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Service Area Type <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="number"
-                    name="serviceRadiusKm"
-                    value={formData.serviceRadiusKm}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => {
-                      if (['e', 'E', '+', '-'].includes(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    placeholder="Enter service radius in KM (e.g. 10)"
-                    required
-                    min="0.1"
-                    max="100"
-                    step="0.1"
-                    className="w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
-                    disabled={loading}
-                  />
-                  <p className="mt-1 text-xs text-neutral-500">
-                    Only customers within this radius can see and order your products
-                  </p>
+                  <div className="flex gap-4 mb-4">
+                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-2 rounded border border-gray-200 hover:bg-gray-50 transition-colors">
+                      <input
+                        type="radio"
+                        name="service_type_toggle"
+                        checked={formData.serviceAreaType === 'radius'}
+                        onChange={() => setFormData(prev => ({ ...prev, serviceAreaType: 'radius' }))}
+                        className="text-teal-600 focus:ring-teal-500"
+                        disabled={loading}
+                      />
+                      <span className="text-sm font-medium text-neutral-700">Radius (Default)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-2 rounded border border-gray-200 hover:bg-gray-50 transition-colors">
+                      <input
+                        type="radio"
+                        name="service_type_toggle"
+                        checked={formData.serviceAreaType === 'polygon'}
+                        onChange={() => setFormData(prev => ({ ...prev, serviceAreaType: 'polygon' }))}
+                        className="text-teal-600 focus:ring-teal-500"
+                        disabled={loading}
+                      />
+                      <span className="text-sm font-medium text-neutral-700">Custom Area (Draw on Map)</span>
+                    </label>
+                  </div>
+
+                  {formData.serviceAreaType === 'radius' ? (
+                    <div className="animate-fadeIn space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Service Radius (KM) <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="serviceRadiusKm"
+                        value={formData.serviceRadiusKm}
+                        onChange={handleInputChange}
+                        disabled={loading}
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none bg-white transition-all appearance-none"
+                      >
+                        <option value="1">1 km</option>
+                        <option value="2">2 km</option>
+                        <option value="5">5 km</option>
+                        <option value="10">10 km</option>
+                        <option value="20">20 km</option>
+                        <option value="50">50 km</option>
+                        <option value="100">100 km</option>
+                      </select>
+                      <p className="text-xs text-gray-500">
+                        Products will be shown to users within this radius from your store location.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="animate-fadeIn space-y-2">
+                      <label className="block text-sm font-medium text-neutral-700">
+                        Draw Service Area <span className="text-red-500">*</span>
+                        <span className="text-xs font-normal text-teal-600 block sm:inline sm:ml-1">
+                          (Use the polygon tool <span className="inline-block w-4 h-4 border border-gray-400 bg-gray-100 align-middle mx-1"></span> on the map below to draw the exact area you deliver to)
+                        </span>
+                      </label>
+
+                      <div className="h-[400px] w-full rounded-lg overflow-hidden border border-neutral-300 shadow-sm relative">
+                        {formData.latitude && formData.longitude ? (
+                          <ServiceAreaMap
+                            key={`service-map-${formData.latitude}-${formData.longitude}`} // Force re-render when location changes
+                            mode="area"
+                            initialLat={parseFloat(formData.latitude)}
+                            initialLng={parseFloat(formData.longitude)}
+                            initialPolygon={formData.serviceAreaCoordinates}
+                            onPolygonChange={(coords) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                serviceAreaCoordinates: coords
+                              }));
+                            }}
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full bg-gray-50 text-gray-500">
+                            <p className="text-center px-4">
+                              Please set your <strong>Exact Location</strong> above first.<br />
+                              The service area map will appear here.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-2 text-xs text-neutral-500">
+                        <strong>How to draw:</strong> Click the "Shape" icon at the top of the map. Click points on the map to outline your area. Click the first point again to close the shape.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div>

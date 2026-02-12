@@ -19,7 +19,7 @@ const defaultCenter = {
 };
 
 type Libraries = ("places" | "drawing" | "geometry" | "visualization")[];
-const libraries: Libraries = ['places'];
+const libraries: Libraries = ['places', 'drawing', 'geometry'];
 
 export default function LocationPickerMap({
   initialLat,

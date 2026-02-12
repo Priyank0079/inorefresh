@@ -11,7 +11,7 @@ interface GoogleMapsAutocompleteProps {
 }
 
 type Libraries = ("places" | "drawing" | "geometry" | "visualization")[];
-const libraries: Libraries = ['places'];
+const libraries: Libraries = ['places', 'drawing', 'geometry'];
 
 // Clean address by removing Plus Codes and unwanted identifiers
 const cleanAddress = (address: string): string => {

@@ -42,6 +42,11 @@ export interface ISeller extends Document {
   };
   // Service radius in kilometers
   serviceRadiusKm?: number;
+  // GeoJSON polygon for custom service area
+  serviceAreaGeo?: {
+    type: 'Polygon';
+    coordinates: number[][][]; // Array of linear rings of coordinates [lng, lat]
+  };
 
   // Payment Details
   accountName?: string;
@@ -200,6 +205,17 @@ const SellerSchema = new Schema<ISeller>(
         type: [Number], // [longitude, latitude]
       },
     },
+    // GeoJSON polygon for custom service area
+    serviceAreaGeo: {
+      type: {
+        type: String,
+        enum: ['Polygon'],
+        default: 'Polygon',
+      },
+      coordinates: {
+        type: [[[Number]]], // Array of linear rings of coordinates [lng, lat]
+      },
+    },
     // Service radius in kilometers (default: 10km if not specified)
     serviceRadiusKm: {
       type: Number,
@@ -304,7 +320,7 @@ const SellerSchema = new Schema<ISeller>(
 );
 
 // Hash password before saving (only if password is provided)
-SellerSchema.pre('save', async function (next) {
+SellerSchema.pre('save', async function (this: ISeller, next) {
   // Skip password hashing if password is not provided or not modified
   if (!this.isModified('password') || !this.password) {
     return next();
@@ -321,6 +337,7 @@ SellerSchema.pre('save', async function (next) {
 
 // Method to compare password
 SellerSchema.methods.comparePassword = async function (
+  this: ISeller,
   candidatePassword: string
 ): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);

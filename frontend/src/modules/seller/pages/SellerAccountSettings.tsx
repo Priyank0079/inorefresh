@@ -5,6 +5,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { getCategories, Category } from '../../../services/api/categoryService';
 import GoogleMapsAutocomplete from '../../../components/GoogleMapsAutocomplete';
 import LocationPickerMap from '../../../components/LocationPickerMap';
+import ServiceAreaMap from '../../../components/ServiceAreaMap';
 
 const SellerAccountSettings = () => {
     const { user, updateUser } = useAuth();
@@ -27,7 +28,10 @@ const SellerAccountSettings = () => {
         searchLocation: '',
         latitude: '',
         longitude: '',
+
         serviceRadiusKm: '10',
+        serviceAreaType: 'radius', // New state
+        serviceAreaCoordinates: [] as number[][], // New state
         panCard: '',
         taxName: '',
         taxNumber: '',
@@ -72,6 +76,10 @@ const SellerAccountSettings = () => {
                     longitude: data.longitude || (locationCoords[0]?.toString() || ''),
                     searchLocation: data.searchLocation || data.address || '',
                     serviceRadiusKm: (data.serviceRadiusKm || 10).toString(),
+                    serviceAreaType: (data.serviceAreaGeo && data.serviceAreaGeo.coordinates && data.serviceAreaGeo.coordinates.length > 0) ? 'polygon' : 'radius',
+                    serviceAreaCoordinates: (data.serviceAreaGeo?.coordinates && data.serviceAreaGeo.coordinates[0])
+                        ? data.serviceAreaGeo.coordinates[0].map((p: number[]) => [p[0], p[1]])
+                        : [], // Flatten if needed, assumes [[lng, lat]]
                 });
             } else {
                 setError(response.message || 'Failed to fetch profile');
@@ -114,7 +122,11 @@ const SellerAccountSettings = () => {
 
             const updateData = {
                 ...sellerData,
-                serviceRadiusKm: radius,
+                serviceRadiusKm: sellerData.serviceAreaType === 'radius' ? radius : undefined,
+                serviceAreaGeo: sellerData.serviceAreaType === 'polygon' ? {
+                    type: 'Polygon',
+                    coordinates: [sellerData.serviceAreaCoordinates]
+                } : null
             };
 
             const response = await updateSellerProfile(updateData);
@@ -128,6 +140,10 @@ const SellerAccountSettings = () => {
                     longitude: data.longitude || (locationCoords[0]?.toString() || ''),
                     searchLocation: data.searchLocation || data.address || '',
                     serviceRadiusKm: (data.serviceRadiusKm || 10).toString(),
+                    serviceAreaType: (data.serviceAreaGeo?.coordinates?.length > 0) ? 'polygon' : 'radius',
+                    serviceAreaCoordinates: (data.serviceAreaGeo?.coordinates && data.serviceAreaGeo.coordinates[0])
+                        ? data.serviceAreaGeo.coordinates[0]
+                        : [],
                 });
                 if (updateUser) {
                     updateUser({
@@ -451,28 +467,93 @@ const SellerAccountSettings = () => {
 
                                                     <InputGroup label="City" name="city" value={sellerData.city} onChange={handleInputChange} disabled={!isEditing} />
 
-                                                    <div className="space-y-1.5">
-                                                        <label className="text-sm font-semibold text-gray-700 ml-1">
-                                                            Service Radius (KM) <span className="text-red-500">*</span>
+                                                    <div className="space-y-3">
+                                                        <label className="block text-sm font-semibold text-gray-700 ml-1">
+                                                            Service Area Type <span className="text-red-500">*</span>
                                                         </label>
-                                                        <select
-                                                            name="serviceRadiusKm"
-                                                            value={sellerData.serviceRadiusKm}
-                                                            onChange={handleInputChange}
-                                                            disabled={!isEditing}
-                                                            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none disabled:bg-gray-50/50 disabled:text-gray-500 transition-all appearance-none bg-white"
-                                                        >
-                                                            <option value="1">1 km</option>
-                                                            <option value="2">2 km</option>
-                                                            <option value="5">5 km</option>
-                                                            <option value="10">10 km</option>
-                                                            <option value="20">20 km</option>
-                                                            <option value="50">50 km</option>
-                                                        </select>
-                                                        {isEditing && (
-                                                            <p className="mt-1 text-xs text-gray-500">
-                                                                Products will be shown to users within this radius from your store location
-                                                            </p>
+                                                        <div className="flex gap-4 mb-2">
+                                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                                <input
+                                                                    type="radio"
+                                                                    name="serviceAreaType"
+                                                                    value="radius"
+                                                                    checked={sellerData.serviceAreaType === 'radius'}
+                                                                    onChange={(e) => setSellerData(prev => ({ ...prev, serviceAreaType: e.target.value }))}
+                                                                    disabled={!isEditing}
+                                                                    className="text-teal-600 focus:ring-teal-500"
+                                                                />
+                                                                <span className="text-sm font-medium text-neutral-700">Radius (Default)</span>
+                                                            </label>
+                                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                                <input
+                                                                    type="radio"
+                                                                    name="serviceAreaType"
+                                                                    value="polygon"
+                                                                    checked={sellerData.serviceAreaType === 'polygon'}
+                                                                    onChange={(e) => setSellerData(prev => ({ ...prev, serviceAreaType: e.target.value }))}
+                                                                    disabled={!isEditing}
+                                                                    className="text-teal-600 focus:ring-teal-500"
+                                                                />
+                                                                <span className="text-sm font-medium text-neutral-700">Custom Area (Draw on Map)</span>
+                                                            </label>
+                                                        </div>
+
+                                                        {sellerData.serviceAreaType === 'radius' ? (
+                                                            <>
+                                                                <label className="text-sm font-semibold text-gray-700 ml-1">
+                                                                    Service Radius (KM) <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <select
+                                                                    name="serviceRadiusKm"
+                                                                    value={sellerData.serviceRadiusKm}
+                                                                    onChange={handleInputChange}
+                                                                    disabled={!isEditing}
+                                                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none disabled:bg-gray-50/50 disabled:text-gray-500 transition-all appearance-none bg-white"
+                                                                >
+                                                                    <option value="1">1 km</option>
+                                                                    <option value="2">2 km</option>
+                                                                    <option value="5">5 km</option>
+                                                                    <option value="10">10 km</option>
+                                                                    <option value="20">20 km</option>
+                                                                    <option value="50">50 km</option>
+                                                                </select>
+                                                                {isEditing && (
+                                                                    <p className="mt-1 text-xs text-gray-500">
+                                                                        Products will be shown to users within this radius from your store location
+                                                                    </p>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <div className="animate-fadeIn">
+                                                                <label className="text-sm font-semibold text-gray-700 ml-1 mb-2 block">
+                                                                    Draw Service Area
+                                                                </label>
+                                                                <div className="h-[400px] w-full rounded-lg overflow-hidden border border-neutral-300">
+                                                                    {sellerData.latitude ? (
+                                                                        <ServiceAreaMap
+                                                                            mode={isEditing ? "area" : "location"} // Only allow drawing if editing
+                                                                            initialLat={parseFloat(sellerData.latitude)}
+                                                                            initialLng={parseFloat(sellerData.longitude)}
+                                                                            initialPolygon={sellerData.serviceAreaCoordinates} // Ensure this prop is passed
+                                                                            onPolygonChange={(coords) => {
+                                                                                setSellerData(prev => ({
+                                                                                    ...prev,
+                                                                                    serviceAreaCoordinates: coords
+                                                                                }));
+                                                                            }}
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="flex items-center justify-center h-full bg-gray-100 text-gray-500">
+                                                                            Please set store location first
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                {isEditing && (
+                                                                    <p className="mt-2 text-xs text-gray-500">
+                                                                        Use the map tools to draw a polygon around your delivery area.
+                                                                    </p>
+                                                                )}
+                                                            </div>
                                                         )}
                                                     </div>
 

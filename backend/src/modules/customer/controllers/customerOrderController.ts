@@ -5,7 +5,7 @@ import OrderItem from "../../../models/OrderItem";
 import Customer from "../../../models/Customer";
 import Seller from "../../../models/Seller";
 import mongoose from "mongoose";
-import { calculateDistance } from "../../../utils/locationHelper";
+import { calculateDistance, isPointInPolygon } from "../../../utils/locationHelper";
 import { notifySellersOfOrderUpdate } from "../../../services/sellerNotificationService";
 import { generateDeliveryOtp } from "../../../services/deliveryOtpService";
 import AppSettings from "../../../models/AppSettings";
@@ -328,6 +328,21 @@ export const createOrder = async (req: Request, res: Response) => {
 
             // Check each seller can deliver to user's location
             for (const seller of sellers) {
+
+                // 1. Check Custom Service Area (Polygon)
+                if (seller.serviceAreaGeo && seller.serviceAreaGeo.coordinates && seller.serviceAreaGeo.coordinates.length > 0) {
+                    const inside = isPointInPolygon([deliveryLng, deliveryLat], seller.serviceAreaGeo.coordinates);
+                    if (!inside) {
+                        if (session) await session.abortTransaction();
+                        return res.status(403).json({
+                            success: false,
+                            message: `Your delivery address is outside the custom service area of ${seller.storeName}.`,
+                        });
+                    }
+                    continue; // Inside polygon, so valid. Skip radius check.
+                }
+
+                // 2. Check Radius (Standard)
                 if (!seller.location || !seller.location.coordinates) {
                     if (session) await session.abortTransaction();
                     return res.status(403).json({

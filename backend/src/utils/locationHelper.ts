@@ -27,6 +27,23 @@ export function calculateDistance(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
+// Ray-casting algorithm for point-in-polygon check
+// Point: [lng, lat], Polygon: [[[lng, lat], ...]] (GeoJSON structure)
+export function isPointInPolygon(point: [number, number], polygon: number[][][]): boolean {
+  if (!polygon || polygon.length === 0) return false;
+  // We check the outer ring (index 0)
+  const vs = polygon[0];
+  const x = point[0], y = point[1];
+  let inside = false;
+  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+    const xi = vs[i][0], yi = vs[i][1];
+    const xj = vs[j][0], yj = vs[j][1];
+    const intersect = ((yi > y) !== (yj > y))
+      && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
 
 /**
  * Find sellers whose service radius covers the user's location
@@ -51,14 +68,23 @@ export async function findSellersWithinRange(
     // Fetch all approved sellers with location
     const sellers = await Seller.find({
       status: "Approved",
-    }).select("_id location serviceRadiusKm latitude longitude");
+    }).select("_id location serviceRadiusKm latitude longitude serviceAreaGeo");
 
     // Filter sellers where user is within their service radius
     const nearbySellerIds: mongoose.Types.ObjectId[] = [];
 
     for (const seller of sellers) {
+      // 1. Check Custom Polygon Service Area First
+      if (seller.serviceAreaGeo && seller.serviceAreaGeo.coordinates && seller.serviceAreaGeo.coordinates.length > 0) {
+        if (isPointInPolygon([userLng, userLat], seller.serviceAreaGeo.coordinates)) {
+          nearbySellerIds.push(seller._id as mongoose.Types.ObjectId);
+        }
+        continue; // If polygon exists, we ONLY check polygon (strict override)
+      }
+
       let sellerLat: number | null = null;
       let sellerLng: number | null = null;
+
 
       // Try GeoJSON first
       if (seller.location && seller.location.coordinates && seller.location.coordinates.length === 2) {
@@ -72,21 +98,17 @@ export async function findSellersWithinRange(
       }
 
       if (sellerLat !== null && sellerLng !== null && !isNaN(sellerLat) && !isNaN(sellerLng)) {
-        // TEMPORARILY DISABLED FOR WALLET TESTING - REMOVE THIS COMMENT TO RE-ENABLE
-        // const distance = calculateDistance(
-        //   userLat,
-        //   userLng,
-        //   sellerLat,
-        //   sellerLng
-        // );
-        // const serviceRadius = seller.serviceRadiusKm || 10; // Default to 10km if not set
+        const distance = calculateDistance(
+          userLat,
+          userLng,
+          sellerLat,
+          sellerLng
+        );
+        const serviceRadius = seller.serviceRadiusKm || 10; // Default to 10km if not set
 
-        // if (distance <= serviceRadius) {
-        //   nearbySellerIds.push(seller._id as mongoose.Types.ObjectId);
-        // }
-
-        // TEMPORARY: Allow all sellers regardless of distance
-        nearbySellerIds.push(seller._id as mongoose.Types.ObjectId);
+        if (distance <= serviceRadius) {
+          nearbySellerIds.push(seller._id as mongoose.Types.ObjectId);
+        }
       }
     }
 
