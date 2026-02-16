@@ -44,7 +44,12 @@ export default function AdminManageCustomer() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [editFormData, setEditFormData] = useState({
+  const [editFormData, setEditFormData] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    status: "Active" | "Inactive";
+  }>({
     name: "",
     email: "",
     phone: "",
@@ -838,7 +843,7 @@ export default function AdminManageCustomer() {
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
                 <select
                   value={editFormData.status}
-                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as "Active" | "Inactive" })}
                   className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white"
                 >
                   <option value="Active">Active</option>
