@@ -4,13 +4,13 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-comp
 
 // Firebase configuration (Production credentials)
 const firebaseConfig = {
-    apiKey: 'AIzaSyDdzURk5KJykQwmtUdOg-Lbdj4HjUT9G8g',
-    authDomain: 'dhakadsnazzy2.firebaseapp.com',
-    projectId: 'dhakadsnazzy2',
-    storageBucket: 'dhakadsnazzy2.firebasestorage.app',
-    messagingSenderId: '88524532800',
-    appId: '1:88524532800:web:347183dc062e619a48c3a5',
-    measurementId: 'G-GCPBFW3F1B'
+    apiKey: 'REPLACE_WITH_YOUR_FIREBASE_API_KEY',
+    authDomain: 'REPLACE_WITH_YOUR_FIREBASE_AUTH_DOMAIN',
+    projectId: 'REPLACE_WITH_YOUR_FIREBASE_PROJECT_ID',
+    storageBucket: 'REPLACE_WITH_YOUR_FIREBASE_STORAGE_BUCKET',
+    messagingSenderId: 'REPLACE_WITH_YOUR_FIREBASE_MESSAGING_SENDER_ID',
+    appId: 'REPLACE_WITH_YOUR_FIREBASE_APP_ID',
+    measurementId: 'REPLACE_WITH_YOUR_FIREBASE_MEASUREMENT_ID'
 };
 
 // Initialize Firebase in service worker
