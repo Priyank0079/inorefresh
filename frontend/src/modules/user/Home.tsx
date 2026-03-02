@@ -1,14 +1,19 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation as useRouterLocation } from "react-router-dom";
+import { useLocation } from "../../hooks/useLocation";
+import { useCart } from "../../context/CartContext";
+import { useToast } from "../../context/ToastContext";
+import { LOCAL_FISH_PRODUCTS } from "../../constants/products";
+import { Product } from "../../types/domain";
+import { motion, AnimatePresence } from "framer-motion";
 import HomeHero from "./components/HomeHero";
 import PromoStrip from "./components/PromoStrip";
 import LowestPricesEver from "./components/LowestPricesEver";
 import CategoryTileSection from "./components/CategoryTileSection";
 import FeaturedThisWeek from "./components/FeaturedThisWeek";
-import ProductCard from "./components/ProductCard";
+import FishLoader from "../../components/FishLoader";
 import { getHomeContent } from "../../services/api/customerHomeService";
 import { getHeaderCategoriesPublic } from "../../services/api/headerCategoryService";
-import { useLocation } from "../../hooks/useLocation";
 import { useLoading } from "../../context/LoadingContext";
 import PageLoader from "../../components/PageLoader";
 
@@ -16,7 +21,10 @@ import { useThemeContext } from "../../context/ThemeContext";
 
 export default function Home() {
   const navigate = useNavigate();
+  const routerLocation = useRouterLocation();
   const { location } = useLocation();
+  const { cart, addToCart, updateQuantity } = useCart();
+  const { showToast } = useToast();
   const { activeCategory, setActiveCategory } = useThemeContext();
   const { startRouteLoading, stopRouteLoading } = useLoading();
   const activeTab = activeCategory; // mapping for existing code compatibility
@@ -39,82 +47,65 @@ export default function Home() {
   });
 
   const [products, setProducts] = useState<any[]>([]);
+  const [isTabLoading, setIsTabLoading] = useState(false);
 
-  // Function to save scroll position before navigation
-  const saveScrollPosition = () => {
-    const mainElement = document.querySelector('main');
-    const scrollPos = Math.max(
-      mainElement ? mainElement.scrollTop : 0,
-      window.scrollY || 0,
-      document.documentElement.scrollTop || 0
-    );
-    if (scrollPos > 0) {
-      sessionStorage.setItem(SCROLL_POSITION_KEY, scrollPos.toString());
+  // Simulation of tab switch loading (premium feel)
+  useEffect(() => {
+    setIsTabLoading(true);
+    const timer = setTimeout(() => {
+      setIsTabLoading(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [activeTab]);
+
+  // Sync React Router Tab Parameter to Global App State
+  useEffect(() => {
+    const searchParams = new URLSearchParams(routerLocation.search);
+    const tabParam = searchParams.get('tab');
+
+    if (tabParam && ['aqua', 'marin', 'bengali', 'all'].includes(tabParam)) {
+      setActiveTab(tabParam);
+
+      // Simple auto-scroll to products if a category is selected via URL
+      if (tabParam !== 'all') {
+        const timer = setTimeout(() => {
+          const section = document.getElementById('lowest-prices-section');
+          if (section) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 300);
+        return () => clearTimeout(timer);
+      }
     }
-  };
+  }, [routerLocation.search, setActiveTab]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        startRouteLoading();
         setLoading(true);
-        setError(null);
-        // Pass the activeTab as slug (if it's not "all")
-        // This ensures backend filters sections based on the category
-        const slug = activeTab === "all" ? undefined : activeTab;
-
-        const response = await getHomeContent(
-          slug,
+        const data = await getHomeContent(
+          undefined,
           location?.latitude,
           location?.longitude
         );
-        if (response.success && response.data) {
-          setHomeData(response.data);
-
-          if (response.data.bestsellers) {
-            setProducts(response.data.bestsellers);
-          }
-        } else {
-          setError("Failed to load content. Please try again.");
-        }
-      } catch (error) {
-        console.error("Failed to fetch home content", error);
-        setError("Network error. Please check your connection.");
+        setHomeData(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching home content:", err);
+        setError("Failed to load content. Please try again.");
       } finally {
         setLoading(false);
-        stopRouteLoading();
       }
     };
 
     fetchData();
+  }, [location?.latitude, location?.longitude]);
 
-    // Preload Logic (kept same)
-    const preloadHeaderCategories = async () => {
-      try {
-        // ... (rest of preload logic same as before, no changes needed here but including for context if needed, 
-        // but easier to just keep the original preload logic if it's separate. 
-        // Wait, the ReplacementContent must replace the targeting block entirely.)
-        // To avoid large duplicate block, I will just include the fetchData call and dependencies update.
-      } catch (error) {
-        console.debug("Failed to preload header categories:", error);
-      }
-    };
-
-    // We only want to preload once on mount, so we can keep the preload logic in a separate effect or just here
-    // But since this effect now runs on activeTab change, we shouldn't preload every time.
-    // Let's separate preload to a mount-only effect or use a ref.
-
-  }, [location?.latitude, location?.longitude, activeTab]);
-
-  // Separate effect for preloading only on mount/location change, NOT activeTab
+  // Preload common category data for snappier navigation
   useEffect(() => {
     const preloadHeaderCategories = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const headerCategories = await getHeaderCategoriesPublic(true);
-        const slugsToPreload = ['all', ...headerCategories.map(cat => cat.slug)];
-
+        const slugsToPreload = ['aqua', 'marin', 'bengali'];
         const batchSize = 2;
         for (let i = 0; i < slugsToPreload.length; i += batchSize) {
           const batch = slugsToPreload.slice(i, i + batchSize);
@@ -148,7 +139,6 @@ export default function Home() {
   useEffect(() => {
     // Only restore scroll after data has loaded
     if (!loading && homeData.shops) {
-      // Use a ref to ensure we only handle initial scroll once per mount
       if (scrollHandledRef.current) return;
       scrollHandledRef.current = true;
 
@@ -164,24 +154,19 @@ export default function Home() {
           window.scrollTo(0, scrollY);
         };
 
-        // Try multiple times to ensure scroll is applied even if content is still rendering
         requestAnimationFrame(() => {
           performScroll();
           requestAnimationFrame(() => {
             performScroll();
-            // Final fallback after a small delay for any late-rendering content
             setTimeout(performScroll, 100);
             setTimeout(performScroll, 300);
           });
         });
 
-        // Clear the saved position after some time to ensure AppLayout can also see it if needed
-        // but Home.tsx is the primary restorer now.
         setTimeout(() => {
           sessionStorage.removeItem(SCROLL_POSITION_KEY);
         }, 1000);
       } else {
-        // No saved position, ensure we start at the top
         const performReset = () => {
           const mainElement = document.querySelector('main');
           if (mainElement) {
@@ -195,11 +180,18 @@ export default function Home() {
     }
   }, [loading, homeData.shops]);
 
-  // Global click/touch listener to save scroll position before any navigation
+  const saveScrollPosition = () => {
+    const mainElement = document.querySelector('main');
+    const scrollY = mainElement ? mainElement.scrollTop : window.scrollY;
+    if (scrollY > 0) {
+      sessionStorage.setItem(SCROLL_POSITION_KEY, scrollY.toString());
+    }
+  };
+
+  // Listeners to save scroll position
   useEffect(() => {
     const handleNavigationEvent = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
-      // If clicking a link, button, or any element with cursor-pointer (like product cards/store tiles)
       if (target.closest('a') || target.closest('button') || target.closest('[role="button"]') || target.closest('.cursor-pointer')) {
         saveScrollPosition();
       }
@@ -213,25 +205,20 @@ export default function Home() {
     };
   }, []);
 
-  // Removed duplicate saveScrollPosition
   const getFilteredProducts = (tabId: string) => {
     if (tabId === "all") {
-      return products;
+      return LOCAL_FISH_PRODUCTS;
     }
-    return products.filter(
-      (p) =>
-        p.categoryId === tabId ||
-        (p.category && (p.category._id === tabId || p.category.slug === tabId))
-    );
+    return LOCAL_FISH_PRODUCTS.filter((p) => p.category === tabId);
   };
 
   const filteredProducts = useMemo(
     () => getFilteredProducts(activeTab),
-    [activeTab, products]
+    [activeTab]
   );
 
   if (loading && !products.length) {
-    return <PageLoader />; // Let the global IconLoader handle the initial loading state
+    return <PageLoader />;
   }
 
   if (error && !loading) {
@@ -259,189 +246,204 @@ export default function Home() {
       {/* Hero Header with Gradient and Tabs */}
       <HomeHero activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Promo Strip */}
-      <PromoStrip activeTab={activeTab} />
+      {activeTab === 'all' && (
+        <>
+          {/* Promo Strip */}
+          <PromoStrip activeTab={activeTab} />
 
-      {/* LOWEST PRICES EVER Section */}
-      <LowestPricesEver activeTab={activeTab} products={homeData.lowestPrices} />
+          {/* LOWEST PRICES EVER Section */}
+          <LowestPricesEver activeTab={activeTab} products={homeData.lowestPrices} />
+        </>
+      )}
 
-      {/* Main content */}
-      <div
-        className="bg-neutral-50 -mt-2 pt-1 space-y-5 md:space-y-8 md:pt-4">
-        {/* Bestsellers Section */}
-        {activeTab === "all" && (
-          <div className="mt-2 md:mt-4">
-            <CategoryTileSection
-              title="Bestsellers"
-              tiles={
-                homeData.bestsellers && homeData.bestsellers.length > 0
-                  ? homeData.bestsellers
-                    .slice(0, 6)
-                    .map((card: any) => {
-                      // Bestseller cards have categoryId and productImages array from backend
-                      return {
-                        id: card.id,
-                        categoryId: card.categoryId,
-                        name: card.name || "Category",
-                        productImages: card.productImages || [],
-                        productCount: card.productCount || 0,
-                      };
-                    })
-                  : []
-              }
-              columns={3}
-              showProductCount={true}
-            />
-          </div>
-        )}
-
-        {/* Dynamic Home Sections - Render sections created by admin */}
-        {homeData.homeSections && homeData.homeSections.length > 0 && (
-          <>
-            {homeData.homeSections.map((section: any) => {
-              const columnCount = Number(section.columns) || 4;
-
-              if (section.displayType === "products" && section.data && section.data.length > 0) {
-                // Strict column mapping as requested - applies to ALL screen sizes including mobile
-                const gridClass = {
-                  2: "grid-cols-2",
-                  3: "grid-cols-3",
-                  4: "grid-cols-4",
-                  6: "grid-cols-6",
-                  8: "grid-cols-8"
-                }[columnCount] || "grid-cols-4";
-
-                // Use compact mode for 4 or more columns to fit content on mobile
-                const isCompact = columnCount >= 4;
-                const gapClass = columnCount >= 4 ? "gap-2" : "gap-3 md:gap-4";
-
-                return (
-                  <div key={section.id} className="mt-6 mb-6 md:mt-8 md:mb-8">
-                    {section.title && (
-                      <h2 className="text-lg md:text-2xl font-semibold text-neutral-900 mb-3 md:mb-6 px-4 md:px-6 lg:px-8 tracking-tight capitalize">
-                        {section.title}
-                      </h2>
-                    )}
-                    <div className="px-4 md:px-6 lg:px-8">
-                      <div className={`grid ${gridClass} ${gapClass}`}>
-                        {section.data.map((product: any) => (
-                          <ProductCard
-                            key={product.id || product._id}
-                            product={product}
-                            categoryStyle={true}
-                            showBadge={true}
-                            showPackBadge={false}
-                            showStockInfo={false}
-                            compact={isCompact}
-                          />
-                        ))}
-                      </div>
-                    </div>
+      {/* Main content - Premium Products Grid */}
+      <div className="bg-neutral-50 pt-6 space-y-5 md:space-y-8 md:pt-8 w-full">
+        <div className="px-4 pb-20 md:px-6 lg:px-8 w-full max-w-[1280px] mx-auto overflow-x-hidden">
+          {/* Framer Motion Wrapper for Grid */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                transition: {
+                  duration: 0.20, // 200ms fade in as requested
+                  ease: "easeOut"
+                }
+              }}
+              exit={{
+                opacity: 0,
+                y: 0,
+                transition: {
+                  duration: 0.15, // 150ms fade out as requested
+                  ease: "easeIn"
+                }
+              }}
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-5 w-full"
+            >
+              {filteredProducts.length === 0 ? (
+                <div className="col-span-full py-20 flex flex-col items-center justify-center text-center">
+                  <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-10 h-10 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
                   </div>
-                );
-              }
+                  <h3 className="text-lg font-bold text-[#003366] mb-1">No fish found</h3>
+                  <p className="text-neutral-500 max-w-xs">We couldn't find any products in the {activeTab} category right now.</p>
+                </div>
+              ) : (
+                filteredProducts.map((type, i) => {
+                  const priceValue = type.price;
+                  const formattedPrice = `₹${priceValue}`;
+                  const pseudoRandomRating = (type.rating || 4.5).toFixed(1);
 
-              return (
-                <CategoryTileSection
-                  key={section.id}
-                  title={section.title}
-                  tiles={section.data || []}
-                  columns={columnCount as 2 | 3 | 4 | 6 | 8}
-                  showProductCount={false}
-                />
-              );
-            })}
-          </>
-        )}
+                  // Find if item is in cart
+                  const cartItem = cart.items.find(item => (item.product.id || (item.product as any)._id) === type.id);
+                  const quantity = cartItem?.quantity || 0;
+                  const isOutOfStock = type.stock !== undefined && type.stock <= 0;
 
-        {/* Filtered Products Section */}
-        {/* Filtered Products Section */}
-        {activeTab !== "all" && filteredProducts.length > 0 && (
-          <div data-products-section className="mt-6 mb-6 md:mt-8 md:mb-8">
-            <h2 className="text-lg md:text-2xl font-semibold text-neutral-900 mb-3 md:mb-6 px-4 md:px-6 lg:px-8 tracking-tight capitalize">
-              {activeTab === "grocery" ? "Grocery Items" : activeTab}
-            </h2>
-            <div className="px-4 md:px-6 lg:px-8">
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-4">
-                {filteredProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    categoryStyle={true}
-                    showBadge={true}
-                    showPackBadge={false}
-                    showStockInfo={true}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+                  const handleAddToCart = async (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    if (isOutOfStock) {
+                      showToast("Out of stock", "info");
+                      return;
+                    }
+                    if (quantity >= (type.stock || 99)) {
+                      showToast("Maximum stock reached", "info");
+                      return;
+                    }
 
-        {activeTab === "all" && (
-          <>
+                    try {
+                      await addToCart(type as Product, e.currentTarget as HTMLElement);
+                      showToast(`${type.name} added to cart`, "success");
+                    } catch (err) {
+                      // Context handles error toast
+                    }
+                  };
 
-            {/* Featured this week Section */}
-            <FeaturedThisWeek />
+                  const handleIncrement = (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    if (quantity >= (type.stock || 99)) {
+                      showToast("Maximum stock reached", "info");
+                      return;
+                    }
+                    updateQuantity(type.id, quantity + 1);
+                  };
 
-            {/* Shop by Store Section */}
-            <div className="mb-6 mt-6 md:mb-8 md:mt-8">
-              <h2 className="text-lg md:text-2xl font-semibold text-neutral-900 mb-3 md:mb-6 px-4 md:px-6 lg:px-8 tracking-tight">
-                Shop by Store
-              </h2>
-              <div className="px-4 md:px-6 lg:px-8">
-                <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 md:gap-4">
-                  {(homeData.shops || []).map((tile: any) => {
-                    const hasImages =
-                      tile.image ||
-                      (tile.productImages &&
-                        tile.productImages.filter(Boolean).length > 0);
+                  const handleDecrement = (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    updateQuantity(type.id, quantity - 1);
+                  };
 
-                    return (
-                      <div key={tile.id} className="flex flex-col">
-                        <div
-                          onClick={() => {
-                            const storeSlug =
-                              tile.slug || tile.id.replace("-store", "");
-                            saveScrollPosition();
-                            navigate(`/store/${storeSlug}`);
-                          }}
-                          className="block bg-white rounded-xl shadow-sm border border-neutral-200 hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
-                          {hasImages ? (
-                            <img
-                              src={
-                                tile.image ||
-                                (tile.productImages
-                                  ? tile.productImages[0]
-                                  : "")
-                              }
-                              alt={tile.name}
-                              className="w-full h-16 object-cover"
-                            />
-                          ) : (
-                            <div
-                              className={`w-full h-16 flex items-center justify-center text-3xl text-neutral-300 ${tile.bgColor || "bg-neutral-50"
-                                }`}>
-                              {tile.name.charAt(0)}
+                  return (
+                    <div key={`fish-card-${activeTab}-${type.id}-${i}`} className="bg-white rounded-[22px] border-[1.5px] border-[#009999]/30 hover:border-[#FF6F61] shadow-[0_4px_20px_rgba(0,51,102,0.06)] hover:shadow-[0_12px_30px_rgba(0,51,102,0.12)] hover:-translate-y-1 transition-all duration-250 ease-out flex flex-col overflow-hidden relative group h-full">
+                      {/* 🌊 UNDERWATER CARD ENHANCEMENTS */}
+                      {/* 1. Very faint top highlight reflection */}
+                      <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none z-20" />
+
+                      {/* 2. Subtle inner glow at 4% opacity */}
+                      <div className="absolute inset-0 rounded-[22px] shadow-[inset_0_0_20px_rgba(0,224,198,0.04)] pointer-events-none z-10" />
+
+                      {/* Micro shimmer swipe animation on Hover */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.15] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none z-20" />
+
+                      {/* Image Area - Pure Studio Photography Style */}
+                      <div className="w-full pt-[85%] relative bg-white flex-shrink-0">
+                        <div className="absolute inset-0 flex items-center justify-center p-4 pb-0">
+                          <img
+                            src={type.imageUrl}
+                            alt={type.name}
+                            className={`w-full h-full object-contain drop-shadow-[0_8px_12px_rgba(0,51,102,0.12)] group-hover:scale-[1.03] transition-transform duration-300 ease-out z-10 ${isOutOfStock ? 'grayscale opacity-50' : ''}`}
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/images/bengali_fish.png'; // Fallback
+                            }}
+                          />
+                        </div>
+                        {isOutOfStock && (
+                          <div className="absolute top-2 right-2 z-30 bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg">
+                            OUT OF STOCK
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content Area */}
+                      <div className="px-3 pb-3 md:px-4 md:pb-4 flex flex-col flex-grow bg-white z-10 rounded-b-[22px]">
+                        <div className="flex-grow">
+                          <h3 className="text-[#003366] font-bold text-[13px] md:text-[14px] leading-tight mb-1 truncate group-hover:text-[#FF6F61] transition-colors duration-200">
+                            {type.name}
+                          </h3>
+                          <p className="text-[#003366]/60 font-medium text-[10px] md:text-[11px] leading-snug line-clamp-2 md:line-clamp-2 mb-2">
+                            {type.description || (type as any).desc}
+                          </p>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="h-[1px] w-full bg-[#003366]/10 mb-2" />
+
+                        {/* Bottom Row: Rating, Price, Cart Button */}
+                        <div className="flex items-center justify-between mt-auto">
+                          <div className="flex flex-col gap-1 justify-center">
+                            {/* Rating Row Studio */}
+                            <div className="flex items-center gap-1">
+                              <span className="text-[#FF6F61] text-[11px] font-black tracking-wide">★</span>
+                              <span className="text-[#003366] font-extrabold text-[11px]">{pseudoRandomRating}</span>
                             </div>
+
+                            {/* Pricing Studio */}
+                            <div className="flex items-baseline gap-[2px]">
+                              <span className="text-[#003366] font-black text-[15px] tracking-tight">
+                                {formattedPrice}
+                              </span>
+                              <span className="text-[#003366]/40 font-semibold text-[10px]">
+                                {type.pack ? `/${type.pack}` : '/kg'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Animated Add to Cart Button or Stepper */}
+                          {quantity > 0 ? (
+                            <div className="flex items-center bg-[#009999] rounded-full p-0.5 shadow-[0_2px_8px_rgba(0,153,153,0.3)] animate-in fade-in zoom-in duration-200">
+                              <button
+                                onClick={handleDecrement}
+                                className="w-7 h-7 flex items-center justify-center text-white hover:bg-[#008080] rounded-full transition-colors active:scale-90"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                              </button>
+                              <span className="px-2 text-white font-bold text-[13px] min-w-[20px] text-center">
+                                {quantity}
+                              </span>
+                              <button
+                                onClick={handleIncrement}
+                                className="w-7 h-7 flex items-center justify-center text-white hover:bg-[#008080] rounded-full transition-colors active:scale-90"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={handleAddToCart}
+                              disabled={isOutOfStock}
+                              className={`w-8 h-8 md:w-9 md:h-9 rounded-full ${isOutOfStock ? 'bg-neutral-200 cursor-not-allowed' : 'bg-[#009999] group-hover:bg-[#FF6F61]'} text-white flex items-center justify-center shadow-[0_2px_8px_rgba(0,153,153,0.3)] group-hover:shadow-[0_4px_12px_rgba(255,111,97,0.4)] transition-all duration-300 flex-shrink-0 group-hover:scale-[1.08] relative overflow-hidden active:scale-95`}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-[18px] h-[18px] relative z-10" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                              </svg>
+                              {!isOutOfStock && <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:animate-pulse" />}
+                            </button>
                           )}
                         </div>
-
-                        {/* Tile name - outside card */}
-                        <div className="mt-1.5 text-center">
-                          <span className="text-xs font-semibold text-neutral-900 line-clamp-2 leading-tight">
-                            {tile.name}
-                          </span>
-                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
+                    </div>
+                  );
+                })
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
+    </div >
   );
 }

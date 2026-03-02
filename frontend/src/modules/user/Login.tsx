@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import OTPInput from '../../components/OTPInput';
 import Lottie from 'lottie-react';
 import groceryAnimation from '../../../assets/animation/Grocery-animation.json';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function Login() {
   const [sessionId, setSessionId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { currentTheme } = useThemeContext();
 
   const handleContinue = async () => {
     if (mobileNumber.length !== 10) return;
@@ -61,12 +63,15 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden"
+      style={{ background: `linear-gradient(to bottom right, ${currentTheme.primary[2]}20, ${currentTheme.primary[3]}30)` }}
+    >
 
       {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-      <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-      <div className="absolute bottom-[-10%] left-[20%] w-64 h-64 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-64 h-64 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" style={{ backgroundColor: currentTheme.primary[1] }}></div>
+      <div className="absolute top-[-10%] right-[-10%] w-64 h-64 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000" style={{ backgroundColor: currentTheme.secondary[1] }}></div>
+      <div className="absolute bottom-[-10%] left-[20%] w-64 h-64 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000" style={{ backgroundColor: currentTheme.primary[2] }}></div>
 
       {/* Back Button */}
       <button
@@ -87,8 +92,8 @@ export default function Login() {
           {/* Logo */}
           <div className="mb-2">
             <img
-              src="/assets/Zeto-mart.png"
-              alt="Zeto Mart"
+              src="/assets/Inor fresh.png"
+              alt="Inor fresh"
               className="h-16 w-auto object-contain drop-shadow-md"
             />
           </div>
@@ -120,7 +125,11 @@ export default function Login() {
                   type="tel"
                   value={mobileNumber}
                   onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  className="block w-full pl-14 pr-4 py-4 bg-neutral-50 border border-neutral-200 rounded-xl text-lg font-medium text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all"
+                  className="block w-full pl-14 pr-4 py-4 bg-neutral-50 border border-neutral-200 rounded-xl text-lg font-medium text-neutral-900 placeholder-neutral-400 focus:outline-none transition-all"
+                  style={{
+                    boxShadow: `0 0 0 2px ${currentTheme.primary[3]}20`,
+                    borderColor: currentTheme.primary[3]
+                  }}
                   placeholder="Enter mobile number"
                   maxLength={10}
                   disabled={loading}
@@ -142,9 +151,12 @@ export default function Login() {
                 onClick={handleContinue}
                 disabled={mobileNumber.length !== 10 || loading}
                 className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 ${mobileNumber.length === 10 && !loading
-                  ? 'bg-gradient-to-r from-green-600 to-green-500 text-white'
+                  ? 'text-white'
                   : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
                   }`}
+                style={mobileNumber.length === 10 && !loading ? {
+                  background: `linear-gradient(to right, ${currentTheme.primary[1]}, ${currentTheme.primary[3]})`
+                } : {}}
               >
                 {loading ? (
                   <div className="flex items-center justify-center gap-2">
@@ -182,7 +194,12 @@ export default function Login() {
                 <button
                   onClick={handleContinue}
                   disabled={loading}
-                  className="flex-1 py-3 px-4 rounded-xl font-semibold text-sm bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors"
+                  className="flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-colors border"
+                  style={{
+                    backgroundColor: `${currentTheme.primary[3]}10`,
+                    color: currentTheme.primary[3],
+                    borderColor: `${currentTheme.primary[3]}30`
+                  }}
                 >
                   {loading ? 'Sending...' : 'Resend OTP'}
                 </button>
@@ -192,7 +209,7 @@ export default function Login() {
 
           <div className="mt-8 text-center">
             <p className="text-xs text-neutral-400">
-              By continuing, you agree to our <a href="#" className="text-green-600 hover:underline">Terms of Service</a> & <a href="#" className="text-green-600 hover:underline">Privacy Policy</a>
+              By continuing, you agree to our <a href="#" className="hover:underline" style={{ color: currentTheme.primary[3] }}>Terms of Service</a> & <a href="#" className="hover:underline" style={{ color: currentTheme.primary[3] }}>Privacy Policy</a>
             </p>
           </div>
         </div>
@@ -201,7 +218,7 @@ export default function Login() {
       {/* Footer Branding */}
       <div className="absolute bottom-6 left-0 right-0 text-center">
         <p className="text-xs font-medium text-neutral-500 opacity-60 uppercase tracking-widest">
-          Powered by Zeto Mart
+          Powered by Inor fresh
         </p>
       </div>
 

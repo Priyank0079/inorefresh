@@ -109,14 +109,23 @@ export const getSubcategories = asyncHandler(
       sortOrder = "asc",
     } = req.query;
 
-    // Verify parent category exists
-    const parentCategory = await Category.findById(id);
+    // Verify parent category exists (handle both ObjectId and slug)
+    let parentCategory;
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      parentCategory = await Category.findById(id);
+    } else {
+      parentCategory = await Category.findOne({ slug: id });
+    }
+
     if (!parentCategory) {
       return res.status(404).json({
         success: false,
         message: "Parent category not found",
       });
     }
+
+    // Now use the actual MongoDB _id for subsequent queries
+    const actualId = parentCategory._id;
 
     // Pagination
     const pageNum = parseInt(page as string);
@@ -136,7 +145,7 @@ export const getSubcategories = asyncHandler(
 
     // 1. Get subcategories from new Category model (where parentId = category id)
     const categorySubcategoriesQuery: any = {
-      parentId: id,
+      parentId: actualId,
       status: "Active", // Only active subcategories
     };
     if (searchQuery) {
@@ -152,7 +161,7 @@ export const getSubcategories = asyncHandler(
       .lean();
 
     // 2. Get subcategories from old SubCategory model (for backward compatibility)
-    const oldSubcategoryQuery: any = { category: id };
+    const oldSubcategoryQuery: any = { category: actualId };
     if (searchQuery) {
       oldSubcategoryQuery.name = searchQuery;
     }

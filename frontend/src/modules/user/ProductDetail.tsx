@@ -16,6 +16,7 @@ import { getProductById } from '../../services/api/customerProductService';
 import WishlistButton from '../../components/WishlistButton';
 import StarRating from "../../components/ui/StarRating";
 import { calculateProductPrice } from '../../utils/priceUtils';
+import { useThemeContext } from "../../context/ThemeContext";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +25,7 @@ export default function ProductDetail() {
   const { cart, addToCart, updateQuantity } = useCart();
   const { location } = useLocation();
   const { startLoading, stopLoading } = useLoading();
+  const { currentTheme } = useThemeContext();
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const [isProductDetailsExpanded, setIsProductDetailsExpanded] =
     useState(false);
@@ -219,7 +221,8 @@ export default function ProductDetail() {
         <p className="text-gray-600 mb-6 max-w-xs">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="px-6 py-2 bg-green-600 text-white rounded-full font-medium hover:bg-green-700 transition-colors"
+          className="px-6 py-2 text-white rounded-full font-medium hover:opacity-90 transition-opacity"
+          style={{ backgroundColor: currentTheme.primary[3] }}
         >
           Try Refreshing
         </button>
@@ -504,10 +507,12 @@ export default function ProductDetail() {
                       setSelectedImageIndex(index);
                       setTimeout(() => setIsTransitioning(false), 300);
                     }}
-                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${index === selectedImageIndex
-                      ? "border-green-600 ring-2 ring-green-200"
-                      : "border-neutral-200 hover:border-neutral-300"
-                      }`}>
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all`}
+                    style={{
+                      borderColor: index === selectedImageIndex ? currentTheme.primary[3] : '#e5e7eb',
+                      boxShadow: index === selectedImageIndex ? `0 0 0 2px ${currentTheme.primary[3]}33` : 'none'
+                    }}
+                  >
                     <img
                       src={image}
                       alt={`${product.name} - Image ${index + 1}`}
@@ -572,12 +577,21 @@ export default function ProductDetail() {
                       key={index}
                       onClick={() => setSelectedVariantIndex(index)}
                       disabled={isOutOfStock}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border-2 ${isSelected
-                        ? "border-green-600 bg-green-50 text-green-700"
-                        : isOutOfStock
-                          ? "border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed"
-                          : "border-neutral-300 bg-white text-neutral-700 hover:border-green-500 hover:bg-green-50"
-                        }`}>
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border-2`}
+                      style={isSelected ? {
+                        borderColor: currentTheme.primary[3],
+                        backgroundColor: `${currentTheme.primary[3]}10`,
+                        color: currentTheme.primary[3]
+                      } : isOutOfStock ? {
+                        borderColor: '#e5e7eb',
+                        backgroundColor: '#f3f4f6',
+                        color: '#9ca3af'
+                      } : {
+                        borderColor: '#d1d5db',
+                        backgroundColor: 'white',
+                        color: '#374151'
+                      }}
+                    >
                       {variantTitle}
                       {isOutOfStock && (
                         <span className="ml-1 text-xs">(Out of Stock)</span>
@@ -628,7 +642,9 @@ export default function ProductDetail() {
             onClick={() =>
               setIsProductDetailsExpanded(!isProductDetailsExpanded)
             }
-            className="flex items-center gap-0.5 text-sm text-green-600 font-medium">
+            className="flex items-center gap-0.5 text-sm font-medium"
+            style={{ color: currentTheme.primary[3] }}
+          >
             View product details
             <svg
               width="11"
@@ -930,7 +946,7 @@ export default function ProductDetail() {
                           Seller:
                         </span>
                         <span className="text-xs text-neutral-600 leading-relaxed flex-1">
-                          Zeto Mart Partner (
+                          Inor fresh Partner (
                           {product.sellerId.slice(-6).toUpperCase()})
                         </span>
                       </div>
@@ -1198,6 +1214,7 @@ export default function ProductDetail() {
                       ? "opacity-50 cursor-not-allowed"
                       : ""
                       }`}
+                    style={(!isAvailableAtLocation || !isVariantAvailable) ? {} : { backgroundColor: currentTheme.primary[3] }}
                     title={
                       !isAvailableAtLocation
                         ? "Not available at your location"
@@ -1219,7 +1236,9 @@ export default function ProductDetail() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.2 }}
-                  className="flex items-center gap-2 bg-white border-2 border-green-600 rounded-full px-2 py-1 h-[36px]">
+                  className="flex items-center gap-2 bg-white border-2 rounded-full px-2 py-1 h-[36px]"
+                  style={{ borderColor: currentTheme.primary[3] }}
+                >
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={() => {
@@ -1227,8 +1246,13 @@ export default function ProductDetail() {
                       const variantId = selectedVariant?._id;
                       updateQuantity(productId, inCartQty - 1, variantId, variantTitle);
                     }}
-                    className="w-6 h-6 flex items-center justify-center text-green-600 font-bold hover:bg-green-50 rounded-full transition-colors border border-green-600 p-0 leading-none text-base"
-                    style={{ lineHeight: 1 }}>
+                    className="w-6 h-6 flex items-center justify-center font-bold rounded-full transition-colors border p-0 leading-none text-base"
+                    style={{
+                      lineHeight: 1,
+                      color: currentTheme.primary[3],
+                      borderColor: currentTheme.primary[3],
+                      backgroundColor: 'transparent'
+                    }}>
                     <span className="relative top-[-1px]">−</span>
                   </motion.button>
                   <motion.span
@@ -1236,7 +1260,8 @@ export default function ProductDetail() {
                     initial={{ scale: 1.2, y: -2 }}
                     animate={{ scale: 1, y: 0 }}
                     transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                    className="text-sm font-bold text-green-600 min-w-[1.5rem] text-center">
+                    className="text-sm font-bold min-w-[1.5rem] text-center"
+                    style={{ color: currentTheme.primary[3] }}>
                     {inCartQty}
                   </motion.span>
                   <motion.button
@@ -1246,8 +1271,13 @@ export default function ProductDetail() {
                       const variantId = selectedVariant?._id;
                       updateQuantity(productId, inCartQty + 1, variantId, variantTitle);
                     }}
-                    className="w-6 h-6 flex items-center justify-center text-green-600 font-bold hover:bg-green-50 rounded-full transition-colors border border-green-600 p-0 leading-none text-base"
-                    style={{ lineHeight: 1 }}>
+                    className="w-6 h-6 flex items-center justify-center font-bold rounded-full transition-colors border p-0 leading-none text-base"
+                    style={{
+                      lineHeight: 1,
+                      color: currentTheme.primary[3],
+                      borderColor: currentTheme.primary[3],
+                      backgroundColor: 'transparent'
+                    }}>
                     <span className="relative top-[-1px]">+</span>
                   </motion.button>
                 </motion.div>

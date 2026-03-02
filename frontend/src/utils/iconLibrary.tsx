@@ -8,6 +8,40 @@ export interface IconDef {
 }
 
 export const ICON_LIBRARY: IconDef[] = [
+    {
+        name: 'aqua-fish',
+        label: 'Aqua Fish',
+        tags: ['fish', 'aqua', 'seafood', 'water'],
+        svg: (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M7 16.3c2.2 0 4-1.8 4-4 0-3.3-4-6-4-6s-4 2.7-4 6c0 2.2 1.8 4 4 4Z" />
+                <path d="M17 18.5c1.7 0 3-1.3 3-3 0-2.5-3-4.5-3-4.5s-3 2-3 4.5c0 1.7 1.3 3 3 3Z" />
+            </svg>
+        )
+    },
+    {
+        name: 'marin-fish',
+        label: 'Marin Fish',
+        tags: ['fish', 'marin', 'marine', 'seafood', 'ocean'],
+        svg: (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
+                <path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
+                <path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
+            </svg>
+        )
+    },
+    {
+        name: 'bengali-fish',
+        label: 'Bengali Fish',
+        tags: ['fish', 'bengali', 'seafood'],
+        svg: (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6.5 12c.94 0 1.89.11 2.83.31 1.59.34 3.19.08 4.77-.71 1.5-.75 3.16-.91 4.76-.48.42.11.84.17 1.28.17 1.14 0 2.42-.43 2.52-1.72.01-.12.01-.24 0-.35-.11-1.29-1.39-1.72-2.52-1.72-.44 0-.86.06-1.28.17-1.6.43-3.26.27-4.76-.48-1.58-.79-3.18-1.05-4.77-.71-.94.2-1.89.31-2.83.31-1.15 0-2.1-.33-2.59-1.03l-1.41-2.02c-.41-.59-1.21-.73-1.79-.32l-.4.28c-.59.41-.73 1.21-.32 1.79l1.41 2.02c.49.7 1.44 1.03 2.59 1.03z" />
+                <path d="M2 12c.49.7 1.44 1.03 2.59 1.03.94 0 1.89-.11 2.83-.31 1.59-.34 3.19-.08 4.77.71 1.5.75 3.16.91 4.76.48.42-.11.84-.17 1.28-.17 1.14 0 2.42.43 2.52 1.72.01.12.01.24 0 .35-.11 1.29-1.39 1.72-2.52 1.72-.44 0-.86-.06-1.28-.17-1.6-.43-3.26-.27-4.76.48-1.58.79-3.18 1.05-4.77.71-.94-.2-1.89-.31-2.83-.31-1.15 0-2.1.33-2.59 1.03l-1.41 2.02c-.41.59-1.21.73-1.79.32l-.4-.28c-.59-.41-.73-1.21-.32-1.79l1.41-2.02C1.04 12.33 2 12 2 12z" />
+            </svg>
+        )
+    },
     // --- GROCERY & FOOD ---
     {
         name: 'grocery-basket',

@@ -3,11 +3,13 @@ import { getHomeContent } from "../../services/api/customerHomeService";
 import { useLocation } from "../../hooks/useLocation";
 import CategoryTileSection from "./components/CategoryTileSection";
 import ProductCard from "./components/ProductCard";
+import { useThemeContext } from "../../context/ThemeContext";
 
 export default function Categories() {
   const { location } = useLocation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { currentTheme } = useThemeContext();
   const [homeData, setHomeData] = useState<any>({
     homeSections: [],
   });
@@ -54,7 +56,8 @@ export default function Categories() {
         <p className="text-gray-600 mb-6 max-w-xs">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="px-6 py-2 bg-green-600 text-white rounded-full font-medium hover:bg-green-700 transition-colors"
+          className="px-6 py-2 text-white rounded-full font-medium transition-opacity hover:opacity-90"
+          style={{ backgroundColor: currentTheme.primary[3] }}
         >
           Try Refreshing
         </button>

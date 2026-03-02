@@ -223,13 +223,16 @@ export const addToCart = async (req: Request, res: Response) => {
         const { productId, quantity = 1, variation } = req.body;
         const { latitude, longitude } = req.query;
 
-        if (!productId) {
-            return res.status(400).json({ success: false, message: 'Product ID is required' });
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({ success: false, message: 'Valid Product ID is required' });
         }
 
         // Parse location
-        const userLat = latitude ? parseFloat(latitude as string) : null;
-        const userLng = longitude ? parseFloat(longitude as string) : null;
+        const latitudeVal = Array.isArray(latitude) ? latitude[0] : latitude;
+        const longitudeVal = Array.isArray(longitude) ? longitude[0] : longitude;
+
+        const userLat = latitudeVal ? parseFloat(latitudeVal as string) : null;
+        const userLng = longitudeVal ? parseFloat(longitudeVal as string) : null;
 
         if (userLat === null || userLng === null || isNaN(userLat) || isNaN(userLng)) {
             return res.status(400).json({

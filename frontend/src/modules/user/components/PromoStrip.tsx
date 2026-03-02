@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import { Link, useNavigate } from "react-router-dom";
 import { getTheme } from "../../../utils/themes";
@@ -7,6 +8,8 @@ import { getSubcategories } from "../../../services/api/categoryService";
 import { apiCache } from "../../../utils/apiCache";
 import { useLocation } from "../../../hooks/useLocation";
 import { calculateProductPrice } from "../../../utils/priceUtils";
+import FishCarouselBanner from "./FishCarouselBanner";
+import { UnderwaterEffect } from "../../../components/UnderwaterEffect";
 
 interface PromoCard {
   id: string;
@@ -69,42 +72,42 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
     // Defer subcategory image fetching to not block initial render
     // Load them after a short delay to prioritize main content
     setTimeout(async () => {
-    const imagesMap: Record<string, string[]> = {};
+      const imagesMap: Record<string, string[]> = {};
 
       // Fetch images in batches to avoid overwhelming the network
       const batchSize = 2;
       for (let i = 0; i < cards.length; i += batchSize) {
         const batch = cards.slice(i, i + batchSize);
-    await Promise.all(
+        await Promise.all(
           batch.map(async (card) => {
-        const categoryId = card.categoryId;
-        if (!categoryId) return;
+            const categoryId = card.categoryId;
+            if (!categoryId) return;
 
-        try {
-          const response = await getSubcategories(categoryId, { limit: 4 });
-          if (response.success && response.data) {
-            const images = response.data
-              .filter((subcat) => subcat.subcategoryImage)
-              .map((subcat) => subcat.subcategoryImage!)
-              .slice(0, 4);
+            try {
+              const response = await getSubcategories(categoryId, { limit: 4 });
+              if (response.success && response.data) {
+                const images = response.data
+                  .filter((subcat) => subcat.subcategoryImage)
+                  .map((subcat) => subcat.subcategoryImage!)
+                  .slice(0, 4);
 
-            if (images.length > 0) {
-              imagesMap[card.id] = images;
-            }
-          }
-        } catch (error) {
+                if (images.length > 0) {
+                  imagesMap[card.id] = images;
+                }
+              }
+            } catch (error) {
               // Silently fail - emoji fallback will be used
-          console.error(`Error fetching subcategories for category ${categoryId}:`, error);
-        }
-      })
-    );
+              console.error(`Error fetching subcategories for category ${categoryId}:`, error);
+            }
+          })
+        );
         // Small delay between batches to prevent network congestion
         if (i + batchSize < cards.length) {
           await new Promise(resolve => setTimeout(resolve, 50));
         }
       }
 
-    setSubcategoryImagesMap(imagesMap);
+      setSubcategoryImagesMap(imagesMap);
     }, 300); // 300ms delay - allows main content to render first
   }, []);
 
@@ -319,21 +322,21 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
     // Defer card animation to prioritize content rendering
     const timeoutId = setTimeout(() => {
       ctx = gsap.context(() => {
-      const cards = container.querySelectorAll(".promo-card");
-      if (cards.length > 0) {
-        gsap.fromTo(
-          cards,
+        const cards = container.querySelectorAll(".promo-card");
+        if (cards.length > 0) {
+          gsap.fromTo(
+            cards,
             { y: 20, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
+            {
+              y: 0,
+              opacity: 1,
               duration: 0.4, // Reduced duration
               stagger: 0.05, // Reduced stagger
               ease: "power2.out", // Simpler easing
-          }
-        );
-      }
-    }, container);
+            }
+          );
+        }
+      }, container);
     }, 100); // Start animation 100ms after render
 
     return () => {
@@ -352,29 +355,29 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
 
     // Defer animation start to prioritize content rendering
     const timeoutId = setTimeout(() => {
-    const snowflakes = snowflakesContainer.querySelectorAll(".snowflake");
+      const snowflakes = snowflakesContainer.querySelectorAll(".snowflake");
 
-    snowflakes.forEach((snowflake, index) => {
-      const delay = index * 0.3;
-      const duration = 3 + Math.random() * 2; // 3-5 seconds
-      const xOffset = (Math.random() - 0.5) * 40; // Random horizontal drift
+      snowflakes.forEach((snowflake, index) => {
+        const delay = index * 0.3;
+        const duration = 3 + Math.random() * 2; // 3-5 seconds
+        const xOffset = (Math.random() - 0.5) * 40; // Random horizontal drift
 
-      gsap.set(snowflake, {
-        y: -20,
-        x: xOffset,
-        opacity: 0.8 + Math.random() * 0.2, // 0.8-1.0 opacity for better visibility
-        scale: 0.6 + Math.random() * 0.4, // 0.6-1.0 scale for better visibility
+        gsap.set(snowflake, {
+          y: -20,
+          x: xOffset,
+          opacity: 0.8 + Math.random() * 0.2, // 0.8-1.0 opacity for better visibility
+          scale: 0.6 + Math.random() * 0.4, // 0.6-1.0 scale for better visibility
+        });
+
+        gsap.to(snowflake, {
+          y: "+=200",
+          x: `+=${xOffset}`,
+          duration: duration,
+          delay: delay,
+          ease: "none",
+          repeat: -1,
+        });
       });
-
-      gsap.to(snowflake, {
-        y: "+=200",
-        x: `+=${xOffset}`,
-        duration: duration,
-        delay: delay,
-        ease: "none",
-        repeat: -1,
-      });
-    });
     }, 200); // Start animation 200ms after render
 
     return () => {
@@ -396,7 +399,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
 
     // Defer animation start to prioritize content rendering
     const timeoutId = setTimeout(() => {
-    const letters = housefullContainer.querySelectorAll(".housefull-letter");
+      const letters = housefullContainer.querySelectorAll(".housefull-letter");
 
       // Simplified animation - single entrance animation instead of loop
       gsap.set([housefullContainer, saleText, dateText], {
@@ -406,9 +409,9 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
 
       gsap.to([housefullContainer, saleText, dateText], {
         scale: 1,
-          opacity: 1,
-          duration: 0.5,
-          ease: "back.out(1.7)",
+        opacity: 1,
+        duration: 0.5,
+        ease: "back.out(1.7)",
       });
 
       // Simplified letter animation - only run once
@@ -416,7 +419,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
         y: -10,
         duration: 0.15,
         stagger: 0.04,
-          ease: "power2.out",
+        ease: "power2.out",
         yoyo: true,
         repeat: 1,
       });
@@ -561,387 +564,139 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
         paddingBottom: "0px",
         marginTop: 0,
       }}>
-      {/* HOUSEFULL SALE Banner */}
-      <div
-        className="px-4 mb-3 text-center relative"
-        style={{ minHeight: "80px" }}>
-        {/* Snowflakes Container */}
-        <div
-          ref={snowflakesRef}
-          className="absolute inset-0 pointer-events-none overflow-hidden"
-          style={{ top: 0, bottom: "auto", height: "100px" }}>
-          {/* Left side snowflakes */}
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={`left-${i}`}
-              className="snowflake absolute"
-              style={{
-                left: `${5 + (i % 4) * 12}%`,
-                top: `${Math.floor(i / 4) * 30}px`,
-              }}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                style={{
-                  filter: "drop-shadow(0 0 2px rgba(255, 255, 255, 0.9))",
-                }}>
-                <path
-                  d="M12 1V5M12 19V23M3 12H1M23 12H21M20.5 20.5L18.5 18.5M20.5 3.5L18.5 5.5M3.5 20.5L5.5 18.5M3.5 3.5L5.5 5.5M18.5 18.5L16.5 16.5M18.5 5.5L16.5 7.5M5.5 18.5L7.5 16.5M5.5 5.5L7.5 7.5"
-                  stroke="rgba(255, 255, 255, 1)"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                />
-                <circle cx="12" cy="12" r="1.8" fill="rgba(255, 255, 255, 1)" />
-              </svg>
-            </div>
-          ))}
-          {/* Right side snowflakes */}
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={`right-${i}`}
-              className="snowflake absolute"
-              style={{
-                right: `${5 + (i % 4) * 12}%`,
-                top: `${Math.floor(i / 4) * 30}px`,
-              }}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                style={{
-                  filter: "drop-shadow(0 0 2px rgba(255, 255, 255, 0.9))",
-                }}>
-                <path
-                  d="M12 1V5M12 19V23M3 12H1M23 12H21M20.5 20.5L18.5 18.5M20.5 3.5L18.5 5.5M3.5 20.5L5.5 18.5M3.5 3.5L5.5 5.5M18.5 18.5L16.5 16.5M18.5 5.5L16.5 7.5M5.5 18.5L7.5 16.5M5.5 5.5L7.5 7.5"
-                  stroke="rgba(255, 255, 255, 1)"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                />
-                <circle cx="12" cy="12" r="1.8" fill="rgba(255, 255, 255, 1)" />
-              </svg>
-            </div>
-          ))}
+
+      {/* 3D Animated Fish Carousel Banner */}
+      <FishCarouselBanner />
+
+      {/* NEW Top List Section */}
+      <div className="px-4 pb-8 pt-4 mt-2 mb-2 relative z-10 w-full overflow-hidden" style={{ background: '#003366', minHeight: '300px' }}>
+        {/* 🌊 PREMIUM UNDERWATER ATMOSPHERE */}
+        <UnderwaterEffect />
+
+        {/* Soft caustic underwater light texture & Vignette */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <motion.div
+            className="absolute inset-0 mix-blend-overlay opacity-20"
+            style={{
+              backgroundImage: 'radial-gradient(ellipse at top right, rgba(0, 224, 198, 0.3) 0%, transparent 60%)',
+            }}
+            animate={{
+              opacity: [0.15, 0.25, 0.15],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: 'easeInOut'
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 opacity-40" />
         </div>
 
-        <div className="relative z-10">
-          <div className="flex items-center justify-center gap-3 mb-0">
-            {/* Left Lightning Bolt */}
-            <svg
-              width="28"
-              height="36"
-              viewBox="0 0 24 30"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="flex-shrink-0">
-              <path
-                d="M13 2L3 14H12L11 22L21 10H12L13 2Z"
-                fill="#FFD700"
-                stroke="#FFA500"
-                strokeWidth="0.5"
-              />
-            </svg>
-
-            {/* HOUSEFULL Text */}
-            <h1
-              ref={housefullRef}
-              className="text-3xl font-black text-white"
-              style={
-                {
-                  fontFamily: '"Poppins", sans-serif',
-                  letterSpacing: "1.5px",
-                  lineHeight: "1.1",
-                  textShadow:
-                    `-2px -2px 0 ${theme.accentColor}, 2px -2px 0 ${theme.accentColor}, -2px 2px 0 ${theme.accentColor}, 2px 2px 0 ${theme.accentColor}, ` +
-                    `-2px 0px 0 ${theme.accentColor}, 2px 0px 0 ${theme.accentColor}, 0px -2px 0 ${theme.accentColor}, 0px 2px 0 ${theme.accentColor}, ` +
-                    `-1px -1px 0 ${theme.accentColor}, 1px -1px 0 ${theme.accentColor}, -1px 1px 0 ${theme.accentColor}, 1px 1px 0 ${theme.accentColor}, ` +
-                    "0px 2px 0px rgba(0, 0, 0, 0.8), 0px 4px 0px rgba(0, 0, 0, 0.6), " +
-                    "0px 6px 0px rgba(0, 0, 0, 0.4), 0px 8px 8px rgba(0, 0, 0, 0.3), " +
-                    "2px 2px 2px rgba(0, 0, 0, 0.5)",
-                } as React.CSSProperties
-              }>
-              {headingText.split("").map((letter, index) => (
-                <span key={index} className="housefull-letter inline-block">
-                  {letter}
-                </span>
-              ))}
-            </h1>
-
-            {/* Right Lightning Bolt */}
-            <svg
-              width="28"
-              height="36"
-              viewBox="0 0 24 30"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="flex-shrink-0"
-              style={{ transform: "scaleX(-1)" }}>
-              <path
-                d="M13 2L3 14H12L11 22L21 10H12L13 2Z"
-                fill="#FFD700"
-                stroke="#FFA500"
-                strokeWidth="0.5"
-              />
-            </svg>
-          </div>
-
-          {/* SALE Text */}
-          <div
-            className="flex justify-center mb-0.5"
-            style={{ marginTop: "-3px" }}>
-            <h2
-              ref={saleRef}
-              className="text-xl font-black text-white"
-              style={
-                {
-                  fontFamily: '"Poppins", sans-serif',
-                  letterSpacing: "1.5px",
-                  textShadow:
-                    `-1.5px -1.5px 0 ${theme.accentColor}, 1.5px -1.5px 0 ${theme.accentColor}, -1.5px 1.5px 0 ${theme.accentColor}, 1.5px 1.5px 0 ${theme.accentColor}, ` +
-                    `-1.5px 0px 0 ${theme.accentColor}, 1.5px 0px 0 ${theme.accentColor}, 0px -1.5px 0 ${theme.accentColor}, 0px 1.5px 0 ${theme.accentColor}, ` +
-                    `-1px -1px 0 ${theme.accentColor}, 1px -1px 0 ${theme.accentColor}, -1px 1px 0 ${theme.accentColor}, 1px 1px 0 ${theme.accentColor}, ` +
-                    "0px 2px 0px rgba(0, 0, 0, 0.8), 0px 4px 0px rgba(0, 0, 0, 0.6), " +
-                    "0px 6px 0px rgba(0, 0, 0, 0.4), 0px 8px 8px rgba(0, 0, 0, 0.3), " +
-                    "2px 2px 2px rgba(0, 0, 0, 0.5)",
-                } as React.CSSProperties
-              }>
-              {saleTextValue}
-            </h2>
-          </div>
-
-          {/* Dates */}
-          {dateRange && (
-            <div
-              ref={dateRef}
-              className="font-bold text-xs text-center mt-1"
-              style={{ color: theme.textColor }}>
-              {dateRange}
-            </div>
-          )}
+        {/* Header */}
+        <div className="flex flex-col mb-4 relative z-10 pt-2">
+          <h2 className="text-[26px] font-bold text-white tracking-wide leading-none" style={{ fontFamily: '"Inter", sans-serif' }}>
+            Top List
+          </h2>
+          <p className="text-[12px] font-medium text-[#009999] mt-1" style={{ letterSpacing: '0.5px' }}>
+            Our Premium Seafood Selection
+          </p>
         </div>
-      </div>
 
-      {/* Main Content: Crazy Deals + Category Cards */}
-      <div className="px-4 mt-2">
-        <div ref={containerRef} className="flex gap-2">
-          {/* Crazy Deals Section - Left */}
-          <div className="flex-shrink-0 w-[100px] promo-card">
-            <div
-              className="h-full rounded-lg p-1 flex flex-col items-center justify-between relative overflow-hidden"
-              style={{
-                background: `radial-gradient(circle at center, rgba(255, 255, 255, 0.15), transparent 60%), linear-gradient(to bottom, ${theme.primary[0]}, ${theme.primary[1]}, ${theme.primary[2]})`,
-                minHeight: "110px",
-              }}>
-              {/* CRAZY DEALS - Two lines, bigger */}
-              <div className="text-center mb-1.5" style={{ marginTop: "4px" }}>
-                <div
-                  className="text-white font-black leading-tight"
-                  style={{
-                    fontSize: "13px",
-                    fontFamily: "sans-serif",
-                    textShadow:
-                      "2px 2px 4px rgba(0, 0, 0, 0.8), 1px 1px 2px rgba(0, 0, 0, 0.9)",
-                    letterSpacing: "0.5px",
-                  }}>
-                  {crazyDealsTitle.split(" ").map((word, idx) => (
-                    <div key={idx}>{word}</div>
-                  ))}
-                </div>
-              </div>
+        {/* Category Showcase Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3.5 md:gap-6 relative z-10 w-full max-w-6xl mx-auto mb-2">
 
-              {/* Price Banners - Compact */}
+          {[
+            {
+              id: "aqua",
+              name: "Aqua Fish",
+              description: "Natural pond Rohu & Catla.",
+              image: "/images/top_list_aqua_fish.png",
+              slug: "aqua",
+              color: "#00ffff"
+            },
+            {
+              id: "marin",
+              name: "Marin Fish",
+              description: "Deep sea Bluefin & Tuna.",
+              image: "/images/top_list_marin_fish.png",
+              slug: "marin",
+              color: "#ff6f61"
+            },
+            {
+              id: "bengali",
+              name: "Bengali Fish",
+              description: "Premium Hilsa & Market favorites.",
+              image: "/images/top_list_bengali_fish.png",
+              slug: "bengali",
+              color: "#ffcc00"
+            }
+          ].map((category) => (
+            <motion.div
+              key={category.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              whileHover={{ y: -8, transition: { duration: 0.25 } }}
+              className="bg-white/5 backdrop-blur-xl rounded-[28px] p-2.5 flex flex-col relative group cursor-pointer border border-white/10 hover:border-[#009999]/40 shadow-xl overflow-hidden"
+              onClick={() => navigate(`/?tab=${category.slug}`)}
+            >
+              {/* 🌊 UNDERWATER CARD ENHANCEMENTS */}
+              <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none z-20" />
+              <div className="absolute inset-0 rounded-[28px] shadow-[inset_0_0_20px_rgba(0,224,198,0.04)] pointer-events-none z-10" />
+              {/* Floating Glow Decorative */}
               <div
-                ref={priceContainerRef}
-                className="flex flex-col items-center mb-0.5 relative">
-                {/* Original Price - Darker Gray, Smaller Banner */}
-                <div
-                  className="bg-neutral-600 rounded px-1.5 inline-block relative z-10"
-                  style={{
-                    height: "fit-content",
-                    lineHeight: "1",
-                    paddingTop: "2px",
-                    paddingBottom: "2px",
-                  }}>
-                  <span className="text-white text-[8px] font-medium line-through leading-none">
-                    ₹{safeOriginalPrice}
-                  </span>
-                </div>
-                {/* Discounted Price - Bright Green Banner */}
-                <div
-                  className="bg-green-500 rounded px-2 inline-block relative -mt-0.5 z-20"
-                  style={{
-                    height: "fit-content",
-                    lineHeight: "1",
-                    paddingTop: "2px",
-                    paddingBottom: "2px",
-                  }}>
-                  <span className="text-white text-[9px] font-bold leading-none">
-                    ₹{safeDiscountedPrice}
-                  </span>
-                </div>
-              </div>
+                className="absolute -top-12 -right-12 w-24 h-24 rounded-full blur-[40px] opacity-20 transition-all duration-500 group-hover:opacity-40"
+                style={{ backgroundColor: category.color }}
+              />
 
-              {/* Product Name - Compact - Clickable */}
+              {/* Fish Image Container (Glass Porthole Style) */}
               <div
-                ref={productNameRef}
-                onClick={handleProductClick}
-                className="text-neutral-900 font-black text-[9px] text-center mb-0.5 cursor-pointer hover:underline line-clamp-2"
-                title={displayProduct.productName || displayProduct.name}>
-                {displayProduct.productName || displayProduct.name}
-              </div>
-
-              {/* Product Thumbnail - Bottom Center, sized to container */}
-              <div
-                ref={productImageRef}
-                className="flex-1 flex items-end justify-center w-full"
-                style={{ minHeight: "50px", maxHeight: "65px" }}>
+                className="aspect-square w-full rounded-[20px] bg-gradient-to-br from-white/10 to-white/5 relative overflow-hidden flex items-center justify-center p-3"
+                style={{
+                  boxShadow: "inset 0 4px 15px rgba(255,255,255,0.05)"
+                }}
+              >
+                {/* Glowing ring behind fish */}
                 <div
-                  onClick={handleProductClick}
-                  className="w-12 h-16 rounded flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-                  style={{ background: "transparent" }}>
-                  {displayProduct.imageUrl ? (
-                    <img
-                      src={displayProduct.imageUrl}
-                      alt={displayProduct.name}
-                      className="w-full h-full object-contain"
-                      loading="lazy"
-                      decoding="async"
-                      style={{
-                        mixBlendMode: "normal",
-                        backgroundColor: "transparent",
-                      }}
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        // Hide broken image and show fallback
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
-                        if (parent && !parent.querySelector('.product-fallback')) {
-                          const fallback = document.createElement('div');
-                          fallback.className = 'product-fallback w-full h-full bg-gradient-to-b from-yellow-100 to-yellow-50 flex items-center justify-center';
-                          const icon = document.createElement('div');
-                          icon.className = 'w-7 h-9 bg-yellow-200 rounded-sm relative';
-                          icon.innerHTML = `
-                            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-2.5 h-2.5 bg-blue-400 rounded-full"></div>
-                            <div class="absolute bottom-0 left-0 right-0 h-1.5 bg-white/80"></div>
-                          `;
-                          fallback.appendChild(icon);
-                          parent.appendChild(fallback);
-                        }
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-b from-yellow-100 to-yellow-50 flex items-center justify-center">
-                      <div className="w-7 h-9 bg-yellow-200 rounded-sm relative">
-                        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2.5 h-2.5 bg-blue-400 rounded-full"></div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/80"></div>
-                      </div>
-                    </div>
-                  )}
+                  className="absolute w-2/3 h-2/3 rounded-full blur-3xl opacity-10 animate-pulse"
+                  style={{ backgroundColor: category.color }}
+                />
+
+                <img
+                  src={category.image}
+                  alt={category.name}
+                  className="w-[85%] h-[85%] object-contain relative z-10 transition-all duration-500 group-hover:scale-110 group-hover:rotate-[3deg] drop-shadow-[0_8px_12px_rgba(0,0,0,0.5)]"
+                />
+
+                {/* Badge/Seal */}
+                <div className="absolute top-2 right-2 z-20">
+                  <div className="w-5 h-5 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: category.color }} />
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Category Cards Grid - Right */}
-          <div className="flex-1 grid grid-cols-2 gap-2">
-            {categoryCards.map((card) => {
-              // Use subcategory images from the map if available, otherwise check card.subcategoryImages, then fallback to emoji icons
-              const subcategoryImages = subcategoryImagesMap[card.id] || card.subcategoryImages || [];
-              const hasSubcategoryImages = subcategoryImages.length > 0;
-              const categoryIcons = getCategoryIcons(card.categoryId || "");
+              {/* Content Panel */}
+              <div className="pt-3 pb-1 px-1 flex flex-col items-start">
+                <h3 className="text-white font-bold text-[15px] md:text-[18px] leading-tight mb-1 group-hover:text-[#00ffff] transition-colors">
+                  {category.name}
+                </h3>
+                <p className="text-white/50 text-[10px] md:text-[12px] leading-snug line-clamp-2 h-[28px] md:h-[36px] font-medium">
+                  {category.description}
+                </p>
 
-              return (
-                <div key={card.id} className="promo-card">
-                  <Link
-                    to={card.slug || card.categoryId ? `/category/${card.slug || card.categoryId}` : "#"}
-                    className="group rounded-lg transition-all duration-300 hover:shadow-md active:scale-[0.98] h-full flex flex-col overflow-hidden relative"
-                    style={{
-                      minHeight: "90px",
-                      background: "rgba(255, 247, 237, 0.9)", // Very light orange
-                    }}>
-                    {/* Green Discount Banner - Only around text, centered at top */}
-                    <div
-                      className="w-full flex justify-center"
-                      style={{ paddingTop: "0", paddingBottom: "2px" }}>
-                      <div className="bg-green-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded tracking-tight text-center inline-block">
-                        {card.badge}
-                      </div>
-                    </div>
-
-                    <div
-                      className="px-1 pb-1 flex flex-col flex-1 justify-between"
-                      style={{ paddingTop: "2px" }}>
-                      {/* Category Title */}
-                      <div
-                        className="text-neutral-900 font-bold text-center"
-                        style={{
-                          fontSize: "13px",
-                          lineHeight: "1.2",
-                          marginBottom: "6px",
-                        }}>
-                        {card.title}
-                      </div>
-
-                      {/* Subcategory Images or Emoji Icons - Horizontal Layout */}
-                      <div
-                        className="flex items-center justify-center gap-1 overflow-hidden"
-                        style={{ marginTop: "auto" }}>
-                        {hasSubcategoryImages
-                          ? // Display subcategory images as small icons
-                            subcategoryImages.slice(0, 4).map((imageUrl, idx) => (
-                                <div
-                                  key={idx}
-                                  className="flex-shrink-0 bg-white rounded flex items-center justify-center overflow-hidden border border-neutral-200"
-                                  style={{ width: "24px", height: "24px" }}>
-                                  <img
-                                    src={imageUrl}
-                                    alt={`Subcategory ${idx + 1}`}
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
-                                    decoding="async"
-                                    onError={(e) => {
-                                      // Fallback to emoji if image fails to load
-                                      const target =
-                                        e.target as HTMLImageElement;
-                                      target.style.display = "none";
-                                      const parent = target.parentElement;
-                                      if (parent) {
-                                        parent.innerHTML =
-                                          categoryIcons[idx] || "📦";
-                                        parent.style.fontSize = "18px";
-                                        parent.style.display = "flex";
-                                        parent.style.alignItems = "center";
-                                        parent.style.justifyContent = "center";
-                                      }
-                                    }}
-                                  />
-                                </div>
-                              ))
-                          : // Fallback to emoji icons if no subcategory images
-                            categoryIcons.slice(0, 4).map((icon, idx) => (
-                              <div
-                                key={idx}
-                                className="flex-shrink-0 bg-transparent rounded flex items-center justify-center overflow-hidden"
-                                style={{
-                                  width: "24px",
-                                  height: "24px",
-                                  fontSize: "18px",
-                                }}>
-                                {icon}
-                              </div>
-                            ))}
-                      </div>
-                    </div>
-                  </Link>
+                {/* Compact Premium Link */}
+                <div className="mt-3 flex items-center gap-1.5 text-[11px] font-bold text-[#009999] group-hover:gap-2.5 transition-all">
+                  <span>Explore</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14m-7-7 7 7-7 7" />
+                  </svg>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            </motion.div>
+          ))}
+
         </div>
       </div>
     </div>

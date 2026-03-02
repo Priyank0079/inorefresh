@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import zetoMartLogo from '@assets/Zeto-mart.png';
+import InorFreshLogo from '@assets/Inor fresh.png';
 import { useAuth } from '../../../context/AuthContext';
+import { useThemeContext } from '../../../context/ThemeContext';
 
 interface SellerHeaderProps {
   onMenuClick: () => void;
@@ -14,6 +15,7 @@ export default function SellerHeader({ onMenuClick, isSidebarOpen }: SellerHeade
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const { user, logout } = useAuth();
+  const { currentTheme } = useThemeContext();
   const settingsRef = useRef<HTMLDivElement>(null);
   const locationRef = useRef<HTMLDivElement>(null);
 
@@ -56,7 +58,10 @@ export default function SellerHeader({ onMenuClick, isSidebarOpen }: SellerHeade
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-neutral-200 sticky top-0 z-30">
+    <header
+      className="bg-white shadow-sm sticky top-0 z-30 border-b-2"
+      style={{ borderBottomColor: currentTheme.primary[3] }}
+    >
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4 gap-3 sm:gap-0">
         {/* Logo and Hamburger Menu */}
         <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
@@ -88,14 +93,14 @@ export default function SellerHeader({ onMenuClick, isSidebarOpen }: SellerHeade
               </svg>
             )}
           </button>
-          {/* Zeto Mart Logo */}
+          {/* Inor fresh Logo */}
           <button
             onClick={handleLogoClick}
             className="hover:opacity-80 transition-opacity"
           >
             <img
-              src={zetoMartLogo}
-              alt="Zeto Mart"
+              src={InorFreshLogo}
+              alt="Inor fresh"
               className="h-10 sm:h-12 w-auto object-contain cursor-pointer"
               style={{ maxWidth: '200px' }}
             />

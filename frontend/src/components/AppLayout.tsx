@@ -7,6 +7,8 @@ import LocationPermissionRequest from './LocationPermissionRequest';
 import { useThemeContext } from '../context/ThemeContext';
 import ServiceNotAvailable from './ServiceNotAvailable';
 import { checkServiceability } from '../services/api/customerHomeService';
+import AmbientFishBackground from './AmbientFishBackground';
+import { UnderwaterEffect } from './UnderwaterEffect';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -171,10 +173,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const showFooter = !isCheckoutPage && !isProductDetailPage;
 
   return (
-    <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
+    <div className="flex flex-col min-h-screen w-full relative overflow-x-hidden">
+      <AmbientFishBackground />
       {/* Desktop Container Wrapper */}
-      <div className="md:w-full md:bg-white md:min-h-screen overflow-x-hidden">
-        <div className="md:w-full md:min-h-screen md:flex md:flex-col overflow-x-hidden">
+      <div className="md:w-full md:bg-transparent md:min-h-screen overflow-x-hidden">
+        <div className="md:w-full md:min-h-screen md:flex md:flex-col overflow-x-hidden relative z-10">
           {/* Top Navigation Bar - Desktop Only */}
           {showFooter && (
             <nav
@@ -296,7 +299,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {(showHeader || isSearchPage) && (
             <header className="sticky top-0 z-50 bg-white shadow-sm md:shadow-md md:top-[60px]">
               {/* Delivery info line */}
-              <div className="px-4 md:px-6 lg:px-8 py-1.5 bg-green-50 text-xs text-green-700 text-center">
+              <div className="px-4 md:px-6 lg:px-8 py-1.5 bg-[#003366] text-xs text-white text-center">
                 Delivering in 10–15 mins
               </div>
 
@@ -324,15 +327,44 @@ export default function AppLayout({ children }: AppLayoutProps) {
               {/* Search bar - Hidden on Order Again page */}
               {showSearchBar && (
                 <div className="px-4 md:px-6 lg:px-8 pb-3">
-                  <div className="relative max-w-2xl md:mx-auto">
+                  <div className="relative max-w-2xl md:mx-auto group">
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#009999] transition-colors duration-200">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                      </svg>
+                    </div>
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => handleSearchChange(e.target.value)}
                       placeholder="Search for products..."
-                      className="w-full px-4 py-2.5 pl-10 bg-neutral-50 border border-neutral-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent md:py-3"
+                      className="w-full px-4 py-3 pl-11 bg-neutral-50 border border-neutral-200 rounded-xl text-[15px] font-medium text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:bg-white focus:ring-2 transition-all duration-300 shadow-sm hover:border-opacity-50"
+                      style={{
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+                        borderColor: 'rgba(0,0,0,0.1)',
+                        // @ts-ignore - Dynamic focus ring using theme
+                        '--tw-ring-color': `${currentTheme.primary[3]}40`,
+                        '--tw-ring-offset-width': '0px'
+                      } as any}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = currentTheme.primary[3];
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)';
+                      }}
                     />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">🔍</span>
+                    {searchQuery && (
+                      <button
+                        onClick={() => handleSearchChange('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-400 transition-colors"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -340,7 +372,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
           )}
 
           {/* Scrollable Main Content */}
-          <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide pb-24 md:pb-8">
+          <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide pb-24 md:pb-8 relative">
+            {/* Global Underwater Atmosphere Layer */}
+            <div className="fixed inset-0 pointer-events-none z-0 opacity-40">
+              <UnderwaterEffect />
+            </div>
+
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={isLocationEnabled && userLocation ? 'content' : 'location-check'}
@@ -427,29 +464,29 @@ export default function AppLayout({ children }: AppLayoutProps) {
                         {isActive('/') ? (
                           <>
                             {/* Roof */}
-                            <path d="M2 12L12 4L22 12" stroke="#1f2937" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="#22c55e" />
+                            <path d="M2 12L12 4L22 12" stroke="#FF6F61" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="#FF6F61" />
                             {/* House body */}
-                            <rect x="4" y="12" width="16" height="8" fill="#22c55e" stroke="#1f2937" strokeWidth="2" strokeLinejoin="round" />
+                            <rect x="4" y="12" width="16" height="8" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" strokeLinejoin="round" />
                             {/* Chimney */}
-                            <rect x="15" y="5" width="4" height="5" fill="#1f2937" stroke="#1f2937" strokeWidth="2" />
+                            <rect x="15" y="5" width="4" height="5" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" />
                             {/* Door */}
-                            <rect x="8" y="15" width="4" height="5" fill="#1f2937" />
+                            <rect x="8" y="15" width="4" height="5" fill="#ffffff" />
                           </>
                         ) : (
                           <>
                             {/* Roof */}
-                            <path d="M2 12L12 4L22 12" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                            <path d="M2 12L12 4L22 12" stroke="rgba(0,51,102,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
                             {/* House body */}
-                            <rect x="4" y="12" width="16" height="8" stroke="#6b7280" strokeWidth="2" strokeLinejoin="round" fill="none" />
+                            <rect x="4" y="12" width="16" height="8" stroke="rgba(0,51,102,0.4)" strokeWidth="2" strokeLinejoin="round" fill="none" />
                             {/* Chimney */}
-                            <rect x="15" y="5" width="4" height="5" stroke="#6b7280" strokeWidth="2" fill="none" />
+                            <rect x="15" y="5" width="4" height="5" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
                             {/* Door */}
-                            <rect x="8" y="15" width="4" height="5" stroke="#6b7280" strokeWidth="2" fill="none" />
+                            <rect x="8" y="15" width="4" height="5" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
                           </>
                         )}
                       </motion.svg>
                     </div>
-                    <span className={`text-xs mt-0.5 relative z-10 ${isActive('/') ? 'font-medium text-neutral-700' : 'font-medium text-neutral-500'}`}>
+                    <span className={`text-xs mt-0.5 relative z-10 ${isActive('/') ? 'font-medium text-[#FF6F61]' : 'font-medium text-[#003366] opacity-60'}`}>
                       Home
                     </span>
                   </Link>
@@ -486,16 +523,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
                         {isActive('/order-again') ? (
                           <>
                             {/* Shopping bag body */}
-                            <path d="M5 8V6C5 4.34315 6.34315 3 8 3H16C17.6569 3 19 4.34315 19 6V8H21C21.5523 8 22 8.44772 22 9V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V9C2 8.44772 2.44772 8 3 8H5Z" fill="#22c55e" stroke="#1f2937" strokeWidth="2" strokeLinejoin="round" />
+                            <path d="M5 8V6C5 4.34315 6.34315 3 8 3H16C17.6569 3 19 4.34315 19 6V8H21C21.5523 8 22 8.44772 22 9V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V9C2 8.44772 2.44772 8 3 8H5Z" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" strokeLinejoin="round" />
                             {/* Handles */}
-                            <path d="M7 8V6C7 5.44772 7.44772 5 8 5H16C16.5523 5 17 5.44772 17 6V8" stroke="#1f2937" strokeWidth="2" strokeLinecap="round" fill="none" />
+                            <path d="M7 8V6C7 5.44772 7.44772 5 8 5H16C16.5523 5 17 5.44772 17 6V8" stroke="#FF6F61" strokeWidth="2" strokeLinecap="round" fill="none" />
                           </>
                         ) : (
                           <>
                             {/* Shopping bag body */}
-                            <path d="M5 8V6C5 4.34315 6.34315 3 8 3H16C17.6569 3 19 4.34315 19 6V8H21C21.5523 8 22 8.44772 22 9V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V9C2 8.44772 2.44772 8 3 8H5Z" stroke="#6b7280" strokeWidth="2" strokeLinejoin="round" fill="none" />
+                            <path d="M5 8V6C5 4.34315 6.34315 3 8 3H16C17.6569 3 19 4.34315 19 6V8H21C21.5523 8 22 8.44772 22 9V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V9C2 8.44772 2.44772 8 3 8H5Z" stroke="rgba(0,51,102,0.4)" strokeWidth="2" strokeLinejoin="round" fill="none" />
                             {/* Handles */}
-                            <path d="M7 8V6C7 5.44772 7.44772 5 8 5H16C16.5523 5 17 5.44772 17 6V8" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" fill="none" />
+                            <path d="M7 8V6C7 5.44772 7.44772 5 8 5H16C16.5523 5 17 5.44772 17 6V8" stroke="rgba(0,51,102,0.4)" strokeWidth="2" strokeLinecap="round" fill="none" />
                           </>
                         )}
                         {/* Heart inside basket - grows when active, shrinks when inactive */}
@@ -504,7 +541,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                             <motion.path
                               key="heart"
                               d="M12 17C11.5 16.5 8 13.5 8 11.5C8 10 9 9 10.5 9C11.2 9 11.8 9.3 12 9.7C12.2 9.3 12.8 9 13.5 9C15 9 16 10 16 11.5C16 13.5 12.5 16.5 12 17Z"
-                              fill="#1f2937"
+                              fill="#ffffff"
                               initial={{ scale: 0, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
                               exit={{ scale: 0, opacity: 0 }}
@@ -514,7 +551,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                         </AnimatePresence>
                       </motion.svg>
                     </div>
-                    <span className={`text-xs mt-0.5 relative z-10 ${isActive('/order-again') ? 'font-medium text-neutral-700' : 'font-medium text-neutral-500'}`}>
+                    <span className={`text-xs mt-0.5 relative z-10 ${isActive('/order-again') ? 'font-medium text-[#FF6F61]' : 'font-medium text-[#003366] opacity-60'}`}>
                       Order Again
                     </span>
                   </Link>
@@ -548,23 +585,23 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       >
                         {(isActive('/categories') || location.pathname.startsWith('/category/')) ? (
                           <>
-                            {/* Top-left and bottom-right are black when active */}
-                            <circle cx="7" cy="7" r="2.5" fill="#1f2937" stroke="#1f2937" strokeWidth="2" />
-                            <circle cx="17" cy="7" r="2.5" fill="#22c55e" stroke="#1f2937" strokeWidth="2" />
-                            <circle cx="7" cy="17" r="2.5" fill="#22c55e" stroke="#1f2937" strokeWidth="2" />
-                            <circle cx="17" cy="17" r="2.5" fill="#1f2937" stroke="#1f2937" strokeWidth="2" />
+                            {/* Active */}
+                            <circle cx="7" cy="7" r="2.5" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" />
+                            <circle cx="17" cy="7" r="2.5" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" />
+                            <circle cx="7" cy="17" r="2.5" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" />
+                            <circle cx="17" cy="17" r="2.5" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" />
                           </>
                         ) : (
                           <>
-                            <circle cx="7" cy="7" r="2.5" stroke="#6b7280" strokeWidth="2" fill="none" />
-                            <circle cx="17" cy="7" r="2.5" stroke="#6b7280" strokeWidth="2" fill="none" />
-                            <circle cx="7" cy="17" r="2.5" stroke="#6b7280" strokeWidth="2" fill="none" />
-                            <circle cx="17" cy="17" r="2.5" stroke="#6b7280" strokeWidth="2" fill="none" />
+                            <circle cx="7" cy="7" r="2.5" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
+                            <circle cx="17" cy="7" r="2.5" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
+                            <circle cx="7" cy="17" r="2.5" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
+                            <circle cx="17" cy="17" r="2.5" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
                           </>
                         )}
                       </motion.svg>
                     </div>
-                    <span className={`text-xs mt-0.5 relative z-10 ${(isActive('/categories') || location.pathname.startsWith('/category/')) ? 'font-medium text-neutral-700' : 'font-medium text-neutral-500'}`}>
+                    <span className={`text-xs mt-0.5 relative z-10 ${(isActive('/categories') || location.pathname.startsWith('/category/')) ? 'font-medium text-[#FF6F61]' : 'font-medium text-[#003366] opacity-60'}`}>
                       Categories
                     </span>
                   </Link>
@@ -604,8 +641,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
                               cx="12"
                               cy="8"
                               r="4"
-                              fill="#22c55e"
-                              stroke="#1f2937"
+                              fill="#FF6F61"
+                              stroke="#FF6F61"
                               strokeWidth="2"
                               animate={{
                                 scale: [1, 1.1, 1]
@@ -618,19 +655,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
                               }}
                             />
                             {/* Profile body */}
-                            <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" stroke="#1f2937" strokeWidth="2" strokeLinecap="round" fill="#22c55e" />
+                            <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" stroke="#FF6F61" strokeWidth="2" strokeLinecap="round" fill="#FF6F61" />
                           </>
                         ) : (
                           <>
                             {/* Profile head */}
-                            <circle cx="12" cy="8" r="4" stroke="#6b7280" strokeWidth="2" fill="none" />
+                            <circle cx="12" cy="8" r="4" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
                             {/* Profile body */}
-                            <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" fill="none" />
+                            <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" stroke="rgba(0,51,102,0.4)" strokeWidth="2" strokeLinecap="round" fill="none" />
                           </>
                         )}
                       </motion.svg>
                     </div>
-                    <span className={`text-xs mt-0.5 relative z-10 ${isActive('/account') ? 'font-medium text-neutral-700' : 'font-medium text-neutral-500'}`}>
+                    <span className={`text-xs mt-0.5 relative z-10 ${isActive('/account') ? 'font-medium text-[#FF6F61]' : 'font-medium text-[#003366] opacity-60'}`}>
                       Profile
                     </span>
                   </Link>

@@ -31,7 +31,7 @@ export interface Product {
   imageUrl?: string;
   mainImage?: string;
   categoryId: string;
-  category?: Category;
+  categoryData?: Category;
   tags?: string[];
   rating?: number;
   reviews?: number;
@@ -46,5 +46,6 @@ export interface Product {
   maxReturnDays?: number;
   sellerId?: string;
   isAvailable?: boolean;
+  category?: string;
 }
 

@@ -7,6 +7,7 @@ import { useCart } from '../../context/CartContext';
 import { getProducts } from '../../services/api/customerProductService';
 import WishlistButton from '../../components/WishlistButton';
 import { calculateProductPrice } from '../../utils/priceUtils';
+import { useThemeContext } from '../../context/ThemeContext';
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -38,6 +39,7 @@ export default function OrderAgain() {
   const { orders } = useOrders();
   const { cart, addToCart, updateQuantity } = useCart();
   const navigate = useNavigate();
+  const { currentTheme } = useThemeContext();
   const [addedOrders, setAddedOrders] = useState<Set<string>>(new Set());
 
   // Handle "Order Again" - Add all items from an order to cart
@@ -184,10 +186,12 @@ export default function OrderAgain() {
                       <button
                         onClick={(e) => handleOrderAgain(order, e)}
                         disabled={addedOrders.has(order.id)}
-                        className={`mt-1 text-[10px] font-semibold px-3 py-1 rounded-md transition-colors shadow-sm ${addedOrders.has(order.id)
-                          ? 'bg-orange-200 text-neutral-600 cursor-not-allowed'
-                          : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
-                          }`}
+                        className={`mt-1 text-[10px] font-semibold px-3 py-1 rounded-md transition-colors shadow-sm cursor-pointer`}
+                        style={{
+                          backgroundColor: addedOrders.has(order.id) ? '#fed7aa' : currentTheme.primary[3],
+                          color: 'white',
+                          opacity: addedOrders.has(order.id) ? 0.8 : 1
+                        }}
                       >
                         {addedOrders.has(order.id) ? 'Added to Cart!' : 'Order Again'}
                       </button>
@@ -267,7 +271,11 @@ export default function OrderAgain() {
                                 e.stopPropagation();
                                 addToCart(product, e.currentTarget);
                               }}
-                              className="bg-white/95 backdrop-blur-sm text-green-600 border-2 border-green-600 text-[10px] font-semibold px-2 py-1 rounded shadow-md hover:bg-white transition-colors"
+                              className="bg-white/95 backdrop-blur-sm text-[10px] font-semibold px-2 py-1 rounded shadow-md hover:bg-white transition-colors border-2"
+                              style={{
+                                borderColor: currentTheme.primary[3],
+                                color: currentTheme.primary[3]
+                              }}
                             >
                               ADD
                             </motion.button>
@@ -278,7 +286,8 @@ export default function OrderAgain() {
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.8 }}
                               transition={{ duration: 0.2 }}
-                              className="flex items-center gap-1 bg-green-600 rounded px-1.5 py-1 shadow-md"
+                              className="flex items-center gap-1 rounded px-1.5 py-1 shadow-md"
+                              style={{ backgroundColor: currentTheme.primary[3] }}
                               onClick={(e) => e.stopPropagation()}
                             >
                               <motion.button
@@ -288,7 +297,7 @@ export default function OrderAgain() {
                                   e.stopPropagation();
                                   updateQuantity(product.id, inCartQty - 1);
                                 }}
-                                className="w-4 h-4 flex items-center justify-center text-white font-bold hover:bg-green-700 rounded transition-colors p-0 leading-none"
+                                className="w-4 h-4 flex items-center justify-center text-white font-bold hover:brightness-110 rounded transition-colors p-0 leading-none"
                                 style={{ lineHeight: 1, fontSize: '14px' }}
                               >
                                 <span className="relative top-[-1px]">−</span>
@@ -310,7 +319,7 @@ export default function OrderAgain() {
                                   e.stopPropagation();
                                   updateQuantity(product.id, inCartQty + 1);
                                 }}
-                                className="w-4 h-4 flex items-center justify-center text-white font-bold hover:bg-green-700 rounded transition-colors p-0 leading-none"
+                                className="w-4 h-4 flex items-center justify-center text-white font-bold hover:brightness-110 rounded transition-colors p-0 leading-none"
                                 style={{ lineHeight: 1, fontSize: '14px' }}
                               >
                                 <span className="relative top-[-1px]">+</span>
@@ -387,13 +396,17 @@ export default function OrderAgain() {
                     {/* Bottom Link */}
                     <div
                       onClick={() => navigate(`/category/${product.categoryId || 'all'}`)}
-                      className="w-full bg-green-100 text-green-700 text-[8px] font-medium py-0.5 rounded-lg flex items-center justify-between px-1 hover:bg-green-200 transition-colors mt-auto cursor-pointer"
+                      className="w-full text-[8px] font-bold py-0.5 rounded-lg flex items-center justify-between px-1 transition-colors mt-auto cursor-pointer"
+                      style={{
+                        backgroundColor: `${currentTheme.primary[3]}15`,
+                        color: currentTheme.primary[3]
+                      }}
                     >
                       <span>See more like this</span>
                       <div className="flex items-center gap-0.5">
-                        <div className="w-px h-2 bg-green-300"></div>
+                        <div className="w-px h-2 opacity-30" style={{ backgroundColor: currentTheme.primary[3] }}></div>
                         <svg width="6" height="6" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M0 0L8 4L0 8Z" fill="#16a34a" />
+                          <path d="M0 0L8 4L0 8Z" fill="currentColor" />
                         </svg>
                       </div>
                     </div>
@@ -426,10 +439,10 @@ export default function OrderAgain() {
                   <div className="absolute top-12 left-1/2 -translate-x-1/2 w-32 h-0.5 bg-yellow-600/30"></div>
                   <div className="absolute top-20 left-1/2 -translate-x-1/2 w-28 h-0.5 bg-yellow-600/20"></div>
 
-                  {/* Zeto Mart text inside basket */}
+                  {/* Inor fresh text inside basket */}
                   <div className="relative z-10 text-center px-4">
-                    <span className="text-2xl font-extrabold text-neutral-900 tracking-tight drop-shadow-sm">Zeto Mart</span>
-                    <span className="inline-block w-2.5 h-2.5 bg-green-500 rounded-full ml-1.5 shadow-sm"></span>
+                    <span className="text-2xl font-extrabold text-neutral-900 tracking-tight drop-shadow-sm">Inor fresh</span>
+                    <span className="inline-block w-2.5 h-2.5 rounded-full ml-1.5 shadow-sm" style={{ backgroundColor: currentTheme.primary[3] }}></span>
                   </div>
                 </div>
               </div>

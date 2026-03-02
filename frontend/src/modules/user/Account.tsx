@@ -61,20 +61,21 @@ export default function Account() {
   if (!user) {
     return (
       <div className="pb-24 md:pb-8 bg-white min-h-screen">
-        <div className="bg-gradient-to-b from-green-200 via-green-100 to-white pb-6 md:pb-8 pt-12 md:pt-16">
-          <div className="px-4 md:px-6 lg:px-8">
-            <button onClick={() => navigate(-1)} className="mb-4 text-neutral-900" aria-label="Back">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        <div className="bg-[#003366] pb-6 md:pb-8 pt-12 md:pt-16 rounded-b-[30px] shadow-[0_4px_20px_rgba(0,51,102,0.15)] relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent pointer-events-none" />
+          <div className="px-4 md:px-6 lg:px-8 relative z-10">
+            <button onClick={() => navigate(-1)} className="mb-4 text-white hover:text-white/80 transition-colors" aria-label="Back">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
             <div className="flex flex-col items-center mb-4 md:mb-6">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-neutral-200 flex items-center justify-center mb-3 md:mb-4 border-2 border-white shadow-sm">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-neutral-500 md:w-12 md:h-12">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-[22px] bg-white/10 backdrop-blur-sm flex items-center justify-center mb-3 md:mb-4 border border-white/20 shadow-lg">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-white md:w-12 md:h-12 drop-shadow-md">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <h1 className="text-xl md:text-2xl font-bold text-neutral-900 mb-2">Welcome!</h1>
-              <p className="text-sm md:text-base text-neutral-600 text-center px-4">
+              <h1 className="text-xl md:text-2xl font-bold text-white mb-2 tracking-tight">Welcome!</h1>
+              <p className="text-sm md:text-base text-white/70 font-medium text-center px-4">
                 Login to access your profile, orders, and more
               </p>
             </div>
@@ -85,7 +86,7 @@ export default function Account() {
           <div className="max-w-md mx-auto space-y-3">
             <button
               onClick={() => navigate('/login')}
-              className="w-full py-3.5 rounded-lg font-semibold text-base bg-teal-600 text-white hover:bg-teal-700 transition-colors shadow-lg shadow-teal-500/20"
+              className="w-full py-3.5 rounded-xl font-bold text-base bg-[#009999] text-white hover:bg-[#FF6F61] transition-colors shadow-[0_4px_12px_rgba(0,153,153,0.3)] hover:shadow-[0_4px_15px_rgba(255,111,97,0.4)]"
             >
               Login
             </button>
@@ -124,21 +125,22 @@ export default function Account() {
   const displayDateOfBirth = profile?.dateOfBirth;
 
   return (
-    <div className="pb-24 md:pb-8 bg-white min-h-screen">
-      <div className="bg-gradient-to-b from-green-200 via-green-100 to-white pb-6 md:pb-8 pt-12 md:pt-16">
-        <div className="px-4 md:px-6 lg:px-8">
-          <button onClick={() => navigate(-1)} className="mb-4 text-neutral-900" aria-label="Back">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    <div className="pb-24 md:pb-8 bg-neutral-50 min-h-screen">
+      <div className="bg-[#003366] pb-10 md:pb-12 pt-12 md:pt-16 rounded-b-[30px] shadow-[0_4px_20px_rgba(0,51,102,0.15)] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent pointer-events-none" />
+        <div className="px-4 md:px-6 lg:px-8 relative z-10">
+          <button onClick={() => navigate(-1)} className="mb-4 text-white hover:text-white/80 transition-colors" aria-label="Back">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
           <div className="flex flex-col items-center mb-4 md:mb-6">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-neutral-200 flex items-center justify-center mb-3 md:mb-4 border-2 border-white shadow-sm">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-neutral-500 md:w-12 md:h-12">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-[22px] bg-white/10 backdrop-blur-sm flex items-center justify-center mb-3 md:mb-4 border border-white/20 shadow-lg">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-white md:w-12 md:h-12 drop-shadow-md">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <h1 className="text-xl md:text-2xl font-bold text-neutral-900 mb-2">{displayName}</h1>
-            <div className="flex flex-col items-center gap-1.5 md:gap-2 text-xs md:text-sm text-neutral-600">
+            <h1 className="text-xl md:text-2xl font-bold text-white mb-2 tracking-tight">{displayName}</h1>
+            <div className="flex flex-col items-center gap-1.5 md:gap-2 text-xs md:text-sm text-white/70 font-medium">
               {displayPhone && (
                 <div className="flex items-center gap-1.5">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -157,10 +159,13 @@ export default function Account() {
       </div>
 
       {/* Wallet Balance Card */}
-      <div className="px-4 md:px-6 lg:px-8 -mt-4 md:-mt-6 mb-4">
+      <div className="px-4 md:px-6 lg:px-8 -mt-6 md:-mt-8 mb-6 relative z-20">
         <div className="max-w-2xl md:mx-auto">
-          <div className="bg-gradient-to-r from-teal-600 to-green-600 rounded-xl p-4 md:p-5 shadow-lg">
-            <div className="flex items-center justify-between">
+          <div className="bg-[#009999]/95 backdrop-blur-md rounded-[22px] p-5 md:p-6 shadow-[0_8px_25px_rgba(0,153,153,0.25)] border-[1.5px] border-white/20 relative overflow-hidden">
+            {/* Soft decorative glow */}
+            <div className="absolute top-[-50%] right-[-10%] w-[150%] h-[200%] bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_0%,_rgba(255,255,255,0)_60%)] pointer-events-none" />
+
+            <div className="flex items-center justify-between relative z-10">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white md:w-7 md:h-7">
@@ -178,26 +183,26 @@ export default function Account() {
               <div className="text-right">
                 <button
                   onClick={() => navigate('/checkout')}
-                  className="px-3 py-1.5 md:px-4 md:py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg text-white text-xs md:text-sm font-semibold transition-colors border border-white/30"
+                  className="px-4 py-2 bg-white text-[#009999] hover:bg-neutral-50 hover:scale-[1.02] shadow-[0_4px_12px_rgba(0,0,0,0.1)] rounded-[12px] text-xs md:text-sm font-bold transition-all active:scale-95"
                 >
                   Use Wallet
                 </button>
-                <p className="text-[10px] md:text-xs text-white/60 mt-1">Use at checkout</p>
+                <p className="text-[10px] md:text-xs text-white/80 font-medium mt-1.5">Use at checkout</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="px-4 md:px-6 lg:px-8 mb-4 md:mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-2.5 md:gap-6 max-w-2xl md:mx-auto">
-          <button onClick={() => navigate('/orders')} className="bg-white rounded-lg border border-neutral-200 p-3 md:p-4 hover:shadow-md transition-shadow text-center outline-none">
+      <div className="px-4 md:px-6 lg:px-8 mb-6 md:mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6 max-w-2xl md:mx-auto">
+          <button onClick={() => navigate('/orders')} className="bg-white rounded-[18px] border border-[#009999]/10 p-4 hover:border-[#FF6F61]/40 shadow-[0_4px_15px_rgba(0,51,102,0.03)] hover:shadow-[0_6px_20px_rgba(0,51,102,0.08)] transition-all text-center outline-none group">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="mx-auto mb-1.5 md:mb-2 text-neutral-700 md:w-6 md:h-6"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             <div className="text-[10px] md:text-xs font-semibold text-neutral-900">Your orders</div>
           </button>
           <button
             onClick={() => navigate('/faq')}
-            className="bg-white rounded-lg border border-neutral-200 p-3 md:p-4 hover:shadow-md transition-shadow text-center outline-none"
+            className="bg-white rounded-[18px] border border-[#009999]/10 p-4 hover:border-[#FF6F61]/40 shadow-[0_4px_15px_rgba(0,51,102,0.03)] hover:shadow-[0_6px_20px_rgba(0,51,102,0.08)] transition-all text-center outline-none group"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="mx-auto mb-1.5 md:mb-2 text-neutral-700 md:w-6 md:h-6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             <div className="text-[10px] md:text-xs font-semibold text-neutral-900">Need help?</div>
@@ -206,37 +211,37 @@ export default function Account() {
       </div>
 
       <div className="px-4 py-2.5">
-        <h2 className="text-xs font-bold text-neutral-900 mb-2 uppercase tracking-wide">Your information</h2>
-        <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden divide-y divide-neutral-100">
-          <button onClick={() => navigate('/address-book')} className="w-full flex items-center justify-between px-3 py-3 hover:bg-neutral-50 transition-colors">
+        <h2 className="text-xs font-black text-[#003366] mb-3 uppercase tracking-wider pl-1">Your Information</h2>
+        <div className="bg-white rounded-[22px] border-[1.5px] border-[#009999]/10 shadow-[0_4px_20px_rgba(0,51,102,0.04)] overflow-hidden divide-y divide-[#003366]/5">
+          <button onClick={() => navigate('/address-book')} className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50/50 transition-colors group">
             <div className="flex items-center gap-3">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-neutral-500"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               <span className="text-[13px] font-medium text-neutral-900">Address Book</span>
             </div>
             <span className="text-neutral-400">›</span>
           </button>
-          <button onClick={() => navigate('/wishlist')} className="w-full flex items-center justify-between px-3 py-3 hover:bg-neutral-50 transition-colors">
+          <button onClick={() => navigate('/wishlist')} className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50/50 transition-colors group">
             <div className="flex items-center gap-3">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-neutral-500"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               <span className="text-[13px] font-medium text-neutral-900">Your Wishlist</span>
             </div>
             <span className="text-neutral-400">›</span>
           </button>
-          <button onClick={() => setShowGstModal(true)} className="w-full flex items-center justify-between px-3 py-3 hover:bg-neutral-50 transition-colors">
+          <button onClick={() => setShowGstModal(true)} className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50/50 transition-colors group">
             <div className="flex items-center gap-3">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-neutral-500"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               <span className="text-[13px] font-medium text-neutral-900">GST Details</span>
             </div>
             <span className="text-neutral-400">›</span>
           </button>
-          <button onClick={() => window.location.href = 'https://about.dhakadsnazzy.com'} className="w-full flex items-center justify-between px-3 py-3 hover:bg-neutral-50 transition-colors">
+          <button onClick={() => window.location.href = 'https://about.dhakadsnazzy.com'} className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50/50 transition-colors group">
             <div className="flex items-center gap-3">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-neutral-500"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /><line x1="12" y1="16" x2="12" y2="12" stroke="currentColor" strokeWidth="2" /><line x1="12" y1="8" x2="12.01" y2="8" stroke="currentColor" strokeWidth="2" /></svg>
               <span className="text-[13px] font-medium text-neutral-900">About Us</span>
             </div>
             <span className="text-neutral-400">›</span>
           </button>
-          <button onClick={handleLogout} className="w-full flex items-center justify-between px-3 py-3 hover:bg-neutral-50 transition-colors">
+          <button onClick={handleLogout} className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50/50 transition-colors group">
             <div className="flex items-center gap-3">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-red-500"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
               <span className="text-[13px] font-medium text-red-500">Log Out</span>

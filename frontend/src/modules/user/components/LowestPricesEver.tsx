@@ -8,6 +8,7 @@ import { useCart } from '../../../context/CartContext';
 import { Product } from '../../../types/domain';
 import { useWishlist } from '../../../hooks/useWishlist';
 import { calculateProductPrice } from '../../../utils/priceUtils';
+import { UnderwaterEffect } from '../../../components/UnderwaterEffect';
 
 interface LowestPricesEverProps {
   activeTab?: string;
@@ -55,9 +56,15 @@ const ProductCard = memo(({
     >
       <div
         onClick={() => navigate(`/product/${product.id}`)}
-        className="bg-white rounded-lg overflow-hidden flex flex-col relative h-full max-h-full cursor-pointer"
+        className="bg-white rounded-lg overflow-hidden flex flex-col relative h-full max-h-full cursor-pointer group"
         style={{ boxShadow: '0 1px 1px rgba(0, 0, 0, 0.03)' }}
       >
+        {/* 🌊 UNDERWATER CARD ENHANCEMENTS */}
+        <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/[0.06] to-transparent pointer-events-none z-20" />
+        <div className="absolute inset-0 rounded-lg shadow-[inset_0_0_15px_rgba(0,224,198,0.03)] pointer-events-none z-10" />
+
+        {/* Micro shimmer swipe animation on Hover */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.12] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none z-20" />
         {/* Product Image Area */}
         <div className="relative block">
           <div className="w-full h-28 bg-neutral-100 flex items-center justify-center overflow-hidden relative">
@@ -126,8 +133,8 @@ const ProductCard = memo(({
                       onAddToCart(product, e.currentTarget);
                     }}
                     className={`bg-white/95 backdrop-blur-sm text-[10px] font-semibold px-2 py-1 rounded shadow-md transition-colors ${product.isAvailable === false
-                        ? 'text-neutral-400 border-2 border-neutral-300 cursor-not-allowed'
-                        : 'text-green-600 border-2 border-green-600 hover:bg-white'
+                      ? 'text-neutral-400 border-2 border-neutral-300 cursor-not-allowed'
+                      : 'text-[#FF6F61] border-2 border-[#FF6F61] hover:bg-white'
                       }`}
                   >
                     {product.isAvailable === false ? 'Out of Range' : 'ADD'}
@@ -139,7 +146,7 @@ const ProductCard = memo(({
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.2 }}
-                    className="flex items-center gap-1 bg-green-600 rounded px-1.5 py-1 shadow-md"
+                    className="flex items-center gap-1 bg-[#FF6F61] rounded px-1.5 py-1 shadow-md"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <motion.button
@@ -149,7 +156,7 @@ const ProductCard = memo(({
                         e.stopPropagation();
                         onUpdateQuantity(product.id, inCartQty - 1);
                       }}
-                      className="w-4 h-4 flex items-center justify-center text-white font-bold hover:bg-green-700 rounded transition-colors p-0 leading-none"
+                      className="w-4 h-4 flex items-center justify-center text-white font-bold hover:bg-[#eb5a4c] rounded transition-colors p-0 leading-none"
                       style={{ lineHeight: 1, fontSize: '14px' }}
                     >
                       <span className="relative top-[-1px]">−</span>
@@ -173,8 +180,8 @@ const ProductCard = memo(({
                         onUpdateQuantity(product.id, inCartQty + 1);
                       }}
                       className={`w-4 h-4 flex items-center justify-center font-bold rounded transition-colors p-0 leading-none ${product.isAvailable === false
-                          ? 'text-neutral-300 cursor-not-allowed'
-                          : 'text-white hover:bg-green-700'
+                        ? 'text-neutral-300 cursor-not-allowed'
+                        : 'text-white hover:bg-[#eb5a4c]'
                         }`}
                       style={{ lineHeight: 1, fontSize: '14px' }}
                     >
@@ -253,16 +260,15 @@ const ProductCard = memo(({
             </div>
           </div>
 
-          {/* Bottom Link */}
           <Link
             to={`/category/${product.categoryId || 'all'}`}
-            className="w-full bg-green-100 text-green-700 text-[8px] font-medium py-0.5 rounded-lg flex items-center justify-between px-1 hover:bg-green-200 transition-colors mt-auto"
+            className="w-full bg-[#ffedea] text-[#FF6F61] text-[8px] font-medium py-0.5 rounded-lg flex items-center justify-between px-1 hover:bg-[#ffdbd6] transition-colors mt-auto"
           >
             <span>See more like this</span>
             <div className="flex items-center gap-0.5">
-              <div className="w-px h-2 bg-green-300"></div>
+              <div className="w-px h-2 bg-[#ffb5ab]"></div>
               <svg width="6" height="6" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 0L8 4L0 8Z" fill="#16a34a" />
+                <path d="M0 0L8 4L0 8Z" fill="#FF6F61" />
               </svg>
             </div>
           </Link>
@@ -435,14 +441,36 @@ export default function LowestPricesEver({ activeTab = 'all', products: adminPro
 
   return (
     <div
-      className="relative"
+      className="relative overflow-hidden"
       style={{
-        background: `linear-gradient(to bottom, ${theme.primary[3]}, ${theme.primary[3]}, ${theme.secondary[1]}, ${theme.secondary[2]})`,
+        background: `linear-gradient(to bottom, #003366, #004c80)`,
         marginTop: '0px', // No gap for seamless blend
         paddingTop: '12px',
         paddingBottom: '16px',
       }}
     >
+      {/* 🌊 PREMIUM UNDERWATER ATMOSPHERE */}
+      <UnderwaterEffect />
+
+      {/* 🌊 Subtle Depth Enhancements */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <motion.div
+          className="absolute inset-0 mix-blend-overlay opacity-[0.05]"
+          style={{
+            backgroundImage: 'radial-gradient(ellipse at center, rgba(0, 224, 198, 0.4) 0%, transparent 70%)',
+          }}
+          animate={{
+            opacity: [0.03, 0.07, 0.03],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 opacity-30" />
+      </div>
+
       {/* White Zip/Scalloped Divider at Top - Upward-pointing semicircles */}
       <div className="absolute top-0 left-0 right-0" style={{ height: '30px', zIndex: 10, opacity: 0.95 }}>
         <svg
@@ -497,17 +525,17 @@ export default function LowestPricesEver({ activeTab = 'all', products: adminPro
             style={{
               fontFamily: '"Poppins", sans-serif',
               fontSize: '28px',
-              color: '#000000',
+              color: '#FFFFFF',
               opacity: fontLoaded ? 1 : 0,
               transition: 'opacity 0.2s ease-in',
               textShadow:
-                '-1.5px -1.5px 0 white, 1.5px -1.5px 0 white, -1.5px 1.5px 0 white, 1.5px 1.5px 0 white, ' +
-                '-1.5px 0px 0 white, 1.5px 0px 0 white, 0px -1.5px 0 white, 0px 1.5px 0 white, ' +
-                '-1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white, ' +
-                '3px 3px 4px rgba(0, 0, 0, 0.5), ' +
-                '2px 2px 3px rgba(0, 0, 0, 0.6), ' +
-                '1px 1px 2px rgba(0, 0, 0, 0.7), ' +
-                '0px 2px 1px rgba(0, 0, 0, 0.4)',
+                '-1.5px -1.5px 0 #009999, 1.5px -1.5px 0 #009999, -1.5px 1.5px 0 #009999, 1.5px 1.5px 0 #009999, ' +
+                '-1.5px 0px 0 #009999, 1.5px 0px 0 #009999, 0px -1.5px 0 #009999, 0px 1.5px 0 #009999, ' +
+                '-1px -1px 0 #009999, 1px -1px 0 #009999, -1px 1px 0 #009999, 1px 1px 0 #009999, ' +
+                '3px 3px 4px rgba(0, 153, 153, 0.5), ' +
+                '2px 2px 3px rgba(0, 153, 153, 0.6), ' +
+                '1px 1px 2px rgba(0, 153, 153, 0.7), ' +
+                '0px 2px 1px rgba(0, 153, 153, 0.4)',
               letterSpacing: '0.8px',
               fontWeight: 900,
               lineHeight: '1.1',

@@ -3,10 +3,12 @@ import { useCart } from '../../context/CartContext';
 import Button from '../../components/ui/button';
 import { appConfig } from '../../services/configService';
 import { calculateProductPrice } from '../../utils/priceUtils';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Cart() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
   const navigate = useNavigate();
+  const { currentTheme } = useThemeContext();
 
   const deliveryFee = cart.total >= appConfig.freeDeliveryThreshold ? 0 : appConfig.deliveryFee;
   const platformFee = appConfig.platformFee;
@@ -23,7 +25,12 @@ export default function Cart() {
         <h2 className="text-xl md:text-2xl font-bold text-neutral-900 mb-2">Your cart is empty</h2>
         <p className="text-neutral-600 mb-6 md:mb-8 md:text-lg">Add some items to get started!</p>
         <Link to="/">
-          <Button variant="default" size="lg" className="md:px-8 md:py-3 md:text-lg">
+          <Button
+            variant="default"
+            size="lg"
+            className="md:px-8 md:py-3 md:text-lg hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: currentTheme.primary[3] }}
+          >
             Start Shopping
           </Button>
         </Link>
@@ -97,9 +104,16 @@ export default function Cart() {
                       variant="outline"
                       size="icon"
                       onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.variant)}
-                      className="w-8 h-8 md:w-10 md:h-10 p-0 border-neutral-300 text-neutral-600 hover:border-green-600 hover:text-green-600 md:text-lg"
+                      className="w-8 h-8 md:w-10 md:h-10 p-0 border-neutral-300 text-neutral-600 md:text-lg transition-colors group"
                     >
-                      −
+                      <span className="group-hover:text-white transition-colors" style={{ color: 'inherit' }}>−</span>
+                      <style>{`
+                        .group:hover {
+                          background-color: ${currentTheme.primary[3]} !important;
+                          border-color: ${currentTheme.primary[3]} !important;
+                          color: white !important;
+                        }
+                      `}</style>
                     </Button>
                     <span className="text-base md:text-lg font-semibold text-neutral-900 min-w-[2rem] md:min-w-[2.5rem] text-center">
                       {item.quantity}
@@ -108,9 +122,9 @@ export default function Cart() {
                       variant="outline"
                       size="icon"
                       onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.variant)}
-                      className="w-8 h-8 md:w-10 md:h-10 p-0 border-neutral-300 text-neutral-600 hover:border-green-600 hover:text-green-600 md:text-lg"
+                      className="w-8 h-8 md:w-10 md:h-10 p-0 border-neutral-300 text-neutral-600 md:text-lg transition-colors group"
                     >
-                      +
+                      <span className="group-hover:text-white transition-colors" style={{ color: 'inherit' }}>+</span>
                     </Button>
                     <div className="ml-auto text-right">
                       <div className="text-sm md:text-base font-bold text-neutral-900">
@@ -149,12 +163,21 @@ export default function Cart() {
             </div>
             <div className="flex justify-between text-neutral-700 md:text-base">
               <span>Delivery Charges</span>
-              <span className={`font-medium ${deliveryFee === 0 ? 'text-green-600' : ''}`}>
+              <span
+                className={`font-medium`}
+                style={deliveryFee === 0 ? { color: currentTheme.primary[3] } : {}}
+              >
                 {deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toLocaleString('en-IN')}`}
               </span>
             </div>
             {cart.total < appConfig.freeDeliveryThreshold && (
-              <div className="text-xs md:text-sm text-green-600 bg-green-50 px-2 py-1 rounded">
+              <div
+                className="text-xs md:text-sm px-2 py-1 rounded"
+                style={{
+                  color: currentTheme.primary[3],
+                  backgroundColor: `${currentTheme.primary[3]}10`
+                }}
+              >
                 Add ₹{(appConfig.freeDeliveryThreshold - cart.total).toLocaleString('en-IN')} more for free delivery
               </div>
             )}
@@ -170,7 +193,8 @@ export default function Cart() {
               variant="default"
               size="lg"
               onClick={handleCheckout}
-              className="w-full md:py-3 md:text-lg"
+              className="w-full md:py-3 md:text-lg hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: currentTheme.primary[3] }}
             >
               Proceed to Checkout
             </Button>

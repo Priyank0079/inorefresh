@@ -8,12 +8,14 @@ import { useToast } from '../../context/ToastContext';
 import Button from '../../components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { calculateProductPrice } from '../../utils/priceUtils';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Wishlist() {
   const navigate = useNavigate();
   const { location } = useLocation();
   const { addToCart } = useCart();
   const { showToast } = useToast();
+  const { currentTheme } = useThemeContext();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -67,7 +69,7 @@ export default function Wishlist() {
       <div className="px-4">
         {loading ? (
           <div className="flex justify-center pt-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: currentTheme.primary[3] }}></div>
           </div>
         ) : products.length > 0 ? (
           <div className="grid grid-cols-2 gap-4">
@@ -114,7 +116,12 @@ export default function Wishlist() {
                       variant="outline"
                       size="sm"
                       onClick={() => addToCart(product)}
-                      className="w-full border-green-600 text-green-600 hover:bg-green-50 rounded-lg h-8 text-xs font-bold"
+                      className="w-full rounded-lg h-8 text-xs font-bold hover:opacity-90 transition-opacity"
+                      style={{
+                        borderColor: currentTheme.primary[3],
+                        color: currentTheme.primary[3],
+                        backgroundColor: 'transparent'
+                      }}
                     >
                       ADD TO CART
                     </Button>
@@ -128,7 +135,11 @@ export default function Wishlist() {
             <div className="text-6xl mb-4">❤️</div>
             <h2 className="text-lg font-bold text-neutral-900 mb-2">Your wishlist is empty</h2>
             <p className="text-sm mb-6">Explore more and shortlist some items</p>
-            <Button onClick={() => navigate('/')} className="bg-green-600 text-white rounded-full px-8">
+            <Button
+              onClick={() => navigate('/')}
+              className="text-white rounded-full px-8 hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: currentTheme.primary[3] }}
+            >
               Start Shopping
             </Button>
           </div>

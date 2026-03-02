@@ -7,11 +7,11 @@ const mongoose = require('mongoose');
 const axios = require('axios');
 
 // MongoDB connection
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/zeto-mart';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/inor-fresh';
 const API_BASE = 'http://localhost:5000/api';
 
 // Admin credentials (update these with actual admin credentials)
-const ADMIN_EMAIL = 'admin@zetomart.com';
+const ADMIN_EMAIL = 'admin@inorfresh.com';
 const ADMIN_PASSWORD = 'admin123';
 
 async function testCustomerWallet() {

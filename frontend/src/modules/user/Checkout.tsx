@@ -33,8 +33,9 @@ import GoogleMapsLocationPicker from "../../components/GoogleMapsLocationPicker"
 import { getProducts } from "../../services/api/customerProductService";
 import { addToWishlist } from "../../services/api/customerWishlistService";
 import { updateProfile, getProfile } from "../../services/api/customerService";
-import { calculateProductPrice } from "../../utils/priceUtils";
+import calculateProductPrice from "../../utils/priceUtils";
 import RazorpayCheckout from "../../components/RazorpayCheckout";
+import { useThemeContext } from "../../context/ThemeContext";
 
 // const STORAGE_KEY = 'saved_address'; // Removed
 
@@ -54,6 +55,7 @@ export default function Checkout() {
   const { location: userLocation } = useLocationContext();
   const { showToast: showGlobalToast } = useToast();
   const { user, updateUser } = useAuth();
+  const { currentTheme } = useThemeContext();
   const navigate = useNavigate();
   const [tipAmount, setTipAmount] = useState<number | null>(null);
   const [customTipAmount, setCustomTipAmount] = useState<number>(0);
@@ -264,7 +266,10 @@ export default function Checkout() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div
+            className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mb-4"
+            style={{ borderColor: `${currentTheme.primary[3]} transparent ${currentTheme.primary[3]} ${currentTheme.primary[3]}` }}
+          ></div>
           <p className="text-sm font-medium text-neutral-600">
             {cartLoading ? "Loading checkout..." : "Redirecting..."}
           </p>
@@ -736,8 +741,10 @@ export default function Checkout() {
                       !profileFormData.name.trim() ||
                       !profileFormData.email.trim()
                       ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-                      : "bg-green-600 text-white hover:bg-green-700"
-                      }`}>
+                      : "text-white hover:opacity-90"
+                      }`}
+                    style={!(isUpdatingProfile || !profileFormData.name.trim() || !profileFormData.email.trim()) ? { backgroundColor: currentTheme.primary[3] } : {}}
+                  >
                     {isUpdatingProfile ? "Saving..." : "Save & Continue"}
                   </button>
                 </div>
@@ -1486,17 +1493,21 @@ export default function Checkout() {
                           `/category/${product.categoryId || product.category || "all"}`,
                         )
                       }
-                      className="w-full bg-green-100 text-green-700 text-[8px] font-medium py-0.5 rounded-lg flex items-center justify-between px-1 hover:bg-green-200 transition-colors mt-auto cursor-pointer">
+                      className="w-full text-[8px] font-medium py-0.5 rounded-lg flex items-center justify-between px-1 transition-colors mt-auto cursor-pointer"
+                      style={{
+                        backgroundColor: `${currentTheme.primary[3]}15`,
+                        color: currentTheme.primary[3]
+                      }}>
                       <span>See more like this</span>
                       <div className="flex items-center gap-0.5">
-                        <div className="w-px h-2 bg-green-300"></div>
+                        <div className="w-px h-2" style={{ backgroundColor: `${currentTheme.primary[3]}40` }}></div>
                         <svg
                           width="6"
                           height="6"
                           viewBox="0 0 8 8"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg">
-                          <path d="M0 0L8 4L0 8Z" fill="#16a34a" />
+                          <path d="M0 0L8 4L0 8Z" fill={currentTheme.primary[3]} />
                         </svg>
                       </div>
                     </div>
@@ -1567,9 +1578,18 @@ export default function Checkout() {
       {/* Coupon Section */}
       {selectedCoupon ? (
         <div className="px-4 py-1.5 border-b border-neutral-200">
-          <div className="flex items-center justify-between bg-green-50 rounded-lg p-2 border border-green-200">
+          <div
+            className="flex items-center justify-between rounded-lg p-2 border"
+            style={{
+              backgroundColor: `${currentTheme.primary[3]}10`,
+              borderColor: `${currentTheme.primary[3]}30`
+            }}
+          >
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              <div className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0">
+              <div
+                className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: currentTheme.primary[3] }}
+              >
                 <svg
                   width="14"
                   height="14"
@@ -1586,17 +1606,19 @@ export default function Checkout() {
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-green-700 truncate">
+                <p className="text-xs font-semibold truncate" style={{ color: currentTheme.primary[3] }}>
                   {selectedCoupon.code}
                 </p>
-                <p className="text-[10px] text-green-600 truncate">
+                <p className="text-[10px] truncate" style={{ color: currentTheme.primary[3], opacity: 0.8 }}>
                   {selectedCoupon.title}
                 </p>
               </div>
             </div>
             <button
               onClick={handleRemoveCoupon}
-              className="text-xs text-green-600 font-medium ml-2 flex-shrink-0">
+              className="text-xs font-medium ml-2 flex-shrink-0"
+              style={{ color: currentTheme.primary[3] }}
+            >
               Remove
             </button>
           </div>
@@ -1635,7 +1657,8 @@ export default function Checkout() {
                   type="checkbox"
                   checked={useWallet}
                   onChange={(e) => setUseWallet(e.target.checked)}
-                  className="w-5 h-5 accent-green-600 rounded focus:ring-green-500"
+                  className="w-5 h-5 rounded hover:cursor-pointer"
+                  style={{ accentColor: currentTheme.primary[3] }}
                 />
               </div>
               <div className="flex flex-col">
@@ -1644,7 +1667,7 @@ export default function Checkout() {
               </div>
             </div>
             {useWallet && (
-              <span className="text-sm font-bold text-green-600">- ₹{walletAmountUsed.toLocaleString("en-IN")}</span>
+              <span className="text-sm font-bold" style={{ color: currentTheme.primary[3] }}>- ₹{walletAmountUsed.toLocaleString("en-IN")}</span>
             )}
           </div>
         </div>
@@ -1659,12 +1682,21 @@ export default function Checkout() {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setPaymentMethod("Online")}
-              className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${paymentMethod === "Online"
-                ? "border-green-600 bg-green-50 text-green-700"
-                : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
-                }`}>
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all`}
+              style={paymentMethod === "Online" ? {
+                borderColor: currentTheme.primary[3],
+                backgroundColor: `${currentTheme.primary[3]}10`,
+                color: currentTheme.primary[3]
+              } : {
+                borderColor: '#e5e7eb',
+                backgroundColor: 'white',
+                color: '#525252'
+              }}
+            >
               <div
-                className={`w-8 h-8 rounded-full mb-2 flex items-center justify-center ${paymentMethod === "Online" ? "bg-green-600" : "bg-neutral-100"}`}>
+                className={`w-8 h-8 rounded-full mb-2 flex items-center justify-center `}
+                style={{ backgroundColor: paymentMethod === "Online" ? currentTheme.primary[3] : '#f5f5f5' }}
+              >
                 <svg
                   width="18"
                   height="18"
@@ -1686,12 +1718,21 @@ export default function Checkout() {
 
             <button
               onClick={() => setPaymentMethod("COD")}
-              className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${paymentMethod === "COD"
-                ? "border-green-600 bg-green-50 text-green-700"
-                : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
-                }`}>
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all`}
+              style={paymentMethod === "COD" ? {
+                borderColor: currentTheme.primary[3],
+                backgroundColor: `${currentTheme.primary[3]}10`,
+                color: currentTheme.primary[3]
+              } : {
+                borderColor: '#e5e7eb',
+                backgroundColor: 'white',
+                color: '#525252'
+              }}
+            >
               <div
-                className={`w-8 h-8 rounded-full mb-2 flex items-center justify-center ${paymentMethod === "COD" ? "bg-green-600" : "bg-neutral-100"}`}>
+                className={`w-8 h-8 rounded-full mb-2 flex items-center justify-center`}
+                style={{ backgroundColor: paymentMethod === "COD" ? currentTheme.primary[3] : '#f5f5f5' }}
+              >
                 <svg
                   width="18"
                   height="18"
@@ -2101,7 +2142,7 @@ export default function Checkout() {
         </button>
       </div>
 
-      {/* Made with love by Zeto Mart */}
+      {/* Made with love by Inor fresh */}
       <div className="px-4 py-2">
         <div className="w-full flex flex-col items-center justify-center">
           <div className="flex items-center gap-1.5 text-neutral-500">
@@ -2114,7 +2155,7 @@ export default function Checkout() {
             </motion.span>
             <span className="text-[10px] font-medium">by</span>
             <span className="text-[10px] font-semibold text-green-600">
-              Zeto Mart
+              Inor fresh
             </span>
           </div>
         </div>
@@ -2372,9 +2413,11 @@ export default function Checkout() {
                             }
                             disabled={!meetsMinOrder || isValidatingCoupon}
                             className={`px-3 py-1 rounded text-xs font-medium transition-colors ${meetsMinOrder
-                              ? "bg-green-600 text-white hover:bg-green-700"
+                              ? "text-white hover:opacity-90"
                               : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-                              }`}>
+                              }`}
+                            style={meetsMinOrder ? { backgroundColor: currentTheme.primary[3] } : {}}
+                          >
                             {isValidatingCoupon ? "..." : "Apply"}
                           </button>
                         )}
@@ -2395,9 +2438,11 @@ export default function Checkout() {
             onClick={handlePlaceOrder}
             disabled={cart.items.length === 0}
             className={`w-full py-3 px-4 font-bold text-sm uppercase tracking-wide transition-colors ${cart.items.length > 0
-              ? "bg-green-600 text-white hover:bg-green-700"
+              ? "text-white hover:opacity-90"
               : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-              }`}>
+              }`}
+            style={cart.items.length > 0 ? { backgroundColor: currentTheme.primary[3] } : {}}
+          >
             Place Order
           </button>
         ) : (
@@ -2409,7 +2454,9 @@ export default function Checkout() {
                 },
               })
             }
-            className="w-full bg-green-600 text-white py-3 px-4 font-bold text-sm uppercase tracking-wide hover:bg-green-700 transition-colors">
+            className="w-full text-white py-3 px-4 font-bold text-sm uppercase tracking-wide hover:opacity-90 transition-colors"
+            style={{ backgroundColor: currentTheme.primary[3] }}
+          >
             Choose address at next step
           </button>
         )}

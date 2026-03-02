@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useOrders } from '../../hooks/useOrders';
+import { useThemeContext } from '../../context/ThemeContext';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -29,6 +30,7 @@ const formatDate = (dateString: string) => {
 
 export default function Orders() {
   const { orders } = useOrders();
+  const { currentTheme } = useThemeContext();
 
   console.log('📋 Orders component - orders:', orders);
   console.log('📋 Orders count:', orders.length);
@@ -41,7 +43,8 @@ export default function Orders() {
         <p className="text-neutral-600 mb-6 md:mb-8 md:text-lg">Start shopping to see your orders here!</p>
         <Link
           to="/"
-          className="inline-block bg-green-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold hover:bg-green-700 transition-colors md:text-lg"
+          className="inline-block text-white px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold hover:opacity-90 transition-opacity md:text-lg text-center"
+          style={{ backgroundColor: currentTheme.primary[3] }}
         >
           Start Shopping
         </Link>

@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { Product } from '../types/domain';
+import { useThemeContext } from '../context/ThemeContext';
 
 interface AddToCartAnimationProps {
   /**
@@ -30,18 +31,6 @@ interface AddToCartAnimationProps {
   linkTo?: string;
 }
 
-/**
- * AddToCartAnimation Component
- * 
- * A self-contained component that handles:
- * - Fly-to-cart animation when products are added
- * - Bounce-out animation when products are removed
- * - Pulse animation on cart changes
- * - "View cart" button display at bottom center
- * 
- * This component automatically integrates with the CartContext and
- * listens for cart changes to trigger appropriate animations.
- */
 export default function AddToCartAnimation({
   bottomOffset = 96,
   pillClassName = '',
@@ -49,6 +38,7 @@ export default function AddToCartAnimation({
   linkTo = '/checkout',
 }: AddToCartAnimationProps) {
   const { cart, lastAddEvent } = useCart();
+  const { currentTheme } = useThemeContext();
   const location = useLocation();
   const linkRef = useRef<HTMLAnchorElement>(null);
   const [removedProduct, setRemovedProduct] = useState<Product | null>(null);
@@ -231,7 +221,7 @@ export default function AddToCartAnimation({
       // Step 1: Scale up with glow
       tl.to(linkRef.current, {
         scale: 1.08,
-        boxShadow: '0 10px 25px rgba(22, 163, 74, 0.4)',
+        boxShadow: `0 10px 25px ${currentTheme.primary[2]}66`,
         duration: 0.15,
         ease: 'power2.out',
         transformOrigin: 'center center',
@@ -240,7 +230,7 @@ export default function AddToCartAnimation({
         // Step 2: Bounce back
         .to(linkRef.current, {
           scale: 1.0,
-          boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)',
+          boxShadow: `0 4px 12px ${currentTheme.primary[2]}4d`,
           duration: 0.2,
           ease: 'power2.inOut',
         })
@@ -256,7 +246,7 @@ export default function AddToCartAnimation({
           ease: 'power1.in',
         });
     }
-  }, [cart.itemCount, cart.total, removedProduct, flyingProduct]);
+  }, [cart.itemCount, cart.total, removedProduct, flyingProduct, currentTheme.primary]);
 
   // Get up to 3 most recently added items for thumbnails
   // Since items are added to the end of the array, we take the last 3
@@ -330,7 +320,12 @@ export default function AddToCartAnimation({
             <Link
               ref={linkRef}
               to={linkTo}
-              className={`bg-gradient-to-r from-green-700 via-green-600 to-green-700 text-white rounded-full shadow-xl shadow-green-900/30 px-3 py-2 flex items-center gap-2 hover:from-green-800 hover:via-green-700 hover:to-green-800 transition-all duration-300 pointer-events-auto border border-green-800/30 backdrop-blur-sm ${pillClassName}`}
+              className={`text-white rounded-full shadow-xl px-3 py-2 flex items-center gap-2 transition-all duration-300 pointer-events-auto border backdrop-blur-sm ${pillClassName}`}
+              style={{
+                background: `linear-gradient(to right, ${currentTheme.primary[1]}, ${currentTheme.primary[2]}, ${currentTheme.primary[1]})`,
+                boxShadow: `0 10px 25px ${currentTheme.primary[2]}66`,
+                borderColor: `${currentTheme.primary[2]}4d`
+              }}
             >
               {/* Left: Product thumbnails */}
               <div className="flex items-center -space-x-4">

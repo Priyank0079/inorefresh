@@ -11,6 +11,7 @@ import Button from '../../../components/ui/button';
 import Badge from '../../../components/ui/badge';
 import StarRating from '../../../components/ui/StarRating';
 import { calculateProductPrice } from '../../../utils/priceUtils';
+import { useThemeContext } from '../../../context/ThemeContext';
 
 interface ProductCardProps {
   product: Product;
@@ -46,6 +47,7 @@ export default function ProductCard({
   const { isAuthenticated } = useAuth();
   const { location } = useLocation();
   const { showToast } = useToast(); // Get toast function
+  const { currentTheme } = useThemeContext();
   const imageRef = useRef<HTMLImageElement>(null);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -212,8 +214,21 @@ export default function ProductCard({
       whileHover={{ y: -2 }}
       whileTap={{ scale: 0.97 }}
       transition={{ duration: 0.2 }}
-      className={`${categoryStyle ? 'bg-green-50' : 'bg-white'} rounded-lg shadow-sm overflow-hidden flex flex-col relative`}
+      className={`${categoryStyle ? 'border-2' : 'bg-white shadow-[0_4px_12px_rgba(0,51,102,0.06)]'} rounded-[20px] overflow-hidden flex flex-col relative group`}
+      style={{
+        backgroundColor: categoryStyle ? `${currentTheme.primary[3]}08` : 'white',
+        borderColor: categoryStyle ? `${currentTheme.primary[3]}20` : 'transparent'
+      }}
     >
+      {/* 🌊 UNDERWATER CARD ENHANCEMENTS */}
+      {/* 1. Very faint top highlight reflection */}
+      <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none z-20" />
+
+      {/* 2. Subtle inner glow at 4% opacity */}
+      <div className="absolute inset-0 rounded-[20px] shadow-[inset_0_0_20px_rgba(0,224,198,0.04)] pointer-events-none z-10" />
+
+      {/* 3. Micro shimmer swipe animation on Hover */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.1] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none z-20" />
       <div
         onClick={handleCardClick}
         className="cursor-pointer flex-1 flex flex-col"
@@ -246,7 +261,10 @@ export default function ProductCard({
           )}
 
           {categoryStyle && showBadge && discount > 0 && (
-            <div className="absolute top-2 left-2 z-10 bg-green-600 text-white text-[10px] font-semibold px-2 py-0.5 rounded">
+            <div
+              className="absolute top-2 left-2 z-10 text-white text-[10px] font-semibold px-2 py-0.5 rounded"
+              style={{ backgroundColor: currentTheme.primary[3] }}
+            >
               {discount}% off
             </div>
           )}
@@ -321,17 +339,25 @@ export default function ProductCard({
                       e.stopPropagation();
                       handleAdd(e);
                     }}
-                    className={`w-full border rounded-full font-semibold text-xs h-7 px-3 flex items-center justify-center uppercase tracking-wide ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
+                    className={`w-full border rounded-full font-semibold text-xs h-7 px-3 flex items-center justify-center uppercase tracking-wide transition-all ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
                       ? 'border-neutral-300 text-neutral-400 bg-neutral-50 cursor-not-allowed'
-                      : 'border-green-600 text-green-600 bg-transparent hover:bg-green-50'
+                      : ''
                       }`}
+                    style={!(product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")) ? {
+                      borderColor: currentTheme.primary[3],
+                      color: currentTheme.primary[3],
+                      backgroundColor: 'transparent'
+                    } : {}}
                   >
                     {product.isAvailable === false ? 'Out of Range' : ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out") ? 'Out of Stock' : 'ADD'}
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center gap-1.5 bg-white border border-green-600 rounded-full px-1.5 py-0.5 h-7 w-full">
+              <div
+                className="flex items-center justify-center gap-1.5 bg-white border rounded-full px-1.5 py-0.5 h-7 w-full shadow-sm"
+                style={{ borderColor: currentTheme.primary[3] }}
+              >
                 <Button
                   variant="default"
                   size="icon"
@@ -339,12 +365,13 @@ export default function ProductCard({
                     e.stopPropagation();
                     handleDecrease(e);
                   }}
-                  className="w-5 h-5 p-0 bg-transparent text-green-600 hover:bg-green-50 shadow-none"
+                  className="w-5 h-5 p-0 bg-transparent shadow-none"
+                  style={{ color: currentTheme.primary[3] }}
                   aria-label="Decrease quantity"
                 >
                   −
                 </Button>
-                <span className="text-xs font-bold text-green-600 min-w-[1rem] text-center">
+                <span className="text-xs font-bold min-w-[1rem] text-center" style={{ color: currentTheme.primary[3] }}>
                   {inCartQty}
                 </span>
                 <Button
@@ -355,8 +382,9 @@ export default function ProductCard({
                     e.stopPropagation();
                     handleIncrease(e);
                   }}
-                  className={`w-5 h-5 p-0 bg-transparent text-green-600 shadow-none ${product.isAvailable === false ? 'text-neutral-300 cursor-not-allowed' : 'hover:bg-green-50'
+                  className={`w-5 h-5 p-0 bg-transparent shadow-none ${product.isAvailable === false ? 'text-neutral-300 cursor-not-allowed' : ''
                     }`}
+                  style={product.isAvailable !== false ? { color: currentTheme.primary[3] } : {}}
                   aria-label="Increase quantity"
                 >
                   +
@@ -403,7 +431,7 @@ export default function ProductCard({
 
               {/* 4. % OFF */}
               {discount > 0 && (
-                <p className="text-[9px] font-semibold text-green-600 mb-0.5 leading-tight">
+                <p className="text-[9px] font-semibold mb-0.5 leading-tight" style={{ color: currentTheme.primary[3] }}>
                   {discount}% OFF
                 </p>
               )}
@@ -446,14 +474,14 @@ export default function ProductCard({
               </div>
 
               {showStockInfo && (
-                <p className="text-xs text-green-600 mb-2 font-medium">
+                <p className="text-xs mb-2 font-medium" style={{ color: currentTheme.primary[3] }}>
                   Fast delivery
                 </p>
               )}
 
               {showVegetarianIcon && (
                 <div className="flex items-center gap-1 mb-2">
-                  <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                  <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: currentTheme.primary[3] }}>
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
                   <span className="text-xs text-neutral-600">Vegetarian</span>
@@ -488,10 +516,15 @@ export default function ProductCard({
                   size="sm"
                   disabled={product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")}
                   onClick={handleAdd}
-                  className={`w-full border h-8 text-xs font-semibold uppercase tracking-wide ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
+                  className={`w-full border h-8 text-xs font-semibold uppercase tracking-wide transition-all ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
                     ? 'border-neutral-300 text-neutral-400 bg-neutral-50 cursor-not-allowed'
-                    : 'border-green-600 text-green-600 hover:bg-green-50'
+                    : ''
                     }`}
+                  style={!(product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")) ? {
+                    borderColor: currentTheme.primary[3],
+                    color: currentTheme.primary[3],
+                    backgroundColor: 'transparent'
+                  } : {}}
                 >
                   {product.isAvailable === false ? 'Out of Range' : ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out") ? 'Out of Stock' : 'Add'}
                 </Button>
@@ -499,17 +532,21 @@ export default function ProductCard({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center gap-2 bg-white border border-green-600 rounded-full px-2 py-0.5 h-8">
+              <div
+                className="flex items-center justify-center gap-2 bg-white border rounded-full px-2 py-0.5 h-8 shadow-sm"
+                style={{ borderColor: currentTheme.primary[3] }}
+              >
                 <Button
                   variant="default"
                   size="icon"
                   onClick={handleDecrease}
-                  className="w-6 h-6 p-0 bg-transparent text-green-600 hover:bg-green-50 shadow-none"
+                  className="w-6 h-6 p-0 bg-transparent shadow-none"
+                  style={{ color: currentTheme.primary[3] }}
                   aria-label="Decrease quantity"
                 >
                   −
                 </Button>
-                <span className="text-xs font-bold text-green-600 min-w-[1.5rem] text-center">
+                <span className="text-xs font-bold min-w-[1.5rem] text-center" style={{ color: currentTheme.primary[3] }}>
                   {inCartQty}
                 </span>
                 <Button
@@ -517,8 +554,9 @@ export default function ProductCard({
                   size="icon"
                   disabled={product.isAvailable === false}
                   onClick={handleIncrease}
-                  className={`w-6 h-6 p-0 bg-transparent text-green-600 shadow-none ${product.isAvailable === false ? 'text-neutral-300 cursor-not-allowed' : 'hover:bg-green-50'
+                  className={`w-6 h-6 p-0 bg-transparent shadow-none ${product.isAvailable === false ? 'text-neutral-300 cursor-not-allowed' : ''
                     }`}
+                  style={product.isAvailable !== false ? { color: currentTheme.primary[3] } : {}}
                   aria-label="Increase quantity"
                 >
                   +

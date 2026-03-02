@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useThemeContext } from "../../../context/ThemeContext";
 
 interface SubMenuItem {
   label: string;
@@ -36,30 +37,6 @@ const menuSections: MenuSection[] = [
         path: "/admin/category",
         hasSubmenu: true,
         submenuItems: [
-          {
-            label: "Category",
-            path: "/admin/category",
-            icon: (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <rect
-                  x="3"
-                  y="3"
-                  width="18"
-                  height="18"
-                  rx="2"
-                  strokeDasharray="4 2"></rect>
-                <path d="M8 6H21M8 12H21M8 18H21M3 6H3.01M3 12H3.01M3 18H3.01"></path>
-              </svg>
-            ),
-          },
           {
             label: "Header Category",
             path: "/admin/category/header",
@@ -952,6 +929,7 @@ const menuSections: MenuSection[] = [
 export default function AdminSidebar({ onClose }: AdminSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentTheme } = useThemeContext();
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -1011,9 +989,15 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
     .filter((section) => section.items.length > 0);
 
   return (
-    <aside className="w-64 bg-teal-700 h-screen flex flex-col">
+    <aside
+      className="w-64 h-screen flex flex-col transition-colors duration-300"
+      style={{ backgroundColor: currentTheme.primary[0] }}
+    >
       {/* Close button - only show on mobile */}
-      <div className="flex justify-end p-4 border-b border-teal-600 lg:hidden">
+      <div
+        className="flex justify-end p-4 lg:hidden"
+        style={{ borderBottom: `1px solid ${currentTheme.primary[1]}` }}
+      >
         <button
           onClick={onClose}
           className="p-2 text-teal-100 hover:text-white transition-colors"
@@ -1036,14 +1020,30 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
       </div>
 
       {/* Search Bar */}
-      <div className="p-4 border-b border-teal-600">
+      <div
+        className="p-4"
+        style={{ borderBottom: `1px solid ${currentTheme.primary[1]}` }}
+      >
         <div className="relative">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search Menu Ctrl + F"
-            className="w-full px-3 py-2 pl-10 bg-teal-800 border border-teal-600 rounded text-white placeholder-teal-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            className="w-full px-3 py-2 pl-10 border rounded text-white text-sm focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: 'rgba(0,0,0,0.2)',
+              borderColor: currentTheme.primary[1],
+              color: 'white'
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = 'white';
+              e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255,255,255,0.2)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = currentTheme.primary[1];
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           />
           <svg
             width="18"
@@ -1052,7 +1052,7 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-300">
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50">
             <circle cx="11" cy="11" r="8"></circle>
             <path d="M21 21L16.65 16.65"></path>
           </svg>
@@ -1064,9 +1064,19 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
         <button
           onClick={() => handleNavigation("/admin")}
           className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${isActive("/admin")
-            ? "bg-teal-600 text-white"
-            : "text-teal-100 hover:bg-teal-600/50 hover:text-white"
-            }`}>
+            ? "text-white"
+            : "text-white/70 hover:text-white"
+            }`}
+          style={{
+            backgroundColor: isActive("/admin") ? currentTheme.primary[1] : 'transparent'
+          }}
+          onMouseEnter={(e) => {
+            if (!isActive("/admin")) e.currentTarget.style.backgroundColor = `${currentTheme.primary[1]}80`;
+          }}
+          onMouseLeave={(e) => {
+            if (!isActive("/admin")) e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+        >
           <svg
             width="18"
             height="18"
@@ -1098,7 +1108,10 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
         `}</style>
         {filteredSections.map((section, sectionIndex) => (
           <div key={sectionIndex} className="mb-6">
-            <h3 className="px-4 mb-2 text-xs font-bold text-teal-200 uppercase tracking-wider">
+            <h3
+              className="px-4 mb-2 text-xs font-bold uppercase tracking-wider"
+              style={{ color: `${currentTheme.primary[3]}cc` }}
+            >
               {section.title}
             </h3>
             <ul className="space-y-1 px-2">
@@ -1118,9 +1131,19 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
                         }
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${active
-                        ? "bg-teal-600 text-white"
-                        : "text-teal-100 hover:bg-teal-600/50 hover:text-white"
-                        }`}>
+                        ? "text-white"
+                        : "text-white/70 hover:text-white"
+                        }`}
+                      style={{
+                        backgroundColor: active ? currentTheme.primary[1] : 'transparent'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!active) e.currentTarget.style.backgroundColor = `${currentTheme.primary[1]}80`;
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!active) e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <span className="flex-shrink-0">{item.icon}</span>
                         <span className="text-sm font-medium truncate">
@@ -1136,7 +1159,7 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
                           stroke="currentColor"
                           strokeWidth="2"
                           className={`transition-transform flex-shrink-0 ml-2 ${expanded ? "rotate-90" : ""
-                            } ${active ? "text-white" : "text-teal-200"}`}>
+                            } ${active ? "text-white" : "text-white/50"}`}>
                           <path
                             d="M9 18L15 12L9 6"
                             strokeLinecap="round"
@@ -1156,9 +1179,19 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
                                 <button
                                   onClick={() => handleNavigation(subItem.path)}
                                   className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-left transition-colors ${subActive
-                                    ? "bg-teal-500 text-white"
-                                    : "text-teal-100 hover:bg-teal-600/50 hover:text-white"
-                                    }`}>
+                                    ? "text-white"
+                                    : "text-white/70 hover:text-white"
+                                    }`}
+                                  style={{
+                                    backgroundColor: subActive ? currentTheme.primary[2] : 'transparent'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (!subActive) e.currentTarget.style.backgroundColor = `${currentTheme.primary[1]}80`;
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!subActive) e.currentTarget.style.backgroundColor = 'transparent';
+                                  }}
+                                >
                                   <div className="flex items-center gap-2 flex-1 min-w-0">
                                     <span className="flex-shrink-0">
                                       {subItem.icon}

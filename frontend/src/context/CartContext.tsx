@@ -269,19 +269,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
           variation = product.pack;
         }
 
-        const response = await apiAddToCart(
-          productId,
-          1,
-          variation,
-          location?.latitude,
-          location?.longitude
-        );
-        if (response && response.data && response.data.items) {
-          // Atomic update from server response
-          setItems(mapApiItemsToState(response.data.items));
-          setEstimatedFee(response.data.estimatedDeliveryFee);
-          setPlatformFee(response.data.platformFee);
-          setFreeDeliveryThreshold(response.data.freeDeliveryThreshold);
+        // Helper to check for MongoDB ObjectId format (24 hex chars)
+        const isMongoId = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
+
+        // Only sync to API if user is authenticated AND the product exists in DB (valid ID)
+        if (isMongoId(productId)) {
+          const response = await apiAddToCart(
+            productId,
+            1,
+            variation,
+            location?.latitude,
+            location?.longitude
+          );
+          if (response && response.data && response.data.items) {
+            // Atomic update from server response
+            setItems(mapApiItemsToState(response.data.items));
+            setEstimatedFee(response.data.estimatedDeliveryFee);
+            setPlatformFee(response.data.platformFee);
+            setFreeDeliveryThreshold(response.data.freeDeliveryThreshold);
+          }
+        } else {
+          console.debug(`Skipping backend sync for local product: ${productId}`);
         }
       } catch (error: any) {
         console.error("Add to cart failed", error);
@@ -313,8 +321,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const previousItems = [...items];
     setItems((prevItems) => prevItems.filter((item) => item?.product && item.product.id !== productId && item.product._id !== productId));
 
-    // Only sync to API if user is authenticated and item has CartItemID
-    if (isAuthenticated && user?.userType === 'Customer' && itemToRemove?.id) {
+    // Only sync to API if user is authenticated and item has a valid MongoDB ID
+    const isMongoId = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
+
+    if (isAuthenticated && user?.userType === 'Customer' && itemToRemove?.id && isMongoId(itemToRemove.id)) {
       try {
         const response = await apiRemoveFromCart(
           itemToRemove.id,
@@ -399,8 +409,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       })
     );
 
-    // Only sync to API if user is authenticated and item has CartItemID
-    if (isAuthenticated && user?.userType === 'Customer' && itemToUpdate?.id) {
+    // Only sync to API if user is authenticated and item has valid CartItemID (Mongo ID)
+    const isMongoId = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
+
+    if (isAuthenticated && user?.userType === 'Customer' && itemToUpdate?.id && isMongoId(itemToUpdate.id)) {
       try {
         const response = await apiUpdateCartItem(
           itemToUpdate.id,

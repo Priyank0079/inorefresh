@@ -9,6 +9,13 @@ import {
 import { themes } from '../../../utils/themes';
 import { ICON_LIBRARY, getIconByName, IconDef } from '../../../utils/iconLibrary';
 
+const FISH_ICON_NAMES = ['aqua-fish', 'marin-fish', 'bengali-fish'];
+const FISH_RELATED_CATEGORIES = [
+  { value: 'auqa-fish', label: 'Auqa fish' },
+  { value: 'marin-fish', label: 'marin fish' },
+  { value: 'bengoli-fish', label: 'Bengoli fish' },
+];
+
 export default function AdminHeaderCategory() {
   const [headerCategories, setHeaderCategories] = useState<HeaderCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +40,10 @@ export default function AdminHeaderCategory() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const themeOptions = Object.keys(themes);
+  const fishIcons = useMemo(
+    () => ICON_LIBRARY.filter((icon) => FISH_ICON_NAMES.includes(icon.name)),
+    []
+  );
 
   useEffect(() => {
     fetchCategories();
@@ -60,16 +71,17 @@ export default function AdminHeaderCategory() {
 
   const filteredIcons = useMemo(() => {
     const term = iconSearchTerm || headerCategoryName || '';
-    if (!term.trim()) return ICON_LIBRARY;
+    if (!term.trim()) return fishIcons;
 
     const lowerTerm = term.toLowerCase();
+    const iconPool = [...fishIcons];
 
-    return [...ICON_LIBRARY].sort((a, b) => {
+    return iconPool.sort((a, b) => {
       const aScore = getMatchScore(a, lowerTerm);
       const bScore = getMatchScore(b, lowerTerm);
       return bScore - aScore;
     });
-  }, [iconSearchTerm, headerCategoryName]);
+  }, [iconSearchTerm, headerCategoryName, fishIcons]);
 
   function getMatchScore(icon: IconDef, term: string) {
     let score = 0;
@@ -199,7 +211,7 @@ export default function AdminHeaderCategory() {
                 type="text"
                 value={headerCategoryName}
                 onChange={(e) => setHeaderCategoryName(e.target.value)}
-                placeholder="Enter Category Name (e.g. Dairy, Books)"
+                placeholder="Enter Category Name (e.g. Search for fish)"
                 className="w-full px-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
               />
             </div>
@@ -320,12 +332,11 @@ export default function AdminHeaderCategory() {
                 className="w-full px-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
               >
                 <option value="">Select Category</option>
-                <option value="fashion">Fashion</option>
-                <option value="electronics">Electronics</option>
-                <option value="home">Home</option>
-                <option value="beauty">Beauty</option>
-                <option value="mobiles">Mobiles</option>
-                <option value="grocery">Grocery</option>
+                {FISH_RELATED_CATEGORIES.map((categoryOption) => (
+                  <option key={categoryOption.value} value={categoryOption.value}>
+                    {categoryOption.label}
+                  </option>
+                ))}
               </select>
             </div>
 

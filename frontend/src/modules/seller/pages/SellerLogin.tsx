@@ -69,8 +69,8 @@ export default function SellerLogin() {
     }
   };
 
-  const handleZetoMartLogin = () => {
-    // Handle Zeto Mart login logic here
+  const handleInorFreshLogin = () => {
+    // Handle Inor fresh login logic here
     navigate('/seller');
   };
 
@@ -80,11 +80,11 @@ export default function SellerLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-green-50 flex flex-col items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#e6f2ff] via-[#f0fbff] to-[#e8f7f5] flex flex-col items-center justify-center px-4 py-8">
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-neutral-50 transition-colors"
+        className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-white/90 border border-[#cfe4f5] shadow-md flex items-center justify-center hover:bg-white transition-colors"
         aria-label="Back"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -93,18 +93,23 @@ export default function SellerLogin() {
       </button>
 
       {/* Login Card */}
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-[#d8e8f5]">
         {/* Header Section */}
-        <div className="px-6 py-6 text-center bg-gradient-to-br from-teal-700 to-teal-900">
+        <div className="px-6 py-6 text-center bg-gradient-to-br from-[#003366] via-[#005a8d] to-[#009999]">
           <div className="flex justify-center mb-4">
-            <img
-              src="/assets/Zeto-mart.png"
-              alt="Zeto Mart"
-              className="h-28 w-auto object-contain bg-white/90 rounded-xl p-2 shadow-sm"
-            />
+            <div className="relative h-28 w-44 flex items-center justify-center">
+              <div className="absolute inset-3 rounded-2xl bg-white/20 blur-xl animate-pulse" />
+              <div className="absolute inset-5 rounded-xl bg-white/35 shadow-[0_0_30px_rgba(255,255,255,0.45)]" />
+              <div className="absolute -inset-x-2 inset-y-10 bg-gradient-to-r from-transparent via-white/35 to-transparent animate-pulse" />
+              <img
+                src="/images/inor_logo_trans.png"
+                alt="Inor fresh"
+                className="relative z-10 h-24 w-auto object-contain drop-shadow-[0_6px_16px_rgba(0,0,0,0.25)]"
+              />
+            </div>
           </div>
           <h1 className="text-2xl font-bold text-white mb-1">Seller Login</h1>
-          <p className="text-teal-100 text-sm">Access your seller dashboard</p>
+          <p className="text-cyan-100 text-sm">Access your seller dashboard</p>
         </div>
 
         {/* Login Form */}
@@ -116,7 +121,7 @@ export default function SellerLogin() {
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                   Mobile Number
                 </label>
-                <div className="flex items-center bg-white border border-neutral-300 rounded-lg overflow-hidden focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-200 transition-all">
+                <div className="flex items-center bg-white border border-neutral-300 rounded-lg overflow-hidden focus-within:border-[#009999] focus-within:ring-2 focus-within:ring-cyan-100 transition-all">
                   <div className="px-3 py-2.5 text-sm font-medium text-neutral-600 border-r border-neutral-300 bg-neutral-50">
                     +91
                   </div>
@@ -142,7 +147,7 @@ export default function SellerLogin() {
                 onClick={handleMobileLogin}
                 disabled={mobileNumber.length !== 10 || loading}
                 className={`w-full py-3 rounded-lg font-bold text-sm transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${mobileNumber.length === 10 && !loading
-                  ? 'bg-gradient-to-r from-teal-700 to-teal-900 text-white hover:from-teal-800 hover:to-teal-950'
+                  ? 'bg-gradient-to-r from-[#003366] to-[#009999] text-white hover:from-[#003f7a] hover:to-[#00a8a8]'
                   : 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
                   }`}
               >
@@ -199,7 +204,7 @@ export default function SellerLogin() {
                     }
                   }}
                   disabled={loading}
-                  className="flex-1 py-3 rounded-lg font-bold text-sm bg-gradient-to-r from-teal-700 to-teal-900 text-white hover:from-teal-800 hover:to-teal-950 transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                  className="flex-1 py-3 rounded-lg font-bold text-sm bg-gradient-to-r from-[#003366] to-[#009999] text-white hover:from-[#003f7a] hover:to-[#00a8a8] transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                 >
                   {loading ? 'Sending...' : 'Resend OTP'}
                 </button>
@@ -217,7 +222,7 @@ export default function SellerLogin() {
               Don't have a seller account?{' '}
               <button
                 onClick={() => navigate('/seller/signup')}
-                className="text-teal-800 hover:text-teal-950 font-bold ml-1 transition-colors"
+                className="text-[#005a8d] hover:text-[#003366] font-bold ml-1 transition-colors"
               >
                 Sign Up
               </button>
@@ -228,7 +233,7 @@ export default function SellerLogin() {
 
       {/* Footer Text */}
       <p className="mt-6 text-xs text-neutral-500 text-center max-w-md">
-        By continuing, you agree to Zeto Mart's Terms of Service and Privacy Policy
+        By continuing, you agree to Inor fresh's Terms of Service and Privacy Policy
       </p>
     </div>
   );

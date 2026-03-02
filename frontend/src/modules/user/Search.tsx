@@ -5,11 +5,13 @@ import { getProducts } from '../../services/api/customerProductService';
 import { getHomeContent } from '../../services/api/customerHomeService';
 import { Product } from '../../types/domain';
 import { useLocation } from '../../hooks/useLocation';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Search() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { location } = useLocation();
+  const { currentTheme } = useThemeContext();
   const searchQuery = searchParams.get('q') || '';
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [trendingItems, setTrendingItems] = useState<any[]>([]);
@@ -82,7 +84,7 @@ export default function Search() {
           </h2>
           {loading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: currentTheme.primary[3] }}></div>
             </div>
           ) : searchResults.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
@@ -111,7 +113,7 @@ export default function Search() {
         <>
           {contentLoading && (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: currentTheme.primary[3] }}></div>
             </div>
           )}
 
@@ -122,21 +124,25 @@ export default function Search() {
                 {trendingItems.map((item) => (
                   <div
                     key={item.id || item._id}
-                    className="bg-white rounded-lg border-2 border-green-600 p-3 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-white rounded-2xl border border-neutral-100 p-2.5 cursor-pointer hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 group"
                     onClick={() => navigate(item.type === 'category' ? `/category/${item.id || item._id}` : `/product/${item.id || item._id}`)}
                   >
-                    <div className="w-full h-24 rounded-lg mb-2 overflow-hidden bg-neutral-50 flex items-center justify-center">
+                    <div className="w-full h-28 rounded-xl mb-3 overflow-hidden bg-neutral-50 flex items-center justify-center p-2 relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent z-10 pointer-events-none" />
                       {item.image || item.imageUrl ? (
                         <img
                           src={item.image || item.imageUrl}
                           alt={item.name}
-                          className="w-full h-full object-contain bg-white rounded-sm"
+                          className="w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.05)] group-hover:scale-110 transition-transform duration-500 z-10"
                         />
                       ) : (
-                        <div className="text-4xl">🔥</div>
+                        <div className="text-4xl z-10">🔥</div>
                       )}
                     </div>
-                    <div className="text-xs font-semibold text-neutral-900 text-center line-clamp-2">
+                    <div
+                      className="text-[12px] font-bold text-neutral-800 text-center line-clamp-1 px-1 transition-colors"
+                      style={{ color: 'inherit' }}
+                    >
                       {item.name || item.title}
                     </div>
                   </div>

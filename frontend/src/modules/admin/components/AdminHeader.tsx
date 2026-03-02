@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
-import zetoMartLogo from '@assets/Zeto-mart.png';
+import { useThemeContext } from '../../../context/ThemeContext';
+import InorFreshLogo from '@assets/Inor fresh.png';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -12,6 +13,7 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+  const { currentTheme } = useThemeContext();
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,7 +44,10 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-neutral-200 sticky top-0 z-30">
+    <header
+      className="bg-white shadow-sm sticky top-0 z-30 border-b-2"
+      style={{ borderBottomColor: currentTheme.primary[3] }}
+    >
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4 gap-3 sm:gap-0">
         {/* Logo and Hamburger Menu */}
         <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
@@ -74,14 +79,14 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
               </svg>
             )}
           </button>
-          {/* Zeto Mart Logo */}
+          {/* Inor fresh Logo */}
           <button
             onClick={handleLogoClick}
             className="hover:opacity-80 transition-opacity"
           >
             <img
-              src={zetoMartLogo}
-              alt="Zeto Mart"
+              src={InorFreshLogo}
+              alt="Inor fresh"
               className="h-10 sm:h-12 w-auto object-contain cursor-pointer"
               style={{ maxWidth: '200px' }}
             />
@@ -144,7 +149,18 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
                       }
                     }}
                     placeholder="Search orders, customers, products..."
-                    className="w-full px-4 py-2 pl-10 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    className="w-full px-4 py-2 pl-10 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-1"
+                    style={{
+                      borderColor: '#d4d4d4'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = currentTheme.primary[3];
+                      e.currentTarget.style.boxShadow = `0 0 0 1px ${currentTheme.primary[3]}`;
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = '#d4d4d4';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                     autoFocus
                   />
                   <svg
@@ -211,7 +227,8 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
                       navigate('/admin/notification');
                       setShowNotificationsDropdown(false);
                     }}
-                    className="w-full text-center text-sm text-teal-600 hover:text-teal-700 font-medium"
+                    className="w-full text-center text-sm font-medium"
+                    style={{ color: currentTheme.primary[3] }}
                   >
                     View All Notifications
                   </button>
