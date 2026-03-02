@@ -1,16 +1,9 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate, Link } from 'react-router-dom';
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { getTheme } from '../../../utils/themes';
 import { useLocation } from '../../../hooks/useLocation';
 import { appConfig } from '../../../services/configService';
-import { getCategories } from '../../../services/api/customerProductService';
-import { Category } from '../../../types/domain';
-import { getHeaderCategoriesPublic } from '../../../services/api/headerCategoryService';
-import { getIconByName } from '../../../utils/iconLibrary';
 import { useCart } from '../../../context/CartContext';
-import { Link } from 'react-router-dom';
 import { UnderwaterEffect } from '../../../components/UnderwaterEffect';
 
 interface HomeHeroProps {
@@ -69,267 +62,169 @@ const SEAFOOD_TABS: Tab[] = [
 ];
 
 export default function HomeHero({ activeTab = 'all', onTabChange }: HomeHeroProps) {
-  const tabs = SEAFOOD_TABS;
   const navigate = useNavigate();
   const { cart } = useCart();
+  const cartItemCount = cart.itemCount ?? 0;
   const { location: userLocation } = useLocation();
-  const heroRef = useRef<HTMLDivElement>(null);
+
   const topSectionRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+
   const [isSticky, setIsSticky] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
-  // Format location display text - only show if user has provided location
+  const heroParticles = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) => ({
+        id: i,
+        left: `${8 + (i * 8) % 86}%`,
+        top: `${10 + (i * 7) % 74}%`,
+        size: 2 + (i % 3),
+        duration: 8 + (i % 5),
+        delay: i * 0.7,
+      })),
+    []
+  );
+
   const locationDisplayText = useMemo(() => {
-    if (userLocation?.address) {
-      // Use the full address if available
-      return userLocation.address;
-    }
-    // Fallback to city, state format if available
-    if (userLocation?.city && userLocation?.state) {
-      return `${userLocation.city}, ${userLocation.state}`;
-    }
-    // Fallback to city only
-    if (userLocation?.city) {
-      return userLocation.city;
-    }
-    // No default - return empty string if no location provided
+    if (userLocation?.address) return userLocation.address;
+    if (userLocation?.city && userLocation?.state) return `${userLocation.city}, ${userLocation.state}`;
+    if (userLocation?.city) return userLocation.city;
     return '';
   }, [userLocation]);
 
-  const [categories, setCategories] = useState<Category[]>([]);
-
-  // Fetch categories for search suggestions
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await getCategories();
-        if (response.success && response.data) {
-          setCategories(response.data.map((c: any) => ({
-            ...c,
-            id: c._id || c.id
-          })));
-        }
-      } catch (error) {
-        console.error("Error fetching categories for suggestions:", error);
-      }
-    };
-    fetchCategories();
-  }, []);
-
-  // Search suggestions based on active tab or fetched categories
-  const searchSuggestions = useMemo(() => {
-    if (activeTab === 'all' && categories.length > 0) {
-      // Use real category names for 'all' tab suggestions
-      return categories.slice(0, 8).map(c => c.name.toLowerCase());
-    }
-
-    switch (activeTab) {
-      case 'wedding':
-        return ['gift packs', 'dry fruits', 'sweets', 'decorative items', 'wedding cards', 'return gifts'];
-      case 'winter':
-        return ['woolen clothes', 'caps', 'gloves', 'blankets', 'heater', 'winter wear'];
-      case 'electronics':
-        return ['chargers', 'cables', 'power banks', 'earphones', 'phone cases', 'screen guards'];
-      case 'beauty':
-        return ['lipstick', 'makeup', 'skincare', 'kajal', 'face wash', 'moisturizer'];
-      case 'grocery':
-        return ['atta', 'milk', 'dal', 'rice', 'oil', 'vegetables'];
-      case 'fashion':
-        return ['clothing', 'shoes', 'accessories', 'watches', 'bags', 'jewelry'];
-      case 'sports':
-        return ['cricket bat', 'football', 'badminton', 'fitness equipment', 'sports shoes', 'gym wear'];
-      default: // 'all'
-        return ['atta', 'milk', 'dal', 'coke', 'bread', 'eggs', 'rice', 'oil'];
-    }
-  }, [activeTab]);
-
-  // Removed unused gsap hook
-
-  // Placeholder simplified for static minimal look
-  const placeholderText = "Search for fish";
-
-  // Handle scroll to detect when "LOWEST PRICES EVER" section is out of view
   useEffect(() => {
     const handleScroll = () => {
-      if (topSectionRef.current && stickyRef.current) {
-        // Find the "LOWEST PRICES EVER" section
-        const lowestPricesSection = document.querySelector('[data-section="lowest-prices"]');
-
-        if (lowestPricesSection) {
-          const sectionBottom = lowestPricesSection.getBoundingClientRect().bottom;
-          // When the section has scrolled up past the viewport, transition to white
-          const progress = Math.min(Math.max(1 - (sectionBottom / 200), 0), 1);
-          setScrollProgress(progress);
-          setIsSticky(sectionBottom <= 100);
-        } else {
-          // Fallback to original logic if section not found
-          const topSectionBottom = topSectionRef.current.getBoundingClientRect().bottom;
-          const topSectionHeight = topSectionRef.current.offsetHeight;
-          const progress = Math.min(Math.max(1 - (topSectionBottom / topSectionHeight), 0), 1);
-          setScrollProgress(progress);
-          setIsSticky(topSectionBottom <= 0);
-        }
+      if (!topSectionRef.current || !stickyRef.current) return;
+      const lowestPricesSection = document.querySelector('[data-section="lowest-prices"]');
+      if (lowestPricesSection) {
+        const sectionBottom = lowestPricesSection.getBoundingClientRect().bottom;
+        setIsSticky(sectionBottom <= 100);
+      } else {
+        const topSectionBottom = topSectionRef.current.getBoundingClientRect().bottom;
+        setIsSticky(topSectionBottom <= 0);
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Check initial state
-
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Update sliding indicator position when activeTab changes and scroll to active tab
   useEffect(() => {
     const updateIndicator = (shouldScroll = true) => {
       const activeTabButton = tabRefs.current.get(activeTab);
       const container = tabsContainerRef.current;
+      if (!activeTabButton || !container) return;
 
-      if (activeTabButton && container) {
-        try {
-          // Use offsetLeft for position relative to container (not affected by scroll)
-          // This ensures the indicator stays aligned even when container scrolls
-          const left = activeTabButton.offsetLeft;
-          const width = activeTabButton.offsetWidth;
+      const left = activeTabButton.offsetLeft;
+      const width = activeTabButton.offsetWidth;
+      if (width > 0) setIndicatorStyle({ left, width });
 
-          // Ensure valid values
-          if (width > 0) {
-            setIndicatorStyle({ left, width });
-          }
+      if (!shouldScroll) return;
+      const containerScrollLeft = container.scrollLeft;
+      const containerWidth = container.offsetWidth;
+      const buttonLeft = left;
+      const buttonRight = buttonLeft + width;
+      const scrollPadding = 20;
 
-          // Scroll the container to bring the active tab into view (only when tab changes)
-          if (shouldScroll) {
-            const containerScrollLeft = container.scrollLeft;
-            const containerWidth = container.offsetWidth;
-            const buttonLeft = left;
-            const buttonWidth = width;
-            const buttonRight = buttonLeft + buttonWidth;
+      let targetScrollLeft = containerScrollLeft;
+      if (buttonLeft < containerScrollLeft + scrollPadding) {
+        targetScrollLeft = buttonLeft - scrollPadding;
+      } else if (buttonRight > containerScrollLeft + containerWidth - scrollPadding) {
+        targetScrollLeft = buttonRight - containerWidth + scrollPadding;
+      }
 
-            // Calculate scroll position to center the button or keep it visible
-            const scrollPadding = 20; // Padding from edges
-            let targetScrollLeft = containerScrollLeft;
-
-            // If button is on the left side and partially or fully hidden
-            if (buttonLeft < containerScrollLeft + scrollPadding) {
-              targetScrollLeft = buttonLeft - scrollPadding;
-            }
-            // If button is on the right side and partially or fully hidden
-            else if (buttonRight > containerScrollLeft + containerWidth - scrollPadding) {
-              targetScrollLeft = buttonRight - containerWidth + scrollPadding;
-            }
-
-            // Smooth scroll to the target position
-            if (targetScrollLeft !== containerScrollLeft) {
-              container.scrollTo({
-                left: Math.max(0, targetScrollLeft),
-                behavior: 'smooth'
-              });
-            }
-          }
-        } catch (error) {
-          console.warn('Error updating indicator:', error);
-        }
+      if (targetScrollLeft !== containerScrollLeft) {
+        container.scrollTo({ left: Math.max(0, targetScrollLeft), behavior: 'smooth' });
       }
     };
 
-    // Update immediately with scroll
     updateIndicator(true);
-
-    // Also update after delays to handle any layout shifts and ensure smooth animation
-    const timeout1 = setTimeout(() => updateIndicator(true), 50);
-    const timeout2 = setTimeout(() => updateIndicator(true), 150);
-    const timeout3 = setTimeout(() => updateIndicator(false), 300); // Last update without scroll to avoid conflicts
+    const t1 = setTimeout(() => updateIndicator(true), 50);
+    const t2 = setTimeout(() => updateIndicator(true), 150);
+    const t3 = setTimeout(() => updateIndicator(false), 300);
 
     return () => {
-      clearTimeout(timeout1);
-      clearTimeout(timeout2);
-      clearTimeout(timeout3);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
     };
   }, [activeTab]);
 
-  const handleTabClick = (tabId: string) => {
-    onTabChange?.(tabId);
-    // Don't scroll - keep page at current position
-  };
-
-  const theme = getTheme(activeTab || 'all');
-  const heroGradient = `linear-gradient(to bottom right, ${theme.primary[0]}, ${theme.primary[1]}, ${theme.primary[2]})`;
-
-  // Helper to convert RGB to RGBA
-  const rgbToRgba = (rgb: string, alpha: number) => {
-    return rgb.replace('rgb', 'rgba').replace(')', `, ${alpha})`);
-  };
-
   return (
     <div
-      ref={heroRef}
-      className="relative overflow-hidden z-40 bg-gradient-to-b from-[#003366] via-[#002b55] to-[#003366] pb-0"
+      className="relative overflow-hidden z-40 pb-0"
+      style={{
+        background: 'linear-gradient(180deg, #0f2f4f 0%, #0d3d63 40%, #0c466f 100%)',
+      }}
     >
-      {/* 🌊 PREMIUM UNDERWATER ATMOSPHERE */}
       <UnderwaterEffect />
 
-      {/* 🌊 Abstract G-Shaped Ocean Current animated background effect - Refined Opacity */}
       <motion.div
-        className="absolute top-0 right-0 w-[120%] h-[150%] md:w-[60%] md:h-[200%] origin-top-right pointer-events-none z-0"
+        className="absolute -top-16 -left-10 w-[58%] h-[52%] pointer-events-none z-0"
         style={{
-          background: 'radial-gradient(ellipse at center, rgba(0, 153, 153, 0.08) 0%, rgba(0,51,102,0) 70%)',
-          filter: 'blur(40px)',
-          borderRadius: '40% 60% 70% 30% / 40% 50% 60% 50%',
+          background:
+            'radial-gradient(circle, rgba(255,255,255,0.14) 0%, rgba(28,167,166,0.08) 38%, rgba(15,47,79,0) 75%)',
+          filter: 'blur(28px)',
         }}
         animate={{
-          rotate: [0, 5, -2, 0],
-          x: [0, -20, 10, 0],
-          y: [0, 20, -5, 0],
-          scale: [1, 1.03, 0.97, 1]
+          x: [0, 18, -8, 0],
+          y: [0, -10, 8, 0],
+          opacity: [0.35, 0.55, 0.35],
         }}
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
+        transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
       />
+
       <motion.div
-        className="absolute top-10 right-[-10%] w-[80%] h-[100%] origin-center pointer-events-none z-0"
+        className="absolute -top-8 left-[36%] w-[46%] h-[38%] pointer-events-none z-0"
         style={{
-          background: 'radial-gradient(circle at center, rgba(0, 224, 198, 0.05) 0%, rgba(0,51,102,0) 60%)',
-          filter: 'blur(50px)',
-          borderRadius: '50% 30% 60% 40% / 60% 40% 50% 50%',
+          background:
+            'radial-gradient(circle, rgba(28,167,166,0.24) 0%, rgba(28,167,166,0.06) 45%, rgba(12,70,111,0) 78%)',
+          filter: 'blur(24px)',
         }}
         animate={{
-          x: [0, -15, 10, 0],
-          y: [0, -20, 15, 0],
-          rotate: [0, -3, 2, 0],
+          x: [0, -14, 8, 0],
+          y: [0, 7, -5, 0],
+          opacity: [0.22, 0.45, 0.22],
         }}
-        transition={{
-          duration: 12,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
+        transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* Very soft vignette over layout constraints */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/15 pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-white/[0.05] backdrop-blur-[1px] pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/25 pointer-events-none z-0" />
 
-      {/* Main Container */}
+      {heroParticles.map((p) => (
+        <motion.span
+          key={p.id}
+          className="absolute rounded-full bg-white/30 pointer-events-none z-0"
+          style={{
+            width: p.size,
+            height: p.size,
+            left: p.left,
+            top: p.top,
+            filter: 'blur(0.5px)',
+          }}
+          animate={{ y: [0, -16, 0], opacity: [0.08, 0.28, 0.08] }}
+          transition={{ duration: p.duration, delay: p.delay, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      ))}
+
       <div className="relative z-10 w-full">
-        {/* 1️⃣ BRAND + DELIVERY BLOCK */}
         <div ref={topSectionRef} className="px-5 md:px-8 pt-6 md:pt-8 pb-4 flex justify-between items-start">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
             className="flex-1 pr-2"
           >
-            {/* Service name - medium weight 85% white */}
             <div className="font-medium text-[11px] md:text-sm mb-0.5 leading-tight text-white/85 tracking-wide">
-              Inor Fresh · Quick Commerce
+              Inor Fresh - Quick Commerce
             </div>
 
-            {/* Delivery time - large, bold */}
             <div
               className="font-bold text-3xl md:text-4xl leading-tight text-white mb-2 tracking-tight"
               style={{ textShadow: '0 2px 10px rgba(0,20,40,0.5)' }}
@@ -337,10 +232,9 @@ export default function HomeHero({ activeTab = 'all', onTabChange }: HomeHeroPro
               {appConfig.estimatedDeliveryTime}
             </div>
 
-            {/* Location row with GPS pin */}
             {locationDisplayText && (
               <div className="text-white/70 text-[11px] md:text-xs flex items-center gap-1.5 leading-tight font-medium">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-[#009999]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-[#1ca7a6]">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                   <circle cx="12" cy="10" r="3"></circle>
                 </svg>
@@ -348,14 +242,37 @@ export default function HomeHero({ activeTab = 'all', onTabChange }: HomeHeroPro
               </div>
             )}
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            whileHover={{ scale: 1.08, boxShadow: '0 0 24px rgba(255,255,255,0.28)' }}
+            className="relative shrink-0 h-11 md:h-12 w-auto px-2 rounded-xl flex items-center justify-center"
+          >
+            <div
+              className="absolute inset-0 rounded-xl pointer-events-none"
+              style={{
+                background:
+                  'radial-gradient(circle, rgba(255,255,255,0.26) 0%, rgba(28,167,166,0.16) 35%, rgba(15,47,79,0) 76%)',
+                filter: 'blur(10px)',
+              }}
+            />
+            <img
+              src="/images/inor_logo_trans.png"
+              alt="Inor Fresh"
+              className="relative h-11 md:h-12 w-auto object-contain"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/images/inor_logo_header.png';
+              }}
+            />
+          </motion.div>
         </div>
 
-        {/* Sticky section: 2️⃣ SEARCH BLOCK and 3️⃣ CATEGORY NAV */}
         <div
           ref={stickyRef}
-          className={`sticky top-0 z-50 transition-all duration-300 ${isSticky ? 'bg-[#003366]/80 backdrop-blur-xl border-b border-[#009999]/10 shadow-lg' : 'bg-transparent'}`}
+          className={`sticky top-0 z-50 transition-all duration-300 ${isSticky ? 'bg-[#0f2f4f]/65 backdrop-blur-xl border-b border-white/10 shadow-[0_8px_24px_rgba(2,14,29,0.35)]' : 'bg-transparent'}`}
         >
-          {/* SEARCH BAR & CART ROW */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
@@ -366,68 +283,64 @@ export default function HomeHero({ activeTab = 'all', onTabChange }: HomeHeroPro
               onClick={() => navigate('/search')}
               onMouseEnter={() => setIsSearchFocused(true)}
               onMouseLeave={() => setIsSearchFocused(false)}
+              whileHover={{ y: -1.5 }}
               animate={{
-                scale: isSearchFocused ? 1.015 : 1,
-                borderColor: isSearchFocused ? 'rgba(0, 224, 198, 0.8)' : 'rgba(0, 224, 198, 0.25)',
-                backgroundColor: isSearchFocused ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.08)',
+                scale: isSearchFocused ? 1.02 : 1,
+                borderColor: isSearchFocused ? 'rgba(28, 167, 166, 0.9)' : 'rgba(255, 255, 255, 0.15)',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
                 boxShadow: isSearchFocused
-                  ? '0 8px 32px rgba(0, 224, 198, 0.15), 0 0 0 4px rgba(0, 224, 198, 0.05)'
-                  : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  ? '0 10px 30px rgba(28,167,166,0.2), 0 0 0 3px rgba(28,167,166,0.14), inset 0 1px 4px rgba(255,255,255,0.22)'
+                  : '0 4px 14px rgba(3,15,28,0.25), inset 0 1px 4px rgba(255,255,255,0.12)',
               }}
-              className="flex-1 max-w-2xl md:mx-auto rounded-2xl px-5 py-3.5 flex items-center gap-4 cursor-pointer relative z-10 border backdrop-blur-md transition-all duration-300"
+              className="flex-1 max-w-2xl md:mx-auto rounded-2xl h-[54px] px-4 flex items-center gap-4 cursor-pointer relative z-10 border backdrop-blur-[14px] transition-all duration-300"
             >
               <motion.div
                 animate={{
-                  scale: isSearchFocused ? 1.1 : 1,
-                  rotate: isSearchFocused ? 10 : 0
+                  scale: isSearchFocused ? 1.1 : [1, 1.04, 1],
+                  rotate: isSearchFocused ? 8 : 0,
                 }}
-                className="flex-shrink-0 text-[#00E0C6]"
+                transition={isSearchFocused ? { duration: 0.2 } : { duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                className="flex-shrink-0 text-[#1ca7a6]"
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2.5" />
                   <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
               </motion.div>
 
               <div className="flex-1 flex items-center h-6">
-                <motion.span
-                  animate={{
-                    x: isSearchFocused ? 2 : 0,
-                    opacity: isSearchFocused ? 1 : 0.7
-                  }}
-                  className="text-base text-white font-medium tracking-wide"
-                >
-                  {placeholderText}
-                </motion.span>
+                <span className="text-[15px] text-white/85 font-medium tracking-wide">
+                  Search fresh fish, prawns, crabs...
+                </span>
               </div>
 
-              {/* Subtle Mic icon for enhancement */}
-              <div className="flex-shrink-0 text-white/40 hover:text-[#00E0C6] transition-colors">
+              <motion.div
+                className="flex-shrink-0 text-white/60"
+                animate={{
+                  opacity: [0.65, 1, 0.65],
+                  boxShadow: ['0 0 0 rgba(28,167,166,0)', '0 0 16px rgba(28,167,166,0.25)', '0 0 0 rgba(28,167,166,0)'],
+                }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                   <line x1="12" y1="19" x2="12" y2="22" />
                 </svg>
-              </div>
+              </motion.div>
             </motion.div>
 
-            {/* 🛒 STICKY TOP RIGHT CART ICON */}
             <Link
               to="/checkout"
               className="w-[48px] h-[48px] rounded-[18px] flex items-center justify-center relative group transition-all duration-300 flex-shrink-0"
               style={{
                 background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(0, 224, 198, 0.3)',
-                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                backdropFilter: 'blur(12px)',
+                boxShadow: '0 6px 16px rgba(3,15,28,0.25)',
               }}
             >
-              <div className="absolute inset-0 bg-[#00E0C6]/10 opacity-0 group-hover:opacity-100 rounded-[18px] transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-[#1ca7a6]/10 opacity-0 group-hover:opacity-100 rounded-[18px] transition-opacity duration-300" />
 
               <svg
                 width="22"
@@ -446,29 +359,28 @@ export default function HomeHero({ activeTab = 'all', onTabChange }: HomeHeroPro
               </svg>
 
               <AnimatePresence>
-                {cart.itemCount > 0 && (
+                {cartItemCount > 0 && (
                   <motion.div
                     key="sticky-cart-badge"
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0, opacity: 0 }}
                     whileHover={{ scale: 1.1 }}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-[#00E0C6] text-[#003366] text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg shadow-[#00E0C6]/40 z-20"
-                    style={{ border: '2px solid #003366' }}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-[#1ca7a6] text-[#0f2f4f] text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg shadow-[#1ca7a6]/40 z-20"
+                    style={{ border: '2px solid #0f2f4f' }}
                   >
-                    {cart.itemCount}
+                    {cartItemCount}
                   </motion.div>
                 )}
               </AnimatePresence>
             </Link>
           </motion.div>
 
-          {/* CATEGORY NAV */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-            className="w-full relative overflow-hidden"
+            transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+            className="w-full relative overflow-hidden px-4 md:px-6 pb-3"
           >
             <motion.div
               ref={tabsContainerRef}
@@ -477,67 +389,67 @@ export default function HomeHero({ activeTab = 'all', onTabChange }: HomeHeroPro
               variants={{
                 visible: {
                   transition: {
-                    staggerChildren: 0.05
-                  }
-                }
+                    staggerChildren: 0.06,
+                  },
+                },
               }}
-              className="relative flex w-full overflow-x-auto scrollbar-hide px-6 md:px-8 justify-between scroll-smooth py-2 pt-1"
+              className="relative flex w-full overflow-x-auto scrollbar-hide px-2 md:px-3 justify-between scroll-smooth py-2 rounded-[18px] border border-white/10 bg-white/[0.05] backdrop-blur-[12px] shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),0_8px_20px_rgba(2,14,29,0.25)]"
             >
-              {tabs.map((tab) => {
-                const isActive = activeTab === tab.id;
+              {indicatorStyle.width > 0 && (
+                <motion.div
+                  className="absolute bottom-[4px] h-[5px] rounded-full bg-[#1ca7a6] pointer-events-none"
+                  initial={false}
+                  animate={{
+                    left: indicatorStyle.left + indicatorStyle.width * 0.18,
+                    width: indicatorStyle.width * 0.64,
+                  }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 420,
+                    damping: 32,
+                    mass: 0.55,
+                  }}
+                  style={{
+                    zIndex: 20,
+                    boxShadow: '0 0 10px rgba(28,167,166,0.65), 0 0 18px rgba(28,167,166,0.35)',
+                  }}
+                />
+              )}
 
+              {SEAFOOD_TABS.map((tab) => {
+                const isActive = activeTab === tab.id;
                 return (
                   <motion.button
                     key={tab.id}
                     variants={{
                       hidden: { opacity: 0, y: 10 },
-                      visible: { opacity: 1, y: 0 }
+                      visible: { opacity: 1, y: 0 },
                     }}
                     ref={(el) => {
                       if (el) tabRefs.current.set(tab.id, el);
                       else tabRefs.current.delete(tab.id);
                     }}
-                    onClick={() => handleTabClick(tab.id)}
-                    whileHover={{ y: -2 }}
+                    onClick={() => onTabChange?.(tab.id)}
+                    whileHover={{ y: -2, scale: 1.03, rotate: 3 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`flex-shrink-0 flex flex-col items-center justify-center min-w-[70px] relative pb-3 pt-1 transition-all duration-300 z-10 outline-none`}
+                    className="flex-shrink-0 flex flex-col items-center justify-center min-w-[70px] relative pb-3 pt-1 transition-all duration-300 z-10 outline-none"
                     type="button"
                   >
                     <motion.div
                       className={`mb-2 transition-all duration-300 ${isActive ? 'text-white' : 'text-white/70'}`}
-                      animate={{ scale: isActive ? 1.1 : 1 }}
+                      animate={{
+                        scale: isActive ? 1.08 : 1,
+                        filter: isActive ? 'drop-shadow(0 0 8px rgba(28,167,166,0.55))' : 'none',
+                      }}
                     >
                       {tab.icon}
                     </motion.div>
-                    <span className={`text-[11px] md:text-xs whitespace-nowrap tracking-wide font-medium transition-all ${isActive ? 'text-white opacity-100' : 'text-white/70 opacity-70'}`}>
+                    <span className={`text-[11px] md:text-xs whitespace-nowrap tracking-wide font-medium transition-all ${isActive ? 'text-white opacity-100' : 'text-white/70 opacity-75'}`}>
                       {tab.label}
                     </span>
                   </motion.button>
-                )
+                );
               })}
-
-              {/* Sliding Bottom Indicator - Glowing Underline */}
-              {indicatorStyle.width > 0 && (
-                <motion.div
-                  layoutId="activeTabUnderline"
-                  className="absolute bottom-0 h-[3px] rounded-full bg-[#00E0C6] transition-all pointer-events-none"
-                  initial={false}
-                  animate={{
-                    left: indicatorStyle.left + indicatorStyle.width * 0.1,
-                    width: indicatorStyle.width * 0.8,
-                  }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 35,
-                    mass: 0.5
-                  }}
-                  style={{
-                    zIndex: 20,
-                    boxShadow: '0 0 10px rgba(0, 224, 198, 0.6), 0 0 20px rgba(0, 224, 198, 0.3)'
-                  }}
-                />
-              )}
             </motion.div>
           </motion.div>
         </div>
