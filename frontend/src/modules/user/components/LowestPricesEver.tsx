@@ -56,204 +56,55 @@ const ProductCard = memo(({
     >
       <div
         onClick={() => navigate(`/product/${product.id}`)}
-        className="bg-white rounded-lg overflow-hidden flex flex-col relative h-full max-h-full cursor-pointer group"
-        style={{ boxShadow: '0 1px 1px rgba(0, 0, 0, 0.03)' }}
+        className="water-card water-shimmer-border rounded-xl overflow-hidden flex flex-col relative h-full max-h-full cursor-pointer group"
       >
         {/* 🌊 UNDERWATER CARD ENHANCEMENTS */}
-        <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/[0.06] to-transparent pointer-events-none z-20" />
-        <div className="absolute inset-0 rounded-lg shadow-[inset_0_0_15px_rgba(0,224,198,0.03)] pointer-events-none z-10" />
+        <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/[0.15] to-transparent pointer-events-none z-20" />
 
         {/* Micro shimmer swipe animation on Hover */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.12] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none z-20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.2] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none z-20" />
+
         {/* Product Image Area */}
-        <div className="relative block">
-          <div className="w-full h-28 bg-neutral-100 flex items-center justify-center overflow-hidden relative">
+        <div className="relative block bg-transparent">
+          <div className="w-full h-28 flex items-center justify-center overflow-hidden relative">
             {product.imageUrl ? (
               <img
                 src={product.imageUrl}
                 alt={product.name}
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain drop-shadow-[0_8px_15px_rgba(0,0,0,0.3)] group-hover:scale-105 transition-transform duration-500"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-neutral-100 text-neutral-400 text-4xl">
+              <div className="w-full h-full flex items-center justify-center bg-white/5 text-[#BEEFFF] text-4xl">
                 {(product.name || product.productName || '?').charAt(0).toUpperCase()}
               </div>
             )}
 
             {/* Red Discount Badge - Top Left */}
             {discount > 0 && (
-              <div className="absolute top-1 left-1 z-10 bg-red-600 text-white text-[9px] font-bold px-1 py-0.5 rounded">
+              <div className="absolute top-1.5 left-1.5 z-10 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-[0_0_10px_rgba(220,38,38,0.5)]">
                 {discount}% OFF
               </div>
             )}
-
-            {/* Heart Icon - Top Right */}
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleWishlist(e);
-              }}
-              className="absolute top-1 right-1 z-30 w-7 h-7 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-sm"
-              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill={isWishlisted ? "#ef4444" : "none"}
-                xmlns="http://www.w3.org/2000/svg"
-                className={isWishlisted ? "text-red-500" : "text-neutral-700"}
-              >
-                <path
-                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-
-            {/* ADD Button or Quantity Stepper - Overlaid on bottom right of image */}
-            <div className="absolute bottom-1.5 right-1.5 z-10">
-              <AnimatePresence mode="wait">
-                {inCartQty === 0 ? (
-                  <motion.button
-                    key="add-button"
-                    type="button"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.2 }}
-                    disabled={product.isAvailable === false}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onAddToCart(product, e.currentTarget);
-                    }}
-                    className={`bg-white/95 backdrop-blur-sm text-[10px] font-semibold px-2 py-1 rounded shadow-md transition-colors ${product.isAvailable === false
-                      ? 'text-neutral-400 border-2 border-neutral-300 cursor-not-allowed'
-                      : 'text-[#FF6F61] border-2 border-[#FF6F61] hover:bg-white'
-                      }`}
-                  >
-                    {product.isAvailable === false ? 'Out of Range' : 'ADD'}
-                  </motion.button>
-                ) : (
-                  <motion.div
-                    key="stepper"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex items-center gap-1 bg-[#FF6F61] rounded px-1.5 py-1 shadow-md"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <motion.button
-                      whileTap={{ scale: 0.9 }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onUpdateQuantity(product.id, inCartQty - 1);
-                      }}
-                      className="w-4 h-4 flex items-center justify-center text-white font-bold hover:bg-[#eb5a4c] rounded transition-colors p-0 leading-none"
-                      style={{ lineHeight: 1, fontSize: '14px' }}
-                    >
-                      <span className="relative top-[-1px]">−</span>
-                    </motion.button>
-                    <motion.span
-                      key={inCartQty}
-                      initial={{ scale: 1.2, y: -2 }}
-                      animate={{ scale: 1, y: 0 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-                      className="text-white font-bold min-w-[0.75rem] text-center"
-                      style={{ fontSize: '12px' }}
-                    >
-                      {inCartQty}
-                    </motion.span>
-                    <motion.button
-                      whileTap={product.isAvailable === false ? {} : { scale: 0.9 }}
-                      disabled={product.isAvailable === false}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onUpdateQuantity(product.id, inCartQty + 1);
-                      }}
-                      className={`w-4 h-4 flex items-center justify-center font-bold rounded transition-colors p-0 leading-none ${product.isAvailable === false
-                        ? 'text-neutral-300 cursor-not-allowed'
-                        : 'text-white hover:bg-[#eb5a4c]'
-                        }`}
-                      style={{ lineHeight: 1, fontSize: '14px' }}
-                    >
-                      <span className="relative top-[-1px]">+</span>
-                    </motion.button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
           </div>
         </div>
 
         {/* Product Details */}
-        <div className="p-1.5 flex-1 flex flex-col min-h-0" style={{ background: '#fef9e7' }}>
-          {/* Light Grey Tags */}
-          <div className="flex gap-0.5 mb-0.5">
-            <div className="bg-neutral-200 text-neutral-700 text-[8px] font-medium px-1 py-0.5 rounded">
-              {product.pack || '1 unit'}
-            </div>
-            {product.pack && (product.pack.includes('g') || product.pack.includes('kg')) && (
-              <div className="bg-neutral-200 text-neutral-700 text-[8px] font-medium px-1 py-0.5 rounded">
-                {product.pack.replace(/[gk]/gi, '').trim()} GSM
-              </div>
-            )}
-          </div>
-
+        <div className="p-2 flex-1 flex flex-col min-h-0 bg-transparent">
           {/* Product Name */}
-          <div className="mb-0.5">
-            <h3 className="text-[10px] font-bold text-neutral-900 line-clamp-2 leading-tight min-h-[2rem] max-h-[2rem] overflow-hidden" title={productName}>
+          <div className="mb-1">
+            <h3 className="text-[11px] font-bold text-white line-clamp-2 leading-tight min-h-[2.2rem] max-h-[2.2rem] overflow-hidden" title={productName}>
               {displayName}
             </h3>
           </div>
 
-          {/* Rating and Reviews */}
-          <div className="flex items-center gap-0.5 mb-0.5">
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <svg
-                  key={i}
-                  width="8"
-                  height="8"
-                  viewBox="0 0 24 24"
-                  fill={i < 4 ? '#fbbf24' : '#e5e7eb'}
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-              ))}
-            </div>
-            <span className="text-[8px] text-neutral-500">(85)</span>
-          </div>
-
-          {/* Delivery Time */}
-          <div className="text-[9px] text-neutral-600 mb-0.5">
-            20 MINS
-          </div>
-
-          {/* Discount - Blue Text */}
-          {discount > 0 && (
-            <div className="text-[9px] text-blue-600 font-semibold mb-0.5">
-              {discount}% OFF
-            </div>
-          )}
-
           {/* Price */}
-          <div className="mb-1">
+          <div className="mb-2">
             <div className="flex items-baseline gap-1">
-              <span className="text-[13px] font-bold text-neutral-900">
+              <span className="text-[14px] font-black text-[#1CA7C7]">
                 ₹{displayPrice.toLocaleString('en-IN')}
               </span>
               {hasDiscount && (
-                <span className="text-[10px] text-neutral-400 line-through">
+                <span className="text-[10px] text-[#BEEFFF]/40 line-through">
                   ₹{mrp.toLocaleString('en-IN')}
                 </span>
               )}
@@ -262,23 +113,18 @@ const ProductCard = memo(({
 
           <Link
             to={`/category/${product.categoryId || 'all'}`}
-            className="w-full bg-[#ffedea] text-[#FF6F61] text-[8px] font-medium py-0.5 rounded-lg flex items-center justify-between px-1 hover:bg-[#ffdbd6] transition-colors mt-auto"
+            className="w-full bg-white/5 text-[#BEEFFF] text-[9px] font-bold py-1 rounded-lg flex items-center justify-between px-2 border border-white/5 hover:bg-white/10 transition-all mt-auto"
           >
-            <span>See more like this</span>
-            <div className="flex items-center gap-0.5">
-              <div className="w-px h-2 bg-[#ffb5ab]"></div>
-              <svg width="6" height="6" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 0L8 4L0 8Z" fill="#FF6F61" />
-              </svg>
-            </div>
+            <span>Details</span>
+            <svg width="6" height="6" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 0L8 4L0 8Z" fill="#1CA7C7" />
+            </svg>
           </Link>
         </div>
       </div>
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Custom comparison: only re-render if the product ID or cart quantity changes
-  // Functions are stable references, so we don't need to compare them
   return (
     prevProps.product.id === nextProps.product.id &&
     prevProps.cartQuantity === nextProps.cartQuantity
@@ -441,12 +287,10 @@ export default function LowestPricesEver({ activeTab = 'all', products: adminPro
 
   return (
     <div
-      className="relative overflow-hidden"
+      className="relative overflow-hidden py-12"
       style={{
-        background: `linear-gradient(to bottom, #003366, #004c80)`,
-        marginTop: '0px', // No gap for seamless blend
-        paddingTop: '12px',
-        paddingBottom: '16px',
+        background: `linear-gradient(180deg, transparent 0%, rgba(11,60,93,0.3) 100%)`,
+        marginTop: '0px'
       }}
     >
       {/* 🌊 PREMIUM UNDERWATER ATMOSPHERE */}
@@ -468,93 +312,39 @@ export default function LowestPricesEver({ activeTab = 'all', products: adminPro
             ease: "easeInOut"
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 opacity-30" />
-      </div>
-
-      {/* White Zip/Scalloped Divider at Top - Upward-pointing semicircles */}
-      <div className="absolute top-0 left-0 right-0" style={{ height: '30px', zIndex: 10, opacity: 0.95 }}>
-        <svg
-          viewBox="0 0 1200 30"
-          preserveAspectRatio="none"
-          className="w-full h-full"
-          style={{ display: 'block' }}
-        >
-          {/* White scalloped pattern with upward semicircles - clearly visible */}
-          <path
-            d="M0,30 L0,15
-               Q25,0 50,15
-               T100,15
-               T150,15
-               T200,15
-               T250,15
-               T300,15
-               T350,15
-               T400,15
-               T450,15
-               T500,15
-               T550,15
-               T600,15
-               T650,15
-               T700,15
-               T750,15
-               T800,15
-               T850,15
-               T900,15
-               T950,15
-               T1000,15
-               T1050,15
-               T1100,15
-               T1150,15
-               L1200,15
-               L1200,30 Z"
-            fill="white"
-            stroke="white"
-            strokeWidth="0"
-          />
-        </svg>
       </div>
 
       {/* LOWEST PRICES EVER Banner */}
-      <div className="px-4 relative z-10" style={{ marginTop: '30px', marginBottom: '12px' }} data-section="lowest-prices">
-        <div className="flex items-center justify-center gap-2 mb-1">
-          {/* Left horizontal line */}
-          <div className="flex-1 h-px bg-neutral-300"></div>
+      <div className="px-6 relative z-10 mb-8" data-section="lowest-prices">
+        <div className="flex items-center justify-center gap-6">
+          <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-[#1CA7C7]/50 to-[#1CA7C7]"></div>
 
           <h2
             className="font-black text-center whitespace-nowrap"
             style={{
               fontFamily: '"Poppins", sans-serif',
-              fontSize: '28px',
+              fontSize: '32px',
               color: '#FFFFFF',
               opacity: fontLoaded ? 1 : 0,
               transition: 'opacity 0.2s ease-in',
-              textShadow:
-                '-1.5px -1.5px 0 #009999, 1.5px -1.5px 0 #009999, -1.5px 1.5px 0 #009999, 1.5px 1.5px 0 #009999, ' +
-                '-1.5px 0px 0 #009999, 1.5px 0px 0 #009999, 0px -1.5px 0 #009999, 0px 1.5px 0 #009999, ' +
-                '-1px -1px 0 #009999, 1px -1px 0 #009999, -1px 1px 0 #009999, 1px 1px 0 #009999, ' +
-                '3px 3px 4px rgba(0, 153, 153, 0.5), ' +
-                '2px 2px 3px rgba(0, 153, 153, 0.6), ' +
-                '1px 1px 2px rgba(0, 153, 153, 0.7), ' +
-                '0px 2px 1px rgba(0, 153, 153, 0.4)',
-              letterSpacing: '0.8px',
+              textShadow: '0 0 20px rgba(28,167,199,0.8), 0 0 40px rgba(28,167,199,0.4)',
+              letterSpacing: '0.1em',
               fontWeight: 900,
               lineHeight: '1.1',
-              transform: 'perspective(500px) rotateX(2deg) rotateY(-1deg)',
-              transformStyle: 'preserve-3d',
+              transform: 'perspective(500px) rotateX(5deg)',
             } as React.CSSProperties}
           >
             LOWEST PRICES EVER
           </h2>
 
-          {/* Right horizontal line */}
-          <div className="flex-1 h-px bg-neutral-300"></div>
+          <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent via-[#1CA7C7]/50 to-[#1CA7C7]"></div>
         </div>
       </div>
 
       {/* Horizontal Scrollable Product Cards */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-2 overflow-x-auto scrollbar-hide px-4"
+        className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-4"
         style={{ scrollSnapType: 'x mandatory' }}
       >
         {discountedProducts.map((product) => {

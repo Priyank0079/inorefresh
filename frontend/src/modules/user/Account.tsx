@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { getProfile, CustomerProfile } from '../../services/api/customerService';
 
@@ -60,37 +61,26 @@ export default function Account() {
   // Show login/signup prompt for unregistered users
   if (!user) {
     return (
-      <div className="pb-24 md:pb-8 bg-white min-h-screen">
-        <div className="bg-[#003366] pb-6 md:pb-8 pt-12 md:pt-16 rounded-b-[30px] shadow-[0_4px_20px_rgba(0,51,102,0.15)] relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent pointer-events-none" />
-          <div className="px-4 md:px-6 lg:px-8 relative z-10">
-            <button onClick={() => navigate(-1)} className="mb-4 text-white hover:text-white/80 transition-colors" aria-label="Back">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </button>
-            <div className="flex flex-col items-center mb-4 md:mb-6">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-[22px] bg-white/10 backdrop-blur-sm flex items-center justify-center mb-3 md:mb-4 border border-white/20 shadow-lg">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-white md:w-12 md:h-12 drop-shadow-md">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <h1 className="text-xl md:text-2xl font-bold text-white mb-2 tracking-tight">Welcome!</h1>
-              <p className="text-sm md:text-base text-white/70 font-medium text-center px-4">
-                Login to access your profile, orders, and more
-              </p>
-            </div>
+      <div className="pb-24 md:pb-8 min-h-screen relative overflow-hidden flex items-center justify-center p-6">
+        <div className="water-card water-shimmer-border rounded-[32px] p-8 max-w-md w-full text-center relative z-10">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#1CA7C7] to-[#0B3C5D] flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(28,167,199,0.4)]">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
           </div>
-        </div>
-
-        <div className="px-4 md:px-6 lg:px-8 mt-6">
-          <div className="max-w-md mx-auto space-y-3">
-            <button
-              onClick={() => navigate('/login')}
-              className="w-full py-3.5 rounded-xl font-bold text-base bg-[#009999] text-white hover:bg-[#FF6F61] transition-colors shadow-[0_4px_12px_rgba(0,153,153,0.3)] hover:shadow-[0_4px_15px_rgba(255,111,97,0.4)]"
-            >
-              Login
-            </button>
-          </div>
+          <h1 className="text-3xl font-black text-white mb-3 uppercase tracking-tighter">Welcome Mate!</h1>
+          <p className="text-[#BEEFFF] opacity-80 mb-8 font-medium">
+            Dive into your personal dashboard to track orders and manage your fresh catch.
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/login')}
+            className="w-full py-4 rounded-2xl font-black text-white bg-gradient-to-r from-[#1CA7C7] to-[#0B3C5D] shadow-[0_10px_30px_rgba(28,167,199,0.3)] transition-all uppercase tracking-widest"
+          >
+            Dive In (Login)
+          </motion.button>
         </div>
       </div>
     );
@@ -98,10 +88,10 @@ export default function Account() {
 
   if (loading) {
     return (
-      <div className="pb-24 md:pb-8 bg-white min-h-screen flex items-center justify-center">
+      <div className="pb-24 md:pb-8 min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading profile...</p>
+          <div className="w-16 h-16 border-4 border-[#1CA7C7] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#BEEFFF] font-black uppercase tracking-widest">Scanning Depth...</p>
         </div>
       </div>
     );
@@ -109,47 +99,77 @@ export default function Account() {
 
   if (error && !profile) {
     return (
-      <div className="pb-24 md:pb-8 bg-white min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <button onClick={() => navigate(-1)} className="px-4 py-2 bg-teal-600 text-white rounded">
-            Go Back
-          </button>
+      <div className="pb-24 md:pb-8 min-h-screen flex items-center justify-center p-6">
+        <div className="water-card rounded-[32px] p-10 max-w-md w-full text-center relative z-10">
+          <div className="w-20 h-20 rounded-2xl bg-red-500/20 flex items-center justify-center mx-auto mb-6 border border-red-500/30">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tighter">Deep Sea Mystery</h2>
+          <p className="text-red-400 mb-8 font-bold opacity-90">{error}</p>
+
+          <div className="flex flex-col gap-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              onClick={() => navigate('/')}
+              className="w-full py-4 bg-gradient-to-r from-[#1CA7C7] to-[#0B3C5D] text-white rounded-2xl font-black uppercase tracking-widest shadow-lg"
+            >
+              Back to Shore
+            </motion.button>
+            <button
+              onClick={handleLogout}
+              className="w-full py-4 text-[#BEEFFF] font-bold uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity"
+            >
+              Reset Session (Logout)
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  const displayName = profile?.name || user?.name || 'User';
+  const displayName = profile?.name || user?.name || 'Explorer';
   const displayPhone = profile?.phone || user?.phone || '';
   const displayDateOfBirth = profile?.dateOfBirth;
 
   return (
-    <div className="pb-24 md:pb-8 bg-neutral-50 min-h-screen">
-      <div className="bg-[#003366] pb-10 md:pb-12 pt-12 md:pt-16 rounded-b-[30px] shadow-[0_4px_20px_rgba(0,51,102,0.15)] relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent pointer-events-none" />
-        <div className="px-4 md:px-6 lg:px-8 relative z-10">
-          <button onClick={() => navigate(-1)} className="mb-4 text-white hover:text-white/80 transition-colors" aria-label="Back">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    <div className="pb-24 md:pb-8 min-h-screen">
+      <div className="bg-gradient-to-b from-[#072F4A] to-[#0B3C5D] pb-12 md:pb-16 pt-12 md:pt-16 rounded-b-[40px] shadow-[0_10px_30px_rgba(0,0,0,0.3)] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(28,167,199,0.2),_transparent_70%)] pointer-events-none" />
+        <div className="px-5 md:px-8 relative z-10">
+          <button onClick={() => navigate(-1)} className="mb-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18L9 12L15 6" /></svg>
           </button>
-          <div className="flex flex-col items-center mb-4 md:mb-6">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-[22px] bg-white/10 backdrop-blur-sm flex items-center justify-center mb-3 md:mb-4 border border-white/20 shadow-lg">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-white md:w-12 md:h-12 drop-shadow-md">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+          <div className="flex flex-col items-center">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-24 h-24 md:w-28 md:h-28 rounded-[28px] bg-gradient-to-br from-[#1CA7C7] to-[#0B3C5D] flex items-center justify-center mb-5 border border-white/20 shadow-[0_0_40px_rgba(28,167,199,0.4)] relative"
+            >
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
               </svg>
-            </div>
-            <h1 className="text-xl md:text-2xl font-bold text-white mb-2 tracking-tight">{displayName}</h1>
-            <div className="flex flex-col items-center gap-1.5 md:gap-2 text-xs md:text-sm text-white/70 font-medium">
+              <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#1CA7C7] border-4 border-[#0B3C5D] flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+              </div>
+            </motion.div>
+
+            <h1 className="text-2xl md:text-3xl font-black text-white mb-2 uppercase tracking-tight">{displayName}</h1>
+            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-[#BEEFFF] font-bold opacity-80">
               {displayPhone && (
-                <div className="flex items-center gap-1.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <div className="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                   <span>{displayPhone}</span>
                 </div>
               )}
               {displayDateOfBirth && (
-                <div className="flex items-center gap-1.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" strokeWidth="2" /><line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                <div className="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
                   <span>{formatDate(displayDateOfBirth)}</span>
                 </div>
               )}
@@ -158,120 +178,138 @@ export default function Account() {
         </div>
       </div>
 
-      {/* Wallet Balance Card */}
-      <div className="px-4 md:px-6 lg:px-8 -mt-6 md:-mt-8 mb-6 relative z-20">
-        <div className="max-w-2xl md:mx-auto">
-          <div className="bg-[#009999]/95 backdrop-blur-md rounded-[22px] p-5 md:p-6 shadow-[0_8px_25px_rgba(0,153,153,0.25)] border-[1.5px] border-white/20 relative overflow-hidden">
-            {/* Soft decorative glow */}
-            <div className="absolute top-[-50%] right-[-10%] w-[150%] h-[200%] bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_0%,_rgba(255,255,255,0)_60%)] pointer-events-none" />
-
+      {/* Wallet Section */}
+      <div className="px-5 md:px-8 -mt-8 mb-8 relative z-20">
+        <div className="max-w-2xl mx-auto">
+          <div className="water-card water-shimmer-border rounded-[28px] p-6 md:p-8 relative overflow-hidden group">
             <div className="flex items-center justify-between relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white md:w-7 md:h-7">
-                    <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M1 10h22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-[#1CA7C7]/20 to-white/5 flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1CA7C7" strokeWidth="2.5">
+                    <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                    <path d="M1 10h22" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-xs md:text-sm text-white/80 font-medium mb-0.5">Wallet Balance</p>
-                  <p className="text-2xl md:text-3xl font-bold text-white">
+                  <p className="text-[11px] md:text-xs text-[#BEEFFF] font-black uppercase tracking-widest mb-1 opacity-70">Ocean Wallet</p>
+                  <p className="text-2xl md:text-4xl font-black text-white">
                     ₹{(profile?.walletAmount || user?.walletAmount || 0).toLocaleString('en-IN')}
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <button
-                  onClick={() => navigate('/checkout')}
-                  className="px-4 py-2 bg-white text-[#009999] hover:bg-neutral-50 hover:scale-[1.02] shadow-[0_4px_12px_rgba(0,0,0,0.1)] rounded-[12px] text-xs md:text-sm font-bold transition-all active:scale-95"
-                >
-                  Use Wallet
-                </button>
-                <p className="text-[10px] md:text-xs text-white/80 font-medium mt-1.5">Use at checkout</p>
-              </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/checkout')}
+                className="px-6 py-3 bg-[#1CA7C7] text-white rounded-xl font-black text-xs md:text-sm uppercase tracking-widest shadow-[0_5px_15px_rgba(28,167,199,0.3)]"
+              >
+                Use Balance
+              </motion.button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="px-4 md:px-6 lg:px-8 mb-6 md:mb-8">
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6 max-w-2xl md:mx-auto">
-          <button onClick={() => navigate('/orders')} className="bg-white rounded-[18px] border border-[#009999]/10 p-4 hover:border-[#FF6F61]/40 shadow-[0_4px_15px_rgba(0,51,102,0.03)] hover:shadow-[0_6px_20px_rgba(0,51,102,0.08)] transition-all text-center outline-none group">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="mx-auto mb-1.5 md:mb-2 text-neutral-700 md:w-6 md:h-6"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            <div className="text-[10px] md:text-xs font-semibold text-neutral-900">Your orders</div>
-          </button>
-          <button
-            onClick={() => navigate('/faq')}
-            className="bg-white rounded-[18px] border border-[#009999]/10 p-4 hover:border-[#FF6F61]/40 shadow-[0_4px_15px_rgba(0,51,102,0.03)] hover:shadow-[0_6px_20px_rgba(0,51,102,0.08)] transition-all text-center outline-none group"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="mx-auto mb-1.5 md:mb-2 text-neutral-700 md:w-6 md:h-6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            <div className="text-[10px] md:text-xs font-semibold text-neutral-900">Need help?</div>
-          </button>
+      {/* Quick Actions */}
+      <div className="px-5 md:px-8 mb-8">
+        <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+          {[
+            { name: 'My Orders', icon: <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0" />, path: '/orders' },
+            { name: 'Help Center', icon: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />, path: '/faq' }
+          ].map((action) => (
+            <motion.button
+              key={action.name}
+              whileHover={{ y: -4 }}
+              onClick={() => navigate(action.path)}
+              className="water-card rounded-2xl p-5 border border-white/5 flex flex-col items-center justify-center text-center group"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1CA7C7" strokeWidth="2.5" className="mb-3 transition-transform group-hover:scale-110">
+                {action.icon}
+              </svg>
+              <span className="text-xs font-black text-white uppercase tracking-widest">{action.name}</span>
+            </motion.button>
+          ))}
         </div>
       </div>
 
-      <div className="px-4 py-2.5">
-        <h2 className="text-xs font-black text-[#003366] mb-3 uppercase tracking-wider pl-1">Your Information</h2>
-        <div className="bg-white rounded-[22px] border-[1.5px] border-[#009999]/10 shadow-[0_4px_20px_rgba(0,51,102,0.04)] overflow-hidden divide-y divide-[#003366]/5">
-          <button onClick={() => navigate('/address-book')} className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50/50 transition-colors group">
-            <div className="flex items-center gap-3">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-neutral-500"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              <span className="text-[13px] font-medium text-neutral-900">Address Book</span>
-            </div>
-            <span className="text-neutral-400">›</span>
-          </button>
-          <button onClick={() => navigate('/wishlist')} className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50/50 transition-colors group">
-            <div className="flex items-center gap-3">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-neutral-500"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              <span className="text-[13px] font-medium text-neutral-900">Your Wishlist</span>
-            </div>
-            <span className="text-neutral-400">›</span>
-          </button>
-          <button onClick={() => setShowGstModal(true)} className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50/50 transition-colors group">
-            <div className="flex items-center gap-3">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-neutral-500"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              <span className="text-[13px] font-medium text-neutral-900">GST Details</span>
-            </div>
-            <span className="text-neutral-400">›</span>
-          </button>
-          <button onClick={() => window.location.href = 'https://about.dhakadsnazzy.com'} className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50/50 transition-colors group">
-            <div className="flex items-center gap-3">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-neutral-500"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /><line x1="12" y1="16" x2="12" y2="12" stroke="currentColor" strokeWidth="2" /><line x1="12" y1="8" x2="12.01" y2="8" stroke="currentColor" strokeWidth="2" /></svg>
-              <span className="text-[13px] font-medium text-neutral-900">About Us</span>
-            </div>
-            <span className="text-neutral-400">›</span>
-          </button>
-          <button onClick={handleLogout} className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50/50 transition-colors group">
-            <div className="flex items-center gap-3">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-red-500"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-              <span className="text-[13px] font-medium text-red-500">Log Out</span>
-            </div>
-            <span className="text-neutral-400">›</span>
-          </button>
+      {/* Settings List */}
+      <div className="px-5 mb-10">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-[11px] font-black text-[#1CA7C7] mb-4 uppercase tracking-[0.2em] pl-2 drop-shadow-sm">System Profile</h2>
+          <div className="water-card rounded-[32px] overflow-hidden divide-y divide-white/5 shadow-2xl">
+            {[
+              { name: 'Address Book', icon: <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />, path: '/address-book' },
+              { name: 'Your Wishlist', icon: <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />, path: '/wishlist' },
+              { name: 'GST Details', icon: <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6" />, action: () => setShowGstModal(true) },
+              { name: 'About Store', icon: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></>, action: () => window.location.href = 'https://about.dhakadsnazzy.com' },
+              { name: 'Log Out', icon: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />, action: handleLogout, danger: true }
+            ].map((item) => (
+              <button
+                key={item.name}
+                onClick={item.action || (() => navigate(item.path!))}
+                className="w-full flex items-center justify-between px-6 py-5 hover:bg-white/5 transition-colors group"
+              >
+                <div className="flex items-center gap-4">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={item.danger ? '#FF6B6B' : '#1CA7C7'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all">
+                    {item.icon}
+                  </svg>
+                  <span className={`text-[13px] font-bold tracking-wide ${item.danger ? 'text-red-400' : 'text-white'}`}>{item.name}</span>
+                </div>
+                <span className="text-[#1CA7C7] opacity-40 group-hover:opacity-100 transition-opacity">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {showGstModal && (
-        <>
-          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowGstModal(false)} />
-          <div className="fixed inset-x-0 bottom-0 z-50 animate-in slide-in-from-bottom duration-500 ease-out">
-            <div className="bg-white rounded-t-[32px] shadow-2xl max-w-lg mx-auto p-6 pt-10 relative">
-              <button onClick={() => setShowGstModal(false)} className="absolute -top-12 right-4 w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center text-white"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
+        <AnimatePresence>
+          <div className="fixed inset-0 z-[100] flex items-end justify-center">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-[#072F4A]/80 backdrop-blur-md"
+              onClick={() => setShowGstModal(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="water-card rounded-t-[40px] border-t border-white/20 w-full max-w-xl p-8 pt-12 relative z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]"
+            >
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/20 rounded-full" />
               <div className="text-center">
-                <div className="mx-auto mb-6 w-20 h-20 rounded-2xl bg-neutral-50 border border-neutral-100 flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" className="w-10 h-10 text-neutral-400" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="5" y="3" width="14" height="18" rx="2" ry="2" /><line x1="9" y1="7" x2="15" y2="7" /><line x1="9" y1="11" x2="15" y2="11" /><line x1="9" y1="15" x2="13" y2="15" /></svg>
+                <div className="w-20 h-20 rounded-2xl bg-[#1CA7C7]/20 flex items-center justify-center mx-auto mb-6 border border-[#1CA7C7]/30">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1CA7C7" strokeWidth="2"><rect x="5" y="3" width="14" height="18" rx="2" ry="2" /><line x1="9" y1="7" x2="15" y2="7" /><line x1="9" y1="11" x2="15" y2="11" /><line x1="9" y1="15" x2="13" y2="15" /></svg>
                 </div>
-                <h3 className="text-xl font-bold text-neutral-900 mb-2">Add GST Details</h3>
-                <p className="text-[13px] text-neutral-500 mb-8 px-4">Identify your business to get a GST invoice on your business purchases.</p>
+                <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">GST Registration</h3>
+                <p className="text-[14px] text-[#BEEFFF] opacity-70 mb-8 px-6 font-medium">Add your business tax identification for valid GST invoices on every fresh catch.</p>
                 <form onSubmit={handleGstSubmit} className="space-y-4">
-                  <input type="text" value={gstNumber} onChange={(e) => setGstNumber(e.target.value)} placeholder="Enter GST Number" className="w-full rounded-xl border border-neutral-200 px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all" />
-                  <button type="submit" disabled={!gstNumber.trim()} className="w-full rounded-xl bg-teal-600 text-white font-bold py-4 hover:bg-teal-700 disabled:opacity-50 transition-colors shadow-lg shadow-teal-500/20 uppercase tracking-wider text-sm">Save Details</button>
+                  <input
+                    type="text"
+                    value={gstNumber}
+                    onChange={(e) => setGstNumber(e.target.value)}
+                    placeholder="ENTER GSTIN"
+                    className="w-full bg-white/5 rounded-2xl border border-white/10 px-6 py-4 text-white text-sm font-bold tracking-widest placeholder:text-white/20 focus:outline-none focus:border-[#1CA7C7] focus:ring-4 focus:ring-[#1CA7C7]/10 transition-all"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={!gstNumber.trim()}
+                    className="w-full rounded-2xl bg-gradient-to-r from-[#1CA7C7] to-[#0B3C5D] text-white font-black py-5 uppercase tracking-[0.2em] shadow-2xl disabled:opacity-40"
+                  >
+                    Save Registration
+                  </motion.button>
                 </form>
-                <p className="mt-6 text-[11px] text-neutral-400">By continuing, you agree to our <span className="underline">Terms & Conditions</span></p>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </>
+        </AnimatePresence>
       )}
     </div>
   );

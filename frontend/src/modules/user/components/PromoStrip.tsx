@@ -8,7 +8,6 @@ import { getSubcategories } from "../../../services/api/categoryService";
 import { apiCache } from "../../../utils/apiCache";
 import { useLocation } from "../../../hooks/useLocation";
 import { calculateProductPrice } from "../../../utils/priceUtils";
-import FishCarouselBanner from "./FishCarouselBanner";
 import { UnderwaterEffect } from "../../../components/UnderwaterEffect";
 
 interface PromoCard {
@@ -564,139 +563,158 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
         paddingBottom: "0px",
         marginTop: 0,
       }}>
-
-      {/* 3D Animated Fish Carousel Banner */}
-      <FishCarouselBanner />
-
-      {/* NEW Top List Section */}
-      <div className="px-4 pb-8 pt-4 mt-2 mb-2 relative z-10 w-full overflow-hidden" style={{ background: '#003366', minHeight: '300px' }}>
-        {/* 🌊 PREMIUM UNDERWATER ATMOSPHERE */}
-        <UnderwaterEffect />
-
-        {/* Soft caustic underwater light texture & Vignette */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-          <motion.div
-            className="absolute inset-0 mix-blend-overlay opacity-20"
-            style={{
-              backgroundImage: 'radial-gradient(ellipse at top right, rgba(0, 224, 198, 0.3) 0%, transparent 60%)',
-            }}
-            animate={{
-              opacity: [0.15, 0.25, 0.15],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: 'easeInOut'
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 opacity-40" />
-        </div>
-
+      {/* 🌊 PREMIUM MAGAZINE-STYLE CATEGORY SECTION (Redesigned Top List) */}
+      <div
+        id="category-section"
+        className="w-full py-[80px] px-5 md:px-[80px] relative z-10"
+        style={{ background: 'transparent' }}
+      >
         {/* Header */}
-        <div className="flex flex-col mb-4 relative z-10 pt-2">
-          <h2 className="text-[26px] font-bold text-white tracking-wide leading-none" style={{ fontFamily: '"Inter", sans-serif' }}>
-            Top List
-          </h2>
-          <p className="text-[12px] font-medium text-[#009999] mt-1" style={{ letterSpacing: '0.5px' }}>
-            Our Premium Seafood Selection
-          </p>
+        <div className="max-w-[1280px] mx-auto mb-[60px] text-center md:text-left">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="inline-block px-4 py-1.5 rounded-full bg-[#1CA7C7]/20 text-[#6FD3FF] text-[12px] font-black tracking-[0.2em] uppercase mb-4 border border-[#1CA7C7]/30 backdrop-blur-md"
+          >
+            Seafood Selection
+          </motion.div>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-white text-4xl md:text-[56px] font-black leading-tight tracking-tighter mb-4"
+            style={{ textShadow: '0 0 20px rgba(28,167,199,0.3)' }}
+          >
+            Our Top <span className="text-[#1CA7C7]">Categories</span>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-[#BEEFFF]/70 text-base md:text-xl max-w-[650px] font-medium"
+          >
+            Explore our curated selection of ultra-fresh fish, delivered straight from the deep waters to your table.
+          </motion.p>
         </div>
 
-        {/* Category Showcase Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3.5 md:gap-6 relative z-10 w-full max-w-6xl mx-auto mb-2">
-
+        {/* Grid Container */}
+        <div className="max-w-[1280px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[40px]">
           {[
             {
               id: "aqua",
               name: "Aqua Fish",
-              description: "Natural pond Rohu & Catla.",
-              image: "/images/top_list_aqua_fish.png",
+              description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality and taste.",
+              image: "/images/rohu_hd.png",
               slug: "aqua",
-              color: "#00ffff"
+              accent: "#1CA7C7",
+              panelBg: "linear-gradient(135deg, rgba(28,167,199,0.15), rgba(11,60,93,0.4))"
             },
             {
               id: "marin",
               name: "Marin Fish",
-              description: "Deep sea Bluefin & Tuna.",
-              image: "/images/top_list_marin_fish.png",
+              description: "Deep sea Bluefin & Tuna. Captured using sustainable methods for premium freshness.",
+              image: "/images/bluefin_tuna.png",
               slug: "marin",
-              color: "#ff6f61"
+              accent: "#6FD3FF",
+              panelBg: "linear-gradient(135deg, rgba(111,211,255,0.15), rgba(7,47,74,0.4))"
             },
             {
               id: "bengali",
               name: "Bengali Fish",
-              description: "Premium Hilsa & Market favorites.",
-              image: "/images/top_list_bengali_fish.png",
+              description: "Premium Hilsa & Market favorites. The heartbeat of every traditional kitchen.",
+              image: "/images/bengali_fish.png",
               slug: "bengali",
-              color: "#ffcc00"
+              accent: "#BEEFFF",
+              panelBg: "linear-gradient(135deg, rgba(190,239,255,0.15), rgba(14,58,109,0.4))"
             }
-          ].map((category) => (
+          ].map((category, idx) => (
             <motion.div
               key={category.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              whileHover={{ y: -8, transition: { duration: 0.25 } }}
-              className="bg-white/5 backdrop-blur-xl rounded-[28px] p-2.5 flex flex-col relative group cursor-pointer border border-white/10 hover:border-[#009999]/40 shadow-xl overflow-hidden"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: idx * 0.15 }}
+              whileHover={{ y: -12 }}
               onClick={() => navigate(`/?tab=${category.slug}`)}
+              className="water-card water-shimmer-border rounded-[32px] p-6 flex flex-col relative group cursor-pointer h-full"
             >
-              {/* 🌊 UNDERWATER CARD ENHANCEMENTS */}
-              <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none z-20" />
-              <div className="absolute inset-0 rounded-[28px] shadow-[inset_0_0_20px_rgba(0,224,198,0.04)] pointer-events-none z-10" />
-              {/* Floating Glow Decorative */}
-              <div
-                className="absolute -top-12 -right-12 w-24 h-24 rounded-full blur-[40px] opacity-20 transition-all duration-500 group-hover:opacity-40"
-                style={{ backgroundColor: category.color }}
-              />
-
-              {/* Fish Image Container (Glass Porthole Style) */}
-              <div
-                className="aspect-square w-full rounded-[20px] bg-gradient-to-br from-white/10 to-white/5 relative overflow-hidden flex items-center justify-center p-3"
-                style={{
-                  boxShadow: "inset 0 4px 15px rgba(255,255,255,0.05)"
-                }}
-              >
-                {/* Glowing ring behind fish */}
-                <div
-                  className="absolute w-2/3 h-2/3 rounded-full blur-3xl opacity-10 animate-pulse"
-                  style={{ backgroundColor: category.color }}
-                />
-
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="w-[85%] h-[85%] object-contain relative z-10 transition-all duration-500 group-hover:scale-110 group-hover:rotate-[3deg] drop-shadow-[0_8px_12px_rgba(0,0,0,0.5)]"
-                />
-
-                {/* Badge/Seal */}
-                <div className="absolute top-2 right-2 z-20">
-                  <div className="w-5 h-5 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: category.color }} />
-                  </div>
-                </div>
+              {/* Corner Accent Badge */}
+              <div className="absolute top-8 right-8 z-30">
+                <div className="w-3 h-3 rounded-full shadow-[0_0_15px_rgba(28,167,199,0.8)] animate-pulse" style={{ backgroundColor: category.accent }}></div>
               </div>
 
-              {/* Content Panel */}
-              <div className="pt-3 pb-1 px-1 flex flex-col items-start">
-                <h3 className="text-white font-bold text-[15px] md:text-[18px] leading-tight mb-1 group-hover:text-[#00ffff] transition-colors">
+              {/* Image Panel Section */}
+              <div
+                className="w-full h-[280px] rounded-[24px] relative overflow-hidden flex items-center justify-center p-8 mb-8 transition-transform duration-700 group-hover:rotate-1 border border-white/10"
+                style={{ background: category.panelBg }}
+              >
+                {/* Decorative Elements */}
+                <div className="absolute top-4 left-4 w-16 h-1 bg-white/10 rounded-full rotate-45"></div>
+
+                {/* Rotated Image Card Effect */}
+                <motion.div
+                  className="w-full h-full relative z-10"
+                  animate={{
+                    rotate: [-3, 2, -3],
+                    y: [0, -8, 0]
+                  }}
+                  transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="w-full h-full object-contain filter drop-shadow(0 20px 40px rgba(0,0,0,0.5)) transition-transform duration-700 group-hover:scale-110"
+                  />
+                </motion.div>
+
+                {/* Glass Highlight */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none"></div>
+              </div>
+
+              {/* Content Section */}
+              <div className="px-2 pb-2">
+                <h3 className="text-white text-[28px] font-black leading-tight mb-3 transition-colors group-hover:text-[#1CA7C7]" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
                   {category.name}
                 </h3>
-                <p className="text-white/50 text-[10px] md:text-[12px] leading-snug line-clamp-2 h-[28px] md:h-[36px] font-medium">
+                <p className="text-[#BEEFFF] text-[16px] font-medium leading-relaxed mb-8 h-[72px] line-clamp-3 opacity-90">
                   {category.description}
                 </p>
 
-                {/* Compact Premium Link */}
-                <div className="mt-3 flex items-center gap-1.5 text-[11px] font-bold text-[#009999] group-hover:gap-2.5 transition-all">
-                  <span>Explore</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14m-7-7 7 7-7 7" />
-                  </svg>
+                {/* Explore Button */}
+                <div className="flex items-center gap-3 group/btn">
+                  <span className="text-[16px] font-black text-[#6FD3FF] tracking-[0.2em] uppercase transition-all group-hover/btn:text-white" style={{ textShadow: '0 0 10px rgba(111,211,255,0.4)' }}>
+                    EXPLORE DEPTH
+                  </span>
+                  <motion.div
+                    className="flex items-center"
+                    animate={{ x: [0, 6, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#6FD3FF"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="transition-colors group-hover/btn:stroke-white"
+                    >
+                      <path d="M5 12h14m-7-7 7 7-7 7" />
+                    </svg>
+                  </motion.div>
                 </div>
               </div>
             </motion.div>
           ))}
-
         </div>
       </div>
     </div>

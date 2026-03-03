@@ -82,88 +82,76 @@ export default function FeaturedThisWeek() {
   }, [newlyLaunchedProducts.length]);
 
   return (
-    <div className="mb-6 mt-6">
-      <h2 className="text-lg font-semibold text-neutral-900 mb-3 px-4 tracking-tight">
-        Featured this week
+    <div className="mb-12 mt-8">
+      <h2 className="text-[28px] font-black text-white mb-6 px-6 tracking-tight uppercase" style={{ textShadow: '0 0 20px rgba(28,167,199,0.3)' }}>
+        Featured <span className="text-[#1CA7C7]">This Week</span>
       </h2>
-      <div className="px-4">
-        <div className="flex gap-2.5 overflow-x-auto scrollbar-hide -mx-4 px-4 scroll-smooth">
-          <div className="flex-shrink-0 w-[110px]">
-            <div className="bg-gradient-to-br from-[#e0efff] via-white to-[#e0efff] border-2 border-[#b8daff] rounded-2xl overflow-hidden relative h-48 shadow-[0_4px_15px_rgba(0,51,102,0.1)] hover:shadow-[0_4px_15px_rgba(0,51,102,0.2)] transition-shadow">
+      <div className="px-6">
+        <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-6 px-6 scroll-smooth">
+          {/* Newly Launched */}
+          <div className="flex-shrink-0 w-[140px]">
+            <div className="water-card water-shimmer-border rounded-[24px] overflow-hidden relative h-56 shadow-2xl transition-all hover:-translate-y-1">
               <div className="absolute top-0 left-0 right-0 z-20">
-                <div className="bg-gradient-to-r from-[#003366] via-[#004c80] to-[#003366] rounded-b-3xl px-3 py-2 text-center shadow-lg relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
-                  <div className="text-white text-[9px] font-black uppercase leading-tight tracking-wider relative z-10">
+                <div className="bg-gradient-to-r from-[#072F4A] via-[#0B3C5D] to-[#072F4A] rounded-b-3xl px-3 py-2 text-center shadow-lg relative overflow-hidden border-b border-white/10">
+                  <div className="text-white text-[10px] font-black uppercase leading-tight tracking-[0.1em] relative z-10">
                     <div>NEWLY</div>
                     <div>LAUNCHED</div>
                   </div>
                 </div>
               </div>
-              <div className="absolute top-12 right-2 w-8 h-8 bg-[#b8daff]/30 rounded-full blur-sm"></div>
-              <div className="absolute bottom-16 left-2 w-6 h-6 bg-[#009999]/10 rounded-full blur-sm"></div>
-              <div className="relative h-32 mt-10 overflow-hidden bg-transparent">
+
+              <div className="relative h-32 mt-12 overflow-hidden bg-transparent">
                 {newlyLaunchedProducts.map((product, idx) => (
                   <div
                     key={`${product.id || idx}-${product.imageUrl || product.name}`}
-                    className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${idx === currentProductIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                    className={`absolute inset-0 flex items-center justify-center transition-opacity duration-700 ${idx === currentProductIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
                       }`}
                   >
                     {product.imageUrl ? (
                       <img
                         src={product.imageUrl}
                         alt={product.name || 'Product'}
-                        className="w-full h-full object-contain p-2 drop-shadow-lg"
+                        className="w-full h-full object-contain p-3 filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
                       />
                     ) : (
-                      <div className="text-5xl drop-shadow-md">
-                        {('emoji' in product && product.emoji) || '🍎'}
+                      <div className="text-5xl drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]">
+                        {('emoji' in product && product.emoji) || '🐟'}
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20">
-                <div className="bg-gradient-to-r from-[#FF6F61] via-[#eb5a4c] to-[#FF6F61] px-3 py-1 rounded-full flex items-center gap-1 shadow-[0_2px_10px_rgba(255,111,97,0.3)] border border-[#ffb5ab]/30">
-                  <div className="w-1 h-1 bg-white rounded-sm rotate-45 shadow-sm"></div>
-                  <span className="text-white text-[8px] font-black tracking-wide">For You</span>
-                  <div className="w-1 h-1 bg-white rounded-sm rotate-45 shadow-sm"></div>
+
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
+                <div className="bg-[#1CA7C7] px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-[0_0_15px_rgba(28,167,199,0.5)]">
+                  <span className="text-white text-[9px] font-black tracking-[0.1em] uppercase">For You</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex-shrink-0 w-[110px]">
+          {/* Price Drop */}
+          <div className="flex-shrink-0 w-[140px]">
             <Link
-              to="/category/snacks"
-              className="block bg-gradient-to-br from-[#003366] via-[#002244] to-[#003366] border-2 border-[#004c80] rounded-2xl overflow-hidden relative h-48 shadow-[0_4px_15px_rgba(0,51,102,0.3)] hover:shadow-xl transition-shadow group"
+              to="/category/all"
+              className="block water-card water-shimmer-border rounded-[24px] overflow-hidden relative h-56 shadow-2xl transition-all hover:-translate-y-1 group"
             >
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,_white_1px,_transparent_1px)] bg-[length:20px_20px]"></div>
-              </div>
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20">
-                <div className="bg-gradient-to-r from-[#FF6F61] to-[#ff8a7a] px-3 py-1 rounded-full shadow-lg border border-[#ffb5ab]/50">
-                  <span className="text-white text-[9px] font-black tracking-wide">Featured</span>
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20">
+                <div className="bg-[#BEEFFF] px-3 py-1 rounded-full shadow-lg border border-white/20">
+                  <span className="text-[#072F4A] text-[10px] font-black tracking-widest uppercase">Special</span>
                 </div>
               </div>
-              <div className="absolute top-8 right-3 w-12 h-12 bg-[#009999]/20 rounded-full blur-md"></div>
-              <div className="absolute bottom-8 left-3 w-10 h-10 bg-[#FF6F61]/20 rounded-full blur-md"></div>
               <div className="flex items-center justify-center h-full px-2 relative z-10">
                 <div className="text-center">
                   <div
-                    className="text-[#009999] text-3xl font-black mb-0.5 transform group-hover:scale-105 transition-transform"
-                    style={{
-                      textShadow: '2px 2px 0px #001a33, 3px 3px 6px rgba(0,0,0,0.3)',
-                      letterSpacing: '2px'
-                    }}
+                    className="text-[#6FD3FF] text-[24px] font-black leading-none mb-1 transform group-hover:scale-105 transition-transform"
+                    style={{ textShadow: '0 0 10px rgba(111,211,255,0.5)' }}
                   >
                     PRICE
                   </div>
                   <div
-                    className="text-[#FF6F61] text-3xl font-black transform group-hover:scale-105 transition-transform"
-                    style={{
-                      textShadow: '2px 2px 0px #001a33, 3px 3px 6px rgba(0,0,0,0.3)',
-                      letterSpacing: '2px'
-                    }}
+                    className="text-white text-[28px] font-black leading-none transform group-hover:scale-105 transition-transform"
+                    style={{ textShadow: '0 0 15px rgba(255,255,255,0.3)' }}
                   >
                     DROP
                   </div>
@@ -172,58 +160,50 @@ export default function FeaturedThisWeek() {
             </Link>
           </div>
 
-          <div className="flex-shrink-0 w-[110px]">
+          {/* Deep Sea Deals (Updated from Plum Cakes) */}
+          <div className="flex-shrink-0 w-[140px]">
             <Link
-              to="/category/biscuits-bakery"
-              className="block bg-gradient-to-br from-[#009999] via-[#008080] to-[#009999] border-2 border-white/30 rounded-2xl overflow-hidden relative h-48 shadow-[0_4px_15px_rgba(0,153,153,0.3)] hover:shadow-xl transition-shadow group"
+              to="/category/marin"
+              className="block water-card water-shimmer-border rounded-[24px] overflow-hidden relative h-56 shadow-2xl transition-all hover:-translate-y-1 group"
             >
-              <div className="absolute inset-0 opacity-5">
-                <div className="absolute inset-0 bg-[linear-gradient(45deg,_transparent_25%,_white_25%,_white_50%,_transparent_50%,_transparent_75%,_white_75%,_white)] bg-[length:20px_20px]"></div>
-              </div>
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20">
-                <div className="bg-gradient-to-r from-[#FF6F61] to-[#ff8a7a] px-3 py-1 rounded-full shadow-lg border border-[#ffb5ab]/50">
-                  <span className="text-white text-[9px] font-black tracking-wide">Featured</span>
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20">
+                <div className="bg-[#1CA7C7] px-3 py-1 rounded-full shadow-lg border border-white/20">
+                  <span className="text-white text-[10px] font-black tracking-widest uppercase">Marin</span>
                 </div>
               </div>
-              <div className="absolute top-8 left-0 right-0 z-20 text-center px-2">
-                <h3 className="text-white text-sm font-black tracking-wide drop-shadow-lg" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
-                  Plum Cakes
+              <div className="absolute top-12 left-0 right-0 z-20 text-center px-2">
+                <h3 className="text-white text-[13px] font-black tracking-[0.1em] uppercase" style={{ textShadow: '0 4px 8px rgba(0,0,0,0.5)' }}>
+                  Deep Sea Deals
                 </h3>
               </div>
-              <div className="absolute top-14 right-2 w-6 h-6 bg-white/10 rounded-full blur-sm"></div>
-              <div className="absolute bottom-10 left-2 w-5 h-5 bg-[#003366]/20 rounded-full blur-sm"></div>
-              <div className="flex items-center justify-center h-full pt-12 relative z-10">
-                <div className="text-5xl transform group-hover:scale-110 transition-transform drop-shadow-2xl">
-                  🎂
+              <div className="flex items-center justify-center h-full pt-14 relative z-10">
+                <div className="text-5xl transform group-hover:scale-110 transition-transform filter drop-shadow-[0_10px_20px_rgba(28,167,199,0.4)]">
+                  🐋
                 </div>
               </div>
             </Link>
           </div>
 
-          <div className="flex-shrink-0 w-[110px]">
+          {/* Fresh Arrivals */}
+          <div className="flex-shrink-0 w-[140px]">
             <Link
-              to="/category/fruits-veg"
-              className="block bg-gradient-to-br from-[#003366] via-[#004c80] to-[#003366] border-2 border-[#009999] rounded-2xl overflow-hidden relative h-48 shadow-[0_4px_15px_rgba(0,51,102,0.3)] hover:shadow-xl transition-shadow group"
+              to="/category/all"
+              className="block water-card water-shimmer-border rounded-[24px] overflow-hidden relative h-56 shadow-2xl transition-all hover:-translate-y-1 group"
             >
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,_white_2px,_transparent_2px)] bg-[length:30px_30px]"></div>
-              </div>
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20">
-                <div className="bg-gradient-to-r from-[#009999] to-[#4dc3c3] px-3 py-1 rounded-full shadow-lg border border-[#8ce3e3]/50">
-                  <span className="text-white text-[9px] font-black tracking-wide">Featured</span>
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20">
+                <div className="bg-[#6FD3FF] px-3 py-1 rounded-full shadow-lg border border-white/20">
+                  <span className="text-[#072F4A] text-[10px] font-black tracking-widest uppercase">Fresh</span>
                 </div>
               </div>
-              <div className="absolute top-8 left-0 right-0 z-20 text-center px-2">
-                <h3 className="text-white text-sm font-black tracking-wide drop-shadow-lg" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+              <div className="absolute top-12 left-0 right-0 z-20 text-center px-2">
+                <h3 className="text-white text-[13px] font-black tracking-[0.1em] uppercase" style={{ textShadow: '0 4px 8px rgba(0,0,0,0.5)' }}>
                   Fresh Arrivals
                 </h3>
               </div>
-              <div className="absolute top-14 right-2 w-8 h-8 bg-white/20 rounded-full blur-md"></div>
-              <div className="absolute bottom-10 left-2 w-6 h-6 bg-[#009999]/30 rounded-full blur-md"></div>
-              <div className="flex items-center justify-center h-full pt-12 relative z-10 gap-1.5">
-                <div className="text-3xl transform group-hover:scale-110 transition-transform">🍎</div>
-                <div className="text-3xl transform group-hover:scale-110 transition-transform">🍌</div>
-                <div className="text-3xl transform group-hover:scale-110 transition-transform">🍊</div>
+              <div className="flex items-center justify-center h-full pt-14 relative z-10 gap-2">
+                <div className="text-3xl transform group-hover:scale-110 group-hover:-rotate-12 transition-transform filter drop-shadow-[0_5px_15px_rgba(0,0,0,0.3)]">🦀</div>
+                <div className="text-4xl transform group-hover:scale-110 transition-transform filter drop-shadow-[0_8px_20px_rgba(0,0,0,0.4)]">🐟</div>
+                <div className="text-3xl transform group-hover:scale-110 group-hover:rotate-12 transition-transform filter drop-shadow-[0_5px_15px_rgba(0,0,0,0.3)]">🦐</div>
               </div>
             </Link>
           </div>

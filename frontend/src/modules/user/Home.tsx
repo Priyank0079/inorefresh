@@ -9,8 +9,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import HomeHero from "./components/HomeHero";
 import PromoStrip from "./components/PromoStrip";
 import LowestPricesEver from "./components/LowestPricesEver";
-import CategoryTileSection from "./components/CategoryTileSection";
-import FeaturedThisWeek from "./components/FeaturedThisWeek";
 import FishLoader from "../../components/FishLoader";
 import { getHomeContent } from "../../services/api/customerHomeService";
 import { getHeaderCategoriesPublic } from "../../services/api/headerCategoryService";
@@ -69,7 +67,7 @@ export default function Home() {
       // Simple auto-scroll to products if a category is selected via URL
       if (tabParam !== 'all') {
         const timer = setTimeout(() => {
-          const section = document.getElementById('lowest-prices-section');
+          const section = document.getElementById('category-section');
           if (section) {
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
@@ -242,22 +240,28 @@ export default function Home() {
   }
 
   return (
-    <div className="bg-white min-h-screen pb-20 md:pb-0" ref={contentRef}>
+    <div className="min-h-screen pb-20 md:pb-0 relative z-10" ref={contentRef}>
+      {/* 🌟 FLOATING SECTION HIGHLIGHTS */}
+      <div className="absolute top-[20%] left-[-10%] w-[40%] h-[40%] bg-[#1CA7C7]/10 blur-[120px] pointer-events-none rounded-full" />
+      <div className="absolute top-[60%] right-[-10%] w-[30%] h-[30%] bg-[#6FD3FF]/10 blur-[100px] pointer-events-none rounded-full" />
+
       {/* Hero Header with Gradient and Tabs */}
       <HomeHero activeTab={activeTab} onTabChange={setActiveTab} />
 
       {activeTab === 'all' && (
-        <>
+        <div className="relative z-10">
           {/* Promo Strip */}
           <PromoStrip activeTab={activeTab} />
 
+
+
           {/* LOWEST PRICES EVER Section */}
           <LowestPricesEver activeTab={activeTab} products={homeData.lowestPrices} />
-        </>
+        </div>
       )}
 
       {/* Main content - Premium Products Grid */}
-      <div className="bg-neutral-50 pt-6 space-y-5 md:space-y-8 md:pt-8 w-full">
+      <div id="fish-products-section" className="pt-6 space-y-5 md:space-y-8 md:pt-8 w-full relative z-10">
         <div className="px-4 pb-20 md:px-6 lg:px-8 w-full max-w-[1280px] mx-auto overflow-x-hidden">
           {/* Framer Motion Wrapper for Grid */}
           <AnimatePresence mode="wait">
@@ -280,17 +284,17 @@ export default function Home() {
                   ease: "easeIn"
                 }
               }}
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-5 w-full"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6 w-full"
             >
               {filteredProducts.length === 0 ? (
                 <div className="col-span-full py-20 flex flex-col items-center justify-center text-center">
-                  <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-10 h-10 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-20 h-20 bg-white/5 backdrop-blur-md rounded-full flex items-center justify-center mb-4 border border-white/10">
+                    <svg className="w-10 h-10 text-[#6FD3FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-bold text-[#003366] mb-1">No fish found</h3>
-                  <p className="text-neutral-500 max-w-xs">We couldn't find any products in the {activeTab} category right now.</p>
+                  <h3 className="text-white font-bold text-xl mb-1">No fish found</h3>
+                  <p className="text-[#BEEFFF]/60 max-w-xs">We couldn't find any products in the {activeTab} category right now.</p>
                 </div>
               ) : (
                 filteredProducts.map((type, i) => {
@@ -337,24 +341,23 @@ export default function Home() {
                   };
 
                   return (
-                    <div key={`fish-card-${activeTab}-${type.id}-${i}`} className="bg-white rounded-[22px] border-[1.5px] border-[#009999]/30 hover:border-[#FF6F61] shadow-[0_4px_20px_rgba(0,51,102,0.06)] hover:shadow-[0_12px_30px_rgba(0,51,102,0.12)] hover:-translate-y-1 transition-all duration-250 ease-out flex flex-col overflow-hidden relative group h-full">
+                    <motion.div
+                      key={`fish-card-${activeTab}-${type.id}-${i}`}
+                      className="water-card water-shimmer-border rounded-[24px] hover:-translate-y-2 transition-all duration-300 ease-out flex flex-col overflow-hidden relative group h-full"
+                    >
                       {/* 🌊 UNDERWATER CARD ENHANCEMENTS */}
-                      {/* 1. Very faint top highlight reflection */}
-                      <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none z-20" />
-
-                      {/* 2. Subtle inner glow at 4% opacity */}
-                      <div className="absolute inset-0 rounded-[22px] shadow-[inset_0_0_20px_rgba(0,224,198,0.04)] pointer-events-none z-10" />
+                      <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/[0.15] to-transparent pointer-events-none z-20" />
 
                       {/* Micro shimmer swipe animation on Hover */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.15] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none z-20" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.2] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none z-20" />
 
                       {/* Image Area - Pure Studio Photography Style */}
-                      <div className="w-full pt-[85%] relative bg-white flex-shrink-0">
-                        <div className="absolute inset-0 flex items-center justify-center p-4 pb-0">
+                      <div className="w-full pt-[85%] relative flex-shrink-0 bg-transparent">
+                        <div className="absolute inset-0 flex items-center justify-center p-4">
                           <img
                             src={type.imageUrl}
                             alt={type.name}
-                            className={`w-full h-full object-contain drop-shadow-[0_8px_12px_rgba(0,51,102,0.12)] group-hover:scale-[1.03] transition-transform duration-300 ease-out z-10 ${isOutOfStock ? 'grayscale opacity-50' : ''}`}
+                            className={`w-full h-full object-contain drop-shadow-[0_12px_20px_rgba(0,0,0,0.3)] group-hover:scale-[1.05] transition-transform duration-500 ease-out z-10 ${isOutOfStock ? 'grayscale opacity-50' : ''}`}
                             loading="lazy"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = '/images/bengali_fish.png'; // Fallback
@@ -362,41 +365,36 @@ export default function Home() {
                           />
                         </div>
                         {isOutOfStock && (
-                          <div className="absolute top-2 right-2 z-30 bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg">
+                          <div className="absolute top-3 right-3 z-30 bg-red-500 text-white text-[9px] font-black px-2 mt-1 py-1 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.5)]">
                             OUT OF STOCK
                           </div>
                         )}
                       </div>
 
                       {/* Content Area */}
-                      <div className="px-3 pb-3 md:px-4 md:pb-4 flex flex-col flex-grow bg-white z-10 rounded-b-[22px]">
+                      <div className="px-4 pb-4 md:px-5 md:pb-5 flex flex-col flex-grow z-10 bg-transparent">
                         <div className="flex-grow">
-                          <h3 className="text-[#003366] font-bold text-[13px] md:text-[14px] leading-tight mb-1 truncate group-hover:text-[#FF6F61] transition-colors duration-200">
+                          <h3 className="text-white font-bold text-[14px] md:text-[16px] leading-tight mb-1 truncate group-hover:text-[#1CA7C7] transition-colors duration-200">
                             {type.name}
                           </h3>
-                          <p className="text-[#003366]/60 font-medium text-[10px] md:text-[11px] leading-snug line-clamp-2 md:line-clamp-2 mb-2">
+                          <p className="text-[#BEEFFF]/60 font-medium text-[11px] md:text-[12px] leading-snug line-clamp-2 mb-3">
                             {type.description || (type as any).desc}
                           </p>
                         </div>
 
-                        {/* Divider */}
-                        <div className="h-[1px] w-full bg-[#003366]/10 mb-2" />
-
                         {/* Bottom Row: Rating, Price, Cart Button */}
                         <div className="flex items-center justify-between mt-auto">
-                          <div className="flex flex-col gap-1 justify-center">
-                            {/* Rating Row Studio */}
-                            <div className="flex items-center gap-1">
-                              <span className="text-[#FF6F61] text-[11px] font-black tracking-wide">★</span>
-                              <span className="text-[#003366] font-extrabold text-[11px]">{pseudoRandomRating}</span>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1.5 bg-white/5 py-0.5 px-2 rounded-full border border-white/5 w-fit">
+                              <span className="text-[#6FD3FF] text-[11px] font-black tracking-wide">★</span>
+                              <span className="text-[#BEEFFF] font-bold text-[11px]">{pseudoRandomRating}</span>
                             </div>
 
-                            {/* Pricing Studio */}
-                            <div className="flex items-baseline gap-[2px]">
-                              <span className="text-[#003366] font-black text-[15px] tracking-tight">
+                            <div className="flex items-baseline gap-[2px] mt-1">
+                              <span className="text-white font-black text-[18px] tracking-tight">
                                 {formattedPrice}
                               </span>
-                              <span className="text-[#003366]/40 font-semibold text-[10px]">
+                              <span className="text-[#BEEFFF]/40 font-semibold text-[11px]">
                                 {type.pack ? `/${type.pack}` : '/kg'}
                               </span>
                             </div>
@@ -404,39 +402,39 @@ export default function Home() {
 
                           {/* Animated Add to Cart Button or Stepper */}
                           {quantity > 0 ? (
-                            <div className="flex items-center bg-[#009999] rounded-full p-0.5 shadow-[0_2px_8px_rgba(0,153,153,0.3)] animate-in fade-in zoom-in duration-200">
+                            <div className="flex items-center bg-[#1CA7C7] rounded-full p-0.5 shadow-[0_0_20px_rgba(28,167,199,0.4)] animate-in fade-in zoom-in duration-300">
                               <button
                                 onClick={handleDecrement}
-                                className="w-7 h-7 flex items-center justify-center text-white hover:bg-[#008080] rounded-full transition-colors active:scale-90"
+                                className="w-8 h-8 flex items-center justify-center text-white hover:bg-white/10 rounded-full transition-all active:scale-90"
                               >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
                               </button>
-                              <span className="px-2 text-white font-bold text-[13px] min-w-[20px] text-center">
+                              <span className="px-2 text-white font-black text-[14px] min-w-[24px] text-center">
                                 {quantity}
                               </span>
                               <button
                                 onClick={handleIncrement}
-                                className="w-7 h-7 flex items-center justify-center text-white hover:bg-[#008080] rounded-full transition-colors active:scale-90"
+                                className="w-8 h-8 flex items-center justify-center text-white hover:bg-white/10 rounded-full transition-all active:scale-90"
                               >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                               </button>
                             </div>
                           ) : (
                             <button
                               onClick={handleAddToCart}
                               disabled={isOutOfStock}
-                              className={`w-8 h-8 md:w-9 md:h-9 rounded-full ${isOutOfStock ? 'bg-neutral-200 cursor-not-allowed' : 'bg-[#009999] group-hover:bg-[#FF6F61]'} text-white flex items-center justify-center shadow-[0_2px_8px_rgba(0,153,153,0.3)] group-hover:shadow-[0_4px_12px_rgba(255,111,97,0.4)] transition-all duration-300 flex-shrink-0 group-hover:scale-[1.08] relative overflow-hidden active:scale-95`}
+                              className={`w-10 h-10 rounded-full ${isOutOfStock ? 'bg-white/5 cursor-not-allowed text-white/20' : 'bg-gradient-to-br from-[#1CA7C7] to-[#072F4A] text-white hover:scale-110 active:scale-95'} flex items-center justify-center shadow-[0_4px_15px_rgba(28,167,199,0.3)] transition-all duration-500 relative overflow-hidden group/btn`}
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-[18px] h-[18px] relative z-10" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-[20px] h-[20px] relative z-10" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                               </svg>
-                              {!isOutOfStock && <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:animate-pulse" />}
+                              {!isOutOfStock && <div className="absolute inset-0 bg-white/20 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />}
                             </button>
                           )}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })
               )}
@@ -444,6 +442,6 @@ export default function Home() {
           </AnimatePresence>
         </div>
       </div>
-    </div >
+    </div>
   );
 }

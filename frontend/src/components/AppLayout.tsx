@@ -9,6 +9,7 @@ import ServiceNotAvailable from './ServiceNotAvailable';
 import { checkServiceability } from '../services/api/customerHomeService';
 import AmbientFishBackground from './AmbientFishBackground';
 import { UnderwaterEffect } from './UnderwaterEffect';
+import OceanNavbar from './OceanNavbar';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -173,203 +174,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const showFooter = !isCheckoutPage && !isProductDetailPage;
 
   return (
-    <div className="flex flex-col min-h-screen w-full relative overflow-x-hidden">
+    <div className="flex flex-col min-h-screen w-full relative overflow-x-hidden ocean-theme-bg">
       <AmbientFishBackground />
+      {/* 💫 FLOATING WATER LIGHT EFFECT */}
+      <div
+        className="fixed top-0 left-0 w-full h-full pointer-events-none z-[1]"
+        style={{ background: 'radial-gradient(circle at 50% 20%, rgba(255,255,255,0.15), transparent 70%)' }}
+      />
       {/* Desktop Container Wrapper */}
       <div className="md:w-full md:bg-transparent md:min-h-screen overflow-x-hidden">
         <div className="md:w-full md:min-h-screen md:flex md:flex-col overflow-x-hidden relative z-10">
-          {/* Top Navigation Bar - Desktop Only */}
-          {showFooter && (
-            <nav
-              className="hidden md:flex items-center justify-center gap-8 px-6 lg:px-8 py-3 shadow-sm transition-colors duration-300"
-              style={{
-                background: `linear-gradient(to right, ${currentTheme.primary[0]}, ${currentTheme.primary[1]})`,
-                borderBottom: `1px solid ${currentTheme.primary[0]}`
-              }}
-            >
-              {/* Home */}
-              <Link
-                to="/"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${isActive('/')
-                  ? 'bg-white shadow-md font-semibold'
-                  : 'hover:bg-white/20'
-                  }`}
-                style={{
-                  color: isActive('/') ? currentTheme.accentColor : currentTheme.headerTextColor
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  {isActive('/') ? (
-                    <>
-                      <path d="M2 12L12 4L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="currentColor" />
-                      <rect x="4" y="12" width="16" height="8" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                    </>
-                  ) : (
-                    <>
-                      <path d="M2 12L12 4L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                      <rect x="4" y="12" width="16" height="8" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" fill="none" />
-                    </>
-                  )}
-                </svg>
-                <span className="font-medium text-sm">Home</span>
-              </Link>
+          {/* New OceanMart Navbar - Replaces both old navbar and sticky header */}
+          <OceanNavbar />
 
-              {/* Order Again */}
-              <Link
-                to="/order-again"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${isActive('/order-again')
-                  ? 'bg-white shadow-md font-semibold'
-                  : 'hover:bg-white/20'
-                  }`}
-                style={{
-                  color: isActive('/order-again') ? currentTheme.accentColor : currentTheme.headerTextColor
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  {isActive('/order-again') ? (
-                    <path d="M5 8V6C5 4.34315 6.34315 3 8 3H16C17.6569 3 19 4.34315 19 6V8H21C21.5523 8 22 8.44772 22 9V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V9C2 8.44772 2.44772 8 3 8H5Z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                  ) : (
-                    <path d="M5 8V6C5 4.34315 6.34315 3 8 3H16C17.6569 3 19 4.34315 19 6V8H21C21.5523 8 22 8.44772 22 9V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V9C2 8.44772 2.44772 8 3 8H5Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" fill="none" />
-                  )}
-                </svg>
-                <span className="font-medium text-sm">Order Again</span>
-              </Link>
-
-              {/* Categories */}
-              <Link
-                to="/categories"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${(isActive('/categories') || location.pathname.startsWith('/category/'))
-                  ? 'bg-white shadow-md font-semibold'
-                  : 'hover:bg-white/20'
-                  }`}
-                style={{
-                  color: (isActive('/categories') || location.pathname.startsWith('/category/')) ? currentTheme.accentColor : currentTheme.headerTextColor
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  {(isActive('/categories') || location.pathname.startsWith('/category/')) ? (
-                    <>
-                      <circle cx="7" cy="7" r="2.5" fill="currentColor" stroke="currentColor" strokeWidth="2" />
-                      <circle cx="17" cy="7" r="2.5" fill="currentColor" stroke="currentColor" strokeWidth="2" />
-                      <circle cx="7" cy="17" r="2.5" fill="currentColor" stroke="currentColor" strokeWidth="2" />
-                      <circle cx="17" cy="17" r="2.5" fill="currentColor" stroke="currentColor" strokeWidth="2" />
-                    </>
-                  ) : (
-                    <>
-                      <circle cx="7" cy="7" r="2.5" stroke="currentColor" strokeWidth="2" fill="none" />
-                      <circle cx="17" cy="7" r="2.5" stroke="currentColor" strokeWidth="2" fill="none" />
-                      <circle cx="7" cy="17" r="2.5" stroke="currentColor" strokeWidth="2" fill="none" />
-                      <circle cx="17" cy="17" r="2.5" stroke="currentColor" strokeWidth="2" fill="none" />
-                    </>
-                  )}
-                </svg>
-                <span className="font-medium text-sm">Categories</span>
-              </Link>
-
-              {/* Profile */}
-              <Link
-                to="/account"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${isActive('/account')
-                  ? 'bg-white shadow-md font-semibold'
-                  : 'hover:bg-white/20'
-                  }`}
-                style={{
-                  color: isActive('/account') ? currentTheme.accentColor : currentTheme.headerTextColor
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  {isActive('/account') ? (
-                    <>
-                      <circle cx="12" cy="8" r="4" fill="currentColor" stroke="currentColor" strokeWidth="2" />
-                      <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="currentColor" />
-                    </>
-                  ) : (
-                    <>
-                      <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" fill="none" />
-                      <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
-                    </>
-                  )}
-                </svg>
-                <span className="font-medium text-sm">Profile</span>
-              </Link>
-            </nav>
-          )}
-
-          {/* Sticky Header - Show on search page and other non-home pages, excluding account page */}
-          {(showHeader || isSearchPage) && (
-            <header className="sticky top-0 z-50 bg-white shadow-sm md:shadow-md md:top-[60px]">
-              {/* Delivery info line */}
-              <div className="px-4 md:px-6 lg:px-8 py-1.5 bg-[#003366] text-xs text-white text-center">
-                Delivering in 10–15 mins
-              </div>
-
-              {/* Location line - only show if user has provided location */}
-              {userLocation && (userLocation.address || userLocation.city) && (
-                <div className="px-4 md:px-6 lg:px-8 py-2 flex items-center justify-between text-sm">
-                  <span className="text-neutral-700 line-clamp-1" title={userLocation?.address || ''}>
-                    {userLocation?.address
-                      ? userLocation.address.length > 50
-                        ? `${userLocation.address.substring(0, 50)}...`
-                        : userLocation.address
-                      : userLocation?.city && userLocation?.state
-                        ? `${userLocation.city}, ${userLocation.state}`
-                        : userLocation?.city || ''}
-                  </span>
-                  <button
-                    onClick={() => setShowLocationChangeModal(true)}
-                    className="text-blue-600 font-medium hover:text-blue-700 transition-colors flex-shrink-0 ml-2"
-                  >
-                    Change
-                  </button>
-                </div>
-              )}
-
-              {/* Search bar - Hidden on Order Again page */}
-              {showSearchBar && (
-                <div className="px-4 md:px-6 lg:px-8 pb-3">
-                  <div className="relative max-w-2xl md:mx-auto group">
-                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#009999] transition-colors duration-200">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="m21 21-4.35-4.35" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => handleSearchChange(e.target.value)}
-                      placeholder="Search for products..."
-                      className="w-full px-4 py-3 pl-11 bg-neutral-50 border border-neutral-200 rounded-xl text-[15px] font-medium text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:bg-white focus:ring-2 transition-all duration-300 shadow-sm hover:border-opacity-50"
-                      style={{
-                        boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
-                        borderColor: 'rgba(0,0,0,0.1)',
-                        // @ts-ignore - Dynamic focus ring using theme
-                        '--tw-ring-color': `${currentTheme.primary[3]}40`,
-                        '--tw-ring-offset-width': '0px'
-                      } as any}
-                      onFocus={(e) => {
-                        e.currentTarget.style.borderColor = currentTheme.primary[3];
-                      }}
-                      onBlur={(e) => {
-                        e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)';
-                      }}
-                    />
-                    {searchQuery && (
-                      <button
-                        onClick={() => handleSearchChange('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-400 transition-colors"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18" />
-                          <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </header>
-          )}
 
           {/* Scrollable Main Content */}
           <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide pb-24 md:pb-8 relative">
@@ -427,252 +244,93 @@ export default function AppLayout({ children }: AppLayoutProps) {
             />
           )}
 
-          {/* Fixed Bottom Navigation - Mobile Only, Hidden on checkout pages */}
+          {/* Fixed Bottom Navigation - Mobile Only */}
           {showFooter && (
             <nav
-              className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200/10 shadow-[0_-2px_4px_rgba(0,0,0,0.05)] z-50 md:hidden"
+              className="fixed bottom-0 left-0 right-0 z-50 md:hidden h-[70px] flex items-center justify-around px-2 border-t border-white/10"
+              style={{
+                background: 'rgba(7, 47, 74, 0.95)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 -10px 40px rgba(0,0,0,0.5)'
+              }}
             >
-              <div className="flex justify-around items-center h-16">
-                {/* Home */}
-                <motion.div
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.1 }}
-                  className="flex-1 h-full"
-                >
-                  <Link
-                    to="/"
-                    className="flex flex-col items-center justify-center h-full relative"
+              {[
+                {
+                  name: 'Home',
+                  path: '/',
+                  altPaths: ['/user/home'],
+                  icon: (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                      <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                  )
+                },
+                {
+                  name: 'Explore',
+                  path: '/categories',
+                  altPaths: ['/category/'],
+                  icon: (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )
+                },
+                {
+                  name: 'Profile',
+                  path: '/account',
+                  altPaths: [],
+                  icon: (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  )
+                }
+              ].map((item) => {
+                const isItemActive = isActive(item.path) || item.altPaths.some(p => location.pathname.startsWith(p));
+                return (
+                  <motion.div
+                    key={item.name}
+                    whileTap={{ scale: 0.9 }}
+                    className="flex-1"
                   >
-                    <div className="flex flex-col items-center justify-center relative z-10">
-                      <motion.svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        animate={isActive('/') ? {
-                          scale: [1, 1.1, 1],
-                          y: [0, -2, 0]
-                        } : {}}
-                        transition={{
-                          duration: 0.4,
-                          ease: "easeInOut",
-                          repeat: isActive('/') ? Infinity : 0,
-                          repeatDelay: 2
-                        }}
-                      >
-                        {isActive('/') ? (
-                          <>
-                            {/* Roof */}
-                            <path d="M2 12L12 4L22 12" stroke="#FF6F61" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="#FF6F61" />
-                            {/* House body */}
-                            <rect x="4" y="12" width="16" height="8" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" strokeLinejoin="round" />
-                            {/* Chimney */}
-                            <rect x="15" y="5" width="4" height="5" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" />
-                            {/* Door */}
-                            <rect x="8" y="15" width="4" height="5" fill="#ffffff" />
-                          </>
-                        ) : (
-                          <>
-                            {/* Roof */}
-                            <path d="M2 12L12 4L22 12" stroke="rgba(0,51,102,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                            {/* House body */}
-                            <rect x="4" y="12" width="16" height="8" stroke="rgba(0,51,102,0.4)" strokeWidth="2" strokeLinejoin="round" fill="none" />
-                            {/* Chimney */}
-                            <rect x="15" y="5" width="4" height="5" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
-                            {/* Door */}
-                            <rect x="8" y="15" width="4" height="5" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
-                          </>
-                        )}
-                      </motion.svg>
-                    </div>
-                    <span className={`text-xs mt-0.5 relative z-10 ${isActive('/') ? 'font-medium text-[#FF6F61]' : 'font-medium text-[#003366] opacity-60'}`}>
-                      Home
-                    </span>
-                  </Link>
-                </motion.div>
-
-                {/* Order Again */}
-                <motion.div
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.1 }}
-                  className="flex-1 h-full"
-                >
-                  <Link
-                    to="/order-again"
-                    className="flex flex-col items-center justify-center h-full relative"
-                  >
-                    <div className="flex flex-col items-center justify-center relative z-10">
-                      <motion.svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        animate={isActive('/order-again') ? {
-                          scale: [1, 1.1, 1],
-                          y: [0, -2, 0]
-                        } : {}}
-                        transition={{
-                          duration: 0.4,
-                          ease: "easeInOut",
-                          repeat: isActive('/order-again') ? Infinity : 0,
-                          repeatDelay: 2
-                        }}
-                      >
-                        {isActive('/order-again') ? (
-                          <>
-                            {/* Shopping bag body */}
-                            <path d="M5 8V6C5 4.34315 6.34315 3 8 3H16C17.6569 3 19 4.34315 19 6V8H21C21.5523 8 22 8.44772 22 9V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V9C2 8.44772 2.44772 8 3 8H5Z" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" strokeLinejoin="round" />
-                            {/* Handles */}
-                            <path d="M7 8V6C7 5.44772 7.44772 5 8 5H16C16.5523 5 17 5.44772 17 6V8" stroke="#FF6F61" strokeWidth="2" strokeLinecap="round" fill="none" />
-                          </>
-                        ) : (
-                          <>
-                            {/* Shopping bag body */}
-                            <path d="M5 8V6C5 4.34315 6.34315 3 8 3H16C17.6569 3 19 4.34315 19 6V8H21C21.5523 8 22 8.44772 22 9V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V9C2 8.44772 2.44772 8 3 8H5Z" stroke="rgba(0,51,102,0.4)" strokeWidth="2" strokeLinejoin="round" fill="none" />
-                            {/* Handles */}
-                            <path d="M7 8V6C7 5.44772 7.44772 5 8 5H16C16.5523 5 17 5.44772 17 6V8" stroke="rgba(0,51,102,0.4)" strokeWidth="2" strokeLinecap="round" fill="none" />
-                          </>
-                        )}
-                        {/* Heart inside basket - grows when active, shrinks when inactive */}
-                        <AnimatePresence>
-                          {isActive('/order-again') && (
-                            <motion.path
-                              key="heart"
-                              d="M12 17C11.5 16.5 8 13.5 8 11.5C8 10 9 9 10.5 9C11.2 9 11.8 9.3 12 9.7C12.2 9.3 12.8 9 13.5 9C15 9 16 10 16 11.5C16 13.5 12.5 16.5 12 17Z"
-                              fill="#ffffff"
-                              initial={{ scale: 0, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              exit={{ scale: 0, opacity: 0 }}
-                              transition={{ duration: 0.3, ease: "easeOut" }}
+                    <Link
+                      to={item.path}
+                      className="flex flex-col items-center justify-center h-full relative"
+                    >
+                      <div className={`
+                        flex flex-col items-center justify-center transition-all duration-300
+                        ${isItemActive ? 'text-[#1CA7C7]' : 'text-[#BEEFFF] opacity-60'}
+                      `}>
+                        <div className="relative">
+                          {isItemActive && (
+                            <motion.div
+                              layoutId="bottom-nav-glow"
+                              className="absolute inset-0 bg-[#1CA7C7]/20 rounded-full blur-[10px]"
                             />
                           )}
-                        </AnimatePresence>
-                      </motion.svg>
-                    </div>
-                    <span className={`text-xs mt-0.5 relative z-10 ${isActive('/order-again') ? 'font-medium text-[#FF6F61]' : 'font-medium text-[#003366] opacity-60'}`}>
-                      Order Again
-                    </span>
-                  </Link>
-                </motion.div>
+                          <div className="relative z-10 transition-transform duration-300 transform" style={{ scale: isItemActive ? 1.1 : 1 }}>
+                            {item.icon}
+                          </div>
+                        </div>
+                        <span className={`text-[11px] mt-1 font-bold tracking-wide transition-all ${isItemActive ? 'text-[#1CA7C7]' : 'text-[#BEEFFF]'}`}>
+                          {item.name}
+                        </span>
+                      </div>
 
-                {/* Categories */}
-                <motion.div
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.1 }}
-                  className="flex-1 h-full"
-                >
-                  <Link
-                    to="/categories"
-                    className="flex flex-col items-center justify-center h-full relative"
-                  >
-                    <div className="flex flex-col items-center justify-center relative z-10">
-                      <motion.svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        animate={{
-                          rotate: categoriesRotation
-                        }}
-                        transition={{
-                          duration: 0.5,
-                          ease: "easeInOut"
-                        }}
-                        style={{ transformOrigin: 'center' }}
-                      >
-                        {(isActive('/categories') || location.pathname.startsWith('/category/')) ? (
-                          <>
-                            {/* Active */}
-                            <circle cx="7" cy="7" r="2.5" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" />
-                            <circle cx="17" cy="7" r="2.5" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" />
-                            <circle cx="7" cy="17" r="2.5" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" />
-                            <circle cx="17" cy="17" r="2.5" fill="#FF6F61" stroke="#FF6F61" strokeWidth="2" />
-                          </>
-                        ) : (
-                          <>
-                            <circle cx="7" cy="7" r="2.5" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
-                            <circle cx="17" cy="7" r="2.5" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
-                            <circle cx="7" cy="17" r="2.5" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
-                            <circle cx="17" cy="17" r="2.5" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
-                          </>
-                        )}
-                      </motion.svg>
-                    </div>
-                    <span className={`text-xs mt-0.5 relative z-10 ${(isActive('/categories') || location.pathname.startsWith('/category/')) ? 'font-medium text-[#FF6F61]' : 'font-medium text-[#003366] opacity-60'}`}>
-                      Categories
-                    </span>
-                  </Link>
-                </motion.div>
-
-                {/* Profile */}
-                <motion.div
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.1 }}
-                  className="flex-1 h-full"
-                >
-                  <Link
-                    to="/account"
-                    className="flex flex-col items-center justify-center h-full relative"
-                  >
-                    <div className="flex flex-col items-center justify-center relative z-10">
-                      <motion.svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        animate={isActive('/account') ? {
-                          scale: [1, 1.05, 1]
-                        } : {}}
-                        transition={{
-                          duration: 0.5,
-                          ease: "easeInOut",
-                          repeat: isActive('/account') ? Infinity : 0,
-                          repeatDelay: 1.5
-                        }}
-                      >
-                        {isActive('/account') ? (
-                          <>
-                            {/* Profile head */}
-                            <motion.circle
-                              cx="12"
-                              cy="8"
-                              r="4"
-                              fill="#FF6F61"
-                              stroke="#FF6F61"
-                              strokeWidth="2"
-                              animate={{
-                                scale: [1, 1.1, 1]
-                              }}
-                              transition={{
-                                duration: 0.6,
-                                ease: "easeInOut",
-                                repeat: Infinity,
-                                repeatDelay: 1.2
-                              }}
-                            />
-                            {/* Profile body */}
-                            <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" stroke="#FF6F61" strokeWidth="2" strokeLinecap="round" fill="#FF6F61" />
-                          </>
-                        ) : (
-                          <>
-                            {/* Profile head */}
-                            <circle cx="12" cy="8" r="4" stroke="rgba(0,51,102,0.4)" strokeWidth="2" fill="none" />
-                            {/* Profile body */}
-                            <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" stroke="rgba(0,51,102,0.4)" strokeWidth="2" strokeLinecap="round" fill="none" />
-                          </>
-                        )}
-                      </motion.svg>
-                    </div>
-                    <span className={`text-xs mt-0.5 relative z-10 ${isActive('/account') ? 'font-medium text-[#FF6F61]' : 'font-medium text-[#003366] opacity-60'}`}>
-                      Profile
-                    </span>
-                  </Link>
-                </motion.div>
-              </div>
+                      {isItemActive && (
+                        <motion.div
+                          layoutId="bottom-indicator"
+                          className="absolute -bottom-2 w-10 h-[3px] bg-[#1CA7C7] rounded-full"
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </nav>
           )}
         </div>
