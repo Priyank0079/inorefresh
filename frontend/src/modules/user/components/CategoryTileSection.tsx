@@ -13,6 +13,7 @@ interface CategoryTile {
   sellerId?: string;
   bgColor?: string;
   slug?: string;
+  link?: string;
   type?: "subcategory" | "product" | "category";
 }
 
@@ -107,30 +108,33 @@ export default function CategoryTileSection({
                 className="flex flex-col">
                 <Link
                   to={
-                    tile.subcategoryId || tile.type === "subcategory"
-                      ? tile.categoryId
-                        ? `/category/${tile.categoryId}?subcategory=${tile.subcategoryId || tile.id
-                        }`
-                        : tile.slug
-                          ? `/category/${tile.slug}`
-                          : `/category/subcategory/${tile.subcategoryId || tile.id
+                    tile.link
+                      ? tile.link
+                      : tile.subcategoryId || tile.type === "subcategory"
+                        ? tile.categoryId
+                          ? `/category/${tile.categoryId}?subcategory=${tile.subcategoryId || tile.id
                           }`
-                      : tile.productId
-                        ? `/product/${tile.productId}`
-                        : tile.type === "category"
-                          ? tile.slug
+                          : tile.slug
                             ? `/category/${tile.slug}`
+                            : `/category/subcategory/${tile.subcategoryId || tile.id
+                            }`
+                        : tile.productId
+                          ? `/product/${tile.productId}`
+                          : tile.type === "category"
+                            ? tile.slug
+                              ? `/category/${tile.slug}`
+                              : tile.categoryId
+                                ? `/category/${tile.categoryId}`
+                                : "#"
                             : tile.categoryId
                               ? `/category/${tile.categoryId}`
-                              : "#"
-                          : tile.categoryId
-                            ? `/category/${tile.categoryId}`
-                            : (tile as any).sellerId
-                              ? `/seller/${(tile as any).sellerId}`
-                              : "#"
+                              : (tile as any).sellerId
+                                ? `/seller/${(tile as any).sellerId}`
+                                : "#"
                   }
                   onClick={(e) => {
                     if (
+                      !tile.link &&
                       !tile.categoryId &&
                       !tile.productId &&
                       !tile.subcategoryId &&

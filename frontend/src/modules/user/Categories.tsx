@@ -4,6 +4,7 @@ import { useLocation } from "../../hooks/useLocation";
 import CategoryTileSection from "./components/CategoryTileSection";
 import ProductCard from "./components/ProductCard";
 import { useThemeContext } from "../../context/ThemeContext";
+import { getCategories } from "../../services/api/categoryService";
 
 export default function Categories() {
   const { location } = useLocation();
@@ -12,6 +13,7 @@ export default function Categories() {
   const { currentTheme } = useThemeContext();
   const [homeData, setHomeData] = useState<any>({
     homeSections: [],
+    categories: []
   });
 
   useEffect(() => {
@@ -25,7 +27,33 @@ export default function Categories() {
           location?.longitude
         );
         if (response.success && response.data) {
-          setHomeData(response.data);
+          const data = response.data;
+          // Ensure we have categories even if homeSections is empty
+          let categoryList = data.categories || [];
+          if ((!data.homeSections || data.homeSections.length === 0) && categoryList.length === 0) {
+            const catRes = await getCategories({ includeSubcategories: true });
+            if (catRes.success) {
+              categoryList = catRes.data;
+            }
+          } else if (categoryList.length === 0) {
+            const catRes = await getCategories({ includeSubcategories: true });
+            if (catRes.success) {
+              categoryList = catRes.data;
+            }
+          }
+
+          // Ensure Masala is present
+          if (!categoryList.find((c: any) => c.name.toLowerCase().includes('masala'))) {
+            categoryList.push({
+              _id: 'masala',
+              name: 'Masala',
+              image: '/images/masala_fish.png', // Default image
+              slug: 'masala'
+            });
+          }
+
+          data.categories = categoryList;
+          setHomeData(data);
         } else {
           setError("Failed to load categories. Please try again.");
         }
@@ -65,6 +93,26 @@ export default function Categories() {
     );
   }
 
+  const mapCategoryToLink = (c: any) => {
+    const name = (c.name || c.title || "").toLowerCase();
+    let link = '';
+
+    // Map special categories to home tabs
+    if (name.includes('aqua') || name.includes('auqa')) link = '/?tab=aqua';
+    else if (name.includes('marin')) link = '/?tab=marin';
+    else if (name.includes('bengali') || name.includes('bengoli')) link = '/?tab=bengali';
+    else if (name.includes('masala')) link = '/?tab=masala';
+    else link = `/category/${c.slug || c._id || c.id}`;
+
+    return {
+      id: c._id || c.id || c.slug,
+      name: c.name || c.title,
+      image: c.image || c.imageUrl,
+      categoryId: c.slug || c._id || c.id,
+      link: link,
+      type: "category"
+    };
+  };
 
   return (
     <div className="pb-4 md:pb-8 bg-white min-h-screen">
@@ -124,18 +172,26 @@ export default function Categories() {
                 <CategoryTileSection
                   key={section.id}
                   title={section.title}
-                  tiles={section.data || []}
+                  tiles={(section.data || []).map(mapCategoryToLink)}
                   columns={columnCount as 2 | 3 | 4 | 6 | 8}
                   showProductCount={false}
                 />
               );
             })}
           </>
+        ) : homeData.categories && homeData.categories.length > 0 ? (
+          <div className="mt-4">
+            <CategoryTileSection
+              title="All Categories"
+              tiles={homeData.categories.map(mapCategoryToLink)}
+              columns={4}
+            />
+          </div>
         ) : (
           <div className="text-center py-12 md:py-16 text-neutral-500 px-4">
             <p className="text-lg md:text-xl mb-2">No categories found</p>
             <p className="text-sm md:text-base">
-              Please create home sections from the admin panel
+              Please create home sections or categories from the admin panel
             </p>
           </div>
         )}

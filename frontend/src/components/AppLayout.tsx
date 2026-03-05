@@ -128,13 +128,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
   };
 
 
+  const isHomePage = location.pathname === '/' || location.pathname === '/user/home';
   const SCROLL_POSITION_KEY = 'home-scroll-position';
 
-  // Reset scroll position when navigating to any page (smooth, no flash)
-  // BUT skip for Home page if there's a saved scroll position to restore
   useEffect(() => {
-    const isHomePage = location.pathname === '/' || location.pathname === '/user/home';
-
     // Home page handles its own scroll restoration and reset logic
     if (isHomePage) {
       return;
@@ -148,7 +145,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       // Also reset window scroll smoothly
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     });
-  }, [location.pathname]);
+  }, [location.pathname, isHomePage]);
 
   // Track categories active state for rotation
   const isCategoriesActive = isActive('/categories') || location.pathname.startsWith('/category/');
@@ -185,7 +182,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <div className="md:w-full md:bg-transparent md:min-h-screen overflow-x-hidden">
         <div className="md:w-full md:min-h-screen md:flex md:flex-col overflow-x-hidden relative z-10">
           {/* New OceanMart Navbar - Replaces both old navbar and sticky header */}
-          <OceanNavbar />
+          {isHomePage && <OceanNavbar />}
 
 
           {/* Scrollable Main Content */}

@@ -61,17 +61,17 @@ export default function Home() {
     const searchParams = new URLSearchParams(routerLocation.search);
     const tabParam = searchParams.get('tab');
 
-    if (tabParam && ['aqua', 'marin', 'bengali', 'all'].includes(tabParam)) {
+    if (tabParam && ['aqua', 'marin', 'bengali', 'masala', 'all'].includes(tabParam)) {
       setActiveTab(tabParam);
 
       // Simple auto-scroll to products if a category is selected via URL
       if (tabParam !== 'all') {
         const timer = setTimeout(() => {
-          const section = document.getElementById('category-section');
+          const section = document.getElementById('fish-products-section');
           if (section) {
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
-        }, 300);
+        }, 150);
         return () => clearTimeout(timer);
       }
     }
@@ -103,7 +103,7 @@ export default function Home() {
   useEffect(() => {
     const preloadHeaderCategories = async () => {
       try {
-        const slugsToPreload = ['aqua', 'marin', 'bengali'];
+        const slugsToPreload = ['aqua', 'marin', 'bengali', 'masala'];
         const batchSize = 2;
         for (let i = 0; i < slugsToPreload.length; i += batchSize) {
           const batch = slugsToPreload.slice(i, i + batchSize);
