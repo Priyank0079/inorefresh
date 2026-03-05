@@ -1,11 +1,11 @@
 import { Server as SocketIOServer } from 'socket.io';
 import Delivery from '../models/Delivery';
 import Order from '../models/Order';
-import Seller from '../models/Seller';
+import warehouse from '../models/warehouse';
 import DeliveryTracking from '../models/DeliveryTracking';
 import AppSettings from '../models/AppSettings';
 import mongoose from 'mongoose';
-import { notifySellersOfOrderUpdate } from './sellerNotificationService';
+import { notifywarehousesOfOrderUpdate } from './warehouseNotificationService';
 
 /**
  * Calculate estimated delivery boy earning for a new order
@@ -133,7 +133,7 @@ export async function findDeliveryBoysNearLocation(
                 }
             }
 
-            console.log(`📍 Found ${nearbyDeliveryBoys.length} delivery boys using live location within ${radiusKm}km of seller`);
+            console.log(`📍 Found ${nearbyDeliveryBoys.length} delivery boys using live location within ${radiusKm}km of warehouse`);
             return nearbyDeliveryBoys.sort((a, b) => a.distance - b.distance);
         }
 
@@ -219,63 +219,63 @@ export async function findDeliveryBoysNearLocation(
 }
 
 /**
- * Find delivery boys near seller locations for an order
- * Aggregates all unique sellers from order items and finds delivery boys within their service radius
+ * Find delivery boys near warehouse locations for an order
+ * Aggregates all unique warehouses from order items and finds delivery boys within their service radius
  */
-export async function findDeliveryBoysNearSellerLocations(
+export async function findDeliveryBoysNearwarehouseLocations(
     order: any
 ): Promise<mongoose.Types.ObjectId[]> {
     try {
-        // Get unique seller IDs from order items
-        const sellerIds = [...new Set(
+        // Get unique warehouse IDs from order items
+        const warehouseIds = [...new Set(
             order.items
-                ?.map((item: any) => item.seller?.toString())
+                ?.map((item: any) => item.warehouse?.toString())
                 .filter((id: string) => id) || []
         )];
 
-        if (sellerIds.length === 0) {
-            console.log('No sellers found in order, falling back to all available delivery boys');
+        if (warehouseIds.length === 0) {
+            console.log('No warehouses found in order, falling back to all available delivery boys');
             return findAvailableDeliveryBoys();
         }
 
-        // Get seller locations
-        const sellers = await Seller.find({
-            _id: { $in: sellerIds },
+        // Get warehouse locations
+        const warehouses = await warehouse.find({
+            _id: { $in: warehouseIds },
         }).select('latitude longitude location serviceRadiusKm storeName');
 
-        if (sellers.length === 0) {
-            console.log('No seller data found, falling back to all available delivery boys');
+        if (warehouses.length === 0) {
+            console.log('No warehouse data found, falling back to all available delivery boys');
             return findAvailableDeliveryBoys();
         }
 
-        // Find delivery boys near each seller location
+        // Find delivery boys near each warehouse location
         const nearbyDeliveryBoyMap = new Map<string, { distance: number }>();
 
-        for (const seller of sellers) {
+        for (const warehouse of warehouses) {
             let lat: number | null = null;
             let lng: number | null = null;
 
             // Prioritize GeoJSON location field
-            if (seller.location && seller.location.coordinates) {
-                lng = seller.location.coordinates[0];
-                lat = seller.location.coordinates[1];
+            if (warehouse.location && warehouse.location.coordinates) {
+                lng = warehouse.location.coordinates[0];
+                lat = warehouse.location.coordinates[1];
             } else {
                 // Fallback to legacy fields
-                lat = seller.latitude ? parseFloat(seller.latitude) : null;
-                lng = seller.longitude ? parseFloat(seller.longitude) : null;
+                lat = warehouse.latitude ? parseFloat(warehouse.latitude) : null;
+                lng = warehouse.longitude ? parseFloat(warehouse.longitude) : null;
             }
 
             if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
-                console.log(`Seller ${seller.storeName} has no valid location, skipping`);
+                console.log(`warehouse ${warehouse.storeName} has no valid location, skipping`);
                 continue;
             }
 
-            const radius = seller.serviceRadiusKm || 10; // Default 10km
+            const radius = warehouse.serviceRadiusKm || 10; // Default 10km
             const nearbyBoys = await findDeliveryBoysNearLocation(lat, lng, radius);
 
             for (const boy of nearbyBoys) {
                 const boyId = boy.deliveryBoyId.toString();
-                // Keep the smallest distance if same delivery boy is near multiple sellers
+                // Keep the smallest distance if same delivery boy is near multiple warehouses
                 if (!nearbyDeliveryBoyMap.has(boyId) || nearbyDeliveryBoyMap.get(boyId)!.distance > boy.distance) {
                     nearbyDeliveryBoyMap.set(boyId, { distance: boy.distance });
                 }
@@ -283,7 +283,7 @@ export async function findDeliveryBoysNearSellerLocations(
         }
 
         if (nearbyDeliveryBoyMap.size === 0) {
-            console.log('No delivery boys found near seller locations, falling back to all available');
+            console.log('No delivery boys found near warehouse locations, falling back to all available');
             return findAvailableDeliveryBoys();
         }
 
@@ -292,25 +292,25 @@ export async function findDeliveryBoysNearSellerLocations(
             .sort((a, b) => a[1].distance - b[1].distance)
             .map(([id]) => new mongoose.Types.ObjectId(id));
 
-        console.log(`📍 Found ${sortedBoys.length} delivery boys near seller locations`);
+        console.log(`📍 Found ${sortedBoys.length} delivery boys near warehouse locations`);
         return sortedBoys;
     } catch (error) {
-        console.error('Error finding delivery boys near seller locations:', error);
+        console.error('Error finding delivery boys near warehouse locations:', error);
         return findAvailableDeliveryBoys();
     }
 }
 
 /**
- * Emit new order notification to delivery boys near seller locations
- * Prioritizes delivery boys within the seller's service radius
+ * Emit new order notification to delivery boys near warehouse locations
+ * Prioritizes delivery boys within the warehouse's service radius
  */
 export async function notifyDeliveryBoysOfNewOrder(
     io: SocketIOServer,
     order: any
 ): Promise<void> {
     try {
-        // Find delivery boys near seller locations (within service radius)
-        let nearbyDeliveryBoyIds = await findDeliveryBoysNearSellerLocations(order);
+        // Find delivery boys near warehouse locations (within service radius)
+        let nearbyDeliveryBoyIds = await findDeliveryBoysNearwarehouseLocations(order);
 
         if (nearbyDeliveryBoyIds.length === 0) {
             console.log('No available delivery boys to notify (including fallback)');
@@ -400,7 +400,7 @@ export async function notifyDeliveryBoysOfNewOrder(
         // Only notify individual active delivery boys, not the general room
         // This prevents offline delivery boys from receiving notifications
 
-        console.log(`📢 Notified ${notifiedIds.size} connected delivery boys near seller locations about order ${order.orderNumber}`);
+        console.log(`📢 Notified ${notifiedIds.size} connected delivery boys near warehouse locations about order ${order.orderNumber}`);
     } catch (error) {
         console.error('Error notifying delivery boys:', error);
     }
@@ -566,8 +566,8 @@ export async function handleOrderRejection(
                         message: 'Unfortunately, no delivery partner is available at the moment. Your order has been rejected.',
                     });
 
-                    // Notify sellers/restaurants
-                    notifySellersOfOrderUpdate(io, order, 'STATUS_UPDATE');
+                    // Notify warehouses/restaurants
+                    notifywarehousesOfOrderUpdate(io, order, 'STATUS_UPDATE');
 
                     console.log(`✅ All delivery boys rejected order ${orderId}. Order status updated to Rejected.`);
                 } else {

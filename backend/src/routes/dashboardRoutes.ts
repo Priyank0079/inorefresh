@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { getDashboardStats } from "../modules/seller/controllers/dashboardController";
+import { getDashboardStats } from "../modules/warehouse/controllers/dashboardController";
 import { authenticate, requireUserType } from "../middleware/auth";
 
 const router = Router();
 
-// All routes require authentication and seller user type
+// All routes require authentication and warehouse user type
 router.use(authenticate);
-router.use(requireUserType("Seller"));
+router.use(requireUserType("Warehouse"));
 
-// Get seller's dashboard statistics
+// Get warehouse's dashboard statistics
 router.get("/stats", getDashboardStats);
 
 export default router;

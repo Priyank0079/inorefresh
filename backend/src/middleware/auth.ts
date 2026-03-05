@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, TokenPayload } from '../services/jwtService';
 
-export type AuthUserType = 'Admin' | 'Seller' | 'Customer' | 'Delivery';
+export type AuthUserType = 'Admin' | 'Warehouse' | 'Customer' | 'Delivery';
 
 // Extend Express Request to include user info
 declare global {
@@ -88,6 +88,11 @@ export const requireUserType = (...userTypes: AuthUserType[]) => {
       return;
     }
 
+    if (!userTypes.includes(req.user.userType as any) && !userTypes.includes(req.user.userType)) {
+      // Support for both old and new types if needed during transition, 
+      // but we'll stick to the new types.
+    }
+
     if (!userTypes.includes(req.user.userType)) {
       res.status(403).json({
         success: false,
@@ -100,3 +105,30 @@ export const requireUserType = (...userTypes: AuthUserType[]) => {
   };
 };
 
+/**
+ * Require authenticated admin user.
+ * Kept as a dedicated middleware for admin-only endpoints that need explicit intent.
+ */
+export const requireAdminAuth = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (!req.user) {
+    res.status(401).json({
+      success: false,
+      message: "Authentication required",
+    });
+    return;
+  }
+
+  if (req.user.userType !== "Admin") {
+    res.status(403).json({
+      success: false,
+      message: "Access denied. Admin access required.",
+    });
+    return;
+  }
+
+  next();
+};

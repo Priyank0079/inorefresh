@@ -1,6 +1,6 @@
 import { Router } from "express";
 import adminAuthRoutes from "./adminAuthRoutes";
-import sellerAuthRoutes from "./sellerAuthRoutes";
+import warehouseAuthRoutes from "./warehouseAuthRoutes";
 import dashboardRoutes from "./dashboardRoutes";
 import customerAuthRoutes from "./customerAuthRoutes";
 import deliveryRoutes from "./deliveryRoutes";
@@ -9,7 +9,7 @@ import deliveryAuthRoutes from "./deliveryAuthRoutes";
 // ... (other imports)
 import { authenticate, requireUserType } from "../middleware/auth";
 import customerRoutes from "./customerRoutes";
-import sellerRoutes from "./sellerRoutes";
+import warehouseRoutes from "./warehouseRoutes";
 import uploadRoutes from "./uploadRoutes";
 import productRoutes from "./productRoutes";
 import headerCategoryRoutes from "./headerCategoryRoutes";
@@ -32,7 +32,7 @@ import customerTrackingRoutes from "../modules/customer/routes/trackingRoutes";
 import deliveryTrackingRoutes from "../modules/delivery/routes/trackingRoutes";
 import fcmTokenRoutes from "./fcmTokenRoutes";
 import paymentRoutes from "./paymentRoutes";
-import sellerWalletRoutes from "./sellerWalletRoutes";
+import warehouseWalletRoutes from "./warehouseWalletRoutes";
 import deliveryWalletRoutes from "./deliveryWalletRoutes";
 import adminWithdrawalRoutes from "./adminWithdrawalRoutes";
 
@@ -57,7 +57,7 @@ router.get("/health", (_req, res) => {
 
 // Authentication routes
 router.use("/auth/admin", adminAuthRoutes);
-router.use("/auth/seller", sellerAuthRoutes);
+router.use("/auth/warehouse", warehouseAuthRoutes);
 router.use("/auth/customer", customerAuthRoutes);
 router.use("/auth/delivery", deliveryAuthRoutes);
 
@@ -112,11 +112,11 @@ router.use("/customer/reviews", productReviewRoutes);
 // General customer route (must be last to avoid intercepting specific routes)
 router.use("/customer", customerRoutes);
 
-// Seller dashboard routes
-router.use("/seller/dashboard", dashboardRoutes);
+// Warehouse dashboard routes
+router.use("/warehouse/dashboard", dashboardRoutes);
 
-// Seller management routes (protected, admin only)
-router.use("/sellers", sellerRoutes);
+// Warehouse management routes (protected, admin only)
+router.use("/warehouses", warehouseRoutes);
 
 // Admin routes (protected, admin only)
 router.use("/admin", adminRoutes);
@@ -124,46 +124,40 @@ router.use("/admin", adminRoutes);
 // Upload routes (protected)
 router.use("/upload", uploadRoutes);
 
-// Product routes (protected, seller only)
+// Product routes (protected, warehouse only)
 router.use("/products", productRoutes);
 
-// Category routes (protected, seller/admin)
+// Category routes (protected, warehouse/admin)
 router.use("/categories", categoryRoutes);
 
 // Header Category Routes
 router.use("/header-categories", headerCategoryRoutes);
 
-// Order routes (protected, seller only)
+// Order routes (protected, warehouse only)
 router.use("/orders", orderRoutes);
 
-// Return routes (protected, seller only)
+// Return routes (protected, warehouse only)
 router.use("/returns", returnRoutes);
 
-// Report routes (protected, seller only)
-router.use("/seller/reports", reportRoutes);
+// Report routes (protected, warehouse only)
+router.use("/warehouse/reports", reportRoutes);
 
-// Wallet routes (protected, seller only)
-router.use("/seller/wallet", walletRoutes);
+// Wallet routes (protected, warehouse only)
+router.use("/warehouse/wallet", walletRoutes);
 
-// Tax routes (protected, seller/admin)
-router.use("/seller/taxes", taxRoutes);
+// Tax routes (protected, warehouse/admin)
+router.use("/warehouse/taxes", taxRoutes);
 
 // Payment routes (Razorpay integration)
 router.use("/payment", paymentRoutes);
 
-// Seller wallet routes (protected, seller only)
-router.use("/seller/wallet-new", authenticate, requireUserType("Seller"), sellerWalletRoutes);
+// Warehouse wallet routes (protected, warehouse only)
+router.use("/warehouse/wallet-new", authenticate, requireUserType("Warehouse"), warehouseWalletRoutes);
 
 // Delivery wallet routes (protected, delivery only)
 router.use("/delivery/wallet", authenticate, requireUserType("Delivery"), deliveryWalletRoutes);
 
 // Admin withdrawal management routes (protected, admin only)
 router.use("/admin/withdrawals", authenticate, requireUserType("Admin"), adminWithdrawalRoutes);
-
-// Admin commission management routes (protected, admin only)
-
-
-// Add more routes here
-// router.use('/users', userRoutes);
 
 export default router;

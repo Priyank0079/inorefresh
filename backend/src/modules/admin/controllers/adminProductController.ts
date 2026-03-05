@@ -5,7 +5,7 @@ import SubCategory from "../../../models/SubCategory";
 import Brand from "../../../models/Brand";
 import Product from "../../../models/Product";
 import Inventory from "../../../models/Inventory";
-import Seller from "../../../models/Seller";
+import Warehouse from "../../../models/Warehouse";
 import HeaderCategory from "../../../models/HeaderCategory";
 import { cache } from "../../../utils/cache";
 
@@ -806,38 +806,40 @@ export const createProduct = asyncHandler(
     try {
       const productData = req.body;
 
-      // If seller is not provided, use/create default Admin Store
-      if (!productData.seller) {
+      // If warehouse is not provided, use/create default Admin Warehouse
+      if (!productData.warehouse) {
         try {
-          // Check for existing admin seller by email OR mobile to avoid duplicate key errors
-          let adminSeller = await Seller.findOne({
+          // Check for existing admin warehouse by email OR mobile
+          let adminWarehouse = await Warehouse.findOne({
             $or: [
-              { email: "admin-store@dhakadsnazzy.com" },
-              { mobile: "9999999999" },
+              { email: "admin-warehouse@zetomart.com" },
+              { phone: "9999999999" },
             ],
           });
 
-          if (!adminSeller) {
-            // Create default admin seller
-            adminSeller = await Seller.create({
-              sellerName: "Dhakad Snazzy Admin",
-              storeName: "Dhakad Snazzy Admin Store",
-              email: "admin-store@dhakadsnazzy.com",
-              mobile: "9999999999",
-              password: "AdminStore@123", // Should be hashed by pre-save hook
-              address: "",
-              city: "",
-              category: "Admin",
-              commission: 0,
-              status: "Approved",
-              requireProductApproval: false,
+          if (!adminWarehouse) {
+            // Create default admin warehouse
+            adminWarehouse = await Warehouse.create({
+              warehouseName: "Zeto Mart Admin Warehouse",
+              managerName: "Admin",
+              email: "admin-warehouse@zetomart.com",
+              phone: "9999999999",
+              password: "Warehouse@123",
+              address: "Admin HQ",
+              location: {
+                type: "Point",
+                coordinates: [0, 0],
+              },
+              status: "ACTIVE",
+              role: "warehouse",
+              createdBy: "ADMIN",
             });
           }
-          productData.seller = adminSeller._id;
-        } catch (sellerError: any) {
-          console.error("Error handling default admin seller:", sellerError);
+          productData.warehouse = adminWarehouse._id;
+        } catch (warehouseError: any) {
+          console.error("Error handling default admin warehouse:", warehouseError);
           throw new Error(
-            "Failed to assign default seller: " + sellerError.message
+            "Failed to assign default warehouse: " + warehouseError.message
           );
         }
       }
@@ -853,12 +855,12 @@ export const createProduct = asyncHandler(
         });
       }
 
-      // Verify seller exists (if passed explicitly or set above)
-      const seller = await Seller.findById(productData.seller);
-      if (!seller) {
+      // Verify warehouse exists
+      const warehouse = await Warehouse.findById(productData.warehouse);
+      if (!warehouse) {
         return res.status(404).json({
           success: false,
-          message: "Seller not found",
+          message: "Warehouse not found",
         });
       }
 
@@ -873,7 +875,7 @@ export const createProduct = asyncHandler(
       try {
         await Inventory.create({
           product: product._id,
-          seller: productData.seller,
+          warehouse: productData.warehouse,
           currentStock: Number(productData.stock) || 0,
           availableStock: Number(productData.stock) || 0,
         });
@@ -932,7 +934,7 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
     category,
     subcategory,
     brand,
-    seller,
+    warehouse,
     status,
     publish,
   } = req.query;
@@ -948,7 +950,7 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   if (category) query.category = category;
   if (subcategory) query.subcategory = subcategory;
   if (brand) query.brand = brand;
-  if (seller) query.seller = seller;
+  if (warehouse) query.warehouse = warehouse;
 
   // Only filter by status if explicitly provided
   // All products show by default (no approval workflow)
@@ -965,7 +967,7 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
       .populate("category", "name")
       .populate("subcategory", "name")
       .populate("brand", "name")
-      .populate("seller", "sellerName storeName")
+      .populate("warehouse", "warehouseName managerName")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit as string)),
@@ -996,7 +998,7 @@ export const getProductById = asyncHandler(
       .populate("category", "name")
       .populate("subcategory", "name")
       .populate("brand", "name")
-      .populate("seller", "sellerName storeName")
+      .populate("warehouse", "warehouseName managerName")
       .populate("approvedBy", "firstName lastName");
 
     if (!product) {

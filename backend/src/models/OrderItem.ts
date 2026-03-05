@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface IOrderItem extends Document {
   order: mongoose.Types.ObjectId;
   product: mongoose.Types.ObjectId;
-  seller: mongoose.Types.ObjectId;
+  warehouse: mongoose.Types.ObjectId;
 
   // Product Details (snapshot at time of order)
   productName: string;
@@ -42,10 +42,10 @@ const OrderItemSchema = new Schema<IOrderItem>(
       ref: "Product",
       required: [true, "Product is required"],
     },
-    seller: {
+    warehouse: {
       type: Schema.Types.ObjectId,
-      ref: "Seller",
-      required: [true, "Seller is required"],
+      ref: "Warehouse",
+      required: [true, "Warehouse is required"],
     },
 
     // Product Details (snapshot)
@@ -121,7 +121,7 @@ const OrderItemSchema = new Schema<IOrderItem>(
 // Indexes for faster queries
 OrderItemSchema.index({ order: 1 });
 OrderItemSchema.index({ product: 1 });
-OrderItemSchema.index({ seller: 1 });
+OrderItemSchema.index({ warehouse: 1 });
 
 const OrderItem = (mongoose.models.OrderItem as mongoose.Model<IOrderItem>) || mongoose.model<IOrderItem>("OrderItem", OrderItemSchema);
 

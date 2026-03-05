@@ -24,11 +24,11 @@ export const getFinancialDashboard = asyncHandler(
     // Get Platform Wallet data
     const platformWallet = await PlatformWallet.findOne();
 
-    // 1. Calculate Real-time Seller Pending Payouts -> Sum of all Seller Balances
-    const sellerBalanceResult = await mongoose.model("Seller").aggregate([
+    // 1. Calculate Real-time Warehouse Pending Payouts -> Sum of all Warehouse Balances
+    const WarehouseBalanceResult = await mongoose.model("Warehouse").aggregate([
       { $group: { _id: null, total: { $sum: "$balance" } } },
     ]);
-    const realTimeSellerPending = sellerBalanceResult.length > 0 ? sellerBalanceResult[0].total : 0;
+    const realTimeWarehousePending = WarehouseBalanceResult.length > 0 ? WarehouseBalanceResult[0].total : 0;
 
     // 2. Calculate Real-time Delivery Boy Pending Payouts & Debt
     const deliveryBalanceResult = await mongoose.model("Delivery").aggregate([
@@ -55,7 +55,7 @@ export const getFinancialDashboard = asyncHandler(
 
           // Real-time aggregates of balances (Liabilities)
           pendingFromDeliveryBoy: realTimePendingFromDeliveryBoy,
-          sellerPendingPayouts: realTimeSellerPending,
+          WarehousePendingPayouts: realTimeWarehousePending,
           deliveryBoyPendingPayouts: realTimeDeliveryPendingPayouts,
 
           // Legacy fields for backward compatibility
@@ -77,7 +77,7 @@ export const getFinancialDashboard = asyncHandler(
 
     // 1. Total Platform Earnings (Net GMV)
     // Formula: Sum(Order.total) - Sum(Delivery Commissions)
-    // This represents the total money that flows into the platform (Admin + Sellers)
+    // This represents the total money that flows into the platform (Admin + Warehouses)
     const totalOrderAmountResult = await mongoose
       .model("Order")
       .aggregate([
@@ -109,15 +109,15 @@ export const getFinancialDashboard = asyncHandler(
     const totalGMV = totalOrderAmount - allDeliveryCommissions;
 
     // 2. Total Admin Earnings
-    // Formula: SellerCommissions + OrderFees (Platform+Shipping) - DeliveryCommissions
+    // Formula: WarehouseCommissions + OrderFees (Platform+Shipping) - DeliveryCommissions
 
-    // A. Seller Commissions (The 10% part)
-    const sellerCommResult = await Commission.aggregate([
-      { $match: { type: "SELLER", status: { $ne: "Cancelled" } } },
+    // A. Warehouse Commissions (The 10% part)
+    const WarehouseCommResult = await Commission.aggregate([
+      { $match: { type: "Warehouse", status: { $ne: "Cancelled" } } },
       { $group: { _id: null, total: { $sum: "$commissionAmount" } } },
     ]);
-    const sellerCommissions =
-      sellerCommResult.length > 0 ? sellerCommResult[0].total : 0;
+    const WarehouseCommissions =
+      WarehouseCommResult.length > 0 ? WarehouseCommResult[0].total : 0;
 
     // B. Delivery Commissions (The part paid to delivery boy)
     // For COD orders, the user requested not to subtract delivery commissions from admin earnings
@@ -150,10 +150,10 @@ export const getFinancialDashboard = asyncHandler(
     ]);
     const orderFees = orderFeesResult.length > 0 ? orderFeesResult[0].total : 0;
 
-    // Calculation: (SellerComm + PlatformFee + Shipping) - DeliveryComm
-    // This effectively gives: SellerComm + PlatformFee + (Shipping - DeliveryComm) -> where (Shipping-DeliveryComm) is Base Charge
+    // Calculation: (WarehouseComm + PlatformFee + Shipping) - DeliveryComm
+    // This effectively gives: WarehouseComm + PlatformFee + (Shipping - DeliveryComm) -> where (Shipping-DeliveryComm) is Base Charge
     const totalAdminEarnings =
-      sellerCommissions + orderFees - deliveryCommissions;
+      WarehouseCommissions + orderFees - deliveryCommissions;
 
     // Calculate Total Completed Withdrawals (Outflow)
     const withdrawalResult = await WithdrawRequest.aggregate([
@@ -166,8 +166,8 @@ export const getFinancialDashboard = asyncHandler(
     // Current Platform Balance = Total Inflow (GMV) - Total Outflow (Withdrawals)
     const currentAccountBalance = totalGMV - totalWithdrawals;
 
-    // 3. Reuse calculated Real-time Seller Pending Payouts
-    const sellerPendingPayouts = realTimeSellerPending;
+    // 3. Reuse calculated Real-time Warehouse Pending Payouts
+    const WarehousePendingPayouts = realTimeWarehousePending;
 
     // 4. Reuse calculated Real-time Delivery Boy Pending Payouts
     const deliveryPendingPayouts = realTimeDeliveryPendingPayouts;
@@ -180,7 +180,7 @@ export const getFinancialDashboard = asyncHandler(
         totalAdminEarnings,
         totalWithdrawals,
         currentAccountBalance,
-        sellerPendingPayouts,
+        WarehousePendingPayouts,
         deliveryPendingPayouts,
         pendingAmountFromDeliveryBoy,
         // Legacy field just in case
@@ -211,7 +211,7 @@ export const getAdminEarnings = asyncHandler(
 
     const earnings = await Commission.find(query)
       .populate("order", "orderNumber")
-      .populate("seller", "storeName sellerName")
+      .populate("Warehouse", "storeName WarehouseName")
       .populate("deliveryBoy", "name mobile")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -222,9 +222,9 @@ export const getAdminEarnings = asyncHandler(
     // Format data for frontend
     const formattedEarnings = earnings.map((e) => {
       let sourceName = "Unknown";
-      if (e.type === "SELLER" && e.seller) {
+      if (e.type === "Warehouse" && e.Warehouse) {
         sourceName =
-          (e.seller as any).storeName || (e.seller as any).sellerName;
+          (e.Warehouse as any).storeName || (e.Warehouse as any).WarehouseName;
       } else if (e.type === "DELIVERY_BOY" && e.deliveryBoy) {
         sourceName = (e.deliveryBoy as any).name;
       }
@@ -255,7 +255,7 @@ export const getAdminEarnings = asyncHandler(
 );
 
 /**
- * Get All Wallet Transactions (Sellers & Delivery Boys)
+ * Get All Wallet Transactions (Warehouses & Delivery Boys)
  */
 export const getWalletTransactions = asyncHandler(
   async (req: Request, res: Response) => {
@@ -272,7 +272,7 @@ export const getWalletTransactions = asyncHandler(
     const transactions = await WalletTransaction.find(query)
       .populate({
         path: "userId", // This will populate based on refPath 'userType'
-        select: "name firstName lastName storeName sellerName mobile email",
+        select: "name firstName lastName storeName WarehouseName mobile email",
       })
       .populate("relatedOrder", "orderNumber")
       .sort({ createdAt: -1 })
@@ -285,8 +285,8 @@ export const getWalletTransactions = asyncHandler(
     const formattedTransactions = transactions.map((t: any) => {
       let userName = "Unknown";
       if (t.userId) {
-        if (t.userType === "SELLER") {
-          userName = t.userId.storeName || t.userId.sellerName;
+        if (t.userType === "Warehouse") {
+          userName = t.userId.storeName || t.userId.WarehouseName;
         } else {
           userName =
             t.userId.name || t.userId.firstName + " " + t.userId.lastName;

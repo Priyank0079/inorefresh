@@ -38,7 +38,7 @@ interface SmsIndiaHubResponse {
   }>;
 }
 
-type UserType = 'Customer' | 'Delivery' | 'Seller' | 'Admin';
+type UserType = 'Customer' | 'Delivery' | 'warehouse' | 'Admin';
 
 /**
  * Generate numeric OTP
@@ -325,12 +325,12 @@ export async function verifySmsOtp(
 }
 
 // ==========================================
-// SMS OTP (Seller / Admin)
+// SMS OTP (warehouse / Admin)
 // ==========================================
 
 export async function sendOTP(
   mobile: string,
-  userType: 'Seller' | 'Admin' | 'Customer' | 'Delivery',
+  userType: 'warehouse' | 'Admin' | 'Customer' | 'Delivery',
   _isLogin: boolean = true
 ): Promise<OtpResponse> {
   try {
@@ -378,7 +378,7 @@ export async function sendOTP(
 export async function verifyOTP(
   mobile: string,
   otpInput: string,
-  userType: 'Seller' | 'Admin' | 'Customer' | 'Delivery'
+  userType: 'warehouse' | 'Admin' | 'Customer' | 'Delivery'
 ): Promise<boolean> {
   if (isDeveloperBypass(otpInput)) {
     return true;

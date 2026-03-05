@@ -1,7 +1,7 @@
 import Commission from "../models/Commission";
 import Order from "../models/Order";
 import OrderItem from "../models/OrderItem";
-import Seller from "../models/Seller";
+import warehouse from "../models/warehouse";
 import Delivery from "../models/Delivery";
 import AppSettings from "../models/AppSettings";
 import { creditWallet } from "./walletManagementService";
@@ -13,11 +13,11 @@ import WalletTransaction from "../models/WalletTransaction";
 
 /**
  * Get the effective commission rate for a product/item
- * Priority: 1. SubSubCategory -> 2. SubCategory -> 3. Category -> 4. Seller -> 5. Global
+ * Priority: 1. SubSubCategory -> 2. SubCategory -> 3. Category -> 4. warehouse -> 5. Global
  */
 export const getOrderItemCommissionRate = async (
   productId: string,
-  sellerId?: string
+  warehouseId?: string
 ): Promise<number> => {
   try {
     const product = await Product.findById(productId);
@@ -47,11 +47,11 @@ export const getOrderItemCommissionRate = async (
       }
     }
 
-    // 4. Check Seller specific rate
-    const finalSellerId = sellerId || product.seller.toString();
-    const seller = await Seller.findById(finalSellerId);
-    if (seller?.commission && seller.commission > 0) {
-      return seller.commission;
+    // 4. Check warehouse specific rate
+    const finalwarehouseId = warehouseId || product.warehouse.toString();
+    const warehouse = await warehouse.findById(finalwarehouseId);
+    if (warehouse?.commission && warehouse.commission > 0) {
+      return warehouse.commission;
     }
 
     // 5. Global Default
@@ -66,23 +66,23 @@ export const getOrderItemCommissionRate = async (
 };
 
 /**
- * Get commission rate for a seller
+ * Get commission rate for a warehouse
  */
 /**
- * Get commission rate for a seller
+ * Get commission rate for a warehouse
  */
-export const getSellerCommissionRate = async (
-  sellerId: string,
+export const getwarehouseCommissionRate = async (
+  warehouseId: string,
 ): Promise<number> => {
   try {
-    const seller = await Seller.findById(sellerId);
-    if (!seller) {
-      throw new Error("Seller not found");
+    const warehouse = await warehouse.findById(warehouseId);
+    if (!warehouse) {
+      throw new Error("warehouse not found");
     }
 
     // Use individual rate if set, otherwise use global default
-    if (seller.commissionRate !== undefined && seller.commissionRate !== null) {
-      return seller.commissionRate;
+    if (warehouse.commissionRate !== undefined && warehouse.commissionRate !== null) {
+      return warehouse.commissionRate;
     }
 
     const settings = await AppSettings.findOne();
@@ -91,7 +91,7 @@ export const getSellerCommissionRate = async (
       ? settings.globalCommissionRate
       : 10;
   } catch (error) {
-    console.error("Error getting seller commission rate:", error);
+    console.error("Error getting warehouse commission rate:", error);
     return 10; // Default fallback
   }
 };
@@ -134,8 +134,8 @@ export const calculateOrderCommissions = async (orderId: string) => {
     }
 
     const commissions: {
-      seller?: {
-        sellerId: string;
+      warehouse?: {
+        warehouseId: string;
         amount: number;
         rate: number;
         orderAmount: number;
@@ -148,8 +148,8 @@ export const calculateOrderCommissions = async (orderId: string) => {
       };
     } = {};
 
-    // Calculate seller commissions (per item/seller)
-    const sellerCommissions = new Map<
+    // Calculate warehouse commissions (per item/warehouse)
+    const warehouseCommissions = new Map<
       string,
       { amount: number; rate: number; orderAmount: number }
     >();
@@ -158,19 +158,19 @@ export const calculateOrderCommissions = async (orderId: string) => {
       const orderItem = await OrderItem.findById(itemId);
       if (!orderItem) continue;
 
-      const sellerId = orderItem.seller.toString();
+      const warehouseId = orderItem.warehouse.toString();
       const itemTotal = orderItem.total;
 
-      // Get commission rate for this seller
-      const commissionRate = await getSellerCommissionRate(sellerId);
+      // Get commission rate for this warehouse
+      const commissionRate = await getwarehouseCommissionRate(warehouseId);
       const commissionAmount = (itemTotal * commissionRate) / 100;
 
-      if (sellerCommissions.has(sellerId)) {
-        const existing = sellerCommissions.get(sellerId)!;
+      if (warehouseCommissions.has(warehouseId)) {
+        const existing = warehouseCommissions.get(warehouseId)!;
         existing.amount += commissionAmount;
         existing.orderAmount += itemTotal;
       } else {
-        sellerCommissions.set(sellerId, {
+        warehouseCommissions.set(warehouseId, {
           amount: commissionAmount,
           rate: commissionRate,
           orderAmount: itemTotal,
@@ -179,9 +179,9 @@ export const calculateOrderCommissions = async (orderId: string) => {
     }
 
     // Convert to array
-    commissions.seller = Array.from(sellerCommissions.entries()).map(
-      ([sellerId, data]) => ({
-        sellerId,
+    commissions.warehouse = Array.from(warehouseCommissions.entries()).map(
+      ([warehouseId, data]) => ({
+        warehouseId,
         ...data,
       }),
     );
@@ -264,19 +264,19 @@ export const createPendingCommissions = async (orderId: string) => {
     }
 
     const items = order.items;
-    // Group items by seller to aggregate earnings (though we store per item mostly)
+    // Group items by warehouse to aggregate earnings (though we store per item mostly)
     // We'll calculate per item as per original logic
 
     for (const itemId of items) {
       const item = await OrderItem.findById(itemId);
       if (!item) continue;
 
-      const seller = await Seller.findById(item.seller);
-      if (!seller) continue;
+      const warehouse = await warehouse.findById(item.warehouse);
+      if (!warehouse) continue;
 
       const commissionRate = await getOrderItemCommissionRate(
         item.product.toString(),
-        item.seller.toString()
+        item.warehouse.toString()
       );
       const commissionAmount = (item.total * commissionRate) / 100;
       const netEarning = item.total - commissionAmount;
@@ -289,8 +289,8 @@ export const createPendingCommissions = async (orderId: string) => {
       const commission = await Commission.create({
         order: item.order,
         orderItem: item._id,
-        seller: item.seller,
-        type: "SELLER",
+        warehouse: item.warehouse,
+        type: "warehouse",
         orderAmount: item.total,
         commissionRate,
         commissionAmount,
@@ -299,10 +299,10 @@ export const createPendingCommissions = async (orderId: string) => {
       });
 
       // Credit Wallet Immediately
-      if (seller) {
+      if (warehouse) {
         await creditWallet(
-          seller._id.toString(),
-          "SELLER",
+          warehouse._id.toString(),
+          "warehouse",
           netEarning,
           `Sale proceeds from Order #${order.orderNumber}`,
           item.order.toString(),
@@ -366,15 +366,15 @@ export const distributeCommissions = async (orderId: string) => {
         "Skipping commission distribution as no pending records found.",
       );
       // return { success: true, message: "No pending commissions to distribute" };
-      // Wait, if we return here, seller gets nothing. We SHOULD calculate if missing.
+      // Wait, if we return here, warehouse gets nothing. We SHOULD calculate if missing.
       // But for this task, let's assume they will be created.
       // Ideally we should call `createPendingCommissions` here but pass the session.
     }
 
     const processedCommissions: any[] = [];
 
-    // Group by Seller to credit wallet once per seller
-    const sellerEarnings = new Map<
+    // Group by warehouse to credit wallet once per warehouse
+    const warehouseEarnings = new Map<
       string,
       { netAmount: number; commissionIds: string[] }
     >();
@@ -387,26 +387,26 @@ export const distributeCommissions = async (orderId: string) => {
       processedCommissions.push(comm);
 
       // Group for wallet credit
-      if (comm.type === "SELLER" && comm.seller) {
-        const sellerId = comm.seller.toString();
+      if (comm.type === "warehouse" && comm.warehouse) {
+        const warehouseId = comm.warehouse.toString();
         const netAmount = comm.orderAmount - comm.commissionAmount;
 
-        if (!sellerEarnings.has(sellerId)) {
-          sellerEarnings.set(sellerId, { netAmount: 0, commissionIds: [] });
+        if (!warehouseEarnings.has(warehouseId)) {
+          warehouseEarnings.set(warehouseId, { netAmount: 0, commissionIds: [] });
         }
-        const data = sellerEarnings.get(sellerId)!;
+        const data = warehouseEarnings.get(warehouseId)!;
         data.netAmount += netAmount;
         data.commissionIds.push(comm._id.toString());
       }
     }
 
-    // Credit Seller Wallets
-    for (const [sellerId, data] of sellerEarnings.entries()) {
-      // For COD orders, we don't credit the seller yet.
-      // The seller will be credited when the delivery boy pays the admin.
+    // Credit warehouse Wallets
+    for (const [warehouseId, data] of warehouseEarnings.entries()) {
+      // For COD orders, we don't credit the warehouse yet.
+      // The warehouse will be credited when the delivery boy pays the admin.
       if (order.paymentMethod === "COD") {
         console.log(
-          `[COD] Delaying seller credit for order ${order.orderNumber}. Will be credited when delivery boy pays admin.`,
+          `[COD] Delaying warehouse credit for order ${order.orderNumber}. Will be credited when delivery boy pays admin.`,
         );
         // Mark these commissions as Pending instead of Paid
         await Commission.updateMany(
@@ -418,8 +418,8 @@ export const distributeCommissions = async (orderId: string) => {
       }
 
       await creditWallet(
-        sellerId,
-        "SELLER",
+        warehouseId,
+        "warehouse",
         data.netAmount,
         `Sale proceeds for order ${order.orderNumber}`,
         orderId,
@@ -580,9 +580,9 @@ export const processPendingCODPayouts = async (
     // Round amount paid for precision
     let remainingAmount = Math.round(amountPaid * 100) / 100;
 
-    // Find all orders delivered by this delivery boy that have pending SELLER commissions
+    // Find all orders delivered by this delivery boy that have pending warehouse commissions
     const pendingCommissions = await Commission.find({
-      type: "SELLER",
+      type: "warehouse",
       status: "Pending",
     })
       .populate({
@@ -623,12 +623,12 @@ export const processPendingCODPayouts = async (
         comm.paidAt = new Date();
         await comm.save({ session });
 
-        // Credit Seller Wallet
+        // Credit warehouse Wallet
         const netEarning = Math.round((comm.orderAmount - comm.commissionAmount) * 100) / 100;
-        if (comm.seller) {
+        if (comm.warehouse) {
           await creditWallet(
-            comm.seller.toString(),
-            "SELLER",
+            comm.warehouse.toString(),
+            "warehouse",
             netEarning,
             `Sale proceeds for COD order ${order.orderNumber} (Delivery boy payout confirmed)`,
             order._id.toString(),
@@ -643,7 +643,7 @@ export const processPendingCODPayouts = async (
             const breakdown = await calculateCODOrderBreakdown(order._id.toString());
 
             platformWallet.totalAdminEarning += breakdown.totalAdminEarning;
-            platformWallet.sellerPendingPayouts = Math.max(0, platformWallet.sellerPendingPayouts + netEarning);
+            platformWallet.warehousePendingPayouts = Math.max(0, platformWallet.warehousePendingPayouts + netEarning);
           }
         }
 
@@ -677,11 +677,11 @@ export const processPendingCODPayouts = async (
  */
 export const getCommissionSummary = async (
   userId: string,
-  userType: "SELLER" | "DELIVERY_BOY",
+  userType: "warehouse" | "DELIVERY_BOY",
 ) => {
   try {
     const query =
-      userType === "SELLER" ? { seller: userId } : { deliveryBoy: userId };
+      userType === "warehouse" ? { warehouse: userId } : { deliveryBoy: userId };
 
     const commissions = await Commission.find(query).sort({ createdAt: -1 });
 
@@ -703,10 +703,10 @@ export const getCommissionSummary = async (
     };
 
     commissions.forEach((c) => {
-      // For Sellers, earning is Order Amount - Commission Amount
+      // For warehouses, earning is Order Amount - Commission Amount
       // For Delivery Boys, earning is the Commission Amount itself
       const earningAmount =
-        userType === "SELLER"
+        userType === "warehouse"
           ? c.orderAmount - c.commissionAmount
           : c.commissionAmount;
 
@@ -759,8 +759,8 @@ export const reverseCommissions = async (orderId: string) => {
 
         // Debit from wallet
         const userId =
-          commission.type === "SELLER"
-            ? commission.seller
+          commission.type === "warehouse"
+            ? commission.warehouse
             : commission.deliveryBoy;
         const userType = commission.type;
 
@@ -806,7 +806,7 @@ export interface ICODOrderBreakdown {
   // Product breakdown
   productCost: number; // Subtotal of all products
   adminProductCommission: number; // Admin's commission on products
-  sellerEarnings: Map<string, number>; // Seller ID -> their earning (product cost - admin commission)
+  warehouseEarnings: Map<string, number>; // warehouse ID -> their earning (product cost - admin commission)
 
   // Fees
   platformFee: number;
@@ -829,7 +829,7 @@ export interface ICODOrderBreakdown {
 /**
  * Calculate complete COD order breakdown
  * This function calculates how money flows for a COD order:
- * - Product commission (admin vs seller)
+ * - Product commission (admin vs warehouse)
  * - Platform fee (goes to admin)
  * - Delivery charge split (delivery boy commission vs admin commission)
  */
@@ -851,7 +851,7 @@ export const calculateCODOrderBreakdown = async (
       orderNumber: order.orderNumber,
       productCost: order.subtotal,
       adminProductCommission: 0,
-      sellerEarnings: new Map<string, number>(),
+      warehouseEarnings: new Map<string, number>(),
       platformFee: order.platformFee || 0,
       totalDeliveryCharge: order.shipping || 0,
       deliveryBoyCommission: 0,
@@ -863,7 +863,7 @@ export const calculateCODOrderBreakdown = async (
       deliveryDistanceKm: order.deliveryDistanceKm,
     };
 
-    // 1. Calculate Product Commissions (Admin vs Seller)
+    // 1. Calculate Product Commissions (Admin vs warehouse)
     for (const itemId of order.items) {
       const item = await OrderItem.findById(itemId);
       if (!item) continue;
@@ -873,19 +873,19 @@ export const calculateCODOrderBreakdown = async (
 
       const commissionRate = item.commissionRate || await getOrderItemCommissionRate(
         item.product.toString(),
-        item.seller.toString()
+        item.warehouse.toString()
       );
 
-      // Calculate commission and seller earning for this item
+      // Calculate commission and warehouse earning for this item
       const itemCommission = (item.total * commissionRate) / 100;
-      const itemSellerEarning = item.total - itemCommission;
+      const itemwarehouseEarning = item.total - itemCommission;
 
       breakdown.adminProductCommission += itemCommission;
 
-      // Aggregate seller earnings
-      const sellerId = item.seller.toString();
-      const currentEarning = breakdown.sellerEarnings.get(sellerId) || 0;
-      breakdown.sellerEarnings.set(sellerId, currentEarning + itemSellerEarning);
+      // Aggregate warehouse earnings
+      const warehouseId = item.warehouse.toString();
+      const currentEarning = breakdown.warehouseEarnings.get(warehouseId) || 0;
+      breakdown.warehouseEarnings.set(warehouseId, currentEarning + itemwarehouseEarning);
     }
 
     // 2. Calculate Delivery Commission Split
@@ -1038,7 +1038,7 @@ export const processCODOrderDelivery = async (
           currentPlatformBalance: 0,
           totalAdminEarning: 0,
           pendingFromDeliveryBoy: breakdown.amountDeliveryBoyOwesAdmin,
-          sellerPendingPayouts: 0,
+          warehousePendingPayouts: 0,
           deliveryBoyPendingPayouts: breakdown.deliveryBoyCommission,
         }], { session });
       } else {
@@ -1048,7 +1048,7 @@ export const processCODOrderDelivery = async (
         await platformWallet.save({ session });
       }
 
-      // 3. Create Commission Records (marked as Pending for sellers, Paid for delivery boy)
+      // 3. Create Commission Records (marked as Pending for warehouses, Paid for delivery boy)
 
       // Create delivery boy commission record
       const deliveryCommission = new Commission({
@@ -1065,31 +1065,31 @@ export const processCODOrderDelivery = async (
       });
       await deliveryCommission.save({ session });
 
-      // Create seller commission records (marked as Pending - will be paid when delivery boy pays admin)
-      const sellerEarningsArray = Array.from(breakdown.sellerEarnings.entries());
-      for (const [sellerId] of sellerEarningsArray) {
-        // Find order items for this seller to get commission details
+      // Create warehouse commission records (marked as Pending - will be paid when delivery boy pays admin)
+      const warehouseEarningsArray = Array.from(breakdown.warehouseEarnings.entries());
+      for (const [warehouseId] of warehouseEarningsArray) {
+        // Find order items for this warehouse to get commission details
         const orderItems = await OrderItem.find({
           order: orderId,
-          seller: sellerId
+          warehouse: warehouseId
         }).session(session);
 
         for (const item of orderItems) {
-          const commRate = item.commissionRate || await getOrderItemCommissionRate(item.product.toString(), item.seller.toString());
+          const commRate = item.commissionRate || await getOrderItemCommissionRate(item.product.toString(), item.warehouse.toString());
           const itemCommission = (item.total * commRate) / 100;
 
-          const sellerCommission = new Commission({
+          const warehouseCommission = new Commission({
             order: orderId,
             orderItem: item._id,
-            seller: sellerId,
-            type: "SELLER",
+            warehouse: warehouseId,
+            type: "warehouse",
             orderAmount: item.total,
             commissionRate: commRate,
             commissionAmount: itemCommission,
-            status: "Pending", // Seller will be paid when delivery boy pays admin
+            status: "Pending", // warehouse will be paid when delivery boy pays admin
             paidAt: null,
           });
-          await sellerCommission.save({ session });
+          await warehouseCommission.save({ session });
         }
       }
 

@@ -14,14 +14,14 @@ interface Seller {
   latitude?: string;
   longitude?: string;
   serviceRadiusKm?: number;
-  status: 'Approved' | 'Pending' | 'Rejected';
+  status: 'Approved' | 'Pending' | 'Rejected' | 'ACTIVE' | 'BLOCKED';
 }
 
 export default function AdminSellerLocation() {
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'All' | 'Approved' | 'Pending' | 'Rejected'>('All');
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Approved' | 'Pending' | 'Rejected' | 'ACTIVE' | 'BLOCKED'>('All');
 
   useEffect(() => {
     const fetchSellers = async () => {
@@ -84,10 +84,12 @@ export default function AdminSellerLocation() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Approved':
+      case 'ACTIVE':
         return 'bg-green-100 text-green-800';
       case 'Pending':
         return 'bg-yellow-100 text-yellow-800';
       case 'Rejected':
+      case 'BLOCKED':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -135,8 +137,10 @@ export default function AdminSellerLocation() {
             >
               <option value="All">All Status</option>
               <option value="Approved">Approved</option>
+              <option value="ACTIVE">ACTIVE</option>
               <option value="Pending">Pending</option>
               <option value="Rejected">Rejected</option>
+              <option value="BLOCKED">BLOCKED</option>
             </select>
           </div>
         </div>

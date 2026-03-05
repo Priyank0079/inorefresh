@@ -113,13 +113,13 @@ export async function sendPushNotification(
 /**
  * Send notification to a specific user by fetching their tokens from database
  * @param userId - User ID
- * @param userType - Type of user (Customer, Admin, Seller, Delivery)
+ * @param userType - Type of user (Customer, Admin, warehouse, Delivery)
  * @param payload - Notification payload
  * @param includeMobile - Whether to include mobile tokens
  */
 export async function sendNotificationToUser(
     userId: string,
-    userType: 'Customer' | 'Admin' | 'Seller' | 'Delivery',
+    userType: 'Customer' | 'Admin' | 'warehouse' | 'Delivery',
     payload: {
         title: string;
         body: string;
@@ -138,8 +138,8 @@ export async function sendNotificationToUser(
             case 'Admin':
                 UserModel = (await import('../models/Admin')).default;
                 break;
-            case 'Seller':
-                UserModel = (await import('../models/Seller')).default;
+            case 'warehouse':
+                UserModel = (await import('../models/warehouse')).default;
                 break;
             case 'Delivery':
                 UserModel = (await import('../models/Delivery')).default;

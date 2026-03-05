@@ -2,6 +2,8 @@ import mongoose, { Document, Schema, Model } from "mongoose";
 
 export interface ICategory extends Document {
   name: string;
+  description?: string;
+  createdBy: "ADMIN";
   slug: string;
   image?: string;
   order: number;
@@ -32,6 +34,15 @@ const CategorySchema = new Schema<ICategory>(
       required: [true, "Category name is required"],
       trim: true,
       unique: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    createdBy: {
+      type: String,
+      enum: ["ADMIN"],
+      default: "ADMIN",
     },
     slug: {
       type: String,

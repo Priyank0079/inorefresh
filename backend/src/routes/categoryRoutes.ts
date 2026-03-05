@@ -6,12 +6,12 @@ import {
   getAllCategoriesWithSubcategories,
   getAllSubcategories,
   getSubSubCategories,
-} from "../modules/seller/controllers/categoryController";
+} from "../modules/warehouse/controllers/categoryController";
 
 const router = Router();
 
 // Category routes - Public for retrieval
-// Admin/Seller specific management routes are in their respective route files
+// Admin/warehouse specific management routes are in their respective route files
 
 // Get all categories (parent categories only by default)
 router.get("/", getCategories);

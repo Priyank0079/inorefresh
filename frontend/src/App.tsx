@@ -72,23 +72,23 @@ const DeliverySellersInRange = lazy(() => import("./modules/delivery/pages/Deliv
 const DeliveryLogin = lazy(() => import("./modules/delivery/pages/DeliveryLogin"));
 const DeliverySignUp = lazy(() => import("./modules/delivery/pages/DeliverySignUp"));
 
-// Lazy load seller routes
-const SellerLayout = lazy(() => import("./modules/seller/components/SellerLayout"));
-const SellerDashboard = lazy(() => import("./modules/seller/pages/SellerDashboard"));
-const SellerOrders = lazy(() => import("./modules/seller/pages/SellerOrders"));
-const SellerOrderDetail = lazy(() => import("./modules/seller/pages/SellerOrderDetail"));
-const SellerCategory = lazy(() => import("./modules/seller/pages/SellerCategory"));
-const SellerSubCategory = lazy(() => import("./modules/seller/pages/SellerSubCategory"));
-const SellerAddProduct = lazy(() => import("./modules/seller/pages/SellerAddProduct"));
-const SellerTaxes = lazy(() => import("./modules/seller/pages/SellerTaxes"));
-const SellerProductList = lazy(() => import("./modules/seller/pages/SellerProductList"));
-const SellerStockManagement = lazy(() => import("./modules/seller/pages/SellerStockManagement"));
-const SellerWallet = lazy(() => import("./modules/seller/pages/SellerWallet"));
-const SellerSalesReport = lazy(() => import("./modules/seller/pages/SellerSalesReport"));
-const SellerReturnRequest = lazy(() => import("./modules/seller/pages/SellerReturnRequest"));
-const SellerAccountSettings = lazy(() => import("./modules/seller/pages/SellerAccountSettings"));
-const SellerLogin = lazy(() => import("./modules/seller/pages/SellerLogin"));
-const SellerSignUp = lazy(() => import("./modules/seller/pages/SellerSignUp"));
+// Lazy load warehouse routes
+const WarehouseLayout = lazy(() => import("./modules/warehouse/components/WarehouseLayout"));
+const WarehouseDashboard = lazy(() => import("./modules/warehouse/pages/WarehouseDashboard"));
+const WarehouseOrders = lazy(() => import("./modules/warehouse/pages/WarehouseOrders"));
+const WarehouseOrderDetail = lazy(() => import("./modules/warehouse/pages/WarehouseOrderDetail"));
+const WarehouseCategory = lazy(() => import("./modules/warehouse/pages/WarehouseCategory"));
+const WarehouseSubCategory = lazy(() => import("./modules/warehouse/pages/WarehouseSubCategory"));
+const WarehouseAddProduct = lazy(() => import("./modules/warehouse/pages/WarehouseAddProduct"));
+const WarehouseTaxes = lazy(() => import("./modules/warehouse/pages/WarehouseTaxes"));
+const WarehouseProductList = lazy(() => import("./modules/warehouse/pages/WarehouseProductList"));
+const WarehouseStockManagement = lazy(() => import("./modules/warehouse/pages/WarehouseStockManagement"));
+const WarehouseWallet = lazy(() => import("./modules/warehouse/pages/WarehouseWallet"));
+const WarehouseSalesReport = lazy(() => import("./modules/warehouse/pages/WarehouseSalesReport"));
+const WarehouseReturnRequest = lazy(() => import("./modules/warehouse/pages/WarehouseReturnRequest"));
+const WarehouseAccountSettings = lazy(() => import("./modules/warehouse/pages/WarehouseAccountSettings"));
+const WarehouseLogin = lazy(() => import("./modules/warehouse/pages/WarehouseLogin"));
+const WarehouseSignUp = lazy(() => import("./modules/warehouse/pages/WarehouseSignUp"));
 
 // Lazy load admin routes
 const AdminLayout = lazy(() => import("./modules/admin/components/AdminLayout"));
@@ -103,6 +103,7 @@ const AdminSellerTransaction = lazy(() => import("./modules/admin/pages/AdminSel
 const AdminStockManagement = lazy(() => import("./modules/admin/pages/AdminStockManagement"));
 const AdminSubcategoryOrder = lazy(() => import("./modules/admin/pages/AdminSubcategoryOrder"));
 const AdminManageSellerList = lazy(() => import("./modules/admin/pages/AdminManageSellerList"));
+const AdminCreateSeller = lazy(() => import("./modules/admin/pages/AdminCreateSeller"));
 const AdminCoupon = lazy(() => import("./modules/admin/pages/AdminCoupon"));
 const AdminNotification = lazy(() => import("./modules/admin/pages/AdminNotification"));
 const AdminSellerLocation = lazy(() => import("./modules/admin/pages/AdminSellerLocation"));
@@ -185,21 +186,21 @@ function App() {
                           />
 
                           <Route
-                            path="/seller/login"
+                            path="/warehouse/login"
                             element={
                               <PublicRoute>
                                 <Suspense fallback={<IconLoader forceShow />}>
-                                  <SellerLogin />
+                                  <WarehouseLogin />
                                 </Suspense>
                               </PublicRoute>
                             }
                           />
                           <Route
-                            path="/seller/signup"
+                            path="/warehouse/signup"
                             element={
                               <PublicRoute>
                                 <Suspense fallback={<IconLoader forceShow />}>
-                                  <SellerSignUp />
+                                  <WarehouseSignUp />
                                 </Suspense>
                               </PublicRoute>
                             }
@@ -265,31 +266,32 @@ function App() {
                             }
                           />
 
-                          {/* Seller App Routes */}
+                          {/* Warehouse App Routes */}
                           <Route
-                            path="/seller/*"
+                            path="/warehouse/*"
                             element={
-                              <ProtectedRoute requiredUserType="Seller" redirectTo="/seller/login">
+                              <ProtectedRoute requiredUserType="Warehouse" redirectTo="/warehouse/login">
                                 <Suspense fallback={<IconLoader forceShow />}>
-                                  <SellerLayout>
+                                  <WarehouseLayout>
                                     <Routes>
-                                      <Route path="" element={<SellerDashboard />} />
-                                      <Route path="orders" element={<SellerOrders />} />
-                                      <Route path="orders/:id" element={<SellerOrderDetail />} />
-                                      <Route path="category" element={<SellerCategory />} />
-                                      <Route path="subcategory" element={<SellerSubCategory />} />
-                                      <Route path="product/add" element={<SellerAddProduct />} />
-                                      <Route path="product/edit/:id" element={<SellerAddProduct />} />
-                                      <Route path="product/taxes" element={<SellerTaxes />} />
-                                      <Route path="product/list" element={<SellerProductList />} />
-                                      <Route path="product/stock" element={<SellerStockManagement />} />
-                                      <Route path="return" element={<SellerReturnRequest />} />
-                                      <Route path="return-order" element={<SellerReturnRequest />} />
-                                      <Route path="wallet" element={<SellerWallet />} />
-                                      <Route path="reports/sales" element={<SellerSalesReport />} />
-                                      <Route path="account-settings" element={<SellerAccountSettings />} />
+                                      <Route path="" element={<WarehouseDashboard />} />
+                                      <Route path="orders" element={<WarehouseOrders />} />
+                                      <Route path="orders/:id" element={<WarehouseOrderDetail />} />
+                                      <Route path="category" element={<WarehouseCategory />} />
+                                      <Route path="subcategory" element={<WarehouseSubCategory />} />
+                                      <Route path="product/add" element={<WarehouseAddProduct />} />
+                                      <Route path="product/edit/:id" element={<WarehouseAddProduct />} />
+                                      <Route path="product/taxes" element={<WarehouseTaxes />} />
+                                      <Route path="product/list" element={<WarehouseProductList />} />
+                                      <Route path="product/stock" element={<WarehouseStockManagement />} />
+                                      <Route path="return" element={<WarehouseReturnRequest />} />
+                                      <Route path="return-order" element={<WarehouseReturnRequest />} />
+                                      <Route path="wallet" element={<WarehouseWallet />} />
+                                      <Route path="reports/sales" element={<WarehouseSalesReport />} />
+                                      <Route path="account-settings" element={<WarehouseAccountSettings />} />
+                                      <Route path="all" element={<AdminManageSellerList />} />
                                     </Routes>
-                                  </SellerLayout>
+                                  </WarehouseLayout>
                                 </Suspense>
                               </ProtectedRoute>
                             }
@@ -312,12 +314,13 @@ function App() {
                                       <Route path="brand" element={<AdminBrand />} />
                                       <Route path="product/taxes" element={<AdminTaxes />} />
                                       <Route path="product/list" element={<AdminStockManagement />} />
-                                      <Route path="manage-seller/list" element={<AdminManageSellerList />} />
-                                      <Route path="manage-seller/transaction" element={<AdminSellerTransaction />} />
+                                      <Route path="manage-warehouse/list" element={<AdminManageSellerList />} />
+                                      <Route path="manage-warehouse/create" element={<AdminCreateSeller />} />
+                                      <Route path="manage-warehouse/transaction" element={<AdminSellerTransaction />} />
                                       <Route path="delivery-boy/manage" element={<AdminManageDeliveryBoy />} />
                                       <Route path="delivery-boy/fund-transfer" element={<AdminFundTransfer />} />
                                       <Route path="delivery-boy/cash-collection" element={<AdminCashCollection />} />
-                                      <Route path="manage-location/seller-location" element={<AdminSellerLocation />} />
+                                      <Route path="manage-location/warehouse-location" element={<AdminSellerLocation />} />
 
                                       <Route path="coupon" element={<AdminCoupon />} />
                                       <Route path="return" element={<AdminReturnRequest />} />

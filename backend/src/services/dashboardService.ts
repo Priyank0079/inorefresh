@@ -4,7 +4,7 @@ import SubCategory from "../models/SubCategory";
 import Product from "../models/Product";
 import Order from "../models/Order";
 // import OrderItem from "../models/OrderItem";
-// import Seller from "../models/Seller";
+// import warehouse from "../models/warehouse";
 
 export interface DashboardStats {
   totalUser: number;
@@ -26,9 +26,9 @@ export interface SalesData {
   value: number;
 }
 
-export interface TopSeller {
-  sellerId: string;
-  sellerName: string;
+export interface Topwarehouse {
+  warehouseId: string;
+  warehouseName: string;
   storeName: string;
   totalRevenue: number;
   totalOrders: number;
@@ -406,13 +406,13 @@ export const getTodaySales = async (): Promise<{ salesToday: number; salesLastWe
 };
 
 /**
- * Get top sellers by revenue
+ * Get top warehouses by revenue
  */
-export const getTopSellers = async (
+export const getTopwarehouses = async (
   limit: number = 10
-): Promise<TopSeller[]> => {
+): Promise<Topwarehouse[]> => {
   try {
-    const topSellers = await Order.aggregate([
+    const topwarehouses = await Order.aggregate([
       {
         $match: {
           status: "Delivered",
@@ -439,7 +439,7 @@ export const getTopSellers = async (
       {
         $group: {
           _id: {
-            seller: "$orderItem.seller",
+            warehouse: "$orderItem.warehouse",
             orderId: "$_id",
           },
           totalRevenue: { $sum: "$orderItem.total" },
@@ -447,7 +447,7 @@ export const getTopSellers = async (
       },
       {
         $group: {
-          _id: "$_id.seller",
+          _id: "$_id.warehouse",
           totalRevenue: { $sum: "$totalRevenue" },
           totalOrders: { $sum: 1 },
         },
@@ -460,32 +460,32 @@ export const getTopSellers = async (
       },
       {
         $lookup: {
-          from: "sellers",
+          from: "warehouses",
           localField: "_id",
           foreignField: "_id",
-          as: "seller",
+          as: "warehouse",
         },
       },
       {
         $unwind: {
-          path: "$seller",
+          path: "$warehouse",
           preserveNullAndEmptyArrays: false,
         },
       },
       {
         $project: {
-          sellerId: { $toString: "$_id" },
-          sellerName: "$seller.sellerName",
-          storeName: "$seller.storeName",
+          warehouseId: { $toString: "$_id" },
+          warehouseName: "$warehouse.warehouseName",
+          storeName: "$warehouse.storeName",
           totalRevenue: { $ifNull: ["$totalRevenue", 0] },
           totalOrders: { $ifNull: ["$totalOrders", 0] },
         },
       },
     ]);
 
-    return topSellers || [];
+    return topwarehouses || [];
   } catch (error) {
-    console.error("Error fetching top sellers:", error);
+    console.error("Error fetching top warehouses:", error);
     return [];
   }
 };

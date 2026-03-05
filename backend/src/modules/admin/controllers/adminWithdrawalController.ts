@@ -17,7 +17,7 @@ export const getAllWithdrawals = async (req: Request, res: Response) => {
         const skip = (Number(page) - 1) * Number(limit);
 
         const requests = await WithdrawRequest.find(query)
-            .populate('userId', 'sellerName storeName name email mobile accountNumber bankName ifscCode')
+            .populate('userId', 'WarehouseName storeName name email mobile accountNumber bankName ifscCode')
             .populate('processedBy', 'name email')
             .sort({ createdAt: -1 })
             .skip(skip)

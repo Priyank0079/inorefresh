@@ -1,6 +1,6 @@
 import Notification from "../models/Notification";
 import Admin from "../models/Admin";
-import Seller from "../models/Seller";
+import warehouse from "../models/warehouse";
 import Customer from "../models/Customer";
 import Delivery from "../models/Delivery";
 
@@ -8,7 +8,7 @@ import Delivery from "../models/Delivery";
  * Send notification to specific user
  */
 export const sendNotification = async (
-  recipientType: "Admin" | "Seller" | "Customer" | "Delivery",
+  recipientType: "Admin" | "warehouse" | "Customer" | "Delivery",
   recipientId: string,
   title: string,
   message: string,
@@ -50,7 +50,7 @@ export const sendNotification = async (
  * Send notification to all users of a type
  */
 export const sendBroadcastNotification = async (
-  recipientType: "Admin" | "Seller" | "Customer" | "Delivery",
+  recipientType: "Admin" | "warehouse" | "Customer" | "Delivery",
   title: string,
   message: string,
   options?: {
@@ -76,9 +76,9 @@ export const sendBroadcastNotification = async (
       const admins = await Admin.find().select("_id");
       userIds = admins.map((a) => a._id.toString());
       break;
-    case "Seller":
-      const sellers = await Seller.find().select("_id");
-      userIds = sellers.map((s) => s._id.toString());
+    case "warehouse":
+      const warehouses = await warehouse.find().select("_id");
+      userIds = warehouses.map((s) => s._id.toString());
       break;
     case "Customer":
       const customers = await Customer.find().select("_id");
@@ -165,7 +165,7 @@ export const sendOrderStatusNotification = async (
  * Send product approval notification
  */
 export const sendProductApprovalNotification = async (
-  sellerId: string,
+  warehouseId: string,
   productId: string,
   status: "Approved" | "Rejected",
   rejectionReason?: string,
@@ -178,7 +178,7 @@ export const sendProductApprovalNotification = async (
           rejectionReason || "Not specified"
         }`;
 
-  return sendNotification("Seller", sellerId, title, message, {
+  return sendNotification("warehouse", warehouseId, title, message, {
     type: status === "Approved" ? "Success" : "Error",
     link: `/products/${productId}`,
     priority: "Medium",

@@ -37,7 +37,7 @@ export const processOrderStatusTransition = async (
       break;
 
     case "Delivered":
-      // Create commissions for sellers
+      // Create commissions for warehouses
       await createCommissions(order.items as any[]);
       break;
   }
@@ -81,11 +81,11 @@ const restoreInventory = async (items: IOrderItem[]) => {
 };
 
 /**
- * Create commissions for sellers when order is delivered
- * Also updates seller balances and creates wallet transactions
+ * Create commissions for warehouses when order is delivered
+ * Also updates warehouse balances and creates wallet transactions
  */
 /**
- * Create commissions for sellers when order is delivered
+ * Create commissions for warehouses when order is delivered
  * Now delegating to commissionService.distributeCommissions
  */
 const createCommissions = async (items: IOrderItem[]) => {

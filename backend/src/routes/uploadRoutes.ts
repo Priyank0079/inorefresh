@@ -26,7 +26,7 @@ router.use(authenticate);
  */
 router.post(
   "/image",
-  requireUserType("Admin", "Seller"),
+  requireUserType("Admin", "warehouse"),
   uploadSingleImage.single("image"),
   handleUploadError,
   asyncHandler(async (req: Request, res: Response) => {
@@ -56,7 +56,7 @@ router.post(
  */
 router.post(
   "/images",
-  requireUserType("Admin", "Seller"),
+  requireUserType("Admin", "warehouse"),
   uploadMultipleImages.array("images", 10), // Max 10 images
   handleUploadError,
   asyncHandler(async (req: Request, res: Response) => {
@@ -104,13 +104,13 @@ router.post(
     }
 
     // Determine folder based on user type
-    let folder: string = CLOUDINARY_FOLDERS.SELLER_DOCUMENTS;
+    let folder: string = CLOUDINARY_FOLDERS.warehouse_DOCUMENTS;
     const userType = (req as any).user?.userType;
 
     if (userType === "Delivery") {
       folder = CLOUDINARY_FOLDERS.DELIVERY_DOCUMENTS;
-    } else if (userType === "Seller") {
-      folder = CLOUDINARY_FOLDERS.SELLER_DOCUMENTS;
+    } else if (userType === "warehouse") {
+      folder = CLOUDINARY_FOLDERS.warehouse_DOCUMENTS;
     }
 
     // Check if it's an image or PDF
@@ -147,13 +147,13 @@ router.post(
     }
 
     // Determine folder based on user type
-    let folder: string = CLOUDINARY_FOLDERS.SELLER_DOCUMENTS;
+    let folder: string = CLOUDINARY_FOLDERS.warehouse_DOCUMENTS;
     const userType = (req as any).user?.userType;
 
     if (userType === "Delivery") {
       folder = CLOUDINARY_FOLDERS.DELIVERY_DOCUMENTS;
-    } else if (userType === "Seller") {
-      folder = CLOUDINARY_FOLDERS.SELLER_DOCUMENTS;
+    } else if (userType === "warehouse") {
+      folder = CLOUDINARY_FOLDERS.warehouse_DOCUMENTS;
     }
 
     const files = (req as any).files as any[];
@@ -182,7 +182,7 @@ router.post(
  */
 router.delete(
   "/:publicId",
-  requireUserType("Admin", "Seller"),
+  requireUserType("Admin", "warehouse"),
   asyncHandler(async (req: Request, res: Response) => {
     const { publicId } = req.params;
 

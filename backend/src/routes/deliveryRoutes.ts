@@ -31,14 +31,14 @@ router.get("/orders/today", deliveryOrderController.getTodayOrders);
 router.get("/orders/pending", deliveryOrderController.getPendingOrders);
 router.get("/orders/returns", deliveryOrderController.getReturnOrders);
 router.get("/orders/:id", deliveryOrderController.getOrderDetails); // Specific order details
-router.get("/orders/:id/seller-locations", deliveryOrderController.getSellerLocationsForOrder);
+router.get("/orders/:id/warehouse-locations", deliveryOrderController.getWarehouseLocationsForOrder);
 router.put("/orders/:id/status", deliveryOrderController.updateOrderStatus);
 router.post("/orders/:id/send-delivery-otp", deliveryOrderController.sendDeliveryOtp);
 router.post("/orders/:id/verify-delivery-otp", deliveryOrderController.verifyDeliveryOtpController);
 
 // New proximity and pickup routes
-router.post("/orders/:id/check-seller-proximity", deliveryOrderController.checkSellerProximity);
-router.post("/orders/:id/confirm-seller-pickup", deliveryOrderController.confirmSellerPickup);
+router.post("/orders/:id/check-warehouse-proximity", deliveryOrderController.checkWarehouseProximity);
+router.post("/orders/:id/confirm-warehouse-pickup", deliveryOrderController.confirmWarehousePickup);
 router.post("/orders/:id/check-customer-proximity", deliveryOrderController.checkCustomerProximity);
 
 // Earnings

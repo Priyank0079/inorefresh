@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { getSalesReport } from "../modules/seller/controllers/reportController";
+import { getSalesReport } from "../modules/warehouse/controllers/reportController";
 import { authenticate, requireUserType } from "../middleware/auth";
 
 const router = Router();
 
-// All routes require authentication and seller user type
+// All routes require authentication and warehouse user type
 router.use(authenticate);
-router.use(requireUserType("Seller"));
+router.use(requireUserType("Warehouse"));
 
-// Get seller's sales report
+// Get warehouse's sales report
 router.get("/sales", getSalesReport);
 
 export default router;

@@ -32,9 +32,9 @@ export interface DashboardResponse {
 }
 
 /**
- * Get seller's dashboard statistics
+ * Get warehouse's dashboard statistics
  */
-export const getSellerDashboardStats = async (): Promise<DashboardResponse> => {
-    const response = await api.get<DashboardResponse>('/seller/dashboard/stats');
+export const getWarehouseDashboardStats = async (): Promise<DashboardResponse> => {
+    const response = await api.get<DashboardResponse>('/warehouse/dashboard/stats');
     return response.data;
 };

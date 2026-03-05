@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate, requireUserType } from "../middleware/auth";
+import { authenticate, requireAdminAuth, requireUserType } from "../middleware/auth";
 
 // Dashboard Controllers
 import * as dashboardController from "../modules/admin/controllers/adminDashboardController";
@@ -29,8 +29,6 @@ import * as notificationController from "../modules/admin/controllers/adminNotif
 import * as walletController from "../modules/admin/controllers/adminWalletController";
 import * as withdrawalController from "../modules/admin/controllers/adminWithdrawalController";
 
-
-
 // Tax Controllers
 import * as taxController from "../modules/admin/controllers/adminTaxController";
 
@@ -40,17 +38,10 @@ import * as cashCollectionController from "../modules/admin/controllers/adminCas
 // FAQ Controllers
 import * as faqController from "../modules/admin/controllers/adminFAQController";
 
-// Role Controllers - Manage Roles functionality removed
-// import * as roleController from "../modules/admin/controllers/adminRoleController";
-
 import * as paymentController from "../modules/admin/controllers/adminPaymentController";
 import * as policyController from "../modules/admin/controllers/adminPolicyController";
-import * as sellerController from "../modules/admin/controllers/adminSellerController";
-
-// Profile Controllers
+import * as warehouseController from "../modules/admin/controllers/adminWarehouseController";
 import * as profileController from "../modules/admin/controllers/adminProfileController";
-
-// Shop Controllers (Shop by Store)
 import {
   createShop,
   getAllShops,
@@ -65,8 +56,8 @@ import * as systemUserController from "../modules/admin/controllers/adminSystemU
 // Home Section Controllers
 import * as homeSectionController from "../modules/admin/controllers/adminHomeSectionController";
 
-// Bestseller Card Controllers
-import * as bestsellerCardController from "../modules/admin/controllers/adminBestsellerCardController";
+// Bestwarehouse Card Controllers
+import * as bestwarehouseCardController from "../modules/admin/controllers/adminBestwarehouseCardController";
 
 // Lowest Prices Controllers
 import * as lowestPricesController from "../modules/admin/controllers/adminLowestPricesController";
@@ -91,8 +82,8 @@ router.get(
   dashboardController.getSalesAnalyticsController
 );
 router.get(
-  "/dashboard/top-sellers",
-  dashboardController.getTopSellersController
+  "/dashboard/top-warehouses",
+  dashboardController.getTopwarehousesController // Renamed concept but same controller for now
 );
 router.get(
   "/dashboard/recent-orders",
@@ -133,16 +124,10 @@ router.put("/brands/:id", productController.updateBrand);
 router.delete("/brands/:id", productController.deleteBrand);
 
 // ==================== Product Routes ====================
-// Admin cannot create products - only sellers can add products
-// router.post("/products", productController.createProduct);
 router.get("/products", productController.getProducts);
-// Product order functionality removed
-// router.put("/products/order", productController.updateProductOrder);
 router.get("/products/:id", productController.getProductById);
 router.put("/products/:id", productController.updateProduct);
 router.delete("/products/:id", productController.deleteProduct);
-// Product approval no longer needed - products show directly in list
-// router.patch("/products/:id/approve", productController.approveProductRequest);
 router.post("/products/bulk-import", productController.bulkImportProducts);
 router.put("/products/bulk-update", productController.bulkUpdateProducts);
 
@@ -158,7 +143,6 @@ router.get("/orders/export/csv", orderController.exportOrders);
 router.get("/return-requests", orderController.getReturnRequests);
 router.get("/return-requests/:id", orderController.getReturnRequestById);
 router.put("/return-requests/:id", orderController.processReturnRequest);
-// Legacy route support if needed, but frontend uses /return-requests
 router.patch("/returns/:id/process", orderController.processReturnRequest);
 
 // ==================== Customer Routes ====================
@@ -236,7 +220,7 @@ router.patch(
 router.patch(
   "/notifications/mark-read",
   notificationController.markMultipleAsRead
-); // Legacy support
+);
 
 // ==================== Wallet & Withdrawal Routes ====================
 router.get("/financial/dashboard", walletController.getFinancialDashboard);
@@ -245,12 +229,10 @@ router.get("/wallet/transactions", walletController.getWalletTransactions);
 router.get("/wallet/withdrawals", withdrawalController.getAllWithdrawals);
 router.post("/wallet/withdrawal/process", walletController.processWithdrawalWrapper);
 
-// Direct withdrawal routes (if used elsewhere)
+// Direct withdrawal routes
 router.put("/withdrawals/:id/approve", withdrawalController.approveWithdrawal);
 router.put("/withdrawals/:id/reject", withdrawalController.rejectWithdrawal);
 router.put("/withdrawals/:id/complete", withdrawalController.completeWithdrawal);
-
-
 
 // ==================== Tax Routes ====================
 router.get("/taxes", taxController.getTaxes);
@@ -285,33 +267,27 @@ router.patch("/faqs/:id/status", faqController.updateFAQStatus);
 router.delete("/faqs/:id", faqController.deleteFAQ);
 router.put("/faqs/order", faqController.updateFAQOrder);
 
-// ==================== Role Routes ====================
-// Manage Roles functionality removed from admin panel
-// router.get("/roles/permissions", roleController.getPermissions);
-// router.get("/roles", roleController.getRoles);
-// router.get("/roles/:id", roleController.getRoleById);
-// router.post("/roles", roleController.createRole);
-// router.put("/roles/:id", roleController.updateRole);
-// router.delete("/roles/:id", roleController.deleteRole);
-
 // ==================== Policy Routes ====================
 router.post("/policies", policyController.createPolicy);
 router.get("/policies", policyController.getPolicies);
 router.put("/policies/:id", policyController.updatePolicy);
 router.delete("/policies/:id", policyController.deletePolicy);
 
-// ==================== Seller Routes ====================
-router.get("/sellers", sellerController.getAllSellers);
+// ==================== Warehouse Routes ====================
+router.get("/warehouses", warehouseController.getAllWarehouses);
+router.post("/create-warehouse", requireAdminAuth, warehouseController.createWarehouse);
+// Maintaining compatibility with old frontend paths if they point to /warehouses
+router.get("/warehouses", warehouseController.getAllWarehouses);
+router.post("/create-warehouse", requireAdminAuth, warehouseController.createWarehouse);
 
 // ==================== Shop Management ====================
-// Legacy routes (keep for backward compatibility)
 router.post("/shop/create", createShop);
 router.get("/shops", getAllShops);
 router.get("/shop/:id", getShopById);
 router.put("/shop/:id", updateShop);
 router.delete("/shop/:id", deleteShop);
 
-// Shop by Store routes (matching frontend API expectations)
+// Shop by Store routes
 router.post("/shop-by-stores", createShop);
 router.get("/shop-by-stores", getAllShops);
 router.get("/shop-by-stores/:id", getShopById);
@@ -333,13 +309,13 @@ router.put("/home-sections/:id", homeSectionController.updateHomeSection);
 router.delete("/home-sections/:id", homeSectionController.deleteHomeSection);
 router.put("/home-sections/reorder", homeSectionController.reorderHomeSections);
 
-// ==================== Bestseller Card Routes ====================
-router.get("/bestseller-cards", bestsellerCardController.getBestsellerCards);
-router.get("/bestseller-cards/:id", bestsellerCardController.getBestsellerCardById);
-router.post("/bestseller-cards", bestsellerCardController.createBestsellerCard);
-router.put("/bestseller-cards/:id", bestsellerCardController.updateBestsellerCard);
-router.delete("/bestseller-cards/:id", bestsellerCardController.deleteBestsellerCard);
-router.put("/bestseller-cards/reorder", bestsellerCardController.reorderBestsellerCards);
+// ==================== Bestwarehouse Card Routes ====================
+router.get("/bestwarehouse-cards", bestwarehouseCardController.getBestwarehouseCards);
+router.get("/bestwarehouse-cards/:id", bestwarehouseCardController.getBestwarehouseCardById);
+router.post("/bestwarehouse-cards", bestwarehouseCardController.createBestwarehouseCard);
+router.put("/bestwarehouse-cards/:id", bestwarehouseCardController.updateBestwarehouseCard);
+router.delete("/bestwarehouse-cards/:id", bestwarehouseCardController.deleteBestwarehouseCard);
+router.put("/bestwarehouse-cards/reorder", bestwarehouseCardController.reorderBestwarehouseCards);
 
 // ==================== Lowest Prices Product Routes ====================
 router.get("/lowest-prices-products", lowestPricesController.getLowestPricesProducts);

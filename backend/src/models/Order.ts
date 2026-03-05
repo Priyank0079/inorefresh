@@ -80,9 +80,9 @@ export interface IOrder extends Document {
   invoiceEnabled?: boolean;
   deliveryDistanceKm?: number;
 
-  // Seller Pickups (for multi-seller orders)
-  sellerPickups?: Array<{
-    seller: mongoose.Types.ObjectId;
+  // Warehouse Pickups (for orders fulfilled by warehouses)
+  warehousePickups?: Array<{
+    warehouse: mongoose.Types.ObjectId;
     pickedUpAt?: Date;
     pickedUpBy?: mongoose.Types.ObjectId; // delivery boy who picked up
     latitude?: number; // location where pickup was confirmed
@@ -313,12 +313,12 @@ const OrderSchema = new Schema<IOrder>(
       type: Number,
     },
 
-    // Seller Pickups (for multi-seller orders)
-    sellerPickups: [
+    // Warehouse Pickups
+    warehousePickups: [
       {
-        seller: {
+        warehouse: {
           type: Schema.Types.ObjectId,
-          ref: "Seller",
+          ref: "Warehouse",
           required: true,
         },
         pickedUpAt: {

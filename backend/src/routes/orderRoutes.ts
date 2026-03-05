@@ -3,16 +3,16 @@ import {
   getOrders,
   getOrderById,
   updateOrderStatus,
-} from "../modules/seller/controllers/orderController";
+} from "../modules/warehouse/controllers/orderController";
 import { authenticate, requireUserType } from "../middleware/auth";
 
 const router = Router();
 
-// All routes require authentication and seller user type
+// All routes require authentication and warehouse user type
 router.use(authenticate);
-router.use(requireUserType("Seller"));
+router.use(requireUserType("Warehouse"));
 
-// Get seller's orders with filters
+// Get warehouse's orders with filters
 router.get("/", getOrders);
 
 // Get order by ID

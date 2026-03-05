@@ -1,32 +1,32 @@
-import Seller from "../models/Seller";
+import warehouse from "../models/warehouse";
 import Customer from "../models/Customer";
 import Commission from "../models/Commission";
 
 
 /**
- * Process seller commission payment
+ * Process warehouse commission payment
  */
-export const processSellerCommission = async (
-  sellerId: string,
+export const processwarehouseCommission = async (
+  warehouseId: string,
   commissionId: string
 ) => {
   const commission = await Commission.findById(commissionId);
-  if (!commission || !commission.seller || commission.seller.toString() !== sellerId) {
-    throw new Error("Commission not found or does not belong to seller");
+  if (!commission || !commission.warehouse || commission.warehouse.toString() !== warehouseId) {
+    throw new Error("Commission not found or does not belong to warehouse");
   }
 
   if (commission.status !== "Pending") {
     throw new Error("Commission already processed");
   }
 
-  const seller = await Seller.findById(sellerId);
-  if (!seller) {
-    throw new Error("Seller not found");
+  const warehouse = await warehouse.findById(warehouseId);
+  if (!warehouse) {
+    throw new Error("warehouse not found");
   }
 
-  // Add commission to seller balance
-  seller.balance += commission.commissionAmount;
-  await seller.save();
+  // Add commission to warehouse balance
+  warehouse.balance += commission.commissionAmount;
+  await warehouse.save();
 
   // Update commission status
   commission.status = "Paid";
@@ -34,7 +34,7 @@ export const processSellerCommission = async (
   await commission.save();
 
   return {
-    seller,
+    warehouse,
     commission,
   };
 };
@@ -43,26 +43,26 @@ export const processSellerCommission = async (
  * Process withdrawal request
  */
 export const processWithdrawal = async (
-  sellerId: string,
+  warehouseId: string,
   amount: number,
   paymentReference?: string
 ) => {
-  const seller = await Seller.findById(sellerId);
-  if (!seller) {
-    throw new Error("Seller not found");
+  const warehouse = await warehouse.findById(warehouseId);
+  if (!warehouse) {
+    throw new Error("warehouse not found");
   }
 
-  if (seller.balance < amount) {
+  if (warehouse.balance < amount) {
     throw new Error("Insufficient balance");
   }
 
-  // Deduct from seller balance
-  seller.balance -= amount;
-  await seller.save();
+  // Deduct from warehouse balance
+  warehouse.balance -= amount;
+  await warehouse.save();
 
   // Mark pending commissions as paid (if withdrawal covers them)
   const pendingCommissions = await Commission.find({
-    seller: sellerId,
+    warehouse: warehouseId,
     status: "Pending",
   }).sort({ createdAt: 1 });
 
@@ -80,20 +80,20 @@ export const processWithdrawal = async (
   }
 
   return {
-    seller,
+    warehouse,
     withdrawalAmount: amount,
     paymentReference,
   };
 };
 
 /**
- * Calculate seller earnings
+ * Calculate warehouse earnings
  */
-export const calculateSellerEarnings = async (
-  sellerId: string,
+export const calculatewarehouseEarnings = async (
+  warehouseId: string,
   period?: { start: Date; end: Date }
 ) => {
-  const query: any = { seller: sellerId, status: "Paid" };
+  const query: any = { warehouse: warehouseId, status: "Paid" };
 
   if (period) {
     query.paidAt = {
@@ -159,16 +159,16 @@ export const processCustomerWalletTransaction = async (
  * Process fund transfer between accounts
  */
 export const processFundTransfer = async (
-  fromType: "seller" | "customer",
+  fromType: "warehouse" | "customer",
   fromId: string,
-  toType: "seller" | "customer",
+  toType: "warehouse" | "customer",
   toId: string,
   amount: number
 ) => {
   // Get from account
   let fromAccount: any;
-  if (fromType === "seller") {
-    fromAccount = await Seller.findById(fromId);
+  if (fromType === "warehouse") {
+    fromAccount = await warehouse.findById(fromId);
   } else {
     fromAccount = await Customer.findById(fromId);
   }
@@ -177,15 +177,15 @@ export const processFundTransfer = async (
     throw new Error("From account not found");
   }
 
-  const fromBalanceField = fromType === "seller" ? "balance" : "walletAmount";
+  const fromBalanceField = fromType === "warehouse" ? "balance" : "walletAmount";
   if (fromAccount[fromBalanceField] < amount) {
     throw new Error("Insufficient balance");
   }
 
   // Get to account
   let toAccount: any;
-  if (toType === "seller") {
-    toAccount = await Seller.findById(toId);
+  if (toType === "warehouse") {
+    toAccount = await warehouse.findById(toId);
   } else {
     toAccount = await Customer.findById(toId);
   }
@@ -196,7 +196,7 @@ export const processFundTransfer = async (
 
   // Process transfer
   fromAccount[fromBalanceField] -= amount;
-  const toBalanceField = toType === "seller" ? "balance" : "walletAmount";
+  const toBalanceField = toType === "warehouse" ? "balance" : "walletAmount";
   toAccount[toBalanceField] += amount;
 
   await Promise.all([fromAccount.save(), toAccount.save()]);

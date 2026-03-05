@@ -3,16 +3,16 @@ import {
   getReturnRequests,
   getReturnRequestById,
   updateReturnStatus,
-} from "../modules/seller/controllers/returnController";
+} from "../modules/warehouse/controllers/returnController";
 import { authenticate, requireUserType } from "../middleware/auth";
 
 const router = Router();
 
-// All routes require authentication and seller user type
+// All routes require authentication and warehouse user type
 router.use(authenticate);
-router.use(requireUserType("Seller"));
+router.use(requireUserType("Warehouse"));
 
-// Get seller's return requests with filters
+// Get warehouse's return requests with filters
 router.get("/", getReturnRequests);
 
 // Get return request by ID

@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import * as walletController from '../modules/seller/controllers/walletController';
+import * as walletController from '../modules/warehouse/controllers/walletController';
 import { authenticate, requireUserType } from '../middleware/auth';
 
 const router = Router();
 
-// All wallet routes require seller authentication
+// All wallet routes require warehouse authentication
 router.use(authenticate);
-router.use(requireUserType('Seller'));
+router.use(requireUserType('Warehouse'));
 
 router.get('/stats', walletController.getWalletStats);
 router.get('/transactions', walletController.getTransactions);

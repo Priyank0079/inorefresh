@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getActiveTaxes, getAllTaxes, createTax, updateTaxStatus } from '../modules/seller/controllers/taxController';
+import { getActiveTaxes, getAllTaxes, createTax, updateTaxStatus } from '../modules/warehouse/controllers/taxController';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -14,7 +14,7 @@ router.get('/active', getActiveTaxes);
 // Get all taxes for management
 router.get('/', getAllTaxes);
 
-// Create tax (Admin should ideally do this, but seller management has a page for it in this app it seems)
+// Create tax (Admin should ideally do this, but warehouse management has a page for it in this app it seems)
 router.post('/', createTax);
 
 // Update tax status

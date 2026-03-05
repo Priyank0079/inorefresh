@@ -16,7 +16,9 @@ export interface Seller {
   balance: number;
   commission: number;
   categories: string[];
-  status: "Approved" | "Pending" | "Rejected";
+  status: "Approved" | "Pending" | "Rejected" | "ACTIVE" | "BLOCKED";
+  role?: "seller";
+  createdBy?: "ADMIN" | "SELF";
   category?: string;
   address?: string;
   city?: string;
@@ -43,47 +45,30 @@ export interface Seller {
 }
 
 export interface GetAllSellersParams {
-  status?: "Approved" | "Pending" | "Rejected";
+  status?: "Approved" | "Pending" | "Rejected" | "ACTIVE" | "BLOCKED";
   search?: string;
 }
 
-export interface CreateSellerData {
-  sellerName: string;
-  storeName: string;
+export interface AdminCreateSellerData {
+  shopName: string;
+  ownerName: string;
+  phone: string;
   email: string;
-  mobile: string;
   password: string;
-  category: string;
-  address?: string;
-  city: string;
-  serviceableArea: string;
-  searchLocation?: string;
-  latitude?: string;
-  longitude?: string;
-  serviceRadiusKm?: number;
-  panCard?: string;
-  taxName?: string;
-  taxNumber?: string;
-  accountName?: string;
-  bankName?: string;
-  branch?: string;
-  accountNumber?: string;
-  ifsc?: string;
-  profile?: string;
-  idProof?: string;
-  addressProof?: string;
-  requireProductApproval: boolean;
-  viewCustomerDetails: boolean;
-  commission: number;
+  shopAddress: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 /**
- * Create a new seller
+ * Create a seller from admin onboarding
  */
 export const createSeller = async (
-  data: CreateSellerData
+  data: AdminCreateSellerData
 ): Promise<ApiResponse<Seller>> => {
-  const response = await api.post<ApiResponse<Seller>>("/sellers", data);
+  const response = await api.post<ApiResponse<Seller>>("/admin/create-seller", data);
   return response.data;
 };
 
@@ -112,7 +97,7 @@ export const getSellerById = async (
  */
 export const updateSellerStatus = async (
   id: string,
-  status: "Approved" | "Pending" | "Rejected"
+  status: "Approved" | "Pending" | "Rejected" | "ACTIVE" | "BLOCKED"
 ): Promise<ApiResponse<Seller>> => {
   const response = await api.patch<ApiResponse<Seller>>(
     `/sellers/${id}/status`,

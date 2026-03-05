@@ -13,8 +13,8 @@ export interface IProduct extends Document {
   headerCategoryId?: mongoose.Types.ObjectId;
   brand?: mongoose.Types.ObjectId;
 
-  // Seller Info
-  seller: mongoose.Types.ObjectId;
+  // Warehouse Info
+  warehouse: mongoose.Types.ObjectId;
 
   // Images
   mainImage?: string;
@@ -139,11 +139,15 @@ const ProductSchema = new Schema<IProduct>(
       ref: "Brand",
     },
 
-    // Seller Info
-    seller: {
+    // Warehouse Info
+    warehouse: {
       type: Schema.Types.ObjectId,
-      ref: "Seller",
-      required: [true, "Seller is required"],
+      ref: "Warehouse",
+      required: [true, "Warehouse is required"],
+    },
+    weight: {
+      type: Number,
+      min: [0, "Weight cannot be negative"],
     },
 
     // Images
@@ -368,7 +372,7 @@ ProductSchema.pre("save", function (next) {
 });
 
 // Indexes for faster queries
-ProductSchema.index({ seller: 1, status: 1 });
+ProductSchema.index({ warehouse: 1, status: 1 });
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ subcategory: 1 });
 ProductSchema.index({ brand: 1 });

@@ -9,26 +9,26 @@ import {
   updateProductStatus,
   bulkUpdateStock,
   getShops,
-} from "../modules/seller/controllers/productController";
+} from "../modules/warehouse/controllers/productController";
 import { getBrands } from "../modules/admin/controllers/adminProductController";
 import { authenticate, requireUserType } from "../middleware/auth";
 
 const router = Router();
 
-// All routes require authentication and seller user type
+// All routes require authentication and warehouse user type
 router.use(authenticate);
-router.use(requireUserType("Seller"));
+router.use(requireUserType("Warehouse"));
 
-// Get all brands - sellers need this for product creation
+// Get all brands - warehouses need this for product creation
 router.get("/brands", getBrands);
 
-// Get all active shops - sellers need this for shop-by-store-only products
+// Get all active shops - warehouses need this for shop-by-store-only products
 router.get("/shops", getShops);
 
 // Create product
 router.post("/", createProduct);
 
-// Get seller's products with filters
+// Get warehouse's products with filters
 router.get("/", getProducts);
 
 // Get product by ID

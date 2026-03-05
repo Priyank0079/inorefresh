@@ -5,7 +5,7 @@ import OrderItem from "../../../models/OrderItem";
 import Delivery from "../../../models/Delivery";
 import DeliveryAssignment from "../../../models/DeliveryAssignment";
 import Return from "../../../models/Return";
-import { notifySellersOfOrderUpdate } from "../../../services/sellerNotificationService";
+import { notifyWarehousesOfOrderUpdate } from "../../../services/WarehouseNotificationService";
 import { Server as SocketIOServer } from "socket.io";
 
 /**
@@ -18,7 +18,7 @@ export const getAllOrders = asyncHandler(
       limit = 10,
       status,
       paymentStatus,
-      seller,
+      Warehouse,
       dateFrom,
       dateTo,
       search,
@@ -42,9 +42,9 @@ export const getAllOrders = asyncHandler(
       ];
     }
 
-    // If seller filter, need to check order items
-    if (seller) {
-      const orderItems = await OrderItem.find({ seller }).distinct("order");
+    // If Warehouse filter, need to check order items
+    if (Warehouse) {
+      const orderItems = await OrderItem.find({ Warehouse }).distinct("order");
       query._id = { $in: orderItems };
     }
 
@@ -93,8 +93,8 @@ export const getOrderById = asyncHandler(
             select: "productName mainImage",
           },
           {
-            path: "seller",
-            select: "sellerName storeName",
+            path: "Warehouse",
+            select: "WarehouseName storeName",
           },
         ],
       })
@@ -174,7 +174,7 @@ export const updateOrderStatus = asyncHandler(
     if (status === "Processed" || order.paymentStatus === "Paid") {
       const io: SocketIOServer = req.app.get("io");
       if (io) {
-        notifySellersOfOrderUpdate(io, order, "STATUS_UPDATE");
+        notifyWarehousesOfOrderUpdate(io, order, "STATUS_UPDATE");
       }
     }
 
@@ -331,7 +331,7 @@ export const getReturnRequests = asyncHandler(
       limit = 10,
       search = "",
       status,
-      seller,
+      Warehouse,
       dateFrom,
       dateTo,
       sortBy = "createdAt",
@@ -372,10 +372,10 @@ export const getReturnRequests = asyncHandler(
       ];
     }
 
-    // Seller filter requires looking up order items
-    if (seller && seller !== "all") {
-      // Find order items for this seller
-      const orderItems = await OrderItem.find({ seller }).select("_id");
+    // Warehouse filter requires looking up order items
+    if (Warehouse && Warehouse !== "all") {
+      // Find order items for this Warehouse
+      const orderItems = await OrderItem.find({ Warehouse }).select("_id");
       const orderItemIds = orderItems.map((oi) => oi._id);
       query.orderItem = { $in: orderItemIds };
     }
@@ -455,7 +455,7 @@ export const getReturnRequestById = asyncHandler(
         path: "orderItem",
         populate: [
           { path: "product", select: "productName mainImage" },
-          { path: "seller", select: "sellerName storeName" },
+          { path: "Warehouse", select: "WarehouseName storeName" },
         ],
       })
       .populate("processedBy", "firstName lastName");

@@ -164,8 +164,8 @@ const menuSections: MenuSection[] = [
         ],
       },
       {
-        label: "Manage Seller",
-        path: "/admin/manage-seller",
+        label: "Manage Warehouse",
+        path: "/admin/manage-warehouse",
         hasSubmenu: true,
         icon: (
           <svg
@@ -186,8 +186,8 @@ const menuSections: MenuSection[] = [
         ),
         submenuItems: [
           {
-            label: "Manage Seller List",
-            path: "/admin/manage-seller/list",
+            label: "Warehouse List",
+            path: "/admin/manage-warehouse/list",
             icon: (
               <svg
                 width="18"
@@ -198,18 +198,14 @@ const menuSections: MenuSection[] = [
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round">
-                <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13"></path>
-                <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88"></path>
-                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                <path d="M8 7H16M8 11H16M8 15H12"></path>
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M7 7h10M7 12h10M7 17h10" />
               </svg>
             ),
           },
           {
-            label: "Seller Transaction",
-            path: "/admin/manage-seller/transaction",
+            label: "Create Warehouse",
+            path: "/admin/manage-warehouse/create",
             icon: (
               <svg
                 width="18"
@@ -220,13 +216,9 @@ const menuSections: MenuSection[] = [
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 6V12M12 18V12"></path>
-                <path d="M8 12H16"></path>
-                <path d="M8 8L12 4L16 8"></path>
-                <path d="M8 16L12 20L16 16"></path>
-                <path d="M16 8L12 4L8 8"></path>
-                <path d="M16 16L12 20L8 16"></path>
+                <path d="M12 5V19"></path>
+                <path d="M5 12H19"></path>
+                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
               </svg>
             ),
           },
@@ -257,8 +249,8 @@ const menuSections: MenuSection[] = [
         ),
         submenuItems: [
           {
-            label: "Seller Location",
-            path: "/admin/manage-location/seller-location",
+            label: "Warehouse Location",
+            path: "/admin/manage-location/warehouse-location",
             icon: (
               <svg
                 width="18"
@@ -381,9 +373,6 @@ const menuSections: MenuSection[] = [
                 <circle cx="12" cy="12" r="10"></circle>
                 <path d="M12 6V12M12 18V12"></path>
                 <path d="M8 12H16"></path>
-                <path d="M12 18L10 20L12 22L14 20L12 18Z"></path>
-                <path d="M10 20H14"></path>
-                <path d="M12 20V22"></path>
               </svg>
             ),
           },
@@ -394,7 +383,6 @@ const menuSections: MenuSection[] = [
   {
     title: "Miscellaneous",
     items: [
-
       {
         label: "Manage Customer",
         path: "/admin/customers",
@@ -410,8 +398,6 @@ const menuSections: MenuSection[] = [
             strokeLinejoin="round">
             <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21"></path>
             <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13"></path>
-            <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88"></path>
           </svg>
         ),
       },
@@ -430,8 +416,6 @@ const menuSections: MenuSection[] = [
             strokeLinejoin="round">
             <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21"></path>
             <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13"></path>
-            <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88"></path>
           </svg>
         ),
       },
@@ -449,13 +433,10 @@ const menuSections: MenuSection[] = [
             strokeLinecap="round"
             strokeLinejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8C6 11.3137 4 14 4 17H20C20 14 18 11.3137 18 8Z"></path>
-            <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21"></path>
             <circle cx="18" cy="8" r="3" fill="currentColor"></circle>
           </svg>
         ),
       },
-
-
       {
         label: "FAQ",
         path: "/admin/faq",
@@ -502,9 +483,7 @@ const menuSections: MenuSection[] = [
             strokeLinejoin="round">
             <circle cx="9" cy="21" r="1"></circle>
             <circle cx="20" cy="21" r="1"></circle>
-            <path d="M1 1H4L6.68 14.39C6.77144 14.8504 7.02191 15.264 7.38755 15.5583C7.75318 15.8526 8.2107 16.009 8.68 16H19C19.4693 16.009 19.9268 15.8526 20.2925 15.5583C20.6581 15.264 20.9086 14.8504 21 14.39L22.54 6.62C22.6214 6.22389 22.6172 5.81177 22.528 5.41838C22.4388 5.02499 22.2672 4.66078 22.026 4.35277C21.7848 4.04476 21.4805 3.80134 21.1372 3.63988C20.794 3.47841 20.4208 3.40296 20.044 3.42H5.82M1 1L3 3M1 1V5"></path>
-            <circle cx="12" cy="12" r="1"></circle>
-            <path d="M12 6V12"></path>
+            <path d="M1 1H4L6.68 14.39C6.77144 14.8504 7.02191 15.264 7.38755 15.5583C7.75318 15.8526 8.2107 16.009 8.68 16H19C19.4693 16.009 19.9268 15.8526 20.2925 15.5583C20.6581 15.264 20.9086 14.8504 21 14.39L22.54 6.62C22.6214 6.22389 22.6172 5.81177 22.528 5.41838C22.4388 5.02499 22.2672 4.66078 22.026 4.35277C21.7848 4.04476 21.4805 3.80134 21.1372 3.63988C20.794 3.47841 20.4208 3.40296 20.044 3.42H5.82"></path>
           </svg>
         ),
         submenuItems: [
@@ -523,7 +502,7 @@ const menuSections: MenuSection[] = [
                 strokeLinejoin="round">
                 <circle cx="9" cy="21" r="1"></circle>
                 <circle cx="20" cy="21" r="1"></circle>
-                <path d="M1 1H4L6.68 14.39C6.77144 14.8504 7.02191 15.264 7.38755 15.5583C7.75318 15.8526 8.2107 16.009 8.68 16H19C19.4693 16.009 19.9268 15.8526 20.2925 15.5583C20.6581 15.264 20.9086 14.8504 21 14.39L22.54 6.62C22.6214 6.22389 22.6172 5.81177 22.528 5.41838C22.4388 5.02499 22.2672 4.66078 22.026 4.35277C21.7848 4.04476 21.4805 3.80134 21.1372 3.63988C20.794 3.47841 20.4208 3.40296 20.044 3.42H5.82M1 1L3 3M1 1V5"></path>
+                <path d="M1 1H4L6.68 14.39C6.77144 14.8504 7.02191 15.264 7.38755 15.5583C7.75318 15.8526 8.2107 16.009 8.68 16H19C19.4693 16.009 19.9268 15.8526 20.2925 15.5583C20.6581 15.264 20.9086 14.8504 21 14.39L22.54 6.62C22.6214 6.22389 22.6172 5.81177 22.528 5.41838C22.4388 5.02499 22.2672 4.66078 22.026 4.35277C21.7848 4.04476 21.4805 3.80134 21.1372 3.63988C20.794 3.47841 20.4208 3.40296 20.044 3.42H5.82"></path>
               </svg>
             ),
           },
@@ -542,139 +521,6 @@ const menuSections: MenuSection[] = [
                 strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-            ),
-          },
-          {
-            label: "Received Order",
-            path: "/admin/orders/received",
-            icon: (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-            ),
-          },
-          {
-            label: "Processed Order",
-            path: "/admin/orders/processed",
-            icon: (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
-              </svg>
-            ),
-          },
-          {
-            label: "Shipped Order",
-            path: "/admin/orders/shipped",
-            icon: (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
-                <line x1="4" y1="22" x2="4" y2="15"></line>
-              </svg>
-            ),
-          },
-          {
-            label: "Out For Delivery",
-            path: "/admin/orders/out-for-delivery",
-            icon: (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <rect x="1" y="3" width="15" height="13"></rect>
-                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                <circle cx="18.5" cy="18.5" r="2.5"></circle>
-              </svg>
-            ),
-          },
-          {
-            label: "Delivered Order",
-            path: "/admin/orders/delivered",
-            icon: (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-            ),
-          },
-          {
-            label: "Cancelled Order",
-            path: "/admin/orders/cancelled",
-            icon: (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="15" y1="9" x2="9" y2="15"></line>
-                <line x1="9" y1="9" x2="15" y2="15"></line>
-              </svg>
-            ),
-          },
-          {
-            label: "Return",
-            path: "/admin/return",
-            icon: (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <path d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z"></path>
-                <path d="M16 21V5C16 4.46957 15.7893 3.96086 15.4142 3.58579C15.0391 3.21071 14.5304 3 14 3H10C9.46957 3 8.96086 3.21071 8.58579 3.58579C8.21071 3.96086 8 4.46957 8 5V21"></path>
-                <path d="M8 12L12 8L16 12M12 8V16"></path>
               </svg>
             ),
           },
@@ -699,8 +545,6 @@ const menuSections: MenuSection[] = [
             strokeLinecap="round"
             strokeLinejoin="round">
             <path d="M20 7h-9a2 2 0 0 0-2 2v1m0 4v9a2 2 0 0 0 2 2h4" />
-            <path d="M19 13h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1" />
-            <path d="M6 7H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h15v4H6.5" />
           </svg>
         ),
       },
@@ -723,82 +567,6 @@ const menuSections: MenuSection[] = [
             strokeLinecap="round"
             strokeLinejoin="round">
             <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z"></path>
-            <path d="M9 22V12H15V22"></path>
-            <path d="M9 12H15"></path>
-          </svg>
-        ),
-      },
-      {
-        label: "Bestseller Cards",
-        path: "/admin/bestseller-cards",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"></path>
-          </svg>
-        ),
-      },
-      {
-        label: "Promo Strip",
-        path: "/admin/promo-strip",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-            <path d="M3 9H21M9 3V21"></path>
-          </svg>
-        ),
-      },
-      {
-        label: "Lowest Prices",
-        path: "/admin/lowest-prices",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z"></path>
-            <path d="M2 17L12 22L22 17"></path>
-            <path d="M2 12L12 17L22 12"></path>
-          </svg>
-        ),
-      },
-      {
-        label: "Shop by Store",
-        path: "/admin/shop-by-store",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z"></path>
-            <path d="M9 22V12H15V22"></path>
-            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-            <path d="M8 7H16M8 11H16M8 15H12"></path>
           </svg>
         ),
       },
@@ -822,103 +590,6 @@ const menuSections: MenuSection[] = [
             strokeLinejoin="round">
             <rect x="2" y="5" width="20" height="14" rx="2"></rect>
             <line x1="2" y1="10" x2="22" y2="10"></line>
-            <line x1="12" y1="15" x2="12" y2="15"></line>
-          </svg>
-        ),
-      },
-      {
-        label: "Payment List",
-        path: "/admin/payment-list",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-            <path d="M8 7H16M8 11H16M8 15H12"></path>
-            <circle cx="18" cy="6" r="1.5" fill="currentColor"></circle>
-            <rect x="16" y="4" width="4" height="4" rx="0.5"></rect>
-          </svg>
-        ),
-      },
-      {
-        label: "SMS Gateway",
-        path: "/admin/sms-gateway",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z"></path>
-            <path d="M8 9H16M8 13H12"></path>
-          </svg>
-        ),
-      },
-      {
-        label: "System User",
-        path: "/admin/system-user",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13"></path>
-            <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88"></path>
-          </svg>
-        ),
-      },
-      {
-        label: "Customer App Policy",
-        path: "/admin/customer-app-policy",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"></path>
-            <path d="M14 2V8H20"></path>
-            <path d="M9 15L11 17L15 13"></path>
-          </svg>
-        ),
-      },
-      {
-        label: "Delivery App Policy",
-        path: "/admin/delivery-app-policy",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"></path>
-            <path d="M14 2V8H20"></path>
-            <path d="M9 15L11 17L15 13"></path>
           </svg>
         ),
       },
@@ -978,7 +649,6 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
     );
   };
 
-  // Filter menu items based on search query
   const filteredSections = menuSections
     .map((section) => ({
       ...section,
@@ -993,7 +663,6 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
       className="w-64 h-screen flex flex-col transition-colors duration-300"
       style={{ backgroundColor: currentTheme.primary[0] }}
     >
-      {/* Close button - only show on mobile */}
       <div
         className="flex justify-end p-4 lg:hidden"
         style={{ borderBottom: `1px solid ${currentTheme.primary[1]}` }}
@@ -1019,7 +688,6 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
         </button>
       </div>
 
-      {/* Search Bar */}
       <div
         className="p-4"
         style={{ borderBottom: `1px solid ${currentTheme.primary[1]}` }}
@@ -1036,14 +704,6 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
               borderColor: currentTheme.primary[1],
               color: 'white'
             }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'white';
-              e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255,255,255,0.2)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = currentTheme.primary[1];
-              e.currentTarget.style.boxShadow = 'none';
-            }}
           />
           <svg
             width="18"
@@ -1059,7 +719,6 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
         </div>
       </div>
 
-      {/* Dashboard Link */}
       <div className="px-4 py-2 border-b border-teal-600">
         <button
           onClick={() => handleNavigation("/admin")}
@@ -1069,12 +728,6 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
             }`}
           style={{
             backgroundColor: isActive("/admin") ? currentTheme.primary[1] : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (!isActive("/admin")) e.currentTarget.style.backgroundColor = `${currentTheme.primary[1]}80`;
-          }}
-          onMouseLeave={(e) => {
-            if (!isActive("/admin")) e.currentTarget.style.backgroundColor = 'transparent';
           }}
         >
           <svg
@@ -1097,15 +750,9 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
         </button>
       </div>
 
-      {/* Navigation Menu */}
       <nav
         className="flex-1 py-4 overflow-y-auto admin-sidebar-nav"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-        <style>{`
-          .admin-sidebar-nav::-webkit-scrollbar {
-            display: none;
-          }
-        `}</style>
         {filteredSections.map((section, sectionIndex) => (
           <div key={sectionIndex} className="mb-6">
             <h3
@@ -1117,8 +764,7 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
             <ul className="space-y-1 px-2">
               {section.items.map((item) => {
                 const expanded = isExpanded(item.path);
-                const active =
-                  isActive(item.path) || isSubmenuActive(item.submenuItems);
+                const active = isActive(item.path) || isSubmenuActive(item.submenuItems);
 
                 return (
                   <li key={item.path}>
@@ -1132,23 +778,15 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${active
                         ? "text-white"
-                        : "text-white/70 hover:text-white"
+                        : "text-white/70 hover:text-white hover:bg-white/10"
                         }`}
                       style={{
-                        backgroundColor: active ? currentTheme.primary[1] : 'transparent'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!active) e.currentTarget.style.backgroundColor = `${currentTheme.primary[1]}80`;
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!active) e.currentTarget.style.backgroundColor = 'transparent';
+                        backgroundColor: (active && !item.hasSubmenu) ? currentTheme.primary[1] : 'transparent'
                       }}
                     >
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="flex-shrink-0">{item.icon}</span>
-                        <span className="text-sm font-medium truncate">
-                          {item.label}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        {item.icon}
+                        <span className="text-sm">{item.label}</span>
                       </div>
                       {item.hasSubmenu && (
                         <svg
@@ -1158,52 +796,26 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="2"
-                          className={`transition-transform flex-shrink-0 ml-2 ${expanded ? "rotate-90" : ""
-                            } ${active ? "text-white" : "text-white/50"}`}>
-                          <path
-                            d="M9 18L15 12L9 6"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"></path>
+                          className={`transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}>
+                          <path d="M6 9l6 6 6-6"></path>
                         </svg>
                       )}
                     </button>
                     {item.hasSubmenu && expanded && (
-                      <ul className="mt-1 space-y-1 ml-4">
-                        {item.submenuItems &&
-                          item.submenuItems.map((subItem) => {
-                            const subActive =
-                              location.pathname === subItem.path ||
-                              location.pathname.startsWith(subItem.path + "/");
-                            return (
-                              <li key={subItem.path}>
-                                <button
-                                  onClick={() => handleNavigation(subItem.path)}
-                                  className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-left transition-colors ${subActive
-                                    ? "text-white"
-                                    : "text-white/70 hover:text-white"
-                                    }`}
-                                  style={{
-                                    backgroundColor: subActive ? currentTheme.primary[2] : 'transparent'
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    if (!subActive) e.currentTarget.style.backgroundColor = `${currentTheme.primary[1]}80`;
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (!subActive) e.currentTarget.style.backgroundColor = 'transparent';
-                                  }}
-                                >
-                                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <span className="flex-shrink-0">
-                                      {subItem.icon}
-                                    </span>
-                                    <span className="text-sm font-medium truncate">
-                                      {subItem.label}
-                                    </span>
-                                  </div>
-                                </button>
-                              </li>
-                            );
-                          })}
+                      <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-2">
+                        {item.submenuItems?.map((subItem) => (
+                          <li key={subItem.path}>
+                            <button
+                              onClick={() => handleNavigation(subItem.path)}
+                              className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-left text-sm transition-colors ${location.pathname === subItem.path
+                                ? "text-white bg-white/20"
+                                : "text-white/60 hover:text-white hover:bg-white/10"
+                                }`}>
+                              {subItem.icon}
+                              <span>{subItem.label}</span>
+                            </button>
+                          </li>
+                        ))}
                       </ul>
                     )}
                   </li>

@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface IInventory extends Document {
   product: mongoose.Types.ObjectId;
-  seller: mongoose.Types.ObjectId;
+  warehouse: mongoose.Types.ObjectId;
 
   // Stock Levels
   currentStock: number;
@@ -33,10 +33,10 @@ const InventorySchema = new Schema<IInventory>(
       required: [true, "Product is required"],
       unique: true, // One inventory record per product
     },
-    seller: {
+    warehouse: {
       type: Schema.Types.ObjectId,
-      ref: "Seller",
-      required: [true, "Seller is required"],
+      ref: "Warehouse",
+      required: [true, "Warehouse is required"],
     },
 
     // Stock Levels
@@ -100,7 +100,7 @@ InventorySchema.pre("save", function (next) {
 
 // Indexes for faster queries
 InventorySchema.index({ product: 1 });
-InventorySchema.index({ seller: 1 });
+InventorySchema.index({ warehouse: 1 });
 InventorySchema.index({ currentStock: 1 });
 
 const Inventory = (mongoose.models.Inventory as mongoose.Model<IInventory>) || mongoose.model<IInventory>("Inventory", InventorySchema);

@@ -5,7 +5,7 @@ import {
   getSalesAnalytics,
   getOrderAnalytics,
   getTodaySales,
-  getTopSellers,
+  getTopWarehouses,
   getRecentOrders,
   getSalesByLocation,
 } from "../../../services/dashboardService";
@@ -47,17 +47,17 @@ export const getSalesAnalyticsController = asyncHandler(
 );
 
 /**
- * Get top sellers
+ * Get top Warehouses
  */
-export const getTopSellersController = asyncHandler(
+export const getTopWarehousesController = asyncHandler(
   async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 10;
-    const topSellers = await getTopSellers(limit);
+    const topWarehouses = await getTopWarehouses(limit);
 
     return res.status(200).json({
       success: true,
-      message: "Top sellers fetched successfully",
-      data: topSellers,
+      message: "Top Warehouses fetched successfully",
+      data: topWarehouses,
     });
   }
 );

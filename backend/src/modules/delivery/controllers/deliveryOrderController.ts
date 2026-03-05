@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import Order from "../../../models/Order";
-import { notifySellersOfOrderUpdate } from "../../../services/sellerNotificationService";
+import { notifyWarehousesOfOrderUpdate } from "../../../services/WarehouseNotificationService";
 import OrderItem from "../../../models/OrderItem";
-import Seller from "../../../models/Seller";
+import Warehouse from "../../../models/Warehouse";
 import {
   generateDeliveryOtp,
   verifyDeliveryOtp,
@@ -307,7 +307,7 @@ export const updateOrderStatus = asyncHandler(
         // Emit order-taken event
         io.to(`order-${id}`).emit("order-taken", {
           orderId: id,
-          message: "Order has been picked up from seller",
+          message: "Order has been picked up from Warehouse",
         });
       }
 
@@ -327,9 +327,9 @@ export const updateOrderStatus = asyncHandler(
         });
       }
 
-      // Trigger notification to sellers for payment status change or specific transitions
+      // Trigger notification to Warehouses for payment status change or specific transitions
       if (order.paymentStatus === "Paid" || status === "Delivered") {
-        notifySellersOfOrderUpdate(io, order, "STATUS_UPDATE");
+        notifyWarehousesOfOrderUpdate(io, order, "STATUS_UPDATE");
       }
     }
 
@@ -376,10 +376,10 @@ export const getReturnOrders = asyncHandler(
 );
 
 /**
- * Get Seller Locations for Order
- * Returns all unique seller shop locations for items in this order
+ * Get Warehouse Locations for Order
+ * Returns all unique Warehouse shop locations for items in this order
  */
-export const getSellerLocationsForOrder = asyncHandler(
+export const getWarehouseLocationsForOrder = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
     const deliveryId = req.user?.userId;
@@ -398,32 +398,32 @@ export const getSellerLocationsForOrder = asyncHandler(
         .json({ success: false, message: "This order is not assigned to you" });
     }
 
-    // Get all unique seller IDs from order items
+    // Get all unique Warehouse IDs from order items
     const orderItems = await OrderItem.find({ order: id });
-    const sellerIds = [
-      ...new Set(orderItems.map((item) => item.seller.toString())),
+    const WarehouseIds = [
+      ...new Set(orderItems.map((item) => item.Warehouse.toString())),
     ];
 
-    // Get seller details including locations
-    const sellers = await Seller.find({ _id: { $in: sellerIds } }).select(
+    // Get Warehouse details including locations
+    const Warehouses = await Warehouse.find({ _id: { $in: WarehouseIds } }).select(
       "storeName address city latitude longitude",
     );
 
-    // Format seller locations
-    const sellerLocations = sellers
-      .filter((seller) => seller.latitude && seller.longitude) // Only include sellers with location data
-      .map((seller) => ({
-        sellerId: seller._id.toString(),
-        storeName: seller.storeName,
-        address: seller.address,
-        city: seller.city,
-        latitude: parseFloat(seller.latitude || "0"),
-        longitude: parseFloat(seller.longitude || "0"),
+    // Format Warehouse locations
+    const WarehouseLocations = Warehouses
+      .filter((Warehouse) => Warehouse.latitude && Warehouse.longitude) // Only include Warehouses with location data
+      .map((Warehouse) => ({
+        WarehouseId: Warehouse._id.toString(),
+        storeName: Warehouse.storeName,
+        address: Warehouse.address,
+        city: Warehouse.city,
+        latitude: parseFloat(Warehouse.latitude || "0"),
+        longitude: parseFloat(Warehouse.longitude || "0"),
       }));
 
     return res.status(200).json({
       success: true,
-      data: sellerLocations,
+      data: WarehouseLocations,
     });
   },
 );
@@ -586,8 +586,8 @@ export const verifyDeliveryOtpController = asyncHandler(
             message: "Order delivered successfully",
           });
 
-          // Notify sellers of status update
-          notifySellersOfOrderUpdate(io, updatedOrder, "STATUS_UPDATE");
+          // Notify Warehouses of status update
+          notifyWarehousesOfOrderUpdate(io, updatedOrder, "STATUS_UPDATE");
         }
       }
 
@@ -606,21 +606,21 @@ export const verifyDeliveryOtpController = asyncHandler(
 );
 
 /**
- * Check Proximity to Seller
- * Checks if delivery boy is within 500m of a specific seller
+ * Check Proximity to Warehouse
+ * Checks if delivery boy is within 500m of a specific Warehouse
  */
-export const checkSellerProximity = asyncHandler(
+export const checkWarehouseProximity = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { sellerId, latitude, longitude } = req.body;
+    const { WarehouseId, latitude, longitude } = req.body;
     const deliveryId = req.user?.userId;
 
-    if (!sellerId || latitude === undefined || longitude === undefined) {
+    if (!WarehouseId || latitude === undefined || longitude === undefined) {
       return res
         .status(400)
         .json({
           success: false,
-          message: "Seller ID, latitude, and longitude are required",
+          message: "Warehouse ID, latitude, and longitude are required",
         });
     }
 
@@ -637,14 +637,14 @@ export const checkSellerProximity = asyncHandler(
         .json({ success: false, message: "This order is not assigned to you" });
     }
 
-    // Get seller location
-    const seller = await Seller.findById(sellerId).select(
+    // Get Warehouse location
+    const Warehouse = await Warehouse.findById(WarehouseId).select(
       "latitude longitude storeName",
     );
-    if (!seller || !seller.latitude || !seller.longitude) {
+    if (!Warehouse || !Warehouse.latitude || !Warehouse.longitude) {
       return res
         .status(404)
-        .json({ success: false, message: "Seller location not found" });
+        .json({ success: false, message: "Warehouse location not found" });
     }
 
     // Calculate distance using locationHelper
@@ -652,8 +652,8 @@ export const checkSellerProximity = asyncHandler(
     const distance = calculateDistance(
       latitude,
       longitude,
-      parseFloat(seller.latitude),
-      parseFloat(seller.longitude),
+      parseFloat(Warehouse.latitude),
+      parseFloat(Warehouse.longitude),
     );
 
     const withinRange = distance <= 0.5; // 500m = 0.5km
@@ -664,28 +664,28 @@ export const checkSellerProximity = asyncHandler(
         withinRange,
         distance: distance.toFixed(3), // in km
         distanceMeters: Math.round(distance * 1000), // in meters
-        sellerName: seller.storeName,
+        WarehouseName: Warehouse.storeName,
       },
     });
   },
 );
 
 /**
- * Confirm Seller Pickup
- * Confirms pickup from a specific seller and updates order status
+ * Confirm Warehouse Pickup
+ * Confirms pickup from a specific Warehouse and updates order status
  */
-export const confirmSellerPickup = asyncHandler(
+export const confirmWarehousePickup = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { sellerId, latitude, longitude } = req.body;
+    const { WarehouseId, latitude, longitude } = req.body;
     const deliveryId = req.user?.userId;
 
-    if (!sellerId || latitude === undefined || longitude === undefined) {
+    if (!WarehouseId || latitude === undefined || longitude === undefined) {
       return res
         .status(400)
         .json({
           success: false,
-          message: "Seller ID, latitude, and longitude are required",
+          message: "Warehouse ID, latitude, and longitude are required",
         });
     }
 
@@ -702,62 +702,62 @@ export const confirmSellerPickup = asyncHandler(
         .json({ success: false, message: "This order is not assigned to you" });
     }
 
-    // Verify proximity to seller
-    const seller = await Seller.findById(sellerId).select(
+    // Verify proximity to Warehouse
+    const Warehouse = await Warehouse.findById(WarehouseId).select(
       "latitude longitude storeName",
     );
-    if (!seller || !seller.latitude || !seller.longitude) {
+    if (!Warehouse || !Warehouse.latitude || !Warehouse.longitude) {
       return res
         .status(404)
-        .json({ success: false, message: "Seller location not found" });
+        .json({ success: false, message: "Warehouse location not found" });
     }
 
     const { calculateDistance } = await import("../../../utils/locationHelper");
     const distance = calculateDistance(
       latitude,
       longitude,
-      parseFloat(seller.latitude),
-      parseFloat(seller.longitude),
+      parseFloat(Warehouse.latitude),
+      parseFloat(Warehouse.longitude),
     );
 
     if (distance > 0.5) {
       // 500m = 0.5km
       return res.status(400).json({
         success: false,
-        message: `You must be within 500 meters of the seller to confirm pickup. Current distance: ${Math.round(distance * 1000)}m`,
+        message: `You must be within 500 meters of the Warehouse to confirm pickup. Current distance: ${Math.round(distance * 1000)}m`,
       });
     }
 
-    // Check if this seller is already picked up
-    const existingPickup = order.sellerPickups?.find(
-      (pickup: any) => pickup.seller.toString() === sellerId,
+    // Check if this Warehouse is already picked up
+    const existingPickup = order.WarehousePickups?.find(
+      (pickup: any) => pickup.Warehouse.toString() === WarehouseId,
     );
 
     if (existingPickup && existingPickup.pickedUpAt) {
       return res.status(400).json({
         success: false,
-        message: "This seller has already been picked up",
+        message: "This Warehouse has already been picked up",
       });
     }
 
-    // Get all unique seller IDs from order items
+    // Get all unique Warehouse IDs from order items
     const orderItems = await OrderItem.find({ order: id });
-    const allSellerIds = [
-      ...new Set(orderItems.map((item) => item.seller.toString())),
+    const allWarehouseIds = [
+      ...new Set(orderItems.map((item) => item.Warehouse.toString())),
     ];
 
-    // Initialize sellerPickups array if it doesn't exist
-    if (!order.sellerPickups) {
-      order.sellerPickups = [];
+    // Initialize WarehousePickups array if it doesn't exist
+    if (!order.WarehousePickups) {
+      order.WarehousePickups = [];
     }
 
-    // Add or update pickup confirmation for this seller
-    const pickupIndex = order.sellerPickups.findIndex(
-      (pickup: any) => pickup.seller.toString() === sellerId,
+    // Add or update pickup confirmation for this Warehouse
+    const pickupIndex = order.WarehousePickups.findIndex(
+      (pickup: any) => pickup.Warehouse.toString() === WarehouseId,
     );
 
     const pickupData = {
-      seller: sellerId,
+      Warehouse: WarehouseId,
       pickedUpAt: new Date(),
       pickedUpBy: deliveryId,
       latitude,
@@ -765,21 +765,21 @@ export const confirmSellerPickup = asyncHandler(
     };
 
     if (pickupIndex >= 0) {
-      order.sellerPickups[pickupIndex] = pickupData as any;
+      order.WarehousePickups[pickupIndex] = pickupData as any;
     } else {
-      order.sellerPickups.push(pickupData as any);
+      order.WarehousePickups.push(pickupData as any);
     }
 
-    // Check if all sellers have been picked up
-    const pickedUpSellerIds = order.sellerPickups
+    // Check if all Warehouses have been picked up
+    const pickedUpWarehouseIds = order.WarehousePickups
       .filter((pickup: any) => pickup.pickedUpAt)
-      .map((pickup: any) => pickup.seller.toString());
+      .map((pickup: any) => pickup.Warehouse.toString());
 
-    const allPickedUp = allSellerIds.every((sellerId) =>
-      pickedUpSellerIds.includes(sellerId),
+    const allPickedUp = allWarehouseIds.every((WarehouseId) =>
+      pickedUpWarehouseIds.includes(WarehouseId),
     );
 
-    // If all sellers picked up, automatically change status to "Out for Delivery"
+    // If all Warehouses picked up, automatically change status to "Out for Delivery"
     if (
       allPickedUp &&
       order.status !== "Out for Delivery" &&
@@ -794,17 +794,17 @@ export const confirmSellerPickup = asyncHandler(
     // Emit socket event
     const io = (req.app as any).get("io");
     if (io) {
-      io.to(`order-${id}`).emit("seller-pickup-confirmed", {
+      io.to(`order-${id}`).emit("Warehouse-pickup-confirmed", {
         orderId: id,
         orderNumber: order.orderNumber,
-        sellerId,
-        sellerName: seller.storeName,
+        WarehouseId,
+        WarehouseName: Warehouse.storeName,
         allPickedUp,
         newStatus: order.status,
       });
 
       if (allPickedUp) {
-        io.to(`delivery-${deliveryId}`).emit("all-sellers-picked-up", {
+        io.to(`delivery-${deliveryId}`).emit("all-Warehouses-picked-up", {
           orderId: id,
           orderNumber: order.orderNumber,
           message: "All items picked up. Order is now Out for Delivery.",
@@ -815,13 +815,13 @@ export const confirmSellerPickup = asyncHandler(
     return res.status(200).json({
       success: true,
       message: allPickedUp
-        ? "All sellers picked up! Order status changed to Out for Delivery."
-        : `Pickup confirmed from ${seller.storeName}`,
+        ? "All Warehouses picked up! Order status changed to Out for Delivery."
+        : `Pickup confirmed from ${Warehouse.storeName}`,
       data: {
         order,
         allPickedUp,
-        pickedUpSellers: pickedUpSellerIds.length,
-        totalSellers: allSellerIds.length,
+        pickedUpWarehouses: pickedUpWarehouseIds.length,
+        totalWarehouses: allWarehouseIds.length,
       },
     });
   },

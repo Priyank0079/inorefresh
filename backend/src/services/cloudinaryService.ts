@@ -80,7 +80,7 @@ export async function uploadDocument(
 ): Promise<UploadResult> {
   try {
     const uploadOptions = {
-      folder: options.folder || CLOUDINARY_FOLDERS.SELLER_DOCUMENTS,
+      folder: options.folder || CLOUDINARY_FOLDERS.warehouse_DOCUMENTS,
       resource_type: options.resourceType || "raw",
       overwrite: options.overwrite || false,
       invalidate: options.invalidate || true,
@@ -154,7 +154,7 @@ export async function uploadDocumentFromBuffer(
 ): Promise<UploadResult> {
   return new Promise((resolve, reject) => {
     const uploadOptions = {
-      folder: options.folder || CLOUDINARY_FOLDERS.SELLER_DOCUMENTS,
+      folder: options.folder || CLOUDINARY_FOLDERS.warehouse_DOCUMENTS,
       resource_type: options.resourceType || "raw",
       overwrite: options.overwrite || false,
       invalidate: options.invalidate || true,
