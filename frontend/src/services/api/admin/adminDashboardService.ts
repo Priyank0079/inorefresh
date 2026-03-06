@@ -36,6 +36,14 @@ export interface TopSeller {
   totalOrders: number;
 }
 
+interface TopWarehouse {
+  warehouseId: string;
+  warehouseName: string;
+  storeName: string;
+  totalRevenue: number;
+  totalOrders: number;
+}
+
 export interface RecentOrder {
   id: string;
   orderNumber: string;
@@ -92,13 +100,42 @@ export const getSalesAnalytics = async (
 export const getTopSellers = async (
   limit?: number
 ): Promise<ApiResponse<TopSeller[]>> => {
-  const response = await api.get<ApiResponse<TopSeller[]>>(
-    "/admin/dashboard/top-sellers",
-    {
-      params: { limit },
+  try {
+    const response = await api.get<ApiResponse<TopSeller[]>>(
+      "/admin/dashboard/top-sellers",
+      {
+        params: { limit },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    // Backward compatibility: backend route was renamed to top-warehouses.
+    if (error?.response?.status === 404) {
+      const fallbackResponse = await api.get<ApiResponse<TopWarehouse[]>>(
+        "/admin/dashboard/top-warehouses",
+        {
+          params: { limit },
+        }
+      );
+
+      const normalized: TopSeller[] = (fallbackResponse.data.data || []).map(
+        (item) => ({
+          sellerId: item.warehouseId,
+          sellerName: item.warehouseName,
+          storeName: item.storeName,
+          totalRevenue: item.totalRevenue,
+          totalOrders: item.totalOrders,
+        })
+      );
+
+      return {
+        ...fallbackResponse.data,
+        data: normalized,
+      };
     }
-  );
-  return response.data;
+
+    throw error;
+  }
 };
 
 /**

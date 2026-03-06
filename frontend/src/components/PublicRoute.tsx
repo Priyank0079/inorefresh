@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 
 interface PublicRouteProps {
     children?: React.ReactNode;
-    userType?: 'Admin' | 'Seller' | 'Customer' | 'Delivery';
+    userType?: 'Admin' | 'Seller' | 'Customer' | 'Delivery' | 'Warehouse';
 }
 
 export default function PublicRoute({ children, userType: allowedUserType }: PublicRouteProps) {
@@ -15,7 +15,7 @@ export default function PublicRoute({ children, userType: allowedUserType }: Pub
 
         // If an allowedUserType is specified (e.g., 'Seller' for SellerLogin),
         // ONLY redirect if the logged-in user matches that type.
-        // This allows a logged-in 'Customer' to see the 'Seller' login page.
+        // This allows a logged-in 'Customer' to see or access the login page for another type.
         if (allowedUserType && currentUserType !== allowedUserType) {
             return children ? <>{children}</> : <Outlet />;
         }
@@ -30,6 +30,10 @@ export default function PublicRoute({ children, userType: allowedUserType }: Pub
 
         if (currentUserType === 'Delivery') {
             return <Navigate to="/delivery" replace />;
+        }
+
+        if (currentUserType === 'Warehouse') {
+            return <Navigate to="/warehouse" replace />;
         }
 
         // Default for Customer

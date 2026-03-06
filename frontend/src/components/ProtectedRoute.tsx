@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 interface ProtectedRouteProps {
   children: ReactNode;
   requiredRole?: string;
-  requiredUserType?: "Admin" | "Seller" | "Customer" | "Delivery";
+  requiredUserType?: "Admin" | "Seller" | "Customer" | "Delivery" | "Warehouse";
   redirectTo?: string;
 }
 
@@ -26,8 +26,6 @@ export default function ProtectedRoute({
   // Check user type if required
   if (requiredUserType && user) {
     // Check userType or role field
-    // Admin users have role: "Admin" or "Super Admin"
-    // For Admin userType check, we need to verify the user is an admin
     const userType = (user as any).userType || (user as any).role;
 
     // For Admin routes, check if role is "Admin" or "Super Admin"
@@ -41,6 +39,8 @@ export default function ProtectedRoute({
         return <Navigate to="/seller/login" replace />;
       if (requiredUserType === "Delivery")
         return <Navigate to="/delivery/login" replace />;
+      if (requiredUserType === "Warehouse")
+        return <Navigate to="/warehouse/login" replace />;
       if (requiredUserType === "Customer")
         return <Navigate to="/login" replace />;
       return <Navigate to="/" replace />;

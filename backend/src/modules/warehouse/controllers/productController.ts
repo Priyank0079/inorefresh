@@ -22,7 +22,7 @@ export const createProduct = asyncHandler(
     // 2. Map fields to match Product model
     const newProductData: any = {
       ...productData,
-      Warehouse: WarehouseId, // Map WarehouseId to Warehouse
+      warehouse: WarehouseId, // Map WarehouseId to model field
       headerCategoryId: productData.headerCategoryId, // Map headerCategoryId
       category: productData.categoryId, // Map categoryId to category
       subcategory: productData.subcategoryId,
@@ -142,7 +142,7 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   } = req.query;
 
   // Build query
-  const query: any = { Warehouse: WarehouseId };
+  const query: any = { warehouse: WarehouseId };
 
   // Search filter
   if (search) {
@@ -230,7 +230,7 @@ export const getProductById = asyncHandler(
       });
     }
 
-    const product = await Product.findOne({ _id: id, Warehouse: WarehouseId })
+    const product = await Product.findOne({ _id: id, warehouse: WarehouseId })
       .populate("category", "name")
       .populate("subcategory", "subcategoryName")
       .populate("headerCategoryId", "name slug")
@@ -264,8 +264,9 @@ export const updateProduct = asyncHandler(
     console.log("DEBUG updateProduct: WarehouseId from token:", WarehouseId);
     console.log("DEBUG updateProduct: productId:", id);
 
-    // Remove WarehouseId from update data if present (cannot change owner)
+    // Remove owner fields from update data (cannot change owner)
     delete updateData.WarehouseId;
+    delete updateData.warehouse;
 
     // Map frontend field names to model field names (same as createProduct)
     if (updateData.headerCategoryId !== undefined) {
@@ -347,15 +348,15 @@ export const updateProduct = asyncHandler(
     }
 
     // Use findOne and then save to trigger pre-save hooks
-    const product = await Product.findOne({ _id: id, Warehouse: WarehouseId });
+    const product = await Product.findOne({ _id: id, warehouse: WarehouseId });
 
     if (!product) {
       // Check if product exists at all
-      const existingProduct = await Product.findById(id).select("Warehouse");
+      const existingProduct = await Product.findById(id).select("warehouse");
       if (existingProduct) {
         console.log(
           "DEBUG updateProduct: product exists but owned by:",
-          existingProduct.Warehouse
+          (existingProduct as any).warehouse
         );
       }
       return res.status(404).json({
@@ -405,7 +406,7 @@ export const deleteProduct = asyncHandler(
 
     const product = await Product.findOneAndDelete({
       _id: id,
-      Warehouse: WarehouseId,
+      warehouse: WarehouseId,
     });
 
     if (!product) {
@@ -430,7 +431,7 @@ export const updateStock = asyncHandler(async (req: Request, res: Response) => {
   const { id, variationId } = req.params;
   const { stock, status } = req.body;
 
-  const product = await Product.findOne({ _id: id, Warehouse: WarehouseId });
+  const product = await Product.findOne({ _id: id, warehouse: WarehouseId });
 
   if (!product) {
     return res.status(404).json({
@@ -488,7 +489,7 @@ export const updateProductStatus = asyncHandler(
     if (dealOfDay !== undefined) updateData.dealOfDay = dealOfDay;
 
     const product = await Product.findOneAndUpdate(
-      { _id: id, Warehouse: WarehouseId },
+      { _id: id, warehouse: WarehouseId },
       updateData,
       { new: true, runValidators: true }
     );
@@ -529,7 +530,7 @@ export const bulkUpdateStock = asyncHandler(
 
       const product = await Product.findOne({
         _id: productId,
-        Warehouse: WarehouseId,
+        warehouse: WarehouseId,
       });
       if (product) {
         const variation: any = product.variations?.find(

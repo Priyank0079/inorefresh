@@ -5,6 +5,7 @@ import CategoryTileSection from "./components/CategoryTileSection";
 import ProductCard from "./components/ProductCard";
 import { useThemeContext } from "../../context/ThemeContext";
 import { getCategories } from "../../services/api/categoryService";
+import { apiCache } from "../../utils/apiCache";
 
 export default function Categories() {
   const { location } = useLocation();
@@ -21,35 +22,32 @@ export default function Categories() {
       try {
         setLoading(true);
         setError(null);
+        // Keep category page fresh after warehouse/admin updates.
+        apiCache.invalidatePattern(/^home-content-/);
+        apiCache.invalidatePattern(/^categories-/);
+
         const response = await getHomeContent(
           undefined,
           location?.latitude,
-          location?.longitude
+          location?.longitude,
+          false
         );
         if (response.success && response.data) {
           const data = response.data;
-          // Ensure we have categories even if homeSections is empty
-          let categoryList = data.categories || [];
-          if ((!data.homeSections || data.homeSections.length === 0) && categoryList.length === 0) {
-            const catRes = await getCategories({ includeSubcategories: true });
-            if (catRes.success) {
-              categoryList = catRes.data;
-            }
-          } else if (categoryList.length === 0) {
-            const catRes = await getCategories({ includeSubcategories: true });
-            if (catRes.success) {
-              categoryList = catRes.data;
-            }
-          }
+          // Always pull latest categories and merge with home payload categories.
+          const catRes = await getCategories({ includeSubcategories: true });
+          const homeCategories = data.categories || [];
+          const fetchedCategories = catRes.success ? catRes.data : [];
 
-          // Ensure Masala is present
-          if (!categoryList.find((c: any) => c.name.toLowerCase().includes('masala'))) {
-            categoryList.push({
-              _id: 'masala',
-              name: 'Masala',
-              image: '/images/masala_fish.png', // Default image
-              slug: 'masala'
-            });
+          const mergedById = new Map<string, any>();
+          [...homeCategories, ...fetchedCategories].forEach((c: any) => {
+            const id = c?._id || c?.id || c?.slug;
+            if (id) mergedById.set(id, c);
+          });
+
+          const categoryList = Array.from(mergedById.values());
+          if (categoryList.length === 0) {
+            setError("No categories available right now.");
           }
 
           data.categories = categoryList;
@@ -101,7 +99,6 @@ export default function Categories() {
     if (name.includes('aqua') || name.includes('auqa')) link = '/?tab=aqua';
     else if (name.includes('marin')) link = '/?tab=marin';
     else if (name.includes('bengali') || name.includes('bengoli')) link = '/?tab=bengali';
-    else if (name.includes('masala')) link = '/?tab=masala';
     else link = `/category/${c.slug || c._id || c.id}`;
 
     return {
@@ -179,7 +176,9 @@ export default function Categories() {
               );
             })}
           </>
-        ) : homeData.categories && homeData.categories.length > 0 ? (
+        ) : null}
+
+        {homeData.categories && homeData.categories.length > 0 ? (
           <div className="mt-4">
             <CategoryTileSection
               title="All Categories"

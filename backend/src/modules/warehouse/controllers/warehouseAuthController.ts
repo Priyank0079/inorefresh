@@ -8,93 +8,42 @@ import { generateToken } from "../../../services/jwtService";
 import { asyncHandler } from "../../../utils/asyncHandler";
 
 /**
- * Send OTP to Warehouse mobile number
+ * Login Warehouse with email and password
  */
-export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
-  const { mobile } = req.body;
+export const login = asyncHandler(async (req: Request, res: Response) => {
+  const { email, password } = req.body;
 
-  if (mobile === "9111966732") {
-    return res.status(200).json({
-      success: true,
-      message: "OTP sent successfully (Test Credential: 1234)",
-    });
-  }
-
-  // Check if Warehouse exists with this mobile
-  const warehouse = await Warehouse.findOne({ mobile });
-  if (!warehouse) {
-    return res.status(404).json({
-      success: false,
-      message: "Warehouse not found with this mobile number",
-    });
-  }
-
-  // Send OTP - for login, always use default OTP
-  const result = await sendOTPService(mobile, "Warehouse", true);
-
-  return res.status(200).json({
-    success: true,
-    message: result.message,
-  });
-});
-
-/**
- * Verify OTP and login Warehouse
- */
-export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
-  const { mobile, otp } = req.body;
-
-  if (!mobile || !/^[0-9]{10}$/.test(mobile)) {
+  if (!email || !password) {
     return res.status(400).json({
       success: false,
-      message: "Valid 10-digit mobile number is required",
-    });
-  }
-
-  if (!otp || !/^[0-9]{4}$/.test(otp)) {
-    return res.status(400).json({
-      success: false,
-      message: "Valid 4-digit OTP is required",
-    });
-  }
-
-  // Verify OTP
-  let isValid = false;
-  if (mobile === "9111966732" && otp === "1234") {
-    isValid = true;
-  } else {
-    isValid = await verifyOTPService(mobile, otp, "Warehouse");
-  }
-
-  if (!isValid) {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid or expired OTP",
+      message: "Email and password are required",
     });
   }
 
   // Find Warehouse
-  let warehouse = await Warehouse.findOne({ mobile }).select("-password");
-
-  // Auto-create test warehouse if it doesn't exist
-  if (!warehouse && mobile === "9111966732") {
-    warehouse = await Warehouse.create({
-      warehouseName: "Test Warehouse",
-      managerName: "Test Manager",
-      mobile: "9111966732",
-      email: "testwarehouse@zetomart.com",
-      storeName: "Test Warehouse Store",
-      address: "Test Address, City",
-      location: { type: "Point", coordinates: [77.5946, 12.9716] }, // Bangalore
-      status: "ACTIVE",
-      role: "warehouse"
-    });
-  }
+  let warehouse = await Warehouse.findOne({ email }).select("+password");
 
   if (!warehouse) {
     return res.status(404).json({
       success: false,
       message: "Warehouse not found",
+    });
+  }
+
+  // Verify Password
+  const isMatch = await warehouse.comparePassword(password);
+
+  if (!isMatch) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid credentials",
+    });
+  }
+
+  if (warehouse.status !== "ACTIVE") {
+    return res.status(403).json({
+      success: false,
+      message: `Warehouse account is ${warehouse.status}`,
     });
   }
 
@@ -137,8 +86,8 @@ export const register = asyncHandler(async (_req: Request, res: Response) => {
 export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   const WarehouseId = (req as any).user.userId;
 
-  const Warehouse = await Warehouse.findById(WarehouseId).select("-password");
-  if (!Warehouse) {
+  const warehouseDoc = await Warehouse.findById(WarehouseId).select("-password");
+  if (!warehouseDoc) {
     return res.status(404).json({
       success: false,
       message: "Warehouse not found",
@@ -147,7 +96,7 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
 
   return res.status(200).json({
     success: true,
-    data: Warehouse,
+    data: warehouseDoc,
   });
 });
 
@@ -225,12 +174,12 @@ export const updateProfile = asyncHandler(
       delete updates.serviceAreaGeo;
     }
 
-    const Warehouse = await Warehouse.findByIdAndUpdate(WarehouseId, updates, {
+    const warehouseDoc = await Warehouse.findByIdAndUpdate(WarehouseId, updates, {
       new: true,
       runValidators: true,
     }).select("-password");
 
-    if (!Warehouse) {
+    if (!warehouseDoc) {
       return res.status(404).json({
         success: false,
         message: "Warehouse not found",
@@ -240,7 +189,7 @@ export const updateProfile = asyncHandler(
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      data: Warehouse,
+      data: warehouseDoc,
     });
   },
 );
@@ -252,9 +201,9 @@ export const toggleShopStatus = asyncHandler(
   async (req: Request, res: Response) => {
     const WarehouseId = (req as any).user.userId;
 
-    const Warehouse = await Warehouse.findById(WarehouseId);
+    const warehouseDoc = await Warehouse.findById(WarehouseId);
 
-    if (!Warehouse) {
+    if (!warehouseDoc) {
       return res.status(404).json({
         success: false,
         message: "Warehouse not found",
@@ -263,31 +212,31 @@ export const toggleShopStatus = asyncHandler(
 
     // Handle undefined case - if isShopOpen is undefined, default to true (open) then toggle to false
     // This ensures backward compatibility with Warehouses created before this field was added
-    if (Warehouse.isShopOpen === undefined) {
-      Warehouse.isShopOpen = false; // Toggle from default "open" to "closed"
+    if ((warehouseDoc as any).isShopOpen === undefined) {
+      (warehouseDoc as any).isShopOpen = false; // Toggle from default "open" to "closed"
     } else {
-      Warehouse.isShopOpen = !Warehouse.isShopOpen; // Normal toggle
+      (warehouseDoc as any).isShopOpen = !(warehouseDoc as any).isShopOpen; // Normal toggle
     }
 
     // Fix invalid GeoJSON location objects
     // MongoDB requires that if location.type is "Point", coordinates must be a valid array
-    if (Warehouse.location && Warehouse.location.type === "Point") {
+    if (warehouseDoc.location && warehouseDoc.location.type === "Point") {
       if (
-        !Warehouse.location.coordinates ||
-        !Array.isArray(Warehouse.location.coordinates) ||
-        Warehouse.location.coordinates.length !== 2
+        !warehouseDoc.location.coordinates ||
+        !Array.isArray(warehouseDoc.location.coordinates) ||
+        warehouseDoc.location.coordinates.length !== 2
       ) {
         // Invalid location object - remove it to prevent validation error
-        Warehouse.location = undefined;
+        (warehouseDoc as any).location = undefined;
       }
     }
 
-    await Warehouse.save();
+    await warehouseDoc.save();
 
     return res.status(200).json({
       success: true,
-      message: `Shop is now ${Warehouse.isShopOpen ? "Open" : "Closed"}`,
-      data: { isShopOpen: Warehouse.isShopOpen },
+      message: `Shop is now ${(warehouseDoc as any).isShopOpen ? "Open" : "Closed"}`,
+      data: { isShopOpen: (warehouseDoc as any).isShopOpen },
     });
   },
 );

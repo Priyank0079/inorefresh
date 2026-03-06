@@ -1,0 +1,141 @@
+﻿src/middleware/auth.ts(91,78): error TS2345: Argument of type 'UserType' is not assignable to parameter of type 'AuthUserType'.
+  Type '"Seller"' is not assignable to type 'AuthUserType'.
+src/middleware/auth.ts(96,29): error TS2345: Argument of type 'UserType' is not assignable to parameter of type 'AuthUserType'.
+  Type '"Seller"' is not assignable to type 'AuthUserType'.
+src/models/Inventory.ts(5,3): error TS2300: Duplicate identifier 'warehouse'.
+src/models/Inventory.ts(5,3): error TS2687: All declarations of 'warehouse' must have identical modifiers.
+src/models/Inventory.ts(17,3): error TS2300: Duplicate identifier 'warehouse'.
+src/models/Inventory.ts(17,3): error TS2687: All declarations of 'warehouse' must have identical modifiers.
+src/models/Inventory.ts(17,3): error TS2717: Subsequent property declarations must have the same type.  Property 'warehouse' must be of type 'ObjectId', but here has type 'string | undefined'.
+src/models/Inventory.ts(73,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/models/Product.ts(148,5): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type '{ warehouse?: SchemaDefinitionProperty<ObjectId, IProduct, Document<unknown, {}, FlatRecord<IProduct>, {}, ResolveSchemaOptions<DefaultSchemaOptions>> & FlatRecord<...> & Required<...> & { ...; }> | undefined; ... 50 more ...; shopId?: SchemaDefinitionProperty<...> | undefined; }'.
+src/models/Product.ts(344,15): error TS2339: Property 'compareAtPrice' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(350,12): error TS2339: Property 'variations' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(350,31): error TS2339: Property 'variations' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(352,14): error TS2339: Property 'variations' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(353,12): error TS2339: Property 'price' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(353,25): error TS2339: Property 'variations' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(357,10): error TS2339: Property 'stock' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(357,23): error TS2339: Property 'variations' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(364,12): error TS2339: Property 'compareAtPrice' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(364,35): error TS2339: Property 'compareAtPrice' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(364,57): error TS2339: Property 'price' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(365,10): error TS2339: Property 'discount' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(366,14): error TS2339: Property 'compareAtPrice' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(366,36): error TS2339: Property 'price' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(366,50): error TS2339: Property 'compareAtPrice' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/models/Product.ts(369,10): error TS2339: Property 'discount' does not exist on type 'IfAny<FlatRecord<DocType>, any, TVirtuals & TInstanceMethods extends Record<string, never> ? Document<unknown, {}, FlatRecord<...>, TVirtuals, ResolveSchemaOptions<...>> & Default__v<...> : IfAny<...>>'.
+src/modules/admin/controllers/adminOrderController.ts(8,47): error TS1149: File name 'D:/pro 7 Inor fresh/Zeto-Mart/backend/src/services/WarehouseNotificationService.ts' differs from already included file name 'D:/pro 7 Inor fresh/Zeto-Mart/backend/src/services/warehouseNotificationService.ts' only in casing.
+  The file is in the program because:
+    Imported via "../../../services/warehouseNotificationService" from file 'D:/pro 7 Inor fresh/Zeto-Mart/backend/src/modules/delivery/controllers/deliveryOrderController.ts'
+    Imported via './warehouseNotificationService' from file 'D:/pro 7 Inor fresh/Zeto-Mart/backend/src/services/orderNotificationService.ts'
+    Imported via "../../../services/WarehouseNotificationService" from file 'D:/pro 7 Inor fresh/Zeto-Mart/backend/src/modules/admin/controllers/adminOrderController.ts'
+    Imported via "../../../services/warehouseNotificationService" from file 'D:/pro 7 Inor fresh/Zeto-Mart/backend/src/modules/customer/controllers/customerOrderController.ts'
+    Matched by include pattern 'src/**/*' in 'D:/pro 7 Inor fresh/Zeto-Mart/backend/tsconfig.json'
+src/modules/admin/controllers/adminProductController.ts(1178,30): error TS2552: Cannot find name 'Seller'. Did you mean 'seller'?
+src/modules/admin/controllers/adminWalletController.ts(225,11): error TS2367: This comparison appears to be unintentional because the types '"WAREHOUSE" | "DELIVERY_BOY"' and '"Warehouse"' have no overlap.
+src/modules/admin/controllers/adminWalletController.ts(225,39): error TS2551: Property 'Warehouse' does not exist on type 'Document<unknown, {}, ICommission, {}, {}> & ICommission & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehouse'?
+src/modules/admin/controllers/adminWalletController.ts(227,14): error TS2551: Property 'Warehouse' does not exist on type 'Document<unknown, {}, ICommission, {}, {}> & ICommission & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehouse'?
+src/modules/admin/controllers/adminWalletController.ts(227,48): error TS2551: Property 'Warehouse' does not exist on type 'Document<unknown, {}, ICommission, {}, {}> & ICommission & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehouse'?
+src/modules/customer/controllers/customerCartController.ts(12,7): error TS6133: 'getOwnerId' is declared but its value is never read.
+src/modules/customer/controllers/customerCartController.ts(52,48): error TS6133: 'nearbySellerIds' is declared but its value is never read.
+src/modules/customer/controllers/customerCartController.ts(165,15): error TS6133: 'nearbySellerIds' is declared but its value is never read.
+src/modules/customer/controllers/customerCartController.ts(358,15): error TS6133: 'product' is declared but its value is never read.
+src/modules/customer/controllers/customerOrderController.ts(262,25): error TS2339: Property 'seller' does not exist on type 'Document<unknown, {}, IProduct, {}, {}> & IProduct & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/customer/controllers/customerOrderController.ts(263,39): error TS2339: Property 'seller' does not exist on type 'Document<unknown, {}, IProduct, {}, {}> & IProduct & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/customer/controllers/customerOrderController.ts(290,95): error TS2339: Property 'seller' does not exist on type 'Document<unknown, {}, IProduct, {}, {}> & IProduct & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/customer/controllers/customerOrderController.ts(297,33): error TS2339: Property 'seller' does not exist on type 'Document<unknown, {}, IProduct, {}, {}> & IProduct & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/customer/controllers/customerProductController.ts(223,28): error TS2339: Property 'seller' does not exist on type 'Document<unknown, {}, IProduct, {}, {}> & IProduct & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/customer/controllers/trackingController.ts(284,65): error TS2339: Property 'seller' does not exist on type 'Document<unknown, {}, IOrderItem, {}, {}> & IOrderItem & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/customer/controllers/wishlistController.ts(86,82): error TS2339: Property 'seller' does not exist on type 'Document<unknown, {}, IProduct, {}, {}> & IProduct & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/delivery/controllers/deliveryOrderController.ts(404,48): error TS2551: Property 'Warehouse' does not exist on type 'Document<unknown, {}, IOrderItem, {}, {}> & IOrderItem & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehouse'?
+src/modules/delivery/controllers/deliveryOrderController.ts(414,40): error TS2339: Property 'latitude' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/delivery/controllers/deliveryOrderController.ts(414,62): error TS2339: Property 'longitude' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/delivery/controllers/deliveryOrderController.ts(417,30): error TS2339: Property 'storeName' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/delivery/controllers/deliveryOrderController.ts(419,25): error TS2339: Property 'city' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/delivery/controllers/deliveryOrderController.ts(420,40): error TS2339: Property 'latitude' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/delivery/controllers/deliveryOrderController.ts(421,41): error TS2339: Property 'longitude' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/delivery/controllers/deliveryOrderController.ts(641,11): error TS7022: 'Warehouse' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+src/modules/delivery/controllers/deliveryOrderController.ts(641,29): error TS2448: Block-scoped variable 'Warehouse' used before its declaration.
+src/modules/delivery/controllers/deliveryOrderController.ts(706,11): error TS7022: 'Warehouse' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+src/modules/delivery/controllers/deliveryOrderController.ts(706,29): error TS2448: Block-scoped variable 'Warehouse' used before its declaration.
+src/modules/delivery/controllers/deliveryOrderController.ts(732,34): error TS2551: Property 'WarehousePickups' does not exist on type 'Document<unknown, {}, IOrder, {}, {}> & IOrder & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehousePickups'?
+src/modules/delivery/controllers/deliveryOrderController.ts(746,48): error TS2551: Property 'Warehouse' does not exist on type 'Document<unknown, {}, IOrderItem, {}, {}> & IOrderItem & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehouse'?
+src/modules/delivery/controllers/deliveryOrderController.ts(750,16): error TS2551: Property 'WarehousePickups' does not exist on type 'Document<unknown, {}, IOrder, {}, {}> & IOrder & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehousePickups'?
+src/modules/delivery/controllers/deliveryOrderController.ts(751,13): error TS2551: Property 'WarehousePickups' does not exist on type 'Document<unknown, {}, IOrder, {}, {}> & IOrder & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehousePickups'?
+src/modules/delivery/controllers/deliveryOrderController.ts(755,31): error TS2551: Property 'WarehousePickups' does not exist on type 'Document<unknown, {}, IOrder, {}, {}> & IOrder & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehousePickups'?
+src/modules/delivery/controllers/deliveryOrderController.ts(768,13): error TS2551: Property 'WarehousePickups' does not exist on type 'Document<unknown, {}, IOrder, {}, {}> & IOrder & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehousePickups'?
+src/modules/delivery/controllers/deliveryOrderController.ts(770,13): error TS2551: Property 'WarehousePickups' does not exist on type 'Document<unknown, {}, IOrder, {}, {}> & IOrder & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehousePickups'?
+src/modules/delivery/controllers/deliveryOrderController.ts(774,40): error TS2551: Property 'WarehousePickups' does not exist on type 'Document<unknown, {}, IOrder, {}, {}> & IOrder & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehousePickups'?
+src/modules/warehouse/controllers/orderController.ts(5,1): error TS6133: 'Warehouse' is declared but its value is never read.
+src/modules/warehouse/controllers/orderController.ts(194,23): error TS2551: Property 'Warehouse' does not exist on type 'Document<unknown, {}, IOrderItem, {}, {}> & IOrderItem & Required<{ _id: ObjectId; }> & { __v: number; }'. Did you mean 'warehouse'?
+src/modules/warehouse/controllers/orderController.ts(312,13): error TS7022: 'Warehouse' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+src/modules/warehouse/controllers/orderController.ts(312,31): error TS2448: Block-scoped variable 'Warehouse' used before its declaration.
+src/modules/warehouse/controllers/walletController.ts(2,1): error TS6133: 'Warehouse' is declared but its value is never read.
+src/modules/warehouse/controllers/walletController.ts(15,11): error TS7022: 'Warehouse' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+src/modules/warehouse/controllers/walletController.ts(15,29): error TS2448: Block-scoped variable 'Warehouse' used before its declaration.
+src/modules/warehouse/controllers/walletController.ts(147,11): error TS7022: 'Warehouse' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+src/modules/warehouse/controllers/walletController.ts(147,29): error TS2448: Block-scoped variable 'Warehouse' used before its declaration.
+src/modules/warehouse/controllers/warehouseAuthController.ts(3,1): error TS6192: All imports in import declaration are unused.
+src/modules/warehouse/controllers/warehouseAuthController.ts(51,57): error TS2345: Argument of type '"Warehouse"' is not assignable to parameter of type 'UserType'.
+src/modules/warehouse/controllers/warehouseAuthController.ts(63,30): error TS2339: Property 'storeName' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/modules/warehouse/controllers/warehouseAuthController.ts(223,34): error TS2367: This comparison appears to be unintentional because the types '{ type: string; enum: ["Point"]; default: "Point"; }' and 'string' have no overlap.
+src/modules/warehouse/controllers/warehouseWalletController.ts(16,61): error TS2345: Argument of type '"Warehouse"' is not assignable to parameter of type '"warehouse" | "DELIVERY_BOY"'.
+src/modules/warehouse/controllers/warehouseWalletController.ts(41,13): error TS2345: Argument of type '"Warehouse"' is not assignable to parameter of type '"warehouse" | "DELIVERY_BOY"'.
+src/modules/warehouse/controllers/warehouseWalletController.ts(84,13): error TS2345: Argument of type '"Warehouse"' is not assignable to parameter of type '"warehouse" | "DELIVERY_BOY"'.
+src/modules/warehouse/controllers/warehouseWalletController.ts(113,13): error TS2345: Argument of type '"Warehouse"' is not assignable to parameter of type '"warehouse" | "DELIVERY_BOY"'.
+src/modules/warehouse/controllers/warehouseWalletController.ts(138,64): error TS2345: Argument of type '"Warehouse"' is not assignable to parameter of type '"warehouse" | "DELIVERY_BOY"'.
+src/routes/adminRoutes.ts(2,24): error TS6133: 'requireAdminAuth' is declared but its value is never read.
+src/routes/fcmTokenRoutes.ts(5,1): error TS6133: 'Warehouse' is declared but its value is never read.
+src/routes/fcmTokenRoutes.ts(47,12): error TS2678: Type '"warehouse"' is not comparable to type 'UserType'.
+src/routes/fcmTokenRoutes.ts(48,21): error TS2552: Cannot find name 'warehouse'. Did you mean 'Warehouse'?
+src/routes/fcmTokenRoutes.ts(160,12): error TS2678: Type '"warehouse"' is not comparable to type 'UserType'.
+src/routes/fcmTokenRoutes.ts(239,12): error TS2678: Type '"warehouse"' is not comparable to type 'UserType'.
+src/routes/index.ts(60,18): error TS6133: 'res' is declared but its value is never read.
+src/routes/uploadRoutes.ts(107,45): error TS2339: Property 'warehouse_DOCUMENTS' does not exist on type '{ readonly PRODUCTS: "dhakadsnazzy/products"; readonly PRODUCT_GALLERY: "dhakadsnazzy/products/gallery"; readonly CATEGORIES: "dhakadsnazzy/categories"; readonly SUBCATEGORIES: "dhakadsnazzy/subcategories"; ... 7 more ...; readonly USERS: "dhakadsnazzy/users"; }'.
+src/routes/uploadRoutes.ts(113,35): error TS2339: Property 'warehouse_DOCUMENTS' does not exist on type '{ readonly PRODUCTS: "dhakadsnazzy/products"; readonly PRODUCT_GALLERY: "dhakadsnazzy/products/gallery"; readonly CATEGORIES: "dhakadsnazzy/categories"; readonly SUBCATEGORIES: "dhakadsnazzy/subcategories"; ... 7 more ...; readonly USERS: "dhakadsnazzy/users"; }'.
+src/routes/uploadRoutes.ts(150,45): error TS2339: Property 'warehouse_DOCUMENTS' does not exist on type '{ readonly PRODUCTS: "dhakadsnazzy/products"; readonly PRODUCT_GALLERY: "dhakadsnazzy/products/gallery"; readonly CATEGORIES: "dhakadsnazzy/categories"; readonly SUBCATEGORIES: "dhakadsnazzy/subcategories"; ... 7 more ...; readonly USERS: "dhakadsnazzy/users"; }'.
+src/routes/uploadRoutes.ts(156,35): error TS2339: Property 'warehouse_DOCUMENTS' does not exist on type '{ readonly PRODUCTS: "dhakadsnazzy/products"; readonly PRODUCT_GALLERY: "dhakadsnazzy/products/gallery"; readonly CATEGORIES: "dhakadsnazzy/categories"; readonly SUBCATEGORIES: "dhakadsnazzy/subcategories"; ... 7 more ...; readonly USERS: "dhakadsnazzy/users"; }'.
+src/routes/warehouseAuthRoutes.ts(3,10): error TS6133: 'otpRateLimiter' is declared but its value is never read.
+src/scripts/debugProductAvailability.ts(27,39): error TS2339: Property 'seller' does not exist on type 'Document<unknown, {}, IProduct, {}, {}> & IProduct & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/scripts/debugProductAvailability.ts(29,17): error TS2339: Property 'seller' does not exist on type 'Document<unknown, {}, IProduct, {}, {}> & IProduct & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/scripts/debugProductAvailability.ts(29,42): error TS2339: Property 'seller' does not exist on type 'Document<unknown, {}, IProduct, {}, {}> & IProduct & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/scripts/debugProductAvailability.ts(30,30): error TS2339: Property 'seller' does not exist on type 'Document<unknown, {}, IProduct, {}, {}> & IProduct & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/scripts/seedGroceryCookingEssentialsProducts.ts(324,61): error TS2345: Argument of type '"Seller"' is not assignable to parameter of type '"warehouse" | "Admin" | "Customer" | "Delivery"'.
+src/scripts/seedGroceryCookingEssentialsProducts.ts(344,66): error TS2345: Argument of type '"Seller"' is not assignable to parameter of type '"warehouse" | "Admin" | "Customer" | "Delivery"'.
+src/scripts/seedGroceryStaplesProducts.ts(327,61): error TS2345: Argument of type '"Seller"' is not assignable to parameter of type '"warehouse" | "Admin" | "Customer" | "Delivery"'.
+src/scripts/seedGroceryStaplesProducts.ts(347,66): error TS2345: Argument of type '"Seller"' is not assignable to parameter of type '"warehouse" | "Admin" | "Customer" | "Delivery"'.
+src/scripts/seedWeddingBridalProducts.ts(96,61): error TS2345: Argument of type '"Seller"' is not assignable to parameter of type '"warehouse" | "Admin" | "Customer" | "Delivery"'.
+src/scripts/seedWeddingBridalProducts.ts(116,66): error TS2345: Argument of type '"Seller"' is not assignable to parameter of type '"warehouse" | "Admin" | "Customer" | "Delivery"'.
+src/services/cloudinaryService.ts(83,52): error TS2339: Property 'warehouse_DOCUMENTS' does not exist on type '{ readonly PRODUCTS: "dhakadsnazzy/products"; readonly PRODUCT_GALLERY: "dhakadsnazzy/products/gallery"; readonly CATEGORIES: "dhakadsnazzy/categories"; readonly SUBCATEGORIES: "dhakadsnazzy/subcategories"; ... 7 more ...; readonly USERS: "dhakadsnazzy/users"; }'.
+src/services/cloudinaryService.ts(157,52): error TS2339: Property 'warehouse_DOCUMENTS' does not exist on type '{ readonly PRODUCTS: "dhakadsnazzy/products"; readonly PRODUCT_GALLERY: "dhakadsnazzy/products/gallery"; readonly CATEGORIES: "dhakadsnazzy/categories"; readonly SUBCATEGORIES: "dhakadsnazzy/subcategories"; ... 7 more ...; readonly USERS: "dhakadsnazzy/users"; }'.
+src/services/commissionService.ts(53,23): error TS2339: Property 'commission' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/services/commissionService.ts(53,50): error TS2339: Property 'commission' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/services/commissionService.ts(54,27): error TS2339: Property 'commission' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/services/commissionService.ts(84,22): error TS2339: Property 'commissionRate' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/services/commissionService.ts(84,67): error TS2339: Property 'commissionRate' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/services/commissionService.ts(85,27): error TS2339: Property 'commissionRate' does not exist on type 'Document<unknown, {}, IWarehouse, {}, {}> & IWarehouse & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/services/commissionService.ts(274,13): error TS7022: 'warehouse' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+src/services/commissionService.ts(274,31): error TS2448: Block-scoped variable 'warehouse' used before its declaration.
+src/services/commissionService.ts(390,11): error TS2367: This comparison appears to be unintentional because the types '"WAREHOUSE" | "DELIVERY_BOY"' and '"warehouse"' have no overlap.
+src/services/commissionService.ts(646,28): error TS2339: Property 'warehousePendingPayouts' does not exist on type 'Document<unknown, {}, IPlatformWallet, {}, {}> & IPlatformWallet & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/services/commissionService.ts(646,81): error TS2339: Property 'warehousePendingPayouts' does not exist on type 'Document<unknown, {}, IPlatformWallet, {}, {}> & IPlatformWallet & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/services/commissionService.ts(762,11): error TS2367: This comparison appears to be unintentional because the types '"WAREHOUSE" | "DELIVERY_BOY"' and '"warehouse"' have no overlap.
+src/services/commissionService.ts(771,13): error TS2345: Argument of type '"WAREHOUSE" | "DELIVERY_BOY"' is not assignable to parameter of type '"warehouse" | "DELIVERY_BOY"'.
+  Type '"WAREHOUSE"' is not assignable to type '"warehouse" | "DELIVERY_BOY"'. Did you mean '"warehouse"'?
+src/services/notificationService.ts(3,1): error TS6133: 'Warehouse' is declared but its value is never read.
+src/services/notificationService.ts(80,32): error TS2552: Cannot find name 'warehouse'. Did you mean 'warehouses'?
+src/services/notificationService.ts(81,33): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/services/orderNotificationService.ts(4,1): error TS6133: 'Warehouse' is declared but its value is never read.
+src/services/orderNotificationService.ts(8,10): error TS2724: '"./warehouseNotificationService"' has no exported member named 'notifywarehousesOfOrderUpdate'. Did you mean 'notifyWarehousesOfOrderUpdate'?
+src/services/orderNotificationService.ts(242,34): error TS2552: Cannot find name 'warehouse'. Did you mean 'warehouses'?
+src/services/walletManagementService.ts(3,1): error TS6133: 'Warehouse' is declared but its value is never read.
+src/services/walletManagementService.ts(44,51): error TS2552: Cannot find name 'warehouse'. Did you mean 'Warehouse'?
+src/services/walletManagementService.ts(110,51): error TS2552: Cannot find name 'warehouse'. Did you mean 'Warehouse'?
+src/services/walletManagementService.ts(144,51): error TS2552: Cannot find name 'warehouse'. Did you mean 'Warehouse'?
+src/services/walletManagementService.ts(245,51): error TS2552: Cannot find name 'warehouse'. Did you mean 'Warehouse'?
+src/services/walletManagementService.ts(294,51): error TS2552: Cannot find name 'warehouse'. Did you mean 'Warehouse'?
+src/services/walletService.ts(61,9): error TS2304: Cannot find name 'warehouse'.
+src/services/walletService.ts(83,5): error TS2552: Cannot find name 'warehouse'. Did you mean 'warehouseId'?
+src/services/walletService.ts(171,25): error TS2304: Cannot find name 'warehouse'.
+src/services/walletService.ts(188,23): error TS2304: Cannot find name 'warehouse'.

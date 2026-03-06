@@ -89,6 +89,11 @@ export interface IOrder extends Document {
     longitude?: number;
   }>;
 
+  // Auto-assigned nearest warehouse (set at order creation)
+  assignedWarehouse?: mongoose.Types.ObjectId;
+  assignedWarehouseName?: string;
+  assignedWarehouseDistanceKm?: number;
+
   // Notes
   adminNotes?: string;
   customerNotes?: string;
@@ -321,21 +326,26 @@ const OrderSchema = new Schema<IOrder>(
           ref: "Warehouse",
           required: true,
         },
-        pickedUpAt: {
-          type: Date,
-        },
-        pickedUpBy: {
-          type: Schema.Types.ObjectId,
-          ref: "Delivery",
-        },
-        latitude: {
-          type: Number,
-        },
-        longitude: {
-          type: Number,
-        },
+        pickedUpAt: { type: Date },
+        pickedUpBy: { type: Schema.Types.ObjectId, ref: "Delivery" },
+        latitude: { type: Number },
+        longitude: { type: Number },
       },
     ],
+
+    // Auto-assigned nearest warehouse
+    assignedWarehouse: {
+      type: Schema.Types.ObjectId,
+      ref: "Warehouse",
+      default: null,
+    },
+    assignedWarehouseName: {
+      type: String,
+      trim: true,
+    },
+    assignedWarehouseDistanceKm: {
+      type: Number,
+    },
 
     // Notes
     adminNotes: {

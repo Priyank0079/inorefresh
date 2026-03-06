@@ -167,13 +167,13 @@ async function fetchSectionData(
       const products = await Product.find(query)
         .sort({ createdAt: -1 }) // Show newest items first
         .limit(limit || 8)
-        .select("productName mainImage price mrp discount rating reviewsCount pack seller variations")
+        .select("productName mainImage price mrp discount rating reviewsCount pack seller warehouse variations")
         .lean();
 
       return products.map((p: any) => {
-        // Check if the product's seller is within range
-        const isAvailable = nearbySellerIds && nearbySellerIds.length > 0 && p.seller
-          ? nearbySellerIds.some(id => id.toString() === p.seller.toString())
+        const ownerId = p.seller || p.warehouse;
+        const isAvailable = nearbySellerIds && nearbySellerIds.length > 0 && ownerId
+          ? nearbySellerIds.some(id => id.toString() === ownerId.toString())
           : false;
 
         return {
@@ -197,6 +197,7 @@ async function fetchSectionData(
           type: "product",
           isAvailable,
           seller: p.seller,
+          warehouse: p.warehouse,
         };
       });
     }
@@ -331,7 +332,7 @@ export const getHomeContent = async (req: Request, res: Response) => {
       .populate({
         path: "product",
         select:
-          "productName mainImage price mrp discount status publish category subcategory seller variations",
+          "productName mainImage price mrp discount status publish category subcategory seller warehouse variations",
         match: {
           status: "Active",
           publish: true,
@@ -346,9 +347,9 @@ export const getHomeContent = async (req: Request, res: Response) => {
       .filter((item: any) => item.product !== null)
       .map((item: any) => {
         const product = item.product;
-        // Check if the product's seller is within range
-        const isAvailable = nearbySellerIds && nearbySellerIds.length > 0 && product.seller
-          ? nearbySellerIds.some(id => id.toString() === product.seller.toString())
+        const ownerId = product.seller || product.warehouse;
+        const isAvailable = nearbySellerIds && nearbySellerIds.length > 0 && ownerId
+          ? nearbySellerIds.some(id => id.toString() === ownerId.toString())
           : false;
 
         return {
@@ -367,14 +368,17 @@ export const getHomeContent = async (req: Request, res: Response) => {
           publish: product.publish,
           isAvailable,
           seller: product.seller,
+          warehouse: product.warehouse,
         };
       });
 
     // 3. Categories for Tiles (Grocery, Snacks, etc)
+    // ONLY show categories that have a headerCategoryId assigned
     const categories = await Category.find({
       status: "Active",
+      headerCategoryId: { $exists: true, $ne: null },
     })
-      .select("name image icon color slug")
+      .select("name image icon color slug headerCategoryId")
       .sort({ order: 1 });
 
     // 4. Shop By Store - Fetch from database
@@ -416,6 +420,7 @@ export const getHomeContent = async (req: Request, res: Response) => {
     // 5. Trending Items (Fetch some popular categories or products)
     const trendingCategories = await Category.find({
       status: "Active",
+      headerCategoryId: { $exists: true, $ne: null },
     })
       .limit(5)
       .select("name image slug");
@@ -611,7 +616,7 @@ export const getHomeContent = async (req: Request, res: Response) => {
         endDate: { $gte: now },
       })
         .populate("categoryCards.categoryId", "name slug image")
-        .populate("featuredProducts", "productName mainImage mainImageUrl galleryImageUrls galleryImages price mrp compareAtPrice discount rating reviewsCount seller variations")
+        .populate("featuredProducts", "productName mainImage mainImageUrl galleryImageUrls galleryImages price mrp compareAtPrice discount rating reviewsCount seller warehouse variations")
         .sort({ order: 1 })
         .lean();
 
@@ -620,8 +625,9 @@ export const getHomeContent = async (req: Request, res: Response) => {
       // If we have promoStrip, add availability flag to featured products
       if (promoStrip && (promoStrip as any).featuredProducts) {
         (promoStrip as any).featuredProducts = (promoStrip as any).featuredProducts.map((p: any) => {
-          const isAvailable = nearbySellerIds && nearbySellerIds.length > 0 && p.seller
-            ? nearbySellerIds.some(id => id.toString() === p.seller.toString())
+          const ownerId = p.seller || p.warehouse;
+          const isAvailable = nearbySellerIds && nearbySellerIds.length > 0 && ownerId
+            ? nearbySellerIds.some(id => id.toString() === ownerId.toString())
             : false;
           return { ...p, isAvailable };
         });
@@ -818,8 +824,16 @@ export const getStoreProducts = async (req: Request, res: Response) => {
         });
       }
 
-      // Filter products by sellers within range
-      query.seller = { $in: nearbySellerIds };
+      // Filter products by nearby sellers or nearby warehouses
+      query.$and = [
+        ...(query.$and || []),
+        {
+          $or: [
+            { seller: { $in: nearbySellerIds } },
+            { warehouse: { $in: nearbySellerIds } },
+          ],
+        },
+      ];
       console.log(`[getStoreProducts] Added seller filter to query`);
     } else {
       // If no location provided, return empty (require location for marketplace)
@@ -844,7 +858,7 @@ export const getStoreProducts = async (req: Request, res: Response) => {
       .populate("category", "name icon image")
       .populate("subcategory", "name")
       .populate("brand", "name")
-      .populate("seller", "storeName")
+      .populate("warehouse", "warehouseName")
       .sort({ createdAt: -1 })
       .limit(50)
       .lean({ virtuals: true });

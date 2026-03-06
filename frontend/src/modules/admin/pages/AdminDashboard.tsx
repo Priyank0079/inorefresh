@@ -55,17 +55,8 @@ export default function AdminDashboard() {
         setLoading(true);
         setError(null);
 
-        // Fetch all dashboard data in parallel
-        const [
-          statsResponse,
-          ordersResponse,
-          sellersResponse,
-          locationResponse,
-          analyticsResponse,
-          orderAnalyticsResponse,
-          orderAnalyticsDailyResponse,
-          todaySalesResponse,
-        ] = await Promise.all([
+        // Fetch dashboard data in parallel; allow partial failures.
+        const results = await Promise.allSettled([
           getDashboardStats(),
           getRecentOrders(10),
           getTopSellers(10),
@@ -76,39 +67,52 @@ export default function AdminDashboard() {
           getTodaySales(),
         ]);
 
-        if (statsResponse.success) {
-          console.log("Dashboard stats received:", statsResponse.data);
-          setStats(statsResponse.data);
+        const [
+          statsResult,
+          ordersResult,
+          sellersResult,
+          locationResult,
+          analyticsResult,
+          orderAnalyticsResult,
+          orderAnalyticsDailyResult,
+          todaySalesResult,
+        ] = results;
+
+        if (statsResult.status === "fulfilled" && statsResult.value.success) {
+          setStats(statsResult.value.data);
         } else {
-          console.error("Failed to fetch dashboard stats:", statsResponse);
+          setError("Failed to load dashboard stats.");
         }
 
-        if (ordersResponse.success) {
-          setNewOrders(ordersResponse.data);
+        if (ordersResult.status === "fulfilled" && ordersResult.value.success) {
+          setNewOrders(ordersResult.value.data);
         }
 
-        if (sellersResponse.success) {
-          setTopSellers(sellersResponse.data);
+        if (sellersResult.status === "fulfilled" && sellersResult.value.success) {
+          setTopSellers(sellersResult.value.data);
         }
 
-        if (locationResponse.success) {
-          setSalesByLocation(locationResponse.data);
+        if (locationResult.status === "fulfilled" && locationResult.value.success) {
+          setSalesByLocation(locationResult.value.data);
         }
 
-        if (analyticsResponse.success) {
-          setSalesAnalytics(analyticsResponse.data);
+        if (analyticsResult.status === "fulfilled" && analyticsResult.value.success) {
+          setSalesAnalytics(analyticsResult.value.data);
         }
 
-        if (orderAnalyticsResponse.success) {
-          setOrderAnalytics(orderAnalyticsResponse.data);
+        if (orderAnalyticsResult.status === "fulfilled" && orderAnalyticsResult.value.success) {
+          setOrderAnalytics(orderAnalyticsResult.value.data);
         }
 
-        if (orderAnalyticsDailyResponse.success) {
-          setOrderAnalyticsDaily(orderAnalyticsDailyResponse.data);
+        if (
+          orderAnalyticsDailyResult.status === "fulfilled" &&
+          orderAnalyticsDailyResult.value.success
+        ) {
+          setOrderAnalyticsDaily(orderAnalyticsDailyResult.value.data);
         }
 
-        if (todaySalesResponse.success) {
-          setTodaySales(todaySalesResponse.data);
+        if (todaySalesResult.status === "fulfilled" && todaySalesResult.value.success) {
+          setTodaySales(todaySalesResult.value.data);
         }
       } catch (err: any) {
         console.error("Error fetching dashboard data:", err);

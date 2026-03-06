@@ -4,7 +4,8 @@ import DashboardCard from '../components/DashboardCard';
 import OrderChart from '../components/OrderChart';
 import AlertCard from '../components/AlertCard';
 import { getWarehouseDashboardStats, DashboardStats, NewOrder } from '../../../services/api/dashboardService';
-import { getWarehouseProfile, toggleShopStatus } from '../../../services/api/auth/WarehouseAuthService';
+import { getWarehouseProfile } from '../../../services/api/warehouseService';
+import { toggleShopStatus } from '../../../services/api/auth/warehouseAuthService';
 
 export default function WarehouseDashboard() {
   const navigate = useNavigate();
@@ -264,14 +265,12 @@ export default function WarehouseDashboard() {
           <button
             onClick={handleToggleShop}
             disabled={statusLoading}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
-              isShopOpen ? 'bg-teal-600' : 'bg-gray-200'
-            } ${statusLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${isShopOpen ? 'bg-teal-600' : 'bg-gray-200'
+              } ${statusLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <span
-              className={`${
-                isShopOpen ? 'translate-x-6' : 'translate-x-1'
-              } inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out`}
+              className={`${isShopOpen ? 'translate-x-6' : 'translate-x-1'
+                } inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out`}
             />
           </button>
         </div>

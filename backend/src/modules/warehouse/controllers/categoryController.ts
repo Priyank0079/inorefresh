@@ -2,7 +2,63 @@ import { Request, Response } from "express";
 import Category from "../../../models/Category";
 import SubCategory from "../../../models/SubCategory";
 import Product from "../../../models/Product";
+import HeaderCategory from "../../../models/HeaderCategory";
 import { asyncHandler } from "../../../utils/asyncHandler";
+
+/**
+ * Create a new category (Warehouse Manager)
+ * Warehouse can create categories under an existing header category
+ */
+export const createCategory = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { name, image, headerCategoryId } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: "Category name is required" });
+    }
+
+    if (!headerCategoryId) {
+      return res.status(400).json({ success: false, message: "Please select a header category" });
+    }
+
+    // Validate header category exists and is Published
+    const headerCat = await HeaderCategory.findById(headerCategoryId);
+    if (!headerCat) {
+      return res.status(400).json({ success: false, message: "Header category not found" });
+    }
+    if (headerCat.status !== "Published") {
+      return res.status(400).json({ success: false, message: "Selected header category is not published" });
+    }
+
+    // Check for duplicate name
+    const existing = await Category.findOne({ name: name.trim() });
+    if (existing) {
+      return res.status(409).json({ success: false, message: `Category "${name}" already exists` });
+    }
+
+    // Auto order
+    const last = await Category.findOne({ parentId: null }).sort({ order: -1 }).limit(1);
+    const order = last ? (last.order || 0) + 1 : 0;
+
+    const category = await Category.create({
+      name: name.trim(),
+      image: image?.trim() || undefined,
+      headerCategoryId,
+      parentId: null,
+      status: "Active",
+      order,
+      isBestseller: false,
+      hasWarning: false,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: `Category "${category.name}" created successfully`,
+      data: category,
+    });
+  }
+);
+
 
 /**
  * Get all categories (parent categories only by default)
@@ -11,10 +67,14 @@ export const getCategories = asyncHandler(
   async (req: Request, res: Response) => {
     const { includeSubcategories, search } = req.query;
 
-    // Build query - by default, get only parent categories (no parentId)
-    const query: any = { parentId: null };
+    // Build query - only Active categories that belong to a header category
+    const query: any = {
+      parentId: null,
+      status: "Active",
+      headerCategoryId: { $ne: null, $exists: true },
+    };
 
-    // If includeSubcategories is true, get all categories
+    // If includeSubcategories is true, get all (but still filter by status/header)
     if (includeSubcategories === "true") {
       delete query.parentId;
     }

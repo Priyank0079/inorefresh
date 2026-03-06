@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 export interface IWarehouse extends Document {
     warehouseName: string;
     managerName: string;
-    phone: string;
+    mobile: string;
     email: string;
     password?: string;
     address: string;
@@ -20,6 +20,7 @@ export interface IWarehouse extends Document {
     role: 'warehouse';
     createdBy: 'ADMIN';
     balance: number;
+    serviceRadiusKm?: number;
     fcmTokens?: string[];
     fcmTokenMobile?: string[];
     createdAt: Date;
@@ -95,6 +96,12 @@ const WarehouseSchema = new Schema<IWarehouse>(
         balance: {
             type: Number,
             default: 0,
+        },
+        serviceRadiusKm: {
+            type: Number,
+            default: 10,
+            min: [0.1, 'Service radius must be at least 0.1 km'],
+            max: [100, 'Service radius cannot exceed 100 km'],
         },
         fcmTokens: {
             type: [String],

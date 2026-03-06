@@ -1,7 +1,7 @@
 import Commission from "../models/Commission";
 import Order from "../models/Order";
 import OrderItem from "../models/OrderItem";
-import warehouse from "../models/warehouse";
+import Warehouse from "../models/Warehouse";
 import Delivery from "../models/Delivery";
 import AppSettings from "../models/AppSettings";
 import { creditWallet } from "./walletManagementService";
@@ -49,9 +49,9 @@ export const getOrderItemCommissionRate = async (
 
     // 4. Check warehouse specific rate
     const finalwarehouseId = warehouseId || product.warehouse.toString();
-    const warehouse = await warehouse.findById(finalwarehouseId);
-    if (warehouse?.commission && warehouse.commission > 0) {
-      return warehouse.commission;
+    const warehouseDoc = await Warehouse.findById(finalwarehouseId);
+    if (warehouseDoc?.commission && warehouseDoc.commission > 0) {
+      return warehouseDoc.commission;
     }
 
     // 5. Global Default
@@ -75,14 +75,14 @@ export const getwarehouseCommissionRate = async (
   warehouseId: string,
 ): Promise<number> => {
   try {
-    const warehouse = await warehouse.findById(warehouseId);
-    if (!warehouse) {
+    const warehouseDoc = await Warehouse.findById(warehouseId);
+    if (!warehouseDoc) {
       throw new Error("warehouse not found");
     }
 
     // Use individual rate if set, otherwise use global default
-    if (warehouse.commissionRate !== undefined && warehouse.commissionRate !== null) {
-      return warehouse.commissionRate;
+    if (warehouseDoc.commissionRate !== undefined && warehouseDoc.commissionRate !== null) {
+      return warehouseDoc.commissionRate;
     }
 
     const settings = await AppSettings.findOne();

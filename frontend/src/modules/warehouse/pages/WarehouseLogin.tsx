@@ -1,47 +1,25 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { sendOTP, verifyOTP } from '../../../services/api/auth/warehouseAuthService';
-import OTPInput from '../../../components/OTPInput';
+import { loginWarehouse } from '../../../services/api/auth/warehouseAuthService';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function WarehouseLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [mobileNumber, setMobileNumber] = useState('');
-  const [showOTP, setShowOTP] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleMobileLogin = async () => {
-    if (mobileNumber.length !== 10) return;
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
 
     setLoading(true);
     setError('');
 
     try {
-      const response = await sendOTP(mobileNumber);
-      if (response.success) {
-        // Only show OTP screen on success
-        setShowOTP(true);
-        setError(''); // Clear any previous errors
-      } else {
-        // If not successful, show error and stay on page
-        setError(response.message || 'Failed to send OTP. Please try again.');
-      }
-    } catch (err: any) {
-      // On error, show error message and stay on the same page
-      setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleOTPComplete = async (otp: string) => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await verifyOTP(mobileNumber, otp);
+      const response = await loginWarehouse(email, password);
       if (response.success && response.data) {
         // Update auth context with Warehouse data
         login(response.data.token, {
@@ -55,28 +33,18 @@ export default function WarehouseLogin() {
           address: response.data.user.address,
           city: response.data.user.city,
         });
-        // Navigate to Warehouse dashboard only on success
+        // Navigate to Warehouse dashboard on success
         navigate('/warehouse', { replace: true });
       } else {
-        // If response is not successful, show error and stay on page
+        // Show error and stay on page
         setError(response.message || 'Login failed. Please try again.');
-        setLoading(false);
       }
     } catch (err: any) {
-      // On error, show error message and stay on the same page
-      setError(err.response?.data?.message || 'Invalid OTP. Please try again.');
+      // Show error and stay on page
+      setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
+    } finally {
       setLoading(false);
     }
-  };
-
-  const handleInorFreshLogin = () => {
-    // Handle Inor fresh login logic here
-    navigate('/Warehouse');
-  };
-
-  const handleAdminLogin = () => {
-    // Navigate to admin login page
-    navigate('/admin/login');
   };
 
   return (
@@ -113,111 +81,58 @@ export default function WarehouseLogin() {
         </div>
 
         {/* Login Form */}
-        <div className="p-6 space-y-4">
-          {!showOTP ? (
-            /* Mobile Login Form */
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Mobile Number
-                </label>
-                <div className="flex items-center bg-white border border-neutral-300 rounded-lg overflow-hidden focus-within:border-[#009999] focus-within:ring-2 focus-within:ring-cyan-100 transition-all">
-                  <div className="px-3 py-2.5 text-sm font-medium text-neutral-600 border-r border-neutral-300 bg-neutral-50">
-                    +91
-                  </div>
-                  <input
-                    type="tel"
-                    value={mobileNumber}
-                    onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="Enter mobile number"
-                    className="flex-1 px-3 py-2.5 text-sm placeholder:text-neutral-400 focus:outline-none"
-                    maxLength={10}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-
-              {error && (
-                <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
-                  {error}
-                </div>
-              )}
-
-              <button
-                onClick={handleMobileLogin}
-                disabled={mobileNumber.length !== 10 || loading}
-                className={`w-full py-3 rounded-lg font-bold text-sm transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${mobileNumber.length === 10 && !loading
-                  ? 'bg-gradient-to-r from-[#003366] to-[#009999] text-white hover:from-[#003f7a] hover:to-[#00a8a8]'
-                  : 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
-                  }`}
-              >
-                {loading ? 'Sending...' : 'Continue'}
-              </button>
+        <div className="p-6">
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter email address"
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                required
+                disabled={loading}
+              />
             </div>
-          ) : (
-            /* OTP Verification Form */
-            <div className="space-y-4">
-              <div className="text-center">
-                <p className="text-sm text-neutral-600 mb-2">
-                  Enter the 4-digit OTP sent to
-                </p>
-                <p className="text-sm font-semibold text-neutral-800">+91 {mobileNumber}</p>
-              </div>
 
-              <OTPInput onComplete={handleOTPComplete} disabled={loading} />
-
-              {error && (
-                <div className="text-sm text-red-600 bg-red-50 p-2 rounded text-center">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setShowOTP(false);
-                    setError('');
-                  }}
-                  disabled={loading}
-                  className="flex-1 py-2.5 rounded-lg font-semibold text-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors border border-neutral-300"
-                >
-                  Change Number
-                </button>
-                <button
-                  onClick={async () => {
-                    setLoading(true);
-                    setError('');
-                    try {
-                      const response = await sendOTP(mobileNumber);
-                      if (response.success) {
-                        // OTP resent successfully, clear any previous errors
-                        setError('');
-                      } else {
-                        // Show error but stay on page
-                        setError(response.message || 'Failed to resend OTP. Please try again.');
-                      }
-                    } catch (err: any) {
-                      // Show error but stay on page
-                      setError(err.response?.data?.message || 'Failed to resend OTP. Please try again.');
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  disabled={loading}
-                  className="flex-1 py-3 rounded-lg font-bold text-sm bg-gradient-to-r from-[#003366] to-[#009999] text-white hover:from-[#003f7a] hover:to-[#00a8a8] transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-                >
-                  {loading ? 'Sending...' : 'Resend OTP'}
-                </button>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                required
+                disabled={loading}
+              />
             </div>
-          )}
 
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+                {error}
+              </div>
+            )}
 
-
-
+            <button
+              type="submit"
+              disabled={!email || !password || loading}
+              className={`w-full py-3 rounded-lg font-bold text-sm transition-all shadow-md mt-4 ${email && password && !loading
+                ? 'bg-gradient-to-r from-[#003366] to-[#009999] text-white hover:shadow-lg transform hover:-translate-y-0.5'
+                : 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
+                }`}
+            >
+              {loading ? 'Logging in...' : 'Login'}
+            </button>
+          </form>
 
           {/* Registration policy note */}
-          <div className="text-center pt-4 border-t border-neutral-200">
+          <div className="text-center pt-6 mt-4 border-t border-neutral-200">
             <p className="text-sm text-neutral-600">
               Warehouse accounts are created by admin only. Contact admin for onboarding.
             </p>
@@ -232,5 +147,3 @@ export default function WarehouseLogin() {
     </div>
   );
 }
-
-

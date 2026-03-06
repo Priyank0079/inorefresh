@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getWarehouseProfile, updateWarehouseProfile } from '../../../services/api/auth/WarehouseAuthService';
+import { getWarehouseProfile, updateWarehouseProfile } from '../../../services/api/warehouseService';
 import { useAuth } from '../../../context/AuthContext';
 import { getCategories, Category } from '../../../services/api/categoryService';
 import GoogleMapsAutocomplete from '../../../components/GoogleMapsAutocomplete';
@@ -67,10 +67,11 @@ const WarehouseAccountSettings = () => {
             setLoading(true);
             const response = await getWarehouseProfile();
             if (response.success) {
-                const data = response.data;
+                const data: any = response.data;
                 // Map location data to state
                 const locationCoords = data.location?.coordinates || [];
-                setWarehouseData({
+                setWarehouseData(prev => ({
+                    ...prev,
                     ...data,
                     latitude: data.latitude || (locationCoords[1]?.toString() || ''),
                     longitude: data.longitude || (locationCoords[0]?.toString() || ''),
@@ -80,7 +81,7 @@ const WarehouseAccountSettings = () => {
                     serviceAreaCoordinates: (data.serviceAreaGeo?.coordinates && data.serviceAreaGeo.coordinates[0])
                         ? data.serviceAreaGeo.coordinates[0].map((p: number[]) => [p[0], p[1]])
                         : [], // Flatten if needed, assumes [[lng, lat]]
-                });
+                }));
             } else {
                 setError(response.message || 'Failed to fetch profile');
             }
@@ -132,9 +133,10 @@ const WarehouseAccountSettings = () => {
             const response = await updateWarehouseProfile(updateData);
             if (response.success) {
                 setIsEditing(false);
-                const data = response.data;
+                const data: any = response.data;
                 const locationCoords = data.location?.coordinates || [];
-                setWarehouseData({
+                setWarehouseData(prev => ({
+                    ...prev,
                     ...data,
                     latitude: data.latitude || (locationCoords[1]?.toString() || ''),
                     longitude: data.longitude || (locationCoords[0]?.toString() || ''),
@@ -144,12 +146,12 @@ const WarehouseAccountSettings = () => {
                     serviceAreaCoordinates: (data.serviceAreaGeo?.coordinates && data.serviceAreaGeo.coordinates[0])
                         ? data.serviceAreaGeo.coordinates[0]
                         : [],
-                });
+                }));
                 if (updateUser) {
                     updateUser({
                         ...user,
                         ...data,
-                        id: data._id || user?.id
+                        id: data._id || (user?.id ?? '')
                     });
                 }
                 setError('');

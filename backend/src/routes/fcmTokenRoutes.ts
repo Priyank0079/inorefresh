@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import { sendPushNotification } from "../services/firebaseAdmin";
 import Customer from "../models/Customer";
 import Admin from "../models/Admin";
-import warehouse from "../models/warehouse";
+import Warehouse from "../models/Warehouse";
 import Delivery from "../models/Delivery";
 
 const router = Router();
@@ -158,7 +158,7 @@ router.delete("/remove", async (req: Request, res: Response): Promise<void> => {
         UserModel = (await import("../models/Admin")).default;
         break;
       case "warehouse":
-        UserModel = (await import("../models/warehouse")).default;
+        UserModel = (await import("../models/Warehouse")).default;
         break;
       case "Delivery":
         UserModel = (await import("../models/Delivery")).default;
@@ -237,7 +237,7 @@ router.post("/test", async (req: Request, res: Response): Promise<void> => {
         UserModel = (await import("../models/Admin")).default;
         break;
       case "warehouse":
-        UserModel = (await import("../models/warehouse")).default;
+        UserModel = (await import("../models/Warehouse")).default;
         break;
       case "Delivery":
         UserModel = (await import("../models/Delivery")).default;

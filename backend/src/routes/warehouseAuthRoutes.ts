@@ -5,11 +5,8 @@ import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
-// Send OTP route
-router.post("/send-otp", otpRateLimiter, warehouseAuthController.sendOTP);
-
-// Verify OTP and login route
-router.post("/verify-otp", loginRateLimiter, warehouseAuthController.verifyOTP);
+// Login route with email and password
+router.post("/login", loginRateLimiter, warehouseAuthController.login);
 
 // Register route
 router.post("/register", warehouseAuthController.register);

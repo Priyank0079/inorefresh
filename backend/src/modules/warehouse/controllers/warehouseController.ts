@@ -11,12 +11,21 @@ export const getAllWarehouses = asyncHandler(
 
     // Build query
     const query: any = {};
+    // Exclude system-generated fallback/dummy warehouse from admin list views.
+    query.email = { $ne: "admin-warehouse@zetomart.com" };
+    query.$nor = [
+      { warehouseName: { $regex: /^Warehouse W\d+$/i } },
+      { managerName: { $regex: /^Manager W\d+$/i } },
+      { email: { $regex: /^manager@w\d+\.com$/i } },
+      { mobile: { $regex: /^999999990\d$/ } },
+      { address: { $regex: /Hub Address,\s*City/i } },
+    ];
     if (status) {
       query.status = status;
     }
     if (search) {
       query.$or = [
-        { WarehouseName: { $regex: search, $options: "i" } },
+        { warehouseName: { $regex: search, $options: "i" } },
         { storeName: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
         { mobile: { $regex: search, $options: "i" } },
@@ -42,9 +51,9 @@ export const getWarehouseById = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    const Warehouse = await Warehouse.findById(id).select("-password");
+    const warehouse = await Warehouse.findById(id).select("-password");
 
-    if (!Warehouse) {
+    if (!warehouse) {
       return res.status(404).json({
         success: false,
         message: "Warehouse not found",
@@ -54,7 +63,7 @@ export const getWarehouseById = asyncHandler(
     return res.status(200).json({
       success: true,
       message: "Warehouse fetched successfully",
-      data: Warehouse,
+      data: warehouse,
     });
   }
 );
@@ -74,13 +83,13 @@ export const updateWarehouseStatus = asyncHandler(
       });
     }
 
-    const Warehouse = await Warehouse.findByIdAndUpdate(
+    const warehouse = await Warehouse.findByIdAndUpdate(
       id,
       { status },
       { new: true, runValidators: true }
     ).select("-password");
 
-    if (!Warehouse) {
+    if (!warehouse) {
       return res.status(404).json({
         success: false,
         message: "Warehouse not found",
@@ -90,7 +99,7 @@ export const updateWarehouseStatus = asyncHandler(
     return res.status(200).json({
       success: true,
       message: `Warehouse status updated to ${status}`,
-      data: Warehouse,
+      data: warehouse,
     });
   }
 );
@@ -150,12 +159,12 @@ export const updateWarehouse = asyncHandler(
       delete updateData.serviceRadiusKm;
     }
 
-    const Warehouse = await Warehouse.findByIdAndUpdate(id, updateData, {
+    const warehouse = await Warehouse.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
     }).select("-password");
 
-    if (!Warehouse) {
+    if (!warehouse) {
       return res.status(404).json({
         success: false,
         message: "Warehouse not found",
@@ -165,7 +174,7 @@ export const updateWarehouse = asyncHandler(
     return res.status(200).json({
       success: true,
       message: "Warehouse updated successfully",
-      data: Warehouse,
+      data: warehouse,
     });
   }
 );
@@ -177,9 +186,9 @@ export const deleteWarehouse = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    const Warehouse = await Warehouse.findByIdAndDelete(id);
+    const warehouse = await Warehouse.findByIdAndDelete(id);
 
-    if (!Warehouse) {
+    if (!warehouse) {
       return res.status(404).json({
         success: false,
         message: "Warehouse not found",

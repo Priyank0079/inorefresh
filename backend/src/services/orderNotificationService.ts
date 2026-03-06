@@ -1,7 +1,7 @@
 import { Server as SocketIOServer } from 'socket.io';
 import Delivery from '../models/Delivery';
 import Order from '../models/Order';
-import warehouse from '../models/warehouse';
+import Warehouse from '../models/Warehouse';
 import DeliveryTracking from '../models/DeliveryTracking';
 import AppSettings from '../models/AppSettings';
 import mongoose from 'mongoose';

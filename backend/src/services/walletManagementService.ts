@@ -1,6 +1,6 @@
 import WalletTransaction from "../models/WalletTransaction";
 import WithdrawRequest from "../models/WithdrawRequest";
-import warehouse from "../models/warehouse";
+import Warehouse from "../models/Warehouse";
 import Delivery from "../models/Delivery";
 import AppSettings from "../models/AppSettings";
 import mongoose from "mongoose";

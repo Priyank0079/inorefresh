@@ -7,7 +7,7 @@ import {
   requestWarehouseWithdrawal,
   getWarehouseWithdrawals,
   getWarehouseCommissions,
-} from '../../../services/api/WarehouseWalletService';
+} from '../../../services/api/warehouseWalletService';
 
 type Tab = 'transactions' | 'withdrawals' | 'commissions';
 

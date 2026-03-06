@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import Order from "../../../models/Order";
-import { notifyWarehousesOfOrderUpdate } from "../../../services/WarehouseNotificationService";
+import { notifyWarehousesOfOrderUpdate } from "../../../services/warehouseNotificationService";
 import OrderItem from "../../../models/OrderItem";
 import Warehouse from "../../../models/Warehouse";
 import {

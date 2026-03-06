@@ -9,6 +9,15 @@ import AppSettings from '../../../models/AppSettings';
 import { getRoadDistances } from '../../../services/mapService';
 import Seller from '../../../models/Seller';
 
+const getOwnerId = (product: any): string | null => {
+    if (!product) return null;
+    // Support legacy field casing from older documents.
+    const owner = product.seller || product.warehouse || product.Seller || product.Warehouse;
+    if (!owner) return null;
+    if (typeof owner === 'object' && owner._id) return owner._id.toString();
+    return owner.toString();
+};
+
 // Helper to calculate item price matching frontend logic
 const calculateItemPrice = (product: any, variationSelector: any) => {
     let variation = null;
@@ -43,19 +52,15 @@ const calculateItemPrice = (product: any, variationSelector: any) => {
 const calculateCartTotal = async (cartId: any, nearbySellerIds: mongoose.Types.ObjectId[] = []) => {
     const items = await CartItem.find({ cart: cartId }).populate({
         path: 'product',
-        select: 'price discPrice variations seller status publish productName'
+        select: 'price discPrice variations seller warehouse status publish productName'
     });
 
     let total = 0;
     for (const item of items) {
         const product = item.product as any;
         if (product && product.status === 'Active' && product.publish) {
-            // Check if seller is in range
-            const isAvailable = nearbySellerIds.some(id => id.toString() === product.seller.toString());
-            if (isAvailable) {
-                const price = calculateItemPrice(product, item.variation);
-                total += price * item.quantity;
-            }
+            const price = calculateItemPrice(product, item.variation);
+            total += price * item.quantity;
         }
     }
     return total;
@@ -163,7 +168,7 @@ export const getCart = async (req: Request, res: Response) => {
             path: 'items',
             populate: {
                 path: 'product',
-                select: 'productName price mainImage stock pack mrp category seller status publish discPrice variations'
+                select: 'productName price mainImage stock pack mrp category seller warehouse status publish discPrice variations'
             }
         });
 
@@ -179,13 +184,10 @@ export const getCart = async (req: Request, res: Response) => {
         for (const item of (cart.items as any)) {
             const product = item.product;
             if (product && product.status === 'Active' && product.publish) {
-                const isAvailable = nearbySellerIds.some(id => id.toString() === product.seller.toString());
-                if (isAvailable) {
-                    filteredItems.push(item);
-                    const price = calculateItemPrice(product, item.variation);
-                    total += price * item.quantity;
-                    console.log(`[DEBUG CartLoop] Item: ${product.productName}, Price: ${price}, Qty: ${item.quantity}, RunningTotal: ${total}`);
-                }
+                filteredItems.push(item);
+                const price = calculateItemPrice(product, item.variation);
+                total += price * item.quantity;
+                console.log(`[DEBUG CartLoop] Item: ${product.productName}, Price: ${price}, Qty: ${item.quantity}, RunningTotal: ${total}`);
             }
         }
 
@@ -242,29 +244,12 @@ export const addToCart = async (req: Request, res: Response) => {
         }
 
         // Verify product exists and is available at location
-        const product = await Product.findOne({ _id: productId, status: 'Active', publish: true }).populate('seller');
+        const product = await Product.findOne({ _id: productId, status: 'Active', publish: true });
         if (!product) {
             return res.status(404).json({ success: false, message: 'Product not found or unavailable' });
         }
 
-        // Check if seller's shop is open
-        const seller = product.seller as any;
-        if (seller && seller.isShopOpen === false) {
-            return res.status(400).json({
-                success: false,
-                message: 'Seller is not available at this moment'
-            });
-        }
-
         const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
-        const isAvailable = nearbySellerIds.some(id => id.toString() === (seller._id || seller).toString());
-
-        if (!isAvailable) {
-            return res.status(403).json({
-                success: false,
-                message: 'This product is not available in your current location'
-            });
-        }
 
         // Get or create cart
         let cart = await Cart.findOne({ customer: userId });
@@ -303,13 +288,13 @@ export const addToCart = async (req: Request, res: Response) => {
             path: 'items',
             populate: {
                 path: 'product',
-                select: 'productName price mainImage stock pack mrp category seller status publish discPrice variations'
+                select: 'productName price mainImage stock pack mrp category seller warehouse status publish discPrice variations'
             }
         });
 
         const filteredItems = (updatedCart?.items as any[] || []).filter(item => {
             const prod = item.product;
-            return prod && nearbySellerIds.some(id => id.toString() === prod.seller.toString());
+            return prod && prod.status === 'Active' && prod.publish;
         });
 
         // Calculate fees
@@ -371,14 +356,7 @@ export const updateCartItem = async (req: Request, res: Response) => {
 
         // Verify item is still available at location
         const product = cartItem.product as any;
-        const isAvailable = product && nearbySellerIds.some(id => id.toString() === product.seller.toString());
-
-        if (!isAvailable) {
-            return res.status(403).json({
-                success: false,
-                message: 'This item is no longer available in your location'
-            });
-        }
+        // Location is no longer a hard blocker for cart quantity updates.
 
         cartItem.quantity = quantity;
         await cartItem.save();
@@ -390,13 +368,13 @@ export const updateCartItem = async (req: Request, res: Response) => {
             path: 'items',
             populate: {
                 path: 'product',
-                select: 'productName price mainImage stock pack mrp category seller status publish discPrice variations'
+                select: 'productName price mainImage stock pack mrp category seller warehouse status publish discPrice variations'
             }
         });
 
         const filteredItems = (updatedCart?.items as any[] || []).filter(item => {
             const prod = item.product;
-            return prod && nearbySellerIds.some(id => id.toString() === prod.seller.toString());
+            return prod && prod.status === 'Active' && prod.publish;
         });
 
         // Calculate fees
@@ -455,16 +433,13 @@ export const removeFromCart = async (req: Request, res: Response) => {
             path: 'items',
             populate: {
                 path: 'product',
-                select: 'productName price mainImage stock pack mrp category seller status publish discPrice variations'
+                select: 'productName price mainImage stock pack mrp category seller warehouse status publish discPrice variations'
             }
         });
 
         const filteredItems = (updatedCart?.items as any[] || []).filter(item => {
             const prod = item.product;
-            if (nearbySellerIds.length > 0) {
-                return prod && nearbySellerIds.some(id => id.toString() === prod.seller.toString());
-            }
-            return true; // If no location provided for removal, just return all (though getCart will filter)
+            return prod && prod.status === 'Active' && prod.publish;
         });
 
         // Calculate fees

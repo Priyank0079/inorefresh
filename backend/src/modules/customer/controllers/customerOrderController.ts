@@ -6,13 +6,14 @@ import Customer from "../../../models/Customer";
 import Seller from "../../../models/Seller";
 import mongoose from "mongoose";
 import { calculateDistance, isPointInPolygon } from "../../../utils/locationHelper";
-import { notifySellersOfOrderUpdate } from "../../../services/sellerNotificationService";
+import { notifyWarehousesOfOrderUpdate } from "../../../services/warehouseNotificationService";
 import { generateDeliveryOtp } from "../../../services/deliveryOtpService";
 import AppSettings from "../../../models/AppSettings";
 import { getRoadDistances } from "../../../services/mapService";
 import { Server as SocketIOServer } from "socket.io";
 import { getOrderItemCommissionRate } from "../../../services/commissionService";
 import WalletTransaction from "../../../models/WalletTransaction";
+import { findNearestWarehouseWithStock } from "../../../services/warehouseFulfillmentService";
 
 
 // Create a new order
@@ -371,6 +372,36 @@ export const createOrder = async (req: Request, res: Response) => {
         let deliveryFee = Number(fees?.deliveryFee) || 0;
         let deliveryDistanceKm = 0;
 
+        // ── Warehouse Fulfillment: Auto-assign nearest warehouse with stock ──────────
+        try {
+            const stockItems = items.map((item: any) => ({
+                productId: item.product.id,
+                quantity: Number(item.quantity) || 1,
+            }));
+
+            const fulfillment = await findNearestWarehouseWithStock(
+                deliveryLat,
+                deliveryLng,
+                stockItems,
+                10_000 // 10 km radius
+            );
+
+            if (fulfillment) {
+                (newOrder as any).assignedWarehouse = fulfillment.warehouseId;
+                (newOrder as any).assignedWarehouseName = fulfillment.warehouseName;
+                (newOrder as any).assignedWarehouseDistanceKm = fulfillment.distanceKm;
+                console.log(`[Order] Assigned to warehouse: ${fulfillment.warehouseName} (${fulfillment.distanceKm.toFixed(2)} km away)`);
+            } else {
+                // No warehouse found within 10km — order proceeds without warehouse assignment
+                // Admin/system can manually assign or expand radius later
+                console.warn(`[Order] No nearby warehouse found within 10km for order. Proceeding without auto-assignment.`);
+            }
+        } catch (fulfillmentError) {
+            // Never block order creation due to fulfillment logic errors
+            console.error("[Order] Warehouse fulfillment lookup failed (non-fatal):", (fulfillmentError as Error).message);
+        }
+        // ────────────────────────────────────────────────────────────────────────────
+
         // --- Distance-Based Delivery Charge Calculation ---
         try {
             const settings = await AppSettings.getSettings();
@@ -546,7 +577,7 @@ export const createOrder = async (req: Request, res: Response) => {
                 const savedOrder = await Order.findById(newOrder._id).lean();
                 if (savedOrder) {
                     // notifyDeliveryBoysOfNewOrder removed: will be triggered when seller accepts the order
-                    await notifySellersOfOrderUpdate(io, savedOrder, 'NEW_ORDER');
+                    await notifyWarehousesOfOrderUpdate(io, savedOrder, 'NEW_ORDER');
                 }
             }
         } catch (notificationError) {
@@ -865,7 +896,7 @@ export const cancelOrder = async (req: Request, res: Response) => {
         try {
             const io = (req.app as any).get("io");
             if (io) {
-                await notifySellersOfOrderUpdate(io, order, 'ORDER_CANCELLED');
+                await notifyWarehousesOfOrderUpdate(io, order, 'ORDER_CANCELLED');
 
                 // Notify delivery boy if assigned
                 if (order.deliveryBoy) {

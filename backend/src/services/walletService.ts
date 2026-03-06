@@ -1,4 +1,4 @@
-import warehouse from "../models/warehouse";
+import Warehouse from '../models/Warehouse';
 import Customer from "../models/Customer";
 import Commission from "../models/Commission";
 
@@ -19,14 +19,14 @@ export const processwarehouseCommission = async (
     throw new Error("Commission already processed");
   }
 
-  const warehouse = await warehouse.findById(warehouseId);
-  if (!warehouse) {
+  const warehouseDoc = await Warehouse.findById(warehouseId);
+  if (!warehouseDoc) {
     throw new Error("warehouse not found");
   }
 
   // Add commission to warehouse balance
-  warehouse.balance += commission.commissionAmount;
-  await warehouse.save();
+  warehouseDoc.balance += commission.commissionAmount;
+  await warehouseDoc.save();
 
   // Update commission status
   commission.status = "Paid";
@@ -34,7 +34,7 @@ export const processwarehouseCommission = async (
   await commission.save();
 
   return {
-    warehouse,
+    warehouse: warehouseDoc,
     commission,
   };
 };
@@ -47,17 +47,17 @@ export const processWithdrawal = async (
   amount: number,
   paymentReference?: string
 ) => {
-  const warehouse = await warehouse.findById(warehouseId);
-  if (!warehouse) {
+  const warehouseDoc = await Warehouse.findById(warehouseId);
+  if (!warehouseDoc) {
     throw new Error("warehouse not found");
   }
 
-  if (warehouse.balance < amount) {
+  if (warehouseDoc.balance < amount) {
     throw new Error("Insufficient balance");
   }
 
   // Deduct from warehouse balance
-  warehouse.balance -= amount;
+  warehouseDoc.balance -= amount;
   await warehouse.save();
 
   // Mark pending commissions as paid (if withdrawal covers them)

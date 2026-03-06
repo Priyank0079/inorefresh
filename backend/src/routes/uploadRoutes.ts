@@ -26,7 +26,7 @@ router.use(authenticate);
  */
 router.post(
   "/image",
-  requireUserType("Admin", "warehouse"),
+  requireUserType("Admin", "Warehouse"),
   uploadSingleImage.single("image"),
   handleUploadError,
   asyncHandler(async (req: Request, res: Response) => {
@@ -56,7 +56,7 @@ router.post(
  */
 router.post(
   "/images",
-  requireUserType("Admin", "warehouse"),
+  requireUserType("Admin", "Warehouse"),
   uploadMultipleImages.array("images", 10), // Max 10 images
   handleUploadError,
   asyncHandler(async (req: Request, res: Response) => {
@@ -109,7 +109,7 @@ router.post(
 
     if (userType === "Delivery") {
       folder = CLOUDINARY_FOLDERS.DELIVERY_DOCUMENTS;
-    } else if (userType === "warehouse") {
+    } else if (userType === "Warehouse") {
       folder = CLOUDINARY_FOLDERS.warehouse_DOCUMENTS;
     }
 
@@ -152,7 +152,7 @@ router.post(
 
     if (userType === "Delivery") {
       folder = CLOUDINARY_FOLDERS.DELIVERY_DOCUMENTS;
-    } else if (userType === "warehouse") {
+    } else if (userType === "Warehouse") {
       folder = CLOUDINARY_FOLDERS.warehouse_DOCUMENTS;
     }
 
@@ -182,7 +182,7 @@ router.post(
  */
 router.delete(
   "/:publicId",
-  requireUserType("Admin", "warehouse"),
+  requireUserType("Admin", "Warehouse"),
   asyncHandler(async (req: Request, res: Response) => {
     const { publicId } = req.params;
 

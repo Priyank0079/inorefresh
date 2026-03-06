@@ -33,45 +33,14 @@ export const getProducts = async (req: Request, res: Response) => {
       ],
     };
 
-    // Location-based filtering: Only show products from sellers within user's range
+    // Location inputs are accepted, but product listing is not hard-filtered by
+    // proximity so users can still browse all active/published products.
     const userLat = latitude ? parseFloat(latitude as string) : null;
     const userLng = longitude ? parseFloat(longitude as string) : null;
 
     if (userLat && userLng && !isNaN(userLat) && !isNaN(userLng)) {
-      // Find sellers within user's location range
-      const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
-
-      if (nearbySellerIds.length === 0) {
-        // No sellers within range, return empty result
-        return res.status(200).json({
-          success: true,
-          data: [],
-          pagination: {
-            page: Number(page),
-            limit: Number(limit),
-            total: 0,
-            pages: 0,
-          },
-          message:
-            "No sellers available in your area. Please update your location.",
-        });
-      }
-
-      // Filter products by sellers within range
-      query.seller = { $in: nearbySellerIds };
-    } else {
-      // If no location provided, return empty result (strictly enforce location)
-      return res.status(200).json({
-        success: true,
-        data: [],
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total: 0,
-          pages: 0,
-        },
-        message: "Please provide your location to see products available in your area.",
-      });
+      // keep for future availability metadata logic
+      await findSellersWithinRange(userLat, userLng);
     }
 
     // Helper to resolve category/subcategory ID from slug or ID
@@ -192,7 +161,7 @@ export const getProducts = async (req: Request, res: Response) => {
       .populate("category", "name icon image")
       .populate("subcategory", "name")
       .populate("brand", "name")
-      .populate("seller", "storeName")
+      .populate("warehouse", "warehouseName")
       .sort(sortOptions)
       .skip(skip)
       .limit(Number(limit));
@@ -239,10 +208,7 @@ export const getProductById = async (req: Request, res: Response) => {
       .populate("category", "name")
       .populate("subcategory", "name")
       .populate("brand", "name")
-      .populate(
-        "seller",
-        "storeName city fssaiLicNo address location serviceRadiusKm"
-      );
+      .populate("warehouse", "warehouseName address location");
 
     if (!product) {
       return res.status(404).json({
@@ -255,24 +221,22 @@ export const getProductById = async (req: Request, res: Response) => {
     const userLat = latitude ? parseFloat(latitude as string) : null;
     const userLng = longitude ? parseFloat(longitude as string) : null;
     const seller = product.seller as any;
+    const warehouse = (product as any).warehouse as any;
 
     // Initialize availability flag
     let isAvailableAtLocation = false;
 
-    // Safely get seller ID - handle both populated and unpopulated cases
-    let sellerId: mongoose.Types.ObjectId | null = null;
-    if (seller) {
-      if (typeof seller === "object" && seller._id) {
-        // Seller is populated
-        sellerId = seller._id;
-      } else if (seller instanceof mongoose.Types.ObjectId) {
-        // Seller is an ObjectId (not populated)
-        sellerId = seller;
-      } else if (typeof seller === "string") {
-        // Seller is a string ID
-        sellerId = new mongoose.Types.ObjectId(seller);
+    // Resolve owner ID (seller or warehouse)
+    const resolveOwnerId = (owner: any): mongoose.Types.ObjectId | null => {
+      if (!owner) return null;
+      if (typeof owner === "object" && owner._id) return owner._id;
+      if (owner instanceof mongoose.Types.ObjectId) return owner;
+      if (typeof owner === "string" && mongoose.Types.ObjectId.isValid(owner)) {
+        return new mongoose.Types.ObjectId(owner);
       }
-    }
+      return null;
+    };
+    const ownerId = resolveOwnerId(seller) || resolveOwnerId(warehouse);
 
     // Check location availability if coordinates are provided
     if (
@@ -280,12 +244,11 @@ export const getProductById = async (req: Request, res: Response) => {
       userLng &&
       !isNaN(userLat) &&
       !isNaN(userLng) &&
-      sellerId &&
-      seller?.location
+      ownerId
     ) {
       const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
       isAvailableAtLocation = nearbySellerIds.some(
-        (id) => id.toString() === sellerId!.toString()
+        (id) => id.toString() === ownerId.toString()
       );
     }
 
@@ -329,10 +292,15 @@ export const getProductById = async (req: Request, res: Response) => {
     if (userLat && userLng && !isNaN(userLat) && !isNaN(userLng)) {
       const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
       if (nearbySellerIds.length > 0) {
-        similarProductsQuery.seller = { $in: nearbySellerIds };
-      } else {
-        // No sellers nearby, return empty similar products
-        similarProductsQuery.seller = { $in: [] };
+        similarProductsQuery.$and = [
+          ...(similarProductsQuery.$and || []),
+          {
+            $or: [
+              { seller: { $in: nearbySellerIds } },
+              { warehouse: { $in: nearbySellerIds } },
+            ],
+          },
+        ];
       }
     }
 

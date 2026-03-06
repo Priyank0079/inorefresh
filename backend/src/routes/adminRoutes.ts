@@ -56,8 +56,8 @@ import * as systemUserController from "../modules/admin/controllers/adminSystemU
 // Home Section Controllers
 import * as homeSectionController from "../modules/admin/controllers/adminHomeSectionController";
 
-// Bestwarehouse Card Controllers
-import * as bestwarehouseCardController from "../modules/admin/controllers/adminBestwarehouseCardController";
+// Bestseller Card Controllers
+import * as bestsellerCardController from "../modules/admin/controllers/adminBestsellerCardController";
 
 // Lowest Prices Controllers
 import * as lowestPricesController from "../modules/admin/controllers/adminLowestPricesController";
@@ -83,7 +83,7 @@ router.get(
 );
 router.get(
   "/dashboard/top-warehouses",
-  dashboardController.getTopwarehousesController // Renamed concept but same controller for now
+  dashboardController.getTopWarehousesController // Renamed concept but same controller for now
 );
 router.get(
   "/dashboard/recent-orders",
@@ -275,10 +275,9 @@ router.delete("/policies/:id", policyController.deletePolicy);
 
 // ==================== Warehouse Routes ====================
 router.get("/warehouses", warehouseController.getAllWarehouses);
-router.post("/create-warehouse", requireAdminAuth, warehouseController.createWarehouse);
-// Maintaining compatibility with old frontend paths if they point to /warehouses
-router.get("/warehouses", warehouseController.getAllWarehouses);
-router.post("/create-warehouse", requireAdminAuth, warehouseController.createWarehouse);
+router.get("/warehouse", warehouseController.getAllWarehouses); // alias
+router.post("/create-warehouse", warehouseController.createWarehouse);
+router.post("/warehouse", warehouseController.createWarehouse); // alias
 
 // ==================== Shop Management ====================
 router.post("/shop/create", createShop);
@@ -309,13 +308,13 @@ router.put("/home-sections/:id", homeSectionController.updateHomeSection);
 router.delete("/home-sections/:id", homeSectionController.deleteHomeSection);
 router.put("/home-sections/reorder", homeSectionController.reorderHomeSections);
 
-// ==================== Bestwarehouse Card Routes ====================
-router.get("/bestwarehouse-cards", bestwarehouseCardController.getBestwarehouseCards);
-router.get("/bestwarehouse-cards/:id", bestwarehouseCardController.getBestwarehouseCardById);
-router.post("/bestwarehouse-cards", bestwarehouseCardController.createBestwarehouseCard);
-router.put("/bestwarehouse-cards/:id", bestwarehouseCardController.updateBestwarehouseCard);
-router.delete("/bestwarehouse-cards/:id", bestwarehouseCardController.deleteBestwarehouseCard);
-router.put("/bestwarehouse-cards/reorder", bestwarehouseCardController.reorderBestwarehouseCards);
+// ==================== Bestseller Card Routes ====================
+router.get("/bestseller-cards", bestsellerCardController.getBestsellerCards);
+router.get("/bestseller-cards/:id", bestsellerCardController.getBestsellerCardById);
+router.post("/bestseller-cards", bestsellerCardController.createBestsellerCard);
+router.put("/bestseller-cards/:id", bestsellerCardController.updateBestsellerCard);
+router.delete("/bestseller-cards/:id", bestsellerCardController.deleteBestsellerCard);
+router.put("/bestseller-cards/reorder", bestsellerCardController.reorderBestsellerCards);
 
 // ==================== Lowest Prices Product Routes ====================
 router.get("/lowest-prices-products", lowestPricesController.getLowestPricesProducts);

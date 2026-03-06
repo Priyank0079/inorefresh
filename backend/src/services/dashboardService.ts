@@ -490,6 +490,9 @@ export const getTopwarehouses = async (
   }
 };
 
+// Backward-compatible alias used by admin dashboard controller import.
+export const getTopWarehouses = getTopwarehouses;
+
 /**
  * Get recent orders
  */

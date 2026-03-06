@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Seller from "../models/Seller";
+import Warehouse from "../models/Warehouse";
 
 /**
  * Helper function to calculate distance between two coordinates (Haversine formula)
@@ -109,6 +110,47 @@ export async function findSellersWithinRange(
         if (distance <= serviceRadius) {
           nearbySellerIds.push(seller._id as mongoose.Types.ObjectId);
         }
+      }
+    }
+
+    // Include active warehouses as valid fulfillment sources.
+    const warehouses = await Warehouse.find({
+      status: "ACTIVE",
+    }).select("_id location latitude longitude serviceRadiusKm");
+
+    for (const warehouse of warehouses) {
+      let warehouseLat: number | null = null;
+      let warehouseLng: number | null = null;
+
+      const coords = warehouse.location?.coordinates;
+      if (coords && coords.length === 2) {
+        warehouseLng = coords[0];
+        warehouseLat = coords[1];
+      } else if ((warehouse as any).latitude && (warehouse as any).longitude) {
+        warehouseLat = parseFloat((warehouse as any).latitude);
+        warehouseLng = parseFloat((warehouse as any).longitude);
+      }
+
+      if (warehouseLat === null || warehouseLng === null) continue;
+
+      if (isNaN(warehouseLat) || isNaN(warehouseLng)) continue;
+
+      const distance = calculateDistance(
+        userLat,
+        userLng,
+        warehouseLat,
+        warehouseLng
+      );
+
+      // Default warehouse service radius: 50km (configurable if present on doc)
+      const serviceRadius =
+        typeof (warehouse as any).serviceRadiusKm === "number" &&
+        !isNaN((warehouse as any).serviceRadiusKm)
+          ? (warehouse as any).serviceRadiusKm
+          : 50;
+
+      if (distance <= serviceRadius) {
+        nearbySellerIds.push(warehouse._id as mongoose.Types.ObjectId);
       }
     }
 

@@ -97,6 +97,29 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
 
   const addOrder = async (order: Order): Promise<string | undefined> => {
     try {
+      // ── Capture user's device location for warehouse fulfillment ──────────────
+      let userLat = order.address.latitude ?? 0;
+      let userLng = order.address.longitude ?? 0;
+
+      // Try to get a fresh GPS reading (more accurate than address lat/lng)
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              timeout: 5000,
+              maximumAge: 60_000,
+              enableHighAccuracy: false,
+            });
+          });
+          userLat = position.coords.latitude;
+          userLng = position.coords.longitude;
+        } catch {
+          // Geolocation denied or timed out — fall back to address coordinates
+          console.warn('[Order] Geolocation unavailable, using address coordinates.');
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────────
+
       // Construct payload
       const payload = {
         address: {
@@ -105,8 +128,8 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
           state: order.address.state || "",
           pincode: order.address.pincode,
           landmark: order.address.landmark || "",
-          latitude: order.address.latitude ?? 0,
-          longitude: order.address.longitude ?? 0,
+          latitude: userLat,
+          longitude: userLng,
         },
         paymentMethod: order.paymentMethod || "COD",
         useWallet: order.useWallet,

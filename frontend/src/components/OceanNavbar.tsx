@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useThemeContext } from '../context/ThemeContext';
-import { getCategories } from '../services/api/categoryService';
+import { getHeaderCategoriesPublic } from '../services/api/headerCategoryService';
 
 export default function OceanNavbar() {
     const internalNavigate = useNavigate();
@@ -15,9 +15,15 @@ export default function OceanNavbar() {
 
     useEffect(() => {
         const fetchCategories = async () => {
-            const res = await getCategories();
-            if (res.success && res.data) {
-                setCategories(res.data.slice(0, 4));
+            try {
+                const data = await getHeaderCategoriesPublic();
+                if (data && Array.isArray(data)) {
+                    // Filter for Published status to be extra safe
+                    const published = data.filter((cat: any) => cat.status === 'Published');
+                    setCategories(published);
+                }
+            } catch (error) {
+                console.error("Error fetching header categories:", error);
             }
         };
         fetchCategories();
@@ -51,17 +57,6 @@ export default function OceanNavbar() {
             );
         }
 
-        if (lowerName.includes('masala')) {
-            return (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 15h14l-1.2 4.2a2 2 0 0 1-1.9 1.5H8.1a2 2 0 0 1-1.9-1.5L5 15z" />
-                    <path d="M9 12c0-1.7 1.3-3 3-3s3 1.3 3 3" />
-                    <path d="M12 3v3" />
-                    <path d="M9.5 5.5l1.2 1.7" />
-                    <path d="M14.5 5.5l-1.2 1.7" />
-                </svg>
-            );
-        }
 
         if (lowerName.includes('aqua')) {
             return (
@@ -105,13 +100,6 @@ export default function OceanNavbar() {
         }))
     ];
 
-    if (!navLinks.some(link => link.name.toLowerCase().includes('masala'))) {
-        navLinks.push({
-            name: 'Masala',
-            id: 'masala',
-            icon: getIcon('Masala', 'masala')
-        });
-    }
 
     const handleNavClick = (id: string) => {
         // Find if this is a named category like 'aqua' but the ID is a mongoID or has a typo
@@ -122,7 +110,6 @@ export default function OceanNavbar() {
         if (name.includes('aqua') || name.includes('auqa')) effectiveId = 'aqua';
         else if (name.includes('marin')) effectiveId = 'marin';
         else if (name.includes('bengali') || name.includes('bengoli')) effectiveId = 'bengali';
-        else if (name.includes('masala')) effectiveId = 'masala';
 
         // Update context immediately for premium feel (glow moves instantly)
         setActiveCategory(effectiveId);

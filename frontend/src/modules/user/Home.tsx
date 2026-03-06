@@ -3,7 +3,6 @@ import { useNavigate, useLocation as useRouterLocation } from "react-router-dom"
 import { useLocation } from "../../hooks/useLocation";
 import { useCart } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
-import { LOCAL_FISH_PRODUCTS } from "../../constants/products";
 import { Product } from "../../types/domain";
 import { motion, AnimatePresence } from "framer-motion";
 import HomeHero from "./components/HomeHero";
@@ -11,6 +10,7 @@ import PromoStrip from "./components/PromoStrip";
 import LowestPricesEver from "./components/LowestPricesEver";
 import FishLoader from "../../components/FishLoader";
 import { getHomeContent } from "../../services/api/customerHomeService";
+import { getProducts as getCustomerProducts } from "../../services/api/customerProductService";
 import { getHeaderCategoriesPublic } from "../../services/api/headerCategoryService";
 import { useLoading } from "../../context/LoadingContext";
 import PageLoader from "../../components/PageLoader";
@@ -44,7 +44,7 @@ export default function Home() {
     cookingIdeas: [],
   });
 
-  const [products, setProducts] = useState<any[]>([]);
+  const [tabProducts, setTabProducts] = useState<any[]>([]);
   const [isTabLoading, setIsTabLoading] = useState(false);
 
   // Simulation of tab switch loading (premium feel)
@@ -61,7 +61,7 @@ export default function Home() {
     const searchParams = new URLSearchParams(routerLocation.search);
     const tabParam = searchParams.get('tab');
 
-    if (tabParam && ['aqua', 'marin', 'bengali', 'masala', 'all'].includes(tabParam)) {
+    if (tabParam) {
       setActiveTab(tabParam);
 
       // Simple auto-scroll to products if a category is selected via URL
@@ -76,6 +76,34 @@ export default function Home() {
       }
     }
   }, [routerLocation.search, setActiveTab]);
+
+  // Fetch products for active tab (all tabs are backend-driven)
+  useEffect(() => {
+    const fetchTabProducts = async () => {
+      try {
+        const params: any = { limit: 40 };
+        if (activeTab !== "all") {
+          params.category = activeTab;
+        }
+        if (location?.latitude && location?.longitude) {
+          params.latitude = location.latitude;
+          params.longitude = location.longitude;
+        }
+
+        const res = await getCustomerProducts(params);
+        if (res.success) {
+          setTabProducts(res.data || []);
+        } else {
+          setTabProducts([]);
+        }
+      } catch (error) {
+        console.error(`Failed to fetch products for tab ${activeTab}:`, error);
+        setTabProducts([]);
+      }
+    };
+
+    fetchTabProducts();
+  }, [activeTab, location?.latitude, location?.longitude]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -103,7 +131,14 @@ export default function Home() {
   useEffect(() => {
     const preloadHeaderCategories = async () => {
       try {
-        const slugsToPreload = ['aqua', 'marin', 'bengali', 'masala'];
+        const headerCategories = await getHeaderCategoriesPublic();
+        const slugsToPreload = (headerCategories || [])
+          .map((c: any) => c.slug)
+          .filter((slug: string) => typeof slug === "string" && slug.trim().length > 0)
+          .slice(0, 6);
+
+        if (slugsToPreload.length === 0) return;
+
         const batchSize = 2;
         for (let i = 0; i < slugsToPreload.length; i += batchSize) {
           const batch = slugsToPreload.slice(i, i + batchSize);
@@ -204,18 +239,31 @@ export default function Home() {
   }, []);
 
   const getFilteredProducts = (tabId: string) => {
-    if (tabId === "all") {
-      return LOCAL_FISH_PRODUCTS;
+    const mapApiProduct = (p: any) => ({
+      id: p._id || p.id,
+      name: p.productName || p.name,
+      description: p.smallDescription || p.description || "",
+      price: p.price || 0,
+      stock: p.stock || 0,
+      rating: p.rating || 0,
+      pack: p.pack || "unit",
+      imageUrl: p.mainImage || p.imageUrl || "/images/image.png",
+      category: tabId,
+    });
+
+    if (tabProducts.length > 0) {
+      return tabProducts.map(mapApiProduct);
     }
-    return LOCAL_FISH_PRODUCTS.filter((p) => p.category === tabId);
+
+    return [];
   };
 
   const filteredProducts = useMemo(
     () => getFilteredProducts(activeTab),
-    [activeTab]
+    [activeTab, tabProducts]
   );
 
-  if (loading && !products.length) {
+  if (loading && tabProducts.length === 0) {
     return <PageLoader />;
   }
 
@@ -293,7 +341,7 @@ export default function Home() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-white font-bold text-xl mb-1">No fish found</h3>
+                  <h3 className="text-white font-bold text-xl mb-1">No products found</h3>
                   <p className="text-[#BEEFFF]/60 max-w-xs">We couldn't find any products in the {activeTab} category right now.</p>
                 </div>
               ) : (
@@ -360,7 +408,7 @@ export default function Home() {
                             className={`w-full h-full object-contain drop-shadow-[0_12px_20px_rgba(0,0,0,0.3)] group-hover:scale-[1.05] transition-transform duration-500 ease-out z-10 ${isOutOfStock ? 'grayscale opacity-50' : ''}`}
                             loading="lazy"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/images/bengali_fish.png'; // Fallback
+                              (e.target as HTMLImageElement).src = '/images/image.png'; // Fallback
                             }}
                           />
                         </div>

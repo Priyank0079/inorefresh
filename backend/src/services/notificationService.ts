@@ -1,6 +1,6 @@
 import Notification from "../models/Notification";
 import Admin from "../models/Admin";
-import warehouse from "../models/warehouse";
+import Warehouse from "../models/Warehouse";
 import Customer from "../models/Customer";
 import Delivery from "../models/Delivery";
 
@@ -14,13 +14,13 @@ export const sendNotification = async (
   message: string,
   options?: {
     type?:
-      | "Info"
-      | "Success"
-      | "Warning"
-      | "Error"
-      | "Order"
-      | "Payment"
-      | "System";
+    | "Info"
+    | "Success"
+    | "Warning"
+    | "Error"
+    | "Order"
+    | "Payment"
+    | "System";
     link?: string;
     actionLabel?: string;
     priority?: "Low" | "Medium" | "High" | "Urgent";
@@ -55,13 +55,13 @@ export const sendBroadcastNotification = async (
   message: string,
   options?: {
     type?:
-      | "Info"
-      | "Success"
-      | "Warning"
-      | "Error"
-      | "Order"
-      | "Payment"
-      | "System";
+    | "Info"
+    | "Success"
+    | "Warning"
+    | "Error"
+    | "Order"
+    | "Payment"
+    | "System";
     link?: string;
     actionLabel?: string;
     priority?: "Low" | "Medium" | "High" | "Urgent";
@@ -174,9 +174,8 @@ export const sendProductApprovalNotification = async (
   const message =
     status === "Approved"
       ? "Your product has been approved and is now live on the platform."
-      : `Your product has been rejected. Reason: ${
-          rejectionReason || "Not specified"
-        }`;
+      : `Your product has been rejected. Reason: ${rejectionReason || "Not specified"
+      }`;
 
   return sendNotification("warehouse", warehouseId, title, message, {
     type: status === "Approved" ? "Success" : "Error",

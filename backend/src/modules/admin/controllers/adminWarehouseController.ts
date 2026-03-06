@@ -117,7 +117,16 @@ export const createWarehouse = asyncHandler(async (req: Request, res: Response) 
  * Get all warehouses
  */
 export const getAllWarehouses = asyncHandler(async (_req: Request, res: Response) => {
-    const warehouses = await Warehouse.find({})
+    const warehouses = await Warehouse.find({
+        email: { $ne: "admin-warehouse@zetomart.com" },
+        $nor: [
+            { warehouseName: { $regex: /^Warehouse W\d+$/i } },
+            { managerName: { $regex: /^Manager W\d+$/i } },
+            { email: { $regex: /^manager@w\d+\.com$/i } },
+            { mobile: { $regex: /^999999990\d$/ } },
+            { address: { $regex: /Hub Address,\s*City/i } },
+        ],
+    })
         .sort({ warehouseName: 1 });
 
     return res.status(200).json({

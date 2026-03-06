@@ -188,7 +188,7 @@ function App() {
                           <Route
                             path="/warehouse/login"
                             element={
-                              <PublicRoute>
+                              <PublicRoute userType="Warehouse">
                                 <Suspense fallback={<IconLoader forceShow />}>
                                   <WarehouseLogin />
                                 </Suspense>
@@ -236,6 +236,20 @@ function App() {
                             }
                           />
 
+                          {/* Direct Warehouse Category Route (stabilizes deep-link navigation) */}
+                          <Route
+                            path="/warehouse/category"
+                            element={
+                              <ProtectedRoute requiredUserType="Warehouse" redirectTo="/warehouse/login">
+                                <Suspense fallback={<IconLoader forceShow />}>
+                                  <WarehouseLayout>
+                                    <WarehouseCategory />
+                                  </WarehouseLayout>
+                                </Suspense>
+                              </ProtectedRoute>
+                            }
+                          />
+
                           {/* Delivery App Routes */}
                           <Route
                             path="/delivery/*"
@@ -244,7 +258,7 @@ function App() {
                                 <Suspense fallback={<IconLoader forceShow />}>
                                   <DeliveryLayout>
                                     <Routes>
-                                      <Route path="" element={<DeliveryDashboard />} />
+                                      <Route index element={<DeliveryDashboard />} />
                                       <Route path="orders" element={<DeliveryOrders />} />
                                       <Route path="orders/:id" element={<DeliveryOrderDetail />} />
                                       <Route path="orders/pending" element={<DeliveryPendingOrders />} />
@@ -274,7 +288,7 @@ function App() {
                                 <Suspense fallback={<IconLoader forceShow />}>
                                   <WarehouseLayout>
                                     <Routes>
-                                      <Route path="" element={<WarehouseDashboard />} />
+                                      <Route index element={<WarehouseDashboard />} />
                                       <Route path="orders" element={<WarehouseOrders />} />
                                       <Route path="orders/:id" element={<WarehouseOrderDetail />} />
                                       <Route path="category" element={<WarehouseCategory />} />
@@ -305,7 +319,7 @@ function App() {
                                 <Suspense fallback={<IconLoader forceShow />}>
                                   <AdminLayout>
                                     <Routes>
-                                      <Route path="" element={<AdminDashboard />} />
+                                      <Route index element={<AdminDashboard />} />
                                       <Route path="profile" element={<AdminProfile />} />
                                       <Route path="category" element={<AdminCategory />} />
                                       <Route path="category/header" element={<AdminHeaderCategory />} />

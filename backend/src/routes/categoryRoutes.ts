@@ -2,11 +2,13 @@ import { Router } from "express";
 import {
   getCategories,
   getCategoryById,
+  createCategory,
   getSubcategories,
   getAllCategoriesWithSubcategories,
   getAllSubcategories,
   getSubSubCategories,
 } from "../modules/warehouse/controllers/categoryController";
+import { authenticate, requireUserType } from "../middleware/auth";
 
 const router = Router();
 
@@ -22,10 +24,17 @@ router.get("/subcategories", getAllSubcategories);
 // Get all categories with nested subcategories
 router.get("/all-with-subcategories", getAllCategoriesWithSubcategories);
 
+// Create a new category (Warehouse or Admin only)
+router.post(
+  "/",
+  authenticate,
+  requireUserType("Warehouse", "Admin"),
+  createCategory
+);
+
 // Get category by ID
 router.get("/:id", getCategoryById);
 
-// Get subcategories of a specific category
 // Get subcategories of a specific category
 router.get("/:id/subcategories", getSubcategories);
 
@@ -33,4 +42,3 @@ router.get("/:id/subcategories", getSubcategories);
 router.get("/:subCategoryId/sub-subcategories", getSubSubCategories);
 
 export default router;
-

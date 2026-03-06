@@ -1,4 +1,5 @@
 import { Router } from "express";
+import * as warehouseController from "../modules/admin/controllers/adminWarehouseController";
 import adminAuthRoutes from "./adminAuthRoutes";
 import warehouseAuthRoutes from "./warehouseAuthRoutes";
 import dashboardRoutes from "./dashboardRoutes";
@@ -55,9 +56,16 @@ router.get("/health", (_req, res) => {
   });
 });
 
+// Debug logging
+router.use((req, res, next) => {
+  console.log(`[API V1 PATH] ${req.method} ${req.path}`);
+  next();
+});
+
 // Authentication routes
 router.use("/auth/admin", adminAuthRoutes);
 router.use("/auth/warehouse", warehouseAuthRoutes);
+router.use("/warehouse/auth", warehouseAuthRoutes); // Alias for compatibility
 router.use("/auth/customer", customerAuthRoutes);
 router.use("/auth/delivery", deliveryAuthRoutes);
 
@@ -119,6 +127,8 @@ router.use("/warehouse/dashboard", dashboardRoutes);
 router.use("/warehouses", warehouseRoutes);
 
 // Admin routes (protected, admin only)
+router.post("/admin/warehouse", authenticate, requireUserType("Admin"), warehouseController.createWarehouse);
+router.post("/admin/create-warehouse", authenticate, requireUserType("Admin"), warehouseController.createWarehouse);
 router.use("/admin", adminRoutes);
 
 // Upload routes (protected)

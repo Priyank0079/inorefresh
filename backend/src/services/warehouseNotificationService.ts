@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 /**
  * Notify all warehouses involved in an order about a new order or status change
  */
-export async function notifywarehousesOfOrderUpdate(
+export async function notifyWarehousesOfOrderUpdate(
     io: SocketIOServer,
     order: any,
     type: 'NEW_ORDER' | 'STATUS_UPDATE' | 'ORDER_CANCELLED'

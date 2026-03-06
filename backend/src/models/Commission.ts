@@ -3,11 +3,11 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface ICommission extends Document {
   order: mongoose.Types.ObjectId;
   orderItem?: mongoose.Types.ObjectId; // Optional for delivery boy commissions
-  seller?: mongoose.Types.ObjectId; // For seller commissions
+  warehouse?: mongoose.Types.ObjectId; // For warehouse commissions
   deliveryBoy?: mongoose.Types.ObjectId; // For delivery boy commissions
 
   // Commission Type
-  type: "SELLER" | "DELIVERY_BOY";
+  type: "WAREHOUSE" | "DELIVERY_BOY";
 
   // Commission Info
   orderAmount: number;
@@ -36,9 +36,9 @@ const CommissionSchema = new Schema<ICommission>(
       type: Schema.Types.ObjectId,
       ref: "OrderItem",
     },
-    seller: {
+    warehouse: {
       type: Schema.Types.ObjectId,
-      ref: "Seller",
+      ref: "Warehouse",
     },
     deliveryBoy: {
       type: Schema.Types.ObjectId,
@@ -48,7 +48,7 @@ const CommissionSchema = new Schema<ICommission>(
     // Commission Type
     type: {
       type: String,
-      enum: ["SELLER", "DELIVERY_BOY"],
+      enum: ["WAREHOUSE", "DELIVERY_BOY"],
       required: [true, "Commission type is required"],
     },
 
@@ -92,7 +92,7 @@ const CommissionSchema = new Schema<ICommission>(
 );
 
 // Indexes
-CommissionSchema.index({ seller: 1, status: 1 });
+CommissionSchema.index({ warehouse: 1, status: 1 });
 CommissionSchema.index({ order: 1 });
 
 const Commission = (mongoose.models.Commission as mongoose.Model<ICommission>) || mongoose.model<ICommission>("Commission", CommissionSchema);

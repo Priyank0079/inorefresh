@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+﻿import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -11,12 +11,11 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Custom store icon
 const storeIcon = new L.DivIcon({
-  html: `<div style="font-size: 24px; text-align: center;">🏪</div>`,
+  html: `<div style="font-size: 20px; text-align: center;">🏬</div>`,
   className: 'store-marker',
   iconSize: [30, 30],
-  iconAnchor: [15, 15]
+  iconAnchor: [15, 15],
 });
 
 interface SellerServiceMapProps {
@@ -26,26 +25,38 @@ interface SellerServiceMapProps {
   storeName: string;
 }
 
+function RecenterMap({ latitude, longitude }: { latitude: number; longitude: number }) {
+  const map = useMap();
+  map.setView([latitude, longitude], Math.max(map.getZoom(), 12), { animate: true });
+  return null;
+}
+
 export default function SellerServiceMap({
   latitude,
   longitude,
   radiusKm,
-  storeName
+  storeName,
 }: SellerServiceMapProps) {
-  // Center of the map
   const position: [number, number] = [latitude, longitude];
-  
-  // Radius in meters for Leaflet Circle
   const radiusMeters = radiusKm * 1000;
+
+  // India bounding box for domestic map context.
+  const indiaBounds: [[number, number], [number, number]] = [
+    [6.0, 68.0],
+    [38.5, 97.5],
+  ];
 
   return (
     <div className="w-full h-full min-h-[300px] rounded-lg overflow-hidden border border-neutral-200 shadow-sm">
       <MapContainer
         center={position}
         zoom={12}
+        maxBounds={indiaBounds}
+        maxBoundsViscosity={0.8}
         style={{ height: '100%', width: '100%' }}
         className="z-0"
       >
+        <RecenterMap latitude={latitude} longitude={longitude} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -60,10 +71,10 @@ export default function SellerServiceMap({
           center={position}
           radius={radiusMeters}
           pathOptions={{
-            color: '#0D9488', // teal-600
+            color: '#0D9488',
             fillColor: '#0D9488',
             fillOpacity: 0.2,
-            weight: 2
+            weight: 2,
           }}
         />
       </MapContainer>

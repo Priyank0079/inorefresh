@@ -293,8 +293,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
           {(categoryCards.length > 0 ? categoryCards : [
             { id: "aqua", title: "Aqua Fish", badge: "Premium", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality and taste.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua", bgColor: "transparent" },
             { id: "marin", title: "Marin Fish", badge: "Fresh", description: "Deep sea Bluefin & Tuna. Captured using sustainable methods for premium freshness.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marin", bgColor: "transparent" },
-            { id: "bengali", title: "Bengali Fish", badge: "Tradition", description: "Premium Hilsa & Market favorites. The heartbeat of every traditional kitchen.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali", bgColor: "transparent" },
-            { id: "masala", title: "Masala", badge: "Spices", description: "Fresh ground spices and authentic blends for rich flavor in every seafood recipe.", imageUrl: "/images/masala_fish.png", slug: "masala", bgColor: "transparent" }
+            { id: "bengali", title: "Bengali Fish", badge: "Tradition", description: "Premium Hilsa & Market favorites. The heartbeat of every traditional kitchen.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali", bgColor: "transparent" }
           ]).map((category: any, idx) => (
             <motion.div
               key={category.id}

@@ -139,7 +139,7 @@ export async function sendNotificationToUser(
                 UserModel = (await import('../models/Admin')).default;
                 break;
             case 'warehouse':
-                UserModel = (await import('../models/warehouse')).default;
+                UserModel = (await import('../models/Warehouse')).default;
                 break;
             case 'Delivery':
                 UserModel = (await import('../models/Delivery')).default;
