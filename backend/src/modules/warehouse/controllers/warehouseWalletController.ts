@@ -13,7 +13,7 @@ import { getCommissionSummary } from '../../../services/commissionService';
 export const getBalance = async (req: Request, res: Response) => {
     try {
         const WarehouseId = req.user!.userId;
-        const balance = await getWalletBalance(WarehouseId, 'Warehouse');
+        const balance = await getWalletBalance(WarehouseId, 'warehouse');
 
         return res.status(200).json({
             success: true,
@@ -38,7 +38,7 @@ export const getTransactions = async (req: Request, res: Response) => {
 
         const result = await getWalletTransactions(
             WarehouseId,
-            'Warehouse',
+            'warehouse',
             Number(page),
             Number(limit)
         );
@@ -81,7 +81,7 @@ export const requestWithdrawal = async (req: Request, res: Response) => {
 
         const result = await createWithdrawalRequest(
             WarehouseId,
-            'Warehouse',
+            'warehouse',
             amount,
             paymentMethod
         );
@@ -110,7 +110,7 @@ export const getWithdrawals = async (req: Request, res: Response) => {
 
         const result = await getWithdrawalRequests(
             WarehouseId,
-            'Warehouse',
+            'warehouse',
             status as string
         );
 
@@ -135,7 +135,7 @@ export const getCommissions = async (req: Request, res: Response) => {
     try {
         const WarehouseId = req.user!.userId;
 
-        const result = await getCommissionSummary(WarehouseId, 'Warehouse');
+        const result = await getCommissionSummary(WarehouseId, 'warehouse');
 
         if (!result.success) {
             return res.status(400).json(result);

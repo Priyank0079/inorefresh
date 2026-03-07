@@ -271,8 +271,8 @@ export const createPendingCommissions = async (orderId: string) => {
       const item = await OrderItem.findById(itemId);
       if (!item) continue;
 
-      const warehouse = await warehouse.findById(item.warehouse);
-      if (!warehouse) continue;
+      const warehouseDoc = await Warehouse.findById(item.warehouse);
+      if (!warehouseDoc) continue;
 
       const commissionRate = await getOrderItemCommissionRate(
         item.product.toString(),
@@ -290,7 +290,7 @@ export const createPendingCommissions = async (orderId: string) => {
         order: item.order,
         orderItem: item._id,
         warehouse: item.warehouse,
-        type: "warehouse",
+        type: "WAREHOUSE",
         orderAmount: item.total,
         commissionRate,
         commissionAmount,
@@ -299,9 +299,9 @@ export const createPendingCommissions = async (orderId: string) => {
       });
 
       // Credit Wallet Immediately
-      if (warehouse) {
+      if (warehouseDoc) {
         await creditWallet(
-          warehouse._id.toString(),
+          warehouseDoc._id.toString(),
           "warehouse",
           netEarning,
           `Sale proceeds from Order #${order.orderNumber}`,
@@ -387,7 +387,7 @@ export const distributeCommissions = async (orderId: string) => {
       processedCommissions.push(comm);
 
       // Group for wallet credit
-      if (comm.type === "warehouse" && comm.warehouse) {
+      if (comm.type === "WAREHOUSE" && comm.warehouse) {
         const warehouseId = comm.warehouse.toString();
         const netAmount = comm.orderAmount - comm.commissionAmount;
 
@@ -582,7 +582,7 @@ export const processPendingCODPayouts = async (
 
     // Find all orders delivered by this delivery boy that have pending warehouse commissions
     const pendingCommissions = await Commission.find({
-      type: "warehouse",
+      type: "WAREHOUSE",
       status: "Pending",
     })
       .populate({
@@ -643,7 +643,7 @@ export const processPendingCODPayouts = async (
             const breakdown = await calculateCODOrderBreakdown(order._id.toString());
 
             platformWallet.totalAdminEarning += breakdown.totalAdminEarning;
-            platformWallet.warehousePendingPayouts = Math.max(0, platformWallet.warehousePendingPayouts + netEarning);
+            platformWallet.sellerPendingPayouts = Math.max(0, platformWallet.sellerPendingPayouts + netEarning);
           }
         }
 
@@ -759,10 +759,10 @@ export const reverseCommissions = async (orderId: string) => {
 
         // Debit from wallet
         const userId =
-          commission.type === "warehouse"
+          commission.type === "WAREHOUSE"
             ? commission.warehouse
             : commission.deliveryBoy;
-        const userType = commission.type;
+        const userType: "warehouse" | "DELIVERY_BOY" = commission.type === "WAREHOUSE" ? "warehouse" : "DELIVERY_BOY";
 
         if (userId) {
           const { debitWallet } = await import("./walletManagementService");

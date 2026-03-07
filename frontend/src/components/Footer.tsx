@@ -23,7 +23,7 @@ export default function Footer() {
                         className="flex flex-col gap-4"
                     >
                         <div>
-                            <h2 className="text-[26px] font-extrabold tracking-tight text-white mb-0.5">Inor Fresh</h2>
+                            <h2 className="text-[26px] font-extrabold tracking-tight text-white mb-0.5">Zeto Mart</h2>
                             <p className="text-[#009999] text-[13px] font-bold tracking-wide uppercase">Premium Fresh Seafood Delivered Hygienically</p>
                         </div>
                         <div className="h-[2px] w-12 bg-[#009999]/60 rounded-full" />
@@ -159,7 +159,7 @@ export default function Footer() {
 
             {/* Bottom Sub-Footer Bar */}
             <div className="mt-14 border-t border-white/10 pt-6 px-4 md:px-6 lg:px-8 max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-3 text-[11px] font-medium tracking-wide text-white/50">
-                <p>© 2026 Inor Fresh. All rights reserved.</p>
+                <p>© 2026 Zeto Mart. All rights reserved.</p>
                 <p className="text-center md:text-right">Designed & Developed for <span className="text-white/70">ACQACORAL DELICACIES PRIVATE LIMITED</span></p>
             </div>
         </footer>

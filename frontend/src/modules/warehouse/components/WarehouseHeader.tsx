@@ -93,16 +93,15 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
               </svg>
             )}
           </button>
-          {/* Inor fresh Logo */}
+          {/* Simple Clean Logo */}
           <button
             onClick={handleLogoClick}
             className="hover:opacity-80 transition-opacity"
           >
             <img
-              src={InorFreshLogo}
-              alt="Inor fresh"
+              src="/logo.svg"
+              alt="Zeto Mart"
               className="h-10 sm:h-12 w-auto object-contain cursor-pointer"
-              style={{ maxWidth: '200px' }}
             />
           </button>
 

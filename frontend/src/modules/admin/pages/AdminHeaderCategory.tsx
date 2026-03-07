@@ -11,9 +11,9 @@ import { ICON_LIBRARY, getIconByName, IconDef } from '../../../utils/iconLibrary
 
 const FISH_ICON_NAMES = ['aqua-fish', 'marin-fish', 'bengali-fish'];
 const FISH_RELATED_CATEGORIES = [
-  { value: 'auqa-fish', label: 'Auqa fish' },
-  { value: 'marin-fish', label: 'marin fish' },
-  { value: 'bengoli-fish', label: 'Bengoli fish' },
+  { value: 'aqua-fish', label: 'Aqua fish' },
+  { value: 'marine-fish', label: 'Marine fish' },
+  { value: 'bangali-fish', label: 'Bangali fish' },
 ];
 
 export default function AdminHeaderCategory() {

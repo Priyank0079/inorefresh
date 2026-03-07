@@ -5,7 +5,7 @@ import Warehouse from '../models/Warehouse';
 import DeliveryTracking from '../models/DeliveryTracking';
 import AppSettings from '../models/AppSettings';
 import mongoose from 'mongoose';
-import { notifywarehousesOfOrderUpdate } from './warehouseNotificationService';
+import { notifyWarehousesOfOrderUpdate } from './warehouseNotificationService';
 
 /**
  * Calculate estimated delivery boy earning for a new order
@@ -239,9 +239,9 @@ export async function findDeliveryBoysNearwarehouseLocations(
         }
 
         // Get warehouse locations
-        const warehouses = await warehouse.find({
+        const warehouses = await Warehouse.find({
             _id: { $in: warehouseIds },
-        }).select('latitude longitude location serviceRadiusKm storeName');
+        }).select('location serviceRadiusKm warehouseName');
 
         if (warehouses.length === 0) {
             console.log('No warehouse data found, falling back to all available delivery boys');
@@ -255,18 +255,13 @@ export async function findDeliveryBoysNearwarehouseLocations(
             let lat: number | null = null;
             let lng: number | null = null;
 
-            // Prioritize GeoJSON location field
             if (warehouse.location && warehouse.location.coordinates) {
                 lng = warehouse.location.coordinates[0];
                 lat = warehouse.location.coordinates[1];
-            } else {
-                // Fallback to legacy fields
-                lat = warehouse.latitude ? parseFloat(warehouse.latitude) : null;
-                lng = warehouse.longitude ? parseFloat(warehouse.longitude) : null;
             }
 
             if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
-                console.log(`warehouse ${warehouse.storeName} has no valid location, skipping`);
+                console.log(`warehouse ${warehouse.warehouseName} has no valid location, skipping`);
                 continue;
             }
 
@@ -567,7 +562,7 @@ export async function handleOrderRejection(
                     });
 
                     // Notify warehouses/restaurants
-                    notifywarehousesOfOrderUpdate(io, order, 'STATUS_UPDATE');
+                    notifyWarehousesOfOrderUpdate(io, order, 'STATUS_UPDATE');
 
                     console.log(`✅ All delivery boys rejected order ${orderId}. Order status updated to Rejected.`);
                 } else {

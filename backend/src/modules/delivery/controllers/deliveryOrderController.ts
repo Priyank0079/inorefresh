@@ -401,24 +401,24 @@ export const getWarehouseLocationsForOrder = asyncHandler(
     // Get all unique Warehouse IDs from order items
     const orderItems = await OrderItem.find({ order: id });
     const WarehouseIds = [
-      ...new Set(orderItems.map((item) => item.Warehouse.toString())),
+      ...new Set(orderItems.map((item) => item.warehouse.toString())),
     ];
 
     // Get Warehouse details including locations
     const Warehouses = await Warehouse.find({ _id: { $in: WarehouseIds } }).select(
-      "storeName address city latitude longitude",
+      "warehouseName address location",
     );
 
     // Format Warehouse locations
     const WarehouseLocations = Warehouses
-      .filter((Warehouse) => Warehouse.latitude && Warehouse.longitude) // Only include Warehouses with location data
-      .map((Warehouse) => ({
-        WarehouseId: Warehouse._id.toString(),
-        storeName: Warehouse.storeName,
-        address: Warehouse.address,
-        city: Warehouse.city,
-        latitude: parseFloat(Warehouse.latitude || "0"),
-        longitude: parseFloat(Warehouse.longitude || "0"),
+      .filter((w) => w.location && w.location.coordinates) // Only include Warehouses with location data
+      .map((w) => ({
+        WarehouseId: w._id.toString(),
+        storeName: w.warehouseName,
+        address: w.address,
+        city: "",
+        latitude: w.location.coordinates[1],
+        longitude: w.location.coordinates[0],
       }));
 
     return res.status(200).json({
@@ -638,10 +638,10 @@ export const checkWarehouseProximity = asyncHandler(
     }
 
     // Get Warehouse location
-    const Warehouse = await Warehouse.findById(WarehouseId).select(
-      "latitude longitude storeName",
+    const warehouseDoc = await Warehouse.findById(WarehouseId).select(
+      "location warehouseName",
     );
-    if (!Warehouse || !Warehouse.latitude || !Warehouse.longitude) {
+    if (!warehouseDoc || !warehouseDoc.location || !warehouseDoc.location.coordinates) {
       return res
         .status(404)
         .json({ success: false, message: "Warehouse location not found" });
@@ -652,8 +652,8 @@ export const checkWarehouseProximity = asyncHandler(
     const distance = calculateDistance(
       latitude,
       longitude,
-      parseFloat(Warehouse.latitude),
-      parseFloat(Warehouse.longitude),
+      warehouseDoc.location.coordinates[1],
+      warehouseDoc.location.coordinates[0],
     );
 
     const withinRange = distance <= 0.5; // 500m = 0.5km
@@ -664,7 +664,7 @@ export const checkWarehouseProximity = asyncHandler(
         withinRange,
         distance: distance.toFixed(3), // in km
         distanceMeters: Math.round(distance * 1000), // in meters
-        WarehouseName: Warehouse.storeName,
+        WarehouseName: warehouseDoc.warehouseName,
       },
     });
   },
@@ -703,10 +703,10 @@ export const confirmWarehousePickup = asyncHandler(
     }
 
     // Verify proximity to Warehouse
-    const Warehouse = await Warehouse.findById(WarehouseId).select(
-      "latitude longitude storeName",
+    const warehouseDoc = await Warehouse.findById(WarehouseId).select(
+      "location warehouseName",
     );
-    if (!Warehouse || !Warehouse.latitude || !Warehouse.longitude) {
+    if (!warehouseDoc || !warehouseDoc.location || !warehouseDoc.location.coordinates) {
       return res
         .status(404)
         .json({ success: false, message: "Warehouse location not found" });
@@ -716,8 +716,8 @@ export const confirmWarehousePickup = asyncHandler(
     const distance = calculateDistance(
       latitude,
       longitude,
-      parseFloat(Warehouse.latitude),
-      parseFloat(Warehouse.longitude),
+      warehouseDoc.location.coordinates[1],
+      warehouseDoc.location.coordinates[0],
     );
 
     if (distance > 0.5) {
@@ -729,7 +729,7 @@ export const confirmWarehousePickup = asyncHandler(
     }
 
     // Check if this Warehouse is already picked up
-    const existingPickup = order.WarehousePickups?.find(
+    const existingPickup = order.warehousePickups?.find(
       (pickup: any) => pickup.Warehouse.toString() === WarehouseId,
     );
 
@@ -743,16 +743,16 @@ export const confirmWarehousePickup = asyncHandler(
     // Get all unique Warehouse IDs from order items
     const orderItems = await OrderItem.find({ order: id });
     const allWarehouseIds = [
-      ...new Set(orderItems.map((item) => item.Warehouse.toString())),
+      ...new Set(orderItems.map((item) => item.warehouse.toString())),
     ];
 
     // Initialize WarehousePickups array if it doesn't exist
-    if (!order.WarehousePickups) {
-      order.WarehousePickups = [];
+    if (!order.warehousePickups) {
+      order.warehousePickups = [];
     }
 
     // Add or update pickup confirmation for this Warehouse
-    const pickupIndex = order.WarehousePickups.findIndex(
+    const pickupIndex = order.warehousePickups.findIndex(
       (pickup: any) => pickup.Warehouse.toString() === WarehouseId,
     );
 
@@ -765,13 +765,13 @@ export const confirmWarehousePickup = asyncHandler(
     };
 
     if (pickupIndex >= 0) {
-      order.WarehousePickups[pickupIndex] = pickupData as any;
+      order.warehousePickups[pickupIndex] = pickupData as any;
     } else {
-      order.WarehousePickups.push(pickupData as any);
+      order.warehousePickups.push(pickupData as any);
     }
 
     // Check if all Warehouses have been picked up
-    const pickedUpWarehouseIds = order.WarehousePickups
+    const pickedUpWarehouseIds = order.warehousePickups
       .filter((pickup: any) => pickup.pickedUpAt)
       .map((pickup: any) => pickup.Warehouse.toString());
 
@@ -798,7 +798,7 @@ export const confirmWarehousePickup = asyncHandler(
         orderId: id,
         orderNumber: order.orderNumber,
         WarehouseId,
-        WarehouseName: Warehouse.storeName,
+        WarehouseName: warehouseDoc.warehouseName,
         allPickedUp,
         newStatus: order.status,
       });
@@ -816,7 +816,7 @@ export const confirmWarehousePickup = asyncHandler(
       success: true,
       message: allPickedUp
         ? "All Warehouses picked up! Order status changed to Out for Delivery."
-        : `Pickup confirmed from ${Warehouse.storeName}`,
+        : `Pickup confirmed from ${warehouseDoc.warehouseName}`,
       data: {
         order,
         allPickedUp,

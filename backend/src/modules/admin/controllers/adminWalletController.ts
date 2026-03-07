@@ -211,7 +211,7 @@ export const getAdminEarnings = asyncHandler(
 
     const earnings = await Commission.find(query)
       .populate("order", "orderNumber")
-      .populate("Warehouse", "storeName WarehouseName")
+      .populate("warehouse", "storeName warehouseName")
       .populate("deliveryBoy", "name mobile")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -222,9 +222,9 @@ export const getAdminEarnings = asyncHandler(
     // Format data for frontend
     const formattedEarnings = earnings.map((e) => {
       let sourceName = "Unknown";
-      if (e.type === "Warehouse" && e.Warehouse) {
+      if (e.type === "WAREHOUSE" && e.warehouse) {
         sourceName =
-          (e.Warehouse as any).storeName || (e.Warehouse as any).WarehouseName;
+          (e.warehouse as any).storeName || (e.warehouse as any).warehouseName;
       } else if (e.type === "DELIVERY_BOY" && e.deliveryBoy) {
         sourceName = (e.deliveryBoy as any).name;
       }

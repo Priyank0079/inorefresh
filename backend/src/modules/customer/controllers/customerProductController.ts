@@ -87,15 +87,15 @@ export const getProducts = async (req: Request, res: Response) => {
 
       // Special handling for Category and "and" -> "&"
       if (modelName === "Category" && value.includes("and")) {
-         const withAmpersand = value.replace(/-and-/g, " & ").replace(/-/g, " ");
-         item = await model
-           .findOne({
-             ...baseQuery,
-             name: { $regex: new RegExp(`^${withAmpersand}$`, "i") },
-           })
-           .select("_id")
-           .lean();
-         if (item) return item._id;
+        const withAmpersand = value.replace(/-and-/g, " & ").replace(/-/g, " ");
+        item = await model
+          .findOne({
+            ...baseQuery,
+            name: { $regex: new RegExp(`^${withAmpersand}$`, "i") },
+          })
+          .select("_id")
+          .lean();
+        if (item) return item._id;
       }
 
       return null;
@@ -157,20 +157,39 @@ export const getProducts = async (req: Request, res: Response) => {
     if (sort === "discount") sortOptions = { discount: -1 };
     if (sort === "popular") sortOptions = { popular: -1, dealOfDay: -1 };
 
-    const products = await Product.find(query)
-      .populate("category", "name icon image")
+    const rawProducts = await Product.find(query)
+      .lean()
+      .populate("category", "name icon image slug")
       .populate("subcategory", "name")
       .populate("brand", "name")
       .populate("warehouse", "warehouseName")
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(Number(limit));
+      .sort(sortOptions) as any[];
 
-    const total = await Product.countDocuments(query);
+    const groupedProductsMap = new Map();
+    for (const p of rawProducts) {
+      if (!groupedProductsMap.has(p.productName)) {
+        groupedProductsMap.set(p.productName, {
+          ...p,
+          totalStock: p.stock,
+          allWarehouses: [{ warehouse: p.warehouse, stock: p.stock, id: p._id }]
+        });
+      } else {
+        const existing = groupedProductsMap.get(p.productName);
+        existing.totalStock += p.stock;
+        existing.stock += p.stock;
+        existing.allWarehouses.push({ warehouse: p.warehouse, stock: p.stock, id: p._id });
+        if (existing.variations && existing.variations.length > 0 && p.variations && p.variations.length > 0) {
+          existing.variations[0].stock += p.variations[0].stock;
+        }
+      }
+    }
+    const aggregatedProducts = Array.from(groupedProductsMap.values());
+    const total = aggregatedProducts.length;
+    const paginatedProducts = aggregatedProducts.slice(skip, skip + Number(limit));
 
     return res.status(200).json({
       success: true,
-      data: products,
+      data: paginatedProducts,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -220,7 +239,7 @@ export const getProductById = async (req: Request, res: Response) => {
     // Parse location
     const userLat = latitude ? parseFloat(latitude as string) : null;
     const userLng = longitude ? parseFloat(longitude as string) : null;
-    const seller = product.seller as any;
+    const seller = (product as any).seller as any;
     const warehouse = (product as any).warehouse as any;
 
     // Initialize availability flag

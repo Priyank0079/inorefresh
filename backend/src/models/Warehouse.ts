@@ -21,6 +21,8 @@ export interface IWarehouse extends Document {
     createdBy: 'ADMIN';
     balance: number;
     serviceRadiusKm?: number;
+    commission?: number;
+    commissionRate?: number;
     fcmTokens?: string[];
     fcmTokenMobile?: string[];
     createdAt: Date;
@@ -102,6 +104,14 @@ const WarehouseSchema = new Schema<IWarehouse>(
             default: 10,
             min: [0.1, 'Service radius must be at least 0.1 km'],
             max: [100, 'Service radius cannot exceed 100 km'],
+        },
+        commission: {
+            type: Number,
+            min: [0, 'Commission cannot be negative'],
+        },
+        commissionRate: {
+            type: Number,
+            min: [0, 'Commission rate cannot be negative'],
         },
         fcmTokens: {
             type: [String],

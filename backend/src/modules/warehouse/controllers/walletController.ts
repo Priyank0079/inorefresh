@@ -12,8 +12,8 @@ import mongoose from 'mongoose';
 export const getWalletStats = asyncHandler(async (req: Request, res: Response) => {
     const WarehouseId = (req as any).user.userId;
 
-    const Warehouse = await Warehouse.findById(WarehouseId).select('balance');
-    if (!Warehouse) {
+    const warehouseDoc = await Warehouse.findById(WarehouseId).select('balance');
+    if (!warehouseDoc) {
         return res.status(404).json({ success: false, message: 'Warehouse not found' });
     }
 
@@ -45,7 +45,7 @@ export const getWalletStats = asyncHandler(async (req: Request, res: Response) =
     return res.status(200).json({
         success: true,
         data: {
-            availableBalance: Warehouse.balance || 0,
+            availableBalance: warehouseDoc.balance || 0,
             totalEarnings: earningsData[0]?.total || 0,
             pendingSettlement: pendingData[0]?.total || 0,
             totalWithdrawn: withdrawnData[0]?.total || 0,
@@ -144,12 +144,12 @@ export const createWithdrawalRequest = asyncHandler(async (req: Request, res: Re
         return res.status(400).json({ success: false, message: 'Account details are required' });
     }
 
-    const Warehouse = await Warehouse.findById(WarehouseId);
-    if (!Warehouse) {
+    const warehouseDoc = await Warehouse.findById(WarehouseId);
+    if (!warehouseDoc) {
         return res.status(404).json({ success: false, message: 'Warehouse not found' });
     }
 
-    if (Warehouse.balance < amount) {
+    if (warehouseDoc.balance < amount) {
         return res.status(400).json({ success: false, message: 'Insufficient balance' });
     }
 
@@ -165,8 +165,8 @@ export const createWithdrawalRequest = asyncHandler(async (req: Request, res: Re
 
     // Deduct from balance immediately to "hold" it (or handle on approval)
     // Usually it's better to deduct on approval, but here we'll follow common practice of deducting and showing as pending
-    Warehouse.balance -= amount;
-    await Warehouse.save();
+    warehouseDoc.balance -= amount;
+    await warehouseDoc.save();
 
     // Log as a debit transaction
     await WalletTransaction.create({

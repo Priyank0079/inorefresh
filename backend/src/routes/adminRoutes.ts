@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate, requireAdminAuth, requireUserType } from "../middleware/auth";
+import { authenticate, requireUserType } from "../middleware/auth";
 
 // Dashboard Controllers
 import * as dashboardController from "../modules/admin/controllers/adminDashboardController";

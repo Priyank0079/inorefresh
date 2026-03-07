@@ -77,8 +77,8 @@ export const sendBroadcastNotification = async (
       userIds = admins.map((a) => a._id.toString());
       break;
     case "warehouse":
-      const warehouses = await warehouse.find().select("_id");
-      userIds = warehouses.map((s) => s._id.toString());
+      const warehouses = await Warehouse.find().select("_id");
+      userIds = warehouses.map((w) => w._id.toString());
       break;
     case "Customer":
       const customers = await Customer.find().select("_id");

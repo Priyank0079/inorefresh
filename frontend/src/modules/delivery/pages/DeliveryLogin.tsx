@@ -93,8 +93,8 @@ export default function DeliveryLogin() {
         <div className="px-6 py-6 text-center bg-gradient-to-br from-teal-700 to-teal-900">
           <div className="flex justify-center mb-4">
             <img
-              src="/assets/Inor fresh.png"
-              alt="Inor fresh"
+              src="/logo.svg"
+              alt="Zeto Mart"
               className="h-28 w-auto object-contain bg-white/90 rounded-xl p-2 shadow-sm"
             />
           </div>
@@ -211,7 +211,7 @@ export default function DeliveryLogin() {
 
       {/* Footer Text */}
       <p className="mt-6 text-xs text-neutral-500 text-center max-w-md">
-        By continuing, you agree to Inor fresh's Terms of Service and Privacy Policy
+        By continuing, you agree to Zeto Mart's Terms of Service and Privacy Policy
       </p>
     </div>
   );

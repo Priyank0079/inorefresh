@@ -29,11 +29,11 @@ export const getWishlist = async (req: Request, res: Response) => {
             match: {
                 status: 'Active',
                 publish: true,
-                seller: { $in: nearbySellerIds }
+                warehouse: { $in: nearbySellerIds }
             },
             populate: {
-                path: 'seller',
-                select: 'storeName location serviceRadiusKm'
+                path: 'warehouse',
+                select: 'warehouseName location serviceRadiusKm'
             }
         });
 
@@ -83,7 +83,7 @@ export const addToWishlist = async (req: Request, res: Response) => {
         }
 
         const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
-        const isAvailable = nearbySellerIds.some(id => id.toString() === product.seller.toString());
+        const isAvailable = nearbySellerIds.some(id => id.toString() === product.warehouse.toString());
 
         if (!isAvailable) {
             return res.status(403).json({
@@ -106,7 +106,7 @@ export const addToWishlist = async (req: Request, res: Response) => {
 
         const populatedWishlist = await wishlist.populate({
             path: 'products',
-            match: { seller: { $in: nearbySellerIds } }
+            match: { warehouse: { $in: nearbySellerIds } }
         });
 
         return res.status(200).json({

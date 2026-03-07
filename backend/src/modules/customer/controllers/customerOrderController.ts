@@ -3,9 +3,10 @@ import Order from "../../../models/Order";
 import Product from "../../../models/Product";
 import OrderItem from "../../../models/OrderItem";
 import Customer from "../../../models/Customer";
-import Seller from "../../../models/Seller";
+
+import Warehouse from "../../../models/Warehouse";
 import mongoose from "mongoose";
-import { calculateDistance, isPointInPolygon } from "../../../utils/locationHelper";
+import { calculateDistance } from "../../../utils/locationHelper";
 import { notifyWarehousesOfOrderUpdate } from "../../../services/warehouseNotificationService";
 import { generateDeliveryOtp } from "../../../services/deliveryOtpService";
 import AppSettings from "../../../models/AppSettings";
@@ -155,7 +156,7 @@ export const createOrder = async (req: Request, res: Response) => {
 
         let calculatedSubtotal = 0;
         const orderItemIds: mongoose.Types.ObjectId[] = [];
-        const sellerIds = new Set<string>(); // Track unique sellers
+        const warehouseIds = new Set<string>(); // Track unique warehouses
 
         for (const item of items) {
             if (!item.product || !item.product.id) {
@@ -258,9 +259,9 @@ export const createOrder = async (req: Request, res: Response) => {
                 throw new Error(`Insufficient stock or product not found: ${item.product.name || 'ID: ' + item.product.id}${variationValue ? ' (' + variationValue + ')' : ''}`);
             }
 
-            // Track seller IDs to validate location
-            if (product.seller) {
-                sellerIds.add(product.seller.toString());
+            // Track warehouse IDs to validate location
+            if (product.warehouse) {
+                warehouseIds.add(product.warehouse.toString());
             }
 
             // Determine the price based on variation and discounts
@@ -287,14 +288,14 @@ export const createOrder = async (req: Request, res: Response) => {
             calculatedSubtotal += itemTotal;
 
             // Calculate commission rate snapshot
-            const commRate = await getOrderItemCommissionRate(product._id.toString(), product.seller.toString());
+            const commRate = await getOrderItemCommissionRate(product._id.toString(), product.warehouse.toString());
             const commAmount = (itemTotal * commRate) / 100;
 
             // Create OrderItem
             const newOrderItemData = {
                 order: newOrder._id,
                 product: product._id,
-                seller: product.seller,
+                warehouse: product.warehouse,
                 productName: product.productName,
                 productImage: product.mainImage,
                 sku: product.sku,
@@ -316,52 +317,37 @@ export const createOrder = async (req: Request, res: Response) => {
             orderItemIds.push(newOrderItem._id as mongoose.Types.ObjectId);
         }
 
-        // Validate all sellers can deliver to user's location
-        if (sellerIds.size > 0) {
-            const uniqueSellerIds = Array.from(sellerIds).map(id => new mongoose.Types.ObjectId(id));
+        // Validate all warehouses can deliver to user's location
+        if (warehouseIds.size > 0) {
+            const uniqueWarehouseIds = Array.from(warehouseIds).map(id => new mongoose.Types.ObjectId(id));
 
-            // Find sellers and check if user is within their service radius
-            const sellers = await Seller.find({
-                _id: { $in: uniqueSellerIds },
-                status: "Approved",
+            // Find warehouses and check if user is within their service radius
+            const warehouses = await Warehouse.find({
+                _id: { $in: uniqueWarehouseIds },
                 location: { $exists: true, $ne: null },
             });
 
-            // Check each seller can deliver to user's location
-            for (const seller of sellers) {
-
-                // 1. Check Custom Service Area (Polygon)
-                if (seller.serviceAreaGeo && seller.serviceAreaGeo.coordinates && seller.serviceAreaGeo.coordinates.length > 0) {
-                    const inside = isPointInPolygon([deliveryLng, deliveryLat], seller.serviceAreaGeo.coordinates);
-                    if (!inside) {
-                        if (session) await session.abortTransaction();
-                        return res.status(403).json({
-                            success: false,
-                            message: `Your delivery address is outside the custom service area of ${seller.storeName}.`,
-                        });
-                    }
-                    continue; // Inside polygon, so valid. Skip radius check.
-                }
-
-                // 2. Check Radius (Standard)
-                if (!seller.location || !seller.location.coordinates) {
+            // Check each warehouse can deliver to user's location
+            for (const warehouse of warehouses) {
+                // Check Radius (Standard)
+                if (!warehouse.location || !warehouse.location.coordinates) {
                     if (session) await session.abortTransaction();
                     return res.status(403).json({
                         success: false,
-                        message: `Seller ${seller.storeName} does not have a valid location. Order cannot be placed.`,
+                        message: `Warehouse ${warehouse.warehouseName} does not have a valid location. Order cannot be placed.`,
                     });
                 }
 
-                const sellerLng = seller.location.coordinates[0];
-                const sellerLat = seller.location.coordinates[1];
-                const distance = calculateDistance(deliveryLat, deliveryLng, sellerLat, sellerLng);
-                const serviceRadius = seller.serviceRadiusKm || 10;
+                const warehouseLng = warehouse.location.coordinates[0];
+                const warehouseLat = warehouse.location.coordinates[1];
+                const distance = calculateDistance(deliveryLat, deliveryLng, warehouseLat, warehouseLng);
+                const serviceRadius = warehouse.serviceRadiusKm || 10;
 
                 if (distance > serviceRadius) {
                     if (session) await session.abortTransaction();
                     return res.status(403).json({
                         success: false,
-                        message: `Your delivery address is ${distance.toFixed(2)} km away from ${seller.storeName}. They only deliver within ${serviceRadius} km. Please select products from sellers in your area.`,
+                        message: `Your delivery address is ${distance.toFixed(2)} km away from ${warehouse.warehouseName}. They only deliver within ${serviceRadius} km. Please select products from warehouses in your area.`,
                     });
                 }
             }
@@ -415,35 +401,32 @@ export const createOrder = async (req: Request, res: Response) => {
             else if (settings && settings.deliveryConfig?.isDistanceBased === true) {
                 const config = settings.deliveryConfig;
 
-                // Collect seller locations
-                const sellerLocations: { lat: number; lng: number }[] = [];
-                const uniqueSellerIds = Array.from(sellerIds).map(id => new mongoose.Types.ObjectId(id));
-                const sellers = await Seller.find({ _id: { $in: uniqueSellerIds } }).select('location latitude longitude storeName');
+                // Collect warehouse locations
+                const warehouseLocations: { lat: number; lng: number }[] = [];
+                const uniqueWarehouseIds = Array.from(warehouseIds).map(id => new mongoose.Types.ObjectId(id));
+                const warehouses = await Warehouse.find({ _id: { $in: uniqueWarehouseIds } }).select('location warehouseName');
 
-                sellers.forEach(seller => {
+                warehouses.forEach(warehouse => {
                     let lat, lng;
-                    if (seller.location?.coordinates?.length === 2) {
-                        lng = seller.location.coordinates[0];
-                        lat = seller.location.coordinates[1];
-                    } else if (seller.latitude && seller.longitude) {
-                        lat = parseFloat(seller.latitude);
-                        lng = parseFloat(seller.longitude);
+                    if (warehouse.location?.coordinates?.length === 2) {
+                        lng = warehouse.location.coordinates[0];
+                        lat = warehouse.location.coordinates[1];
                     }
 
                     if (lat && lng) {
-                        sellerLocations.push({ lat, lng });
+                        warehouseLocations.push({ lat, lng });
                     }
                 });
 
-                if (sellerLocations.length > 0 && deliveryLat && deliveryLng) {
+                if (warehouseLocations.length > 0 && deliveryLat && deliveryLng) {
                     // Get distances (Road or Air based on API Key presence)
                     const distances = await getRoadDistances(
-                        sellerLocations,
+                        warehouseLocations,
                         { lat: deliveryLat, lng: deliveryLng },
                         config.googleMapsKey
                     );
 
-                    // Take the maximum distance (furthest seller)
+                    // Take the maximum distance (furthest warehouse)
                     deliveryDistanceKm = Math.max(...distances);
 
                     // Calculate Fee
@@ -705,7 +688,7 @@ export const getOrderById = async (req: Request, res: Response) => {
                 path: 'items',
                 populate: [
                     { path: 'product', select: 'productName mainImage pack manufacturer price' },
-                    { path: 'seller', select: 'storeName city phone fssaiLicNo' }
+                    { path: 'warehouse', select: 'warehouseName address mobile managerName' }
                 ]
             })
             .populate('deliveryBoy', 'name phone profileImage vehicleNumber');

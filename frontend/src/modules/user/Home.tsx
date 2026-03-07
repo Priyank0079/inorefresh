@@ -14,6 +14,8 @@ import { getProducts as getCustomerProducts } from "../../services/api/customerP
 import { getHeaderCategoriesPublic } from "../../services/api/headerCategoryService";
 import { useLoading } from "../../context/LoadingContext";
 import PageLoader from "../../components/PageLoader";
+import CategoryTileSection from "./components/CategoryTileSection";
+import FishCategoryCards from "./components/FishCategoryCards";
 
 import { useThemeContext } from "../../context/ThemeContext";
 
@@ -301,6 +303,11 @@ export default function Home() {
           {/* Promo Strip */}
           <PromoStrip activeTab={activeTab} />
 
+          {/* 🐟 NEW FISH CATEGORIES SECTION */}
+          <div className="py-8 bg-transparent">
+            <FishCategoryCards />
+          </div>
+
 
 
           {/* LOWEST PRICES EVER Section */}
@@ -412,9 +419,13 @@ export default function Home() {
                             }}
                           />
                         </div>
-                        {isOutOfStock && (
+                        {isOutOfStock ? (
                           <div className="absolute top-3 right-3 z-30 bg-red-500 text-white text-[9px] font-black px-2 mt-1 py-1 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.5)]">
                             OUT OF STOCK
+                          </div>
+                        ) : (
+                          <div className="absolute top-3 right-3 z-30 bg-[#1CA7C7]/80 backdrop-blur-md text-white text-[9px] font-black px-2 mt-1 py-1 rounded-full border border-white/20">
+                            {type.stock} AVAILABLE
                           </div>
                         )}
                       </div>
@@ -422,35 +433,35 @@ export default function Home() {
                       {/* Content Area */}
                       <div className="px-4 pb-4 md:px-5 md:pb-5 flex flex-col flex-grow z-10 bg-transparent">
                         <div className="flex-grow">
-                          <h3 className="text-white font-bold text-[14px] md:text-[16px] leading-tight mb-1 truncate group-hover:text-[#1CA7C7] transition-colors duration-200">
+                          <h3 className="text-white font-bold text-[14px] md:text-[16px] leading-tight mb-1 truncate group-hover:text-[#6FD3FF] transition-colors duration-200">
                             {type.name}
                           </h3>
-                          <p className="text-[#BEEFFF]/60 font-medium text-[11px] md:text-[12px] leading-snug line-clamp-2 mb-3">
-                            {type.description || (type as any).desc}
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[#BEEFFF]/60 font-medium text-[11px] md:text-[12px] bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
+                              {type.pack}
+                            </span>
+                          </div>
+                          <p className="text-[#BEEFFF]/40 font-medium text-[10px] md:text-[11px] leading-snug line-clamp-2 mb-3">
+                            {type.description || (type as any).desc || `Premium quality fresh ${type.name} sourced directly.`}
                           </p>
                         </div>
 
                         {/* Bottom Row: Rating, Price, Cart Button */}
                         <div className="flex items-center justify-between mt-auto">
                           <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-1.5 bg-white/5 py-0.5 px-2 rounded-full border border-white/5 w-fit">
-                              <span className="text-[#6FD3FF] text-[11px] font-black tracking-wide">★</span>
-                              <span className="text-[#BEEFFF] font-bold text-[11px]">{pseudoRandomRating}</span>
-                            </div>
-
-                            <div className="flex items-baseline gap-[2px] mt-1">
+                            <div className="flex items-baseline gap-[2px]">
                               <span className="text-white font-black text-[18px] tracking-tight">
                                 {formattedPrice}
                               </span>
-                              <span className="text-[#BEEFFF]/40 font-semibold text-[11px]">
-                                {type.pack ? `/${type.pack}` : '/kg'}
+                              <span className="text-[#BEEFFF]/40 font-semibold text-[10px] uppercase">
+                                / KG
                               </span>
                             </div>
                           </div>
 
                           {/* Animated Add to Cart Button or Stepper */}
                           {quantity > 0 ? (
-                            <div className="flex items-center bg-[#1CA7C7] rounded-full p-0.5 shadow-[0_0_20px_rgba(28,167,199,0.4)] animate-in fade-in zoom-in duration-300">
+                            <div className="flex items-center bg-gradient-to-r from-[#1CA7C7] to-[#072F4A] rounded-full p-0.5 shadow-[0_0_20px_rgba(28,167,199,0.4)] animate-in fade-in zoom-in duration-300 border border-white/10">
                               <button
                                 onClick={handleDecrement}
                                 className="w-8 h-8 flex items-center justify-center text-white hover:bg-white/10 rounded-full transition-all active:scale-90"
@@ -471,13 +482,14 @@ export default function Home() {
                             <button
                               onClick={handleAddToCart}
                               disabled={isOutOfStock}
-                              className={`w-10 h-10 rounded-full ${isOutOfStock ? 'bg-white/5 cursor-not-allowed text-white/20' : 'bg-gradient-to-br from-[#1CA7C7] to-[#072F4A] text-white hover:scale-110 active:scale-95'} flex items-center justify-center shadow-[0_4px_15px_rgba(28,167,199,0.3)] transition-all duration-500 relative overflow-hidden group/btn`}
+                              className={`h-10 px-4 rounded-full ${isOutOfStock ? 'bg-white/5 cursor-not-allowed text-white/20' : 'bg-gradient-to-br from-[#1CA7C7] to-[#072F4A] text-white hover:scale-105 active:scale-95'} flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(28,167,199,0.3)] transition-all duration-500 relative overflow-hidden group/btn border border-white/10`}
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-[20px] h-[20px] relative z-10" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <span className="text-[11px] font-black tracking-wider uppercase">Add</span>
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-[14px] h-[14px] relative z-10" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                               </svg>
-                              {!isOutOfStock && <div className="absolute inset-0 bg-white/20 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />}
+                              {!isOutOfStock && <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />}
                             </button>
                           )}
                         </div>

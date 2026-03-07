@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useThemeContext } from '../../../context/ThemeContext';
-import InorFreshLogo from '@assets/Inor fresh.png';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -79,16 +78,15 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
               </svg>
             )}
           </button>
-          {/* Inor fresh Logo */}
+          {/* Simple Clean Logo */}
           <button
             onClick={handleLogoClick}
             className="hover:opacity-80 transition-opacity"
           >
             <img
-              src={InorFreshLogo}
-              alt="Inor fresh"
-              className="h-10 sm:h-12 w-auto object-contain cursor-pointer"
-              style={{ maxWidth: '200px' }}
+              src="/logo.svg"
+              alt="Zeto Mart"
+              className="h-8 sm:h-10 w-auto object-contain cursor-pointer"
             />
           </button>
         </div>

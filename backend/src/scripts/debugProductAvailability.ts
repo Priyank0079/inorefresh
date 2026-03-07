@@ -11,7 +11,7 @@ async function debugProductAvailability() {
     console.log('✓ Connected to MongoDB\n');
 
     // Find the product "Fresh Kiwi from 9111"
-    const product = await Product.findOne({ productName: /kiwi/i }).populate('seller');
+    const product = await Product.findOne({ productName: /kiwi/i }).populate('warehouse');
 
     if (!product) {
       console.log('❌ Product not found');
@@ -24,10 +24,10 @@ async function debugProductAvailability() {
     console.log('Product ID:', product._id);
     console.log('Status:', product.status);
     console.log('Published:', product.publish);
-    console.log('Seller ID:', product.seller);
+    console.log('Seller ID:', product.warehouse);
 
-    if (product.seller && typeof product.seller === 'object') {
-      const seller = product.seller as any;
+    if (product.warehouse && typeof product.warehouse === 'object') {
+      const seller = product.warehouse as any;
       console.log('\n=== SELLER DETAILS ===');
       console.log('Store Name:', seller.storeName);
       console.log('Status:', seller.status);
@@ -91,4 +91,5 @@ async function debugProductAvailability() {
 }
 
 debugProductAvailability();
+
 

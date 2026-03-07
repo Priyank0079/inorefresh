@@ -241,6 +241,7 @@ export default function ProductCard({
               alt={product.name || product.productName || 'Product'}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
+              loading="lazy"
               onError={(e) => {
                 // Hide broken image and show fallback
                 const target = e.target as HTMLImageElement;

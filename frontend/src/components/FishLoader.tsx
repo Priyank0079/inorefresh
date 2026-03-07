@@ -1,22 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 /**
  * FishLoader - A premium, lightweight fish-themed animated loader.
- * Requirements:
- * - 3 SVG fish shapes in a horizontal sequence.
- * - Swimming motion (+/- 6px up/down) using CSS keyframes.
- * - Active "glow" rotation every 0.5s using React state.
- * - Minimal, high-quality, branded look.
+ * Refactored to use requestAnimationFrame for smoother state transitions and lower CPU usage.
  */
 const FishLoader: React.FC = () => {
     const [activeIndex, setActiveIndex] = useState(0);
+    const lastUpdateRef = useRef<number>(0);
+    const requestRef = useRef<number>(0);
+
+    const animate = (time: number) => {
+        if (lastUpdateRef.current === 0) lastUpdateRef.current = time;
+        const deltaTime = time - lastUpdateRef.current;
+
+        if (deltaTime >= 500) {
+            setActiveIndex((prev) => (prev + 1) % 3);
+            lastUpdateRef.current = time;
+        }
+        requestRef.current = requestAnimationFrame(animate);
+    };
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setActiveIndex((prev) => (prev + 1) % 3);
-        }, 500);
-
-        return () => clearInterval(interval);
+        requestRef.current = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(requestRef.current);
     }, []);
 
     // Minimal Fish SVG Path - Facing Right
@@ -42,7 +48,7 @@ const FishLoader: React.FC = () => {
                             viewBox="0 0 24 14"
                             className={`transition-all duration-300
                                 ${activeIndex === index
-                                    ? 'text-[#009999] drop-shadow-[0_0_8px_rgba(0,153,153,0.5)]'
+                                    ? 'text-[#6FD3FF] drop-shadow-[0_0_8px_rgba(111,211,255,0.5)]'
                                     : 'text-[#003366]'
                                 }
                             `}

@@ -10,7 +10,7 @@ import mongoose from "mongoose";
  */
 export const creditWallet = async (
   userId: string,
-  userType: "warehouse" | "DELIVERY_BOY",
+  userType: "Warehouse" | "DELIVERY_BOY",
   amount: number,
   description: string,
   relatedOrderId?: string,
@@ -41,7 +41,7 @@ export const creditWallet = async (
     }
 
     // Update user balance
-    const Model: any = userType === "warehouse" ? warehouse : Delivery;
+    const Model: any = userType === "Warehouse" ? Warehouse : Delivery;
     const updateQuery = { $inc: { balance: amount } };
 
     if (session) {
@@ -107,7 +107,7 @@ export const debitWallet = async (
     }
 
     // Update user balance
-    const Model: any = userType === "warehouse" ? warehouse : Delivery;
+    const Model: any = userType === "warehouse" ? Warehouse : Delivery;
     const updateQuery = { $inc: { balance: -amount } };
 
     if (session) {
@@ -138,10 +138,10 @@ export const debitWallet = async (
  */
 export const getWalletBalance = async (
   userId: string,
-  userType: "warehouse" | "DELIVERY_BOY",
+  userType: "Warehouse" | "DELIVERY_BOY",
 ): Promise<number> => {
   try {
-    const Model: any = userType === "warehouse" ? warehouse : Delivery;
+    const Model: any = userType === "Warehouse" ? Warehouse : Delivery;
     const user = await Model.findById(userId);
 
     if (!user) {
@@ -242,7 +242,7 @@ export const validateWithdrawal = async (
     }
 
     // Check bank details
-    const Model: any = userType === "warehouse" ? warehouse : Delivery;
+    const Model: any = userType === "warehouse" ? Warehouse : Delivery;
     const user = await Model.findById(userId);
 
     if (!user) {
@@ -291,7 +291,7 @@ export const createWithdrawalRequest = async (
     }
 
     // Get user details
-    const Model: any = userType === "warehouse" ? warehouse : Delivery;
+    const Model: any = userType === "warehouse" ? Warehouse : Delivery;
     const user = await Model.findById(userId);
 
     if (!user) {
@@ -332,7 +332,7 @@ export const createWithdrawalRequest = async (
  */
 export const getWithdrawalRequests = async (
   userId: string,
-  userType: "warehouse" | "DELIVERY_BOY",
+  userType: "Warehouse" | "DELIVERY_BOY",
   status?: string,
 ) => {
   try {

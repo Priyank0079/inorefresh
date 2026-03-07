@@ -25,7 +25,7 @@ export const getOrders = asyncHandler(
     } = req.query;
 
     // Find all order IDs that contain items from this Warehouse
-    const orderItems = await OrderItem.find({ Warehouse: WarehouseId }).distinct("order");
+    const orderItems = await OrderItem.find({ warehouse: WarehouseId }).distinct("order");
 
     // Build query - filter by orders containing this Warehouse's items
     const query: any = { _id: { $in: orderItems } };
@@ -124,8 +124,8 @@ export const getOrderById = asyncHandler(
 
     // First check if this Warehouse has items in this order
     // First check if this Warehouse has items in this order
-    const WarehouseItems = await OrderItem.find({ order: id, Warehouse: WarehouseId })
-      .populate("Warehouse", "storeName")
+    const WarehouseItems = await OrderItem.find({ order: id, warehouse: WarehouseId })
+      .populate("warehouse", "warehouseName")
       .populate("product");
 
     if (!WarehouseItems || WarehouseItems.length === 0) {
@@ -191,7 +191,7 @@ export const getOrderById = asyncHandler(
       return {
         srNo: item._id.toString().slice(-4), // Use last 4 chars of ID as srNo
         product: item.productName || 'Unknown Product',
-        soldBy: (item.Warehouse as any)?.storeName || 'N/A',
+        soldBy: (item.warehouse as any)?.warehouseName || 'N/A',
         unit: unit,
         price: item.unitPrice || 0,
         tax: 0,
@@ -250,7 +250,7 @@ export const updateOrderStatus = asyncHandler(
     }
 
     // Check if this Warehouse has items in this order
-    const WarehouseItems = await OrderItem.findOne({ order: id, Warehouse: WarehouseId });
+    const WarehouseItems = await OrderItem.findOne({ order: id, warehouse: WarehouseId });
 
     if (!WarehouseItems) {
       return res.status(404).json({
@@ -309,16 +309,16 @@ export const updateOrderStatus = asyncHandler(
 
     // If order is delivered, credit Warehouse's balance
     if (status === 'Delivered' && previousStatus !== 'Delivered') {
-      const Warehouse = await Warehouse.findById(WarehouseId);
-      if (Warehouse) {
+      const warehouseDoc = await Warehouse.findById(WarehouseId);
+      if (warehouseDoc) {
         // Calculate net earning (sale amount - commission)
         // Commission is stored in Warehouse model
-        const commissionRate = (Warehouse.commission || 0) / 100;
+        const commissionRate = (warehouseDoc.commission || 0) / 100;
         const commissionAmount = order.total * commissionRate;
         const netEarning = order.total - commissionAmount;
 
-        Warehouse.balance = (Warehouse.balance || 0) + netEarning;
-        await Warehouse.save();
+        warehouseDoc.balance = (warehouseDoc.balance || 0) + netEarning;
+        await warehouseDoc.save();
 
         // Log transaction
         await WalletTransaction.create({

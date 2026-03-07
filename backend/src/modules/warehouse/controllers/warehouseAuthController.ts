@@ -1,9 +1,5 @@
 import { Request, Response } from "express";
 import Warehouse from "../../../models/Warehouse";
-import {
-  sendOTP as sendOTPService,
-  verifyOTP as verifyOTPService,
-} from "../../../services/otpService";
 import { generateToken } from "../../../services/jwtService";
 import { asyncHandler } from "../../../utils/asyncHandler";
 
@@ -60,7 +56,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
         warehouseName: warehouse.warehouseName,
         mobile: warehouse.mobile,
         email: warehouse.email,
-        storeName: warehouse.storeName,
+        storeName: warehouse.warehouseName,
         status: warehouse.status,
         logo: (warehouse as any).logo,
         address: warehouse.address,
@@ -220,7 +216,7 @@ export const toggleShopStatus = asyncHandler(
 
     // Fix invalid GeoJSON location objects
     // MongoDB requires that if location.type is "Point", coordinates must be a valid array
-    if (warehouseDoc.location && warehouseDoc.location.type === "Point") {
+    if (warehouseDoc.location && (warehouseDoc.location as any).type === "Point") {
       if (
         !warehouseDoc.location.coordinates ||
         !Array.isArray(warehouseDoc.location.coordinates) ||

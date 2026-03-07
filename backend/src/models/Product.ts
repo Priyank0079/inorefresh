@@ -23,6 +23,7 @@ export interface IProduct extends Document {
   // Pricing & Inventory
   price: number;
   discPrice?: number;
+  weight?: number;
   compareAtPrice?: number;
   stock: number;
   sku?: string;
@@ -340,33 +341,34 @@ const ProductSchema = new Schema<IProduct>(
 );
 
 // Virtual for mrp (alias for compareAtPrice to match frontend)
-ProductSchema.virtual("mrp").get(function () {
+ProductSchema.virtual("mrp").get(function (this: any) {
   return this.compareAtPrice;
 });
 
 // Calculate discount and sync stock/price from variations before saving
 ProductSchema.pre("save", function (next) {
+  const self = this as any;
   // Sync price and stock from variations if they exist
-  if (this.variations && this.variations.length > 0) {
+  if (self.variations && self.variations.length > 0) {
     // Set price to the price of the first variation if top-level price is not set or if we want to keep it in sync
-    if (this.variations[0].price !== undefined) {
-      this.price = this.variations[0].price;
+    if (self.variations[0].price !== undefined) {
+      self.price = self.variations[0].price;
     }
 
     // Calculate total stock as sum of all variation stocks
-    this.stock = this.variations.reduce(
+    self.stock = self.variations.reduce(
       (acc: number, curr: any) => acc + (Number(curr.stock) || 0),
       0
     );
   }
 
   // Calculate discount
-  if (this.compareAtPrice && this.compareAtPrice > this.price) {
-    this.discount = Math.round(
-      ((this.compareAtPrice - this.price) / this.compareAtPrice) * 100
+  if (self.compareAtPrice && self.compareAtPrice > self.price) {
+    self.discount = Math.round(
+      ((self.compareAtPrice - self.price) / self.compareAtPrice) * 100
     );
   } else {
-    this.discount = 0;
+    self.discount = 0;
   }
   next();
 });

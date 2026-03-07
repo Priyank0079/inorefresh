@@ -107,9 +107,9 @@ export default function OceanNavbar() {
         const name = link?.name.toLowerCase() || '';
 
         let effectiveId = id;
-        if (name.includes('aqua') || name.includes('auqa')) effectiveId = 'aqua';
-        else if (name.includes('marin')) effectiveId = 'marin';
-        else if (name.includes('bengali') || name.includes('bengoli')) effectiveId = 'bengali';
+        if (name.includes('aqua') || name.includes('auqa')) effectiveId = 'aqua-fish';
+        else if (name.includes('marin') || name.includes('marine')) effectiveId = 'marine-fish';
+        else if (name.includes('bengali') || name.includes('bengoli')) effectiveId = 'bangali-fish';
 
         // Update context immediately for premium feel (glow moves instantly)
         setActiveCategory(effectiveId);

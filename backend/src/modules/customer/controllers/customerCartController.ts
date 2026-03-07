@@ -9,14 +9,14 @@ import AppSettings from '../../../models/AppSettings';
 import { getRoadDistances } from '../../../services/mapService';
 import Seller from '../../../models/Seller';
 
-const getOwnerId = (product: any): string | null => {
-    if (!product) return null;
-    // Support legacy field casing from older documents.
-    const owner = product.seller || product.warehouse || product.Seller || product.Warehouse;
-    if (!owner) return null;
-    if (typeof owner === 'object' && owner._id) return owner._id.toString();
-    return owner.toString();
-};
+// const getOwnerId = (product: any): string | null => {
+//     if (!product) return null;
+//     // Support legacy field casing from older documents.
+//     const owner = product.seller || product.warehouse || product.Seller || product.Warehouse;
+//     if (!owner) return null;
+//     if (typeof owner === 'object' && owner._id) return owner._id.toString();
+//     return owner.toString();
+// };
 
 // Helper to calculate item price matching frontend logic
 const calculateItemPrice = (product: any, variationSelector: any) => {
@@ -49,7 +49,7 @@ const calculateItemPrice = (product: any, variationSelector: any) => {
 };
 
 // Helper to calculate cart total with location filtering
-const calculateCartTotal = async (cartId: any, nearbySellerIds: mongoose.Types.ObjectId[] = []) => {
+const calculateCartTotal = async (cartId: any) => {
     const items = await CartItem.find({ cart: cartId }).populate({
         path: 'product',
         select: 'price discPrice variations seller warehouse status publish productName'
@@ -162,7 +162,7 @@ export const getCart = async (req: Request, res: Response) => {
             });
         }
 
-        const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
+        await findSellersWithinRange(userLat, userLng);
 
         let cart = await Cart.findOne({ customer: userId }).populate({
             path: 'items',
@@ -249,38 +249,7 @@ export const addToCart = async (req: Request, res: Response) => {
             return res.status(404).json({ success: false, message: 'Product not found or unavailable' });
         }
 
-        const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
-
-        // Get or create cart
-        let cart = await Cart.findOne({ customer: userId });
-        if (!cart) {
-            cart = await Cart.create({ customer: userId, items: [], total: 0 });
-        }
-
-        // Check if item already exists in cart
-        let cartItem = await CartItem.findOne({
-            cart: cart._id,
-            product: productId,
-            variation: variation || null
-        });
-
-        if (cartItem) {
-            // Update quantity
-            cartItem.quantity += quantity;
-            await cartItem.save();
-        } else {
-            // Create new cart item
-            cartItem = await CartItem.create({
-                cart: cart._id,
-                product: productId,
-                quantity,
-                variation
-            });
-            cart.items.push(cartItem._id as any);
-        }
-
-        // Update total with location filtering
-        cart.total = await calculateCartTotal(cart._id, nearbySellerIds);
+        cart.total = await calculateCartTotal(cart._id);
         await cart.save();
 
         // Return updated cart with filtering
@@ -342,7 +311,7 @@ export const updateCartItem = async (req: Request, res: Response) => {
             });
         }
 
-        const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
+        await findSellersWithinRange(userLat, userLng);
 
         const cart = await Cart.findOne({ customer: userId });
         if (!cart) {
@@ -355,13 +324,13 @@ export const updateCartItem = async (req: Request, res: Response) => {
         }
 
         // Verify item is still available at location
-        const product = cartItem.product as any;
+        // const product = cartItem.product as any;
         // Location is no longer a hard blocker for cart quantity updates.
 
         cartItem.quantity = quantity;
         await cartItem.save();
 
-        cart.total = await calculateCartTotal(cart._id, nearbySellerIds);
+        cart.total = await calculateCartTotal(cart._id);
         await cart.save();
 
         const updatedCart = await Cart.findById(cart._id).populate({
@@ -426,7 +395,7 @@ export const removeFromCart = async (req: Request, res: Response) => {
             nearbySellerIds = await findSellersWithinRange(userLat, userLng);
         }
 
-        cart.total = await calculateCartTotal(cart._id, nearbySellerIds);
+        cart.total = await calculateCartTotal(cart._id);
         await cart.save();
 
         const updatedCart = await Cart.findById(cart._id).populate({

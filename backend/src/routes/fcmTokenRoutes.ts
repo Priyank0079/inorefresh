@@ -44,8 +44,8 @@ router.post("/save", async (req: Request, res: Response): Promise<void> => {
       case "Admin":
         UserModel = Admin;
         break;
-      case "warehouse":
-        UserModel = warehouse;
+      case "Warehouse":
+        UserModel = Warehouse;
         break;
       case "Delivery":
         UserModel = Delivery;
@@ -157,7 +157,7 @@ router.delete("/remove", async (req: Request, res: Response): Promise<void> => {
       case "Admin":
         UserModel = (await import("../models/Admin")).default;
         break;
-      case "warehouse":
+      case "Warehouse":
         UserModel = (await import("../models/Warehouse")).default;
         break;
       case "Delivery":
@@ -236,7 +236,7 @@ router.post("/test", async (req: Request, res: Response): Promise<void> => {
       case "Admin":
         UserModel = (await import("../models/Admin")).default;
         break;
-      case "warehouse":
+      case "Warehouse":
         UserModel = (await import("../models/Warehouse")).default;
         break;
       case "Delivery":

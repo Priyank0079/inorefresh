@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50">
+  <path d="M15,25 C15,10 45,10 55,25 C45,40 15,40 15,25 Z M53,25 L65,15 L65,35 Z" fill="#1CA7C7" />
+  <circle cx="25" cy="22" r="2" fill="white" />
+  <text x="75" y="34" font-family="Inter, system-ui, sans-serif" font-weight="800" font-size="24" fill="#072F4A">ZETO</text>
+  <text x="142" y="34" font-family="Inter, system-ui, sans-serif" font-weight="800" font-size="24" fill="#1CA7C7">MART</text>
+</svg>

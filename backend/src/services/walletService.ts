@@ -58,7 +58,7 @@ export const processWithdrawal = async (
 
   // Deduct from warehouse balance
   warehouseDoc.balance -= amount;
-  await warehouse.save();
+  await warehouseDoc.save();
 
   // Mark pending commissions as paid (if withdrawal covers them)
   const pendingCommissions = await Commission.find({
@@ -80,7 +80,7 @@ export const processWithdrawal = async (
   }
 
   return {
-    warehouse,
+    warehouse: warehouseDoc,
     withdrawalAmount: amount,
     paymentReference,
   };
@@ -168,7 +168,7 @@ export const processFundTransfer = async (
   // Get from account
   let fromAccount: any;
   if (fromType === "warehouse") {
-    fromAccount = await warehouse.findById(fromId);
+    fromAccount = await Warehouse.findById(fromId);
   } else {
     fromAccount = await Customer.findById(fromId);
   }
@@ -185,7 +185,7 @@ export const processFundTransfer = async (
   // Get to account
   let toAccount: any;
   if (toType === "warehouse") {
-    toAccount = await warehouse.findById(toId);
+    toAccount = await Warehouse.findById(toId);
   } else {
     toAccount = await Customer.findById(toId);
   }

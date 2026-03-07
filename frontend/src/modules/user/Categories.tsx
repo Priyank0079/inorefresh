@@ -96,9 +96,9 @@ export default function Categories() {
     let link = '';
 
     // Map special categories to home tabs
-    if (name.includes('aqua') || name.includes('auqa')) link = '/?tab=aqua';
-    else if (name.includes('marin')) link = '/?tab=marin';
-    else if (name.includes('bengali') || name.includes('bengoli')) link = '/?tab=bengali';
+    if (name.includes('aqua') || name.includes('auqa')) link = '/?tab=aqua-fish';
+    else if (name.includes('marin') || name.includes('marine')) link = '/?tab=marine-fish';
+    else if (name.includes('bengali') || name.includes('bengoli')) link = '/?tab=bangali-fish';
     else link = `/category/${c.slug || c._id || c.id}`;
 
     return {

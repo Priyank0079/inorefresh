@@ -18,7 +18,7 @@ export const getAllOrders = asyncHandler(
       limit = 10,
       status,
       paymentStatus,
-      Warehouse,
+      warehouseId,
       dateFrom,
       dateTo,
       search,
@@ -42,9 +42,9 @@ export const getAllOrders = asyncHandler(
       ];
     }
 
-    // If Warehouse filter, need to check order items
-    if (Warehouse) {
-      const orderItems = await OrderItem.find({ Warehouse }).distinct("order");
+    // If warehouseId filter, need to check order items
+    if (warehouseId) {
+      const orderItems = await OrderItem.find({ warehouse: warehouseId }).distinct("order");
       query._id = { $in: orderItems };
     }
 
@@ -93,8 +93,8 @@ export const getOrderById = asyncHandler(
             select: "productName mainImage",
           },
           {
-            path: "Warehouse",
-            select: "WarehouseName storeName",
+            path: "warehouse",
+            select: "warehouseName managerName",
           },
         ],
       })
@@ -331,7 +331,7 @@ export const getReturnRequests = asyncHandler(
       limit = 10,
       search = "",
       status,
-      Warehouse,
+      warehouseId,
       dateFrom,
       dateTo,
       sortBy = "createdAt",
@@ -372,10 +372,10 @@ export const getReturnRequests = asyncHandler(
       ];
     }
 
-    // Warehouse filter requires looking up order items
-    if (Warehouse && Warehouse !== "all") {
-      // Find order items for this Warehouse
-      const orderItems = await OrderItem.find({ Warehouse }).select("_id");
+    // warehouse filter requires looking up order items
+    if (warehouseId && warehouseId !== "all") {
+      // Find order items for this warehouse
+      const orderItems = await OrderItem.find({ warehouse: warehouseId }).select("_id");
       const orderItemIds = orderItems.map((oi) => oi._id);
       query.orderItem = { $in: orderItemIds };
     }
@@ -455,7 +455,7 @@ export const getReturnRequestById = asyncHandler(
         path: "orderItem",
         populate: [
           { path: "product", select: "productName mainImage" },
-          { path: "Warehouse", select: "WarehouseName storeName" },
+          { path: "warehouse", select: "warehouseName managerName" },
         ],
       })
       .populate("processedBy", "firstName lastName");

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as warehouseAuthController from "../modules/warehouse/controllers/warehouseAuthController";
-import { otpRateLimiter, loginRateLimiter } from "../middleware/rateLimiter";
+import { loginRateLimiter } from "../middleware/rateLimiter";
 import { authenticate } from "../middleware/auth";
 
 const router = Router();

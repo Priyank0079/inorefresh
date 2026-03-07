@@ -62,6 +62,10 @@ export default function Login() {
     }
   };
 
+  const handleLogoClick = () => {
+    navigate('/');
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden"
@@ -89,14 +93,18 @@ export default function Login() {
 
         {/* Animation Section */}
         <div className="w-full bg-gradient-to-b from-white/50 to-transparent p-6 pb-0 flex flex-col items-center">
-          {/* Logo */}
-          <div className="mb-2">
+          {/* Simple Clean Logo */}
+          <button
+            onClick={handleLogoClick}
+            className="hover:opacity-80 transition-opacity mb-2"
+          >
             <img
-              src="/assets/Inor fresh.png"
-              alt="Inor fresh"
-              className="h-16 w-auto object-contain drop-shadow-md"
+              src="/logo.svg"
+              alt="Zeto Mart"
+              className="h-12 w-auto object-contain drop-shadow-md"
+              loading="lazy"
             />
-          </div>
+          </button>
 
           {/* Lottie Animation */}
           <div className="w-64 h-64 sm:w-72 sm:h-72">
@@ -109,7 +117,7 @@ export default function Login() {
           <p className="text-neutral-500 text-center text-sm mb-6 px-8 leading-relaxed">
             {showOTP
               ? `Enter the code sent to +91 ${mobileNumber}`
-              : 'Groceries delivered in 15 minutes. Login to continue.'}
+              : 'Fresh seafood delivered in minutes. Login to continue.'}
           </p>
         </div>
 
@@ -218,7 +226,7 @@ export default function Login() {
       {/* Footer Branding */}
       <div className="absolute bottom-6 left-0 right-0 text-center">
         <p className="text-xs font-medium text-neutral-500 opacity-60 uppercase tracking-widest">
-          Powered by Inor fresh
+          Powered by Zeto Mart
         </p>
       </div>
 
@@ -249,5 +257,3 @@ export default function Login() {
     </div>
   );
 }
-
-

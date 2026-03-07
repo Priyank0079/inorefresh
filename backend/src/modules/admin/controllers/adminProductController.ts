@@ -1031,7 +1031,7 @@ export const updateProduct = asyncHandler(
       .populate("category", "name")
       .populate("subcategory", "name")
       .populate("brand", "name")
-      .populate("seller", "sellerName storeName");
+      .populate("warehouse", "warehouseName managerName");
 
     if (!product) {
       return res.status(404).json({
@@ -1117,7 +1117,7 @@ export const approveProductRequest = asyncHandler(
       .populate("category", "name")
       .populate("subcategory", "name")
       .populate("brand", "name")
-      .populate("seller", "sellerName storeName");
+      .populate("warehouse", "warehouseName managerName");
 
     if (!product) {
       return res.status(404).json({
@@ -1163,7 +1163,7 @@ export const bulkImportProducts = asyncHandler(
         if (
           !productData.productName ||
           !productData.category ||
-          !productData.seller ||
+          !productData.warehouse ||
           !productData.price
         ) {
           results.failed++;
@@ -1174,13 +1174,13 @@ export const bulkImportProducts = asyncHandler(
           continue;
         }
 
-        // Verify seller exists
-        const seller = await Seller.findById(productData.seller);
-        if (!seller) {
+        // Verify warehouse exists
+        const warehouseDoc = await Warehouse.findById(productData.warehouse);
+        if (!warehouseDoc) {
           results.failed++;
           results.errors.push({
             index: i,
-            error: "Seller not found",
+            error: "Warehouse not found",
           });
           continue;
         }
@@ -1195,7 +1195,7 @@ export const bulkImportProducts = asyncHandler(
         // Create inventory record
         await Inventory.create({
           product: product._id,
-          seller: productData.seller,
+          warehouse: productData.warehouse,
           currentStock: productData.stock || 0,
           availableStock: productData.stock || 0,
         });

@@ -6,7 +6,7 @@ import readline from "readline";
 import Category from "../models/Category";
 import HeaderCategory from "../models/HeaderCategory";
 import Product from "../models/Product";
-import Seller from "../models/Seller";
+import Warehouse from "../models/Warehouse";
 import {
   sendOTP as sendOTPService,
   verifyOTP as verifyOTPService,
@@ -80,7 +80,7 @@ async function seedProducts() {
 
     // 1. Find seller by mobile number
     log(`\nFinding seller with mobile: ${SELLER_MOBILE}`);
-    const seller = await Seller.findOne({ mobile: SELLER_MOBILE });
+    const seller = await Warehouse.findOne({ mobile: SELLER_MOBILE });
 
     if (!seller) {
       log(`❌ Seller not found with mobile number: ${SELLER_MOBILE}`);
@@ -88,12 +88,12 @@ async function seedProducts() {
       process.exit(1);
     }
 
-    log(`✅ Found seller: ${seller.sellerName} (${seller.storeName})`);
+    log(`✅ Found seller: ${seller.warehouseName}`);
 
     // 2. Send OTP for authentication
     log(`\nSending OTP to ${SELLER_MOBILE}...`);
     try {
-      const otpResult = await sendOTPService(SELLER_MOBILE, "Seller", true);
+      const otpResult = await sendOTPService(SELLER_MOBILE, "warehouse", true);
       log(`✅ ${otpResult.message}`);
 
       // Extract OTP from message if in mock mode
@@ -113,7 +113,7 @@ async function seedProducts() {
 
       // Verify OTP
       log(`\nVerifying OTP...`);
-      const isValid = await verifyOTPService(SELLER_MOBILE, otp, "Seller");
+      const isValid = await verifyOTPService(SELLER_MOBILE, otp, "warehouse");
 
       if (!isValid) {
         log(`❌ Invalid or expired OTP. Please try again.`);
@@ -280,7 +280,7 @@ async function seedProducts() {
 
     log("\n✅ Product seeding completed successfully!");
     log(`\nSummary:`);
-    log(`- Seller: ${seller.sellerName} (${seller.storeName})`);
+    log(`- Seller: ${seller.warehouseName}`);
     log(`- Header Category: ${weddingHeader.name}`);
     log(`- Category: ${bridalWearCategory.name}`);
     log(`- Subcategories processed: ${subcategories.length}`);
@@ -296,4 +296,5 @@ async function seedProducts() {
 }
 
 seedProducts();
+
 

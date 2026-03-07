@@ -3,7 +3,7 @@ import { asyncHandler } from "../../../utils/asyncHandler";
 import DeliveryTracking from "../../../models/DeliveryTracking";
 import Order from "../../../models/Order";
 import OrderItem from "../../../models/OrderItem";
-import Seller from "../../../models/Seller";
+import Warehouse from "../../../models/Warehouse";
 import Delivery from "../../../models/Delivery";
 
 /**
@@ -279,30 +279,30 @@ export const getSellerLocationsForOrder = asyncHandler(
       });
     }
 
-    // Get all unique seller IDs from order items
+    // Get all unique warehouse IDs from order items
     const orderItems = await OrderItem.find({ order: orderId });
-    const sellerIds = [...new Set(orderItems.map((item) => item.seller.toString()))];
+    const warehouseIds = [...new Set(orderItems.map((item) => item.warehouse.toString()))];
 
-    // Get seller details including locations
-    const sellers = await Seller.find({ _id: { $in: sellerIds } }).select(
-      "storeName address city latitude longitude"
+    // Get warehouse details including locations
+    const warehouses = await Warehouse.find({ _id: { $in: warehouseIds } }).select(
+      "warehouseName address location"
     );
 
-    // Format seller locations
-    const sellerLocations = sellers
-      .filter((seller) => seller.latitude && seller.longitude) // Only include sellers with location data
-      .map((seller) => ({
-        sellerId: seller._id.toString(),
-        storeName: seller.storeName,
-        address: seller.address,
-        city: seller.city,
-        latitude: parseFloat(seller.latitude || "0"),
-        longitude: parseFloat(seller.longitude || "0"),
+    // Format warehouse locations
+    const warehouseLocations = warehouses
+      .filter((warehouse) => warehouse.location && warehouse.location.coordinates)
+      .map((warehouse) => ({
+        sellerId: warehouse._id.toString(), // Kept for frontend compatibility
+        storeName: warehouse.warehouseName,
+        address: warehouse.address,
+        city: "N/A", // Warehouse typically doesn't have a distinct city field
+        latitude: warehouse.location.coordinates[1],
+        longitude: warehouse.location.coordinates[0],
       }));
 
     return res.status(200).json({
       success: true,
-      data: sellerLocations,
+      data: warehouseLocations,
     });
   }
 );
@@ -332,10 +332,10 @@ export const getSellersInRadius = asyncHandler(
       });
     }
 
-    // Use aggregation to find sellers whose radius covers the current point
-    // 1. Get all sellers with locations
+    // Use aggregation to find warehouses whose radius covers the current point
+    // 1. Get all warehouses with locations
     // 2. Filter by distance <= serviceRadiusKm
-    const sellersInRange = await Seller.aggregate([
+    const warehousesInRange = await Warehouse.aggregate([
       {
         $geoNear: {
           near: { type: "Point", coordinates: [lng, lat] },
@@ -362,7 +362,7 @@ export const getSellersInRadius = asyncHandler(
       {
         $project: {
           _id: 1,
-          storeName: 1,
+          storeName: "$warehouseName", // Map for frontend compatibility
           address: 1,
           serviceRadiusKm: 1,
           distanceFromDeliveryBoy: 1,
@@ -373,8 +373,8 @@ export const getSellersInRadius = asyncHandler(
     return res.status(200).json({
       success: true,
       data: {
-        count: sellersInRange.length,
-        sellers: sellersInRange,
+        count: warehousesInRange.length,
+        sellers: warehousesInRange,
       },
     });
   }
