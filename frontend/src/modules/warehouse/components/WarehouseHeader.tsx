@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import InorFreshLogo from '@assets/Inor fresh.png';
 import { useAuth } from '../../../context/AuthContext';
 import { useThemeContext } from '../../../context/ThemeContext';
 
@@ -53,10 +52,6 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
     setShowSettingsDropdown(false);
   };
 
-  const handleLogoClick = () => {
-    navigate('/Warehouse');
-  };
-
   return (
     <header
       className="bg-white shadow-sm sticky top-0 z-30 border-b-2"
@@ -93,18 +88,6 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
               </svg>
             )}
           </button>
-          {/* Simple Clean Logo */}
-          <button
-            onClick={handleLogoClick}
-            className="hover:opacity-80 transition-opacity"
-          >
-            <img
-              src="/logo.svg"
-              alt="Zeto Mart"
-              className="h-10 sm:h-12 w-auto object-contain cursor-pointer"
-            />
-          </button>
-
           {/* Mobile Logout Button - Only visible on mobile */}
           <div className="ml-auto sm:hidden">
             <button

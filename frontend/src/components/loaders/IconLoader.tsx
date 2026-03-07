@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import Lottie from 'lottie-react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLoading } from '../../context/LoadingContext';
-import './iconLoader.css';
+import LoadingSpinner from '../LoadingSpinner';
 
 interface IconLoaderProps {
   forceShow?: boolean;
@@ -11,39 +10,19 @@ interface IconLoaderProps {
 const IconLoader: React.FC<IconLoaderProps> = ({ forceShow = false }) => {
   const { isRouteLoading } = useLoading();
   const show = isRouteLoading || forceShow;
-  const [animationData, setAnimationData] = useState<any>(null);
-
-  useEffect(() => {
-    if (show && !animationData) {
-      fetch('/animations/loading.json')
-        .then(res => res.json())
-        .then(data => setAnimationData(data))
-        .catch(err => console.error('Failed to load animation:', err));
-    }
-  }, [show, animationData]);
 
   return (
     <AnimatePresence>
       {show && (
         <motion.div
-          className="global-loader-overlay"
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-white/95"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="loader-container">
-            <div className="lottie-wrapper">
-              {animationData ? (
-                <Lottie
-                  animationData={animationData}
-                  loop={true}
-                  className="loader-lottie"
-                />
-              ) : (
-                <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
-              )}
-            </div>
+          <div className="flex min-h-[120px] min-w-[120px] items-center justify-center">
+            <LoadingSpinner size="lg" />
           </div>
         </motion.div>
       )}

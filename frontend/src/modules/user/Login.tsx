@@ -4,7 +4,7 @@ import { sendOTP, verifyOTP } from '../../services/api/auth/customerAuthService'
 import { useAuth } from '../../context/AuthContext';
 import OTPInput from '../../components/OTPInput';
 import Lottie from 'lottie-react';
-import groceryAnimation from '../../../assets/animation/Grocery-animation.json';
+import groceryAnimation from '../../../assets/animation/coming_soon.json';
 import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Login() {

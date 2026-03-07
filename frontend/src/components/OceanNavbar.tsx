@@ -87,13 +87,56 @@ export default function OceanNavbar() {
         );
     };
 
+    const fishCategoryLinks = [
+        {
+            name: 'Marine Fish',
+            id: 'marine-fish',
+            icon: getIcon('Marine Fish', 'marine-fish')
+        },
+        {
+            name: 'Aqua Fish',
+            id: 'aqua-fish',
+            icon: getIcon('Aqua Fish', 'aqua-fish')
+        },
+        {
+            name: 'Bangali Fish',
+            id: 'bangali-fish',
+            icon: getIcon('Bangali Fish', 'bangali-fish')
+        }
+    ];
+
+    const filteredCategories = categories.filter((cat) => {
+        const normalizedName = String(cat.name || '').toLowerCase();
+        const normalizedSlug = String(cat.slug || '').toLowerCase();
+
+        return ![
+            'fish market',
+            'fish-market',
+            'marine fish',
+            'marine-fish',
+            'aqua fish',
+            'aqua-fish',
+            'bangali fish',
+            'bangali-fish',
+            'bengali fish',
+            'bengali-fish'
+        ].includes(normalizedName) && ![
+            'fish-market',
+            'marine-fish',
+            'aqua-fish',
+            'bangali-fish',
+            'bengali-fish'
+        ].includes(normalizedSlug);
+    });
+
     const navLinks = [
         {
             name: 'Home',
             id: 'all',
             icon: getIcon('Home', 'all')
         },
-        ...categories.map(cat => ({
+        ...fishCategoryLinks,
+        ...filteredCategories.map(cat => ({
             name: cat.name,
             id: cat.slug || cat._id,
             icon: getIcon(cat.name, cat.slug || cat._id)
