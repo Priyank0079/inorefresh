@@ -302,7 +302,7 @@ export const createPendingCommissions = async (orderId: string) => {
       if (warehouseDoc) {
         await creditWallet(
           warehouseDoc._id.toString(),
-          "warehouse",
+          "Warehouse",
           netEarning,
           `Sale proceeds from Order #${order.orderNumber}`,
           item.order.toString(),
@@ -419,7 +419,7 @@ export const distributeCommissions = async (orderId: string) => {
 
       await creditWallet(
         warehouseId,
-        "warehouse",
+        "Warehouse",
         data.netAmount,
         `Sale proceeds for order ${order.orderNumber}`,
         orderId,
@@ -628,7 +628,7 @@ export const processPendingCODPayouts = async (
         if (comm.warehouse) {
           await creditWallet(
             comm.warehouse.toString(),
-            "warehouse",
+            "Warehouse",
             netEarning,
             `Sale proceeds for COD order ${order.orderNumber} (Delivery boy payout confirmed)`,
             order._id.toString(),
@@ -762,7 +762,7 @@ export const reverseCommissions = async (orderId: string) => {
           commission.type === "WAREHOUSE"
             ? commission.warehouse
             : commission.deliveryBoy;
-        const userType: "warehouse" | "DELIVERY_BOY" = commission.type === "WAREHOUSE" ? "warehouse" : "DELIVERY_BOY";
+        const userType: "Warehouse" | "DELIVERY_BOY" = commission.type === "WAREHOUSE" ? "Warehouse" : "DELIVERY_BOY";
 
         if (userId) {
           const { debitWallet } = await import("./walletManagementService");

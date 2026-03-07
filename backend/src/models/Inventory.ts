@@ -14,7 +14,6 @@ export interface IInventory extends Document {
   reorderLevel: number;
 
   // Location
-  warehouse?: string;
   location?: string;
 
   // Tracking
@@ -70,10 +69,6 @@ const InventorySchema = new Schema<IInventory>(
     },
 
     // Location
-    warehouse: {
-      type: String,
-      trim: true,
-    },
     location: {
       type: String,
       trim: true,

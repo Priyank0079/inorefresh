@@ -221,7 +221,6 @@ export const getCart = async (req: Request, res: Response) => {
 // Add item to cart
 export const addToCart = async (req: Request, res: Response) => {
     try {
-        const userId = req.user?.userId;
         const { productId, quantity = 1, variation } = req.body;
         const { latitude, longitude } = req.query;
 
@@ -247,6 +246,29 @@ export const addToCart = async (req: Request, res: Response) => {
         const product = await Product.findOne({ _id: productId, status: 'Active', publish: true });
         if (!product) {
             return res.status(404).json({ success: false, message: 'Product not found or unavailable' });
+        }
+
+        // Get or create cart for user
+        const customerId = req.user?.userId;
+        let cart = await Cart.findOne({ customer: customerId });
+        if (!cart) {
+            cart = await Cart.create({ customer: customerId, items: [], total: 0 });
+        }
+
+        // Upsert cart item
+        const existingItem = await CartItem.findOne({ cart: cart._id, product: productId, variation: variation || null });
+        if (existingItem) {
+            existingItem.quantity += Number(quantity);
+            await existingItem.save();
+        } else {
+            const newItem = await CartItem.create({
+                cart: cart._id,
+                product: productId,
+                quantity: Number(quantity),
+                variation: variation || null,
+            });
+            cart.items.push(newItem._id as any);
+            await cart.save();
         }
 
         cart.total = await calculateCartTotal(cart._id);
@@ -390,9 +412,8 @@ export const removeFromCart = async (req: Request, res: Response) => {
         cart.items = cart.items.filter(id => id.toString() !== itemId);
 
         // Calculate total with location if provided
-        let nearbySellerIds: mongoose.Types.ObjectId[] = [];
         if (userLat !== null && userLng !== null && !isNaN(userLat) && !isNaN(userLng)) {
-            nearbySellerIds = await findSellersWithinRange(userLat, userLng);
+            await findSellersWithinRange(userLat, userLng);
         }
 
         cart.total = await calculateCartTotal(cart._id);

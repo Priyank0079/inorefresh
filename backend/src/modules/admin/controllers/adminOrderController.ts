@@ -5,7 +5,7 @@ import OrderItem from "../../../models/OrderItem";
 import Delivery from "../../../models/Delivery";
 import DeliveryAssignment from "../../../models/DeliveryAssignment";
 import Return from "../../../models/Return";
-import { notifyWarehousesOfOrderUpdate } from "../../../services/WarehouseNotificationService";
+import { notifyWarehousesOfOrderUpdate } from "../../../services/warehouseNotificationService";
 import { Server as SocketIOServer } from "socket.io";
 
 /**

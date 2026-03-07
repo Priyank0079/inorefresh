@@ -72,7 +72,7 @@ export const creditWallet = async (
  */
 export const debitWallet = async (
   userId: string,
-  userType: "warehouse" | "DELIVERY_BOY",
+  userType: "Warehouse" | "DELIVERY_BOY",
   amount: number,
   description: string,
   relatedOrderId?: string,
@@ -107,7 +107,7 @@ export const debitWallet = async (
     }
 
     // Update user balance
-    const Model: any = userType === "warehouse" ? Warehouse : Delivery;
+    const Model: any = userType === "Warehouse" ? Warehouse : Delivery;
     const updateQuery = { $inc: { balance: -amount } };
 
     if (session) {
@@ -160,7 +160,7 @@ export const getWalletBalance = async (
  */
 export const getWalletTransactions = async (
   userId: string,
-  userType: "warehouse" | "DELIVERY_BOY",
+  userType: "Warehouse" | "DELIVERY_BOY",
   page: number = 1,
   limit: number = 20,
 ) => {
@@ -202,7 +202,7 @@ export const getWalletTransactions = async (
  */
 export const validateWithdrawal = async (
   userId: string,
-  userType: "warehouse" | "DELIVERY_BOY",
+  userType: "Warehouse" | "DELIVERY_BOY",
   amount: number,
 ) => {
   try {
@@ -242,7 +242,7 @@ export const validateWithdrawal = async (
     }
 
     // Check bank details
-    const Model: any = userType === "warehouse" ? Warehouse : Delivery;
+    const Model: any = userType === "Warehouse" ? Warehouse : Delivery;
     const user = await Model.findById(userId);
 
     if (!user) {
@@ -279,7 +279,7 @@ export const validateWithdrawal = async (
  */
 export const createWithdrawalRequest = async (
   userId: string,
-  userType: "warehouse" | "DELIVERY_BOY",
+  userType: "Warehouse" | "DELIVERY_BOY",
   amount: number,
   paymentMethod: "Bank Transfer" | "UPI",
 ) => {
@@ -291,7 +291,7 @@ export const createWithdrawalRequest = async (
     }
 
     // Get user details
-    const Model: any = userType === "warehouse" ? Warehouse : Delivery;
+    const Model: any = userType === "Warehouse" ? Warehouse : Delivery;
     const user = await Model.findById(userId);
 
     if (!user) {
