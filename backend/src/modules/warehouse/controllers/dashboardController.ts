@@ -16,7 +16,7 @@ export const getDashboardStats = asyncHandler(
 
         // Find orders associated with this Warehouse
         // Since Order model doesn't have WarehouseId, we find orders via OrderItem
-        const WarehouseOrderItems = await OrderItem.find({ Warehouse: WarehouseId }).select('order');
+        const WarehouseOrderItems = await OrderItem.find({ warehouse: WarehouseId }).select('order');
         const WarehouseOrderIds = [...new Set(WarehouseOrderItems.map(item => item.order.toString()))];
 
         // 1. KPI Metrics
@@ -34,15 +34,14 @@ export const getDashboardStats = asyncHandler(
             Order.countDocuments({ _id: { $in: WarehouseOrderIds }, status: "Delivered" }),
             Order.countDocuments({ _id: { $in: WarehouseOrderIds }, status: "Pending" }),
             Order.countDocuments({ _id: { $in: WarehouseOrderIds }, status: "Cancelled" }),
-            Product.countDocuments({ Warehouse: WarehouseId }), // Note: Product model uses 'Warehouse' (ref) or 'WarehouseId'? Checking schema... Product.ts usually uses 'Warehouse' as ref. Checking prev file... Product.countDocuments({ WarehouseId }) was used. Let's verify Product model.
-            Product.distinct("category", { Warehouse: WarehouseId }).then(ids => ids.length),
-            Product.distinct("subcategory", { Warehouse: WarehouseId }).then(ids => ids.length),
+            Product.countDocuments({ warehouse: WarehouseId }), // Fix uppercase W
+            Product.distinct("category", { warehouse: WarehouseId }).then(ids => ids.length),
+            Product.distinct("subcategory", { warehouse: WarehouseId }).then(ids => ids.length),
             Order.distinct("customer", { _id: { $in: WarehouseOrderIds } }).then(ids => ids.length),
         ]);
 
         // 2. Alert Metrics (Low Stock < 5)
-        // Check Product model usage
-        const products = await Product.find({ Warehouse: WarehouseId });
+        const products = await Product.find({ warehouse: WarehouseId });
         let soldOutProducts = 0;
         let lowStockProducts = 0;
 

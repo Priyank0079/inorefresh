@@ -320,11 +320,11 @@ export default function AddToCartAnimation({
             <Link
               ref={linkRef}
               to={linkTo}
-              className={`text-white rounded-full shadow-xl px-3 py-2 flex items-center gap-2 transition-all duration-300 pointer-events-auto border backdrop-blur-sm ${pillClassName}`}
+              className={`text-white rounded-full shadow-xl px-3 py-2 flex items-center gap-2 transition-all duration-300 pointer-events-auto border backdrop-blur-sm hover:bg-[#1FA9C6] hover:border-[#1FA9C6] ${pillClassName}`}
               style={{
-                background: `linear-gradient(to right, ${currentTheme.primary[1]}, ${currentTheme.primary[2]}, ${currentTheme.primary[1]})`,
-                boxShadow: `0 10px 25px ${currentTheme.primary[2]}66`,
-                borderColor: `${currentTheme.primary[2]}4d`
+                backgroundColor: '#0E6F86',
+                boxShadow: `0 10px 25px rgba(14, 111, 134, 0.4)`,
+                borderColor: '#0E6F86'
               }}
             >
               {/* Left: Product thumbnails */}

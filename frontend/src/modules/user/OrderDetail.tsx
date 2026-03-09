@@ -626,7 +626,7 @@ export default function OrderDetail() {
   const handleShare = async () => {
     const shareData = {
       title: `Order #${order?.id?.split("-").slice(-1)[0]}`,
-      text: `Track my Zeto Mart order: Order #${order?.id?.split("-").slice(-1)[0]
+      text: `Track my Inor Fresh order: Order #${order?.id?.split("-").slice(-1)[0]
         }`,
       url: window.location.href,
     };

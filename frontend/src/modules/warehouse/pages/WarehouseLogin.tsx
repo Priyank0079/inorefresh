@@ -70,8 +70,8 @@ export default function WarehouseLogin() {
               <div className="absolute inset-5 rounded-xl bg-white/35 shadow-[0_0_30px_rgba(255,255,255,0.45)]" />
               <div className="absolute -inset-x-2 inset-y-10 bg-gradient-to-r from-transparent via-white/35 to-transparent animate-pulse" />
               <img
-                src="/logo.svg"
-                alt="Zeto Mart"
+                src="/assets/Inor fresh.png"
+                alt="Inor Fresh"
                 className="relative z-10 h-24 w-auto object-contain drop-shadow-[0_6px_16px_rgba(0,0,0,0.25)]"
               />
             </div>
@@ -142,7 +142,7 @@ export default function WarehouseLogin() {
 
       {/* Footer Text */}
       <p className="mt-6 text-xs text-neutral-500 text-center max-w-md">
-        By continuing, you agree to Zeto Mart's Terms of Service and Privacy Policy
+        By continuing, you agree to Inor Fresh's Terms of Service and Privacy Policy
       </p>
     </div>
   );

@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       registerFCMToken(true)
         .then(() => {
           // Send test notification after successful token registration
-          const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+          const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.dhakadsnazzy.com/api/v1';
 
           fetch(`${apiUrl}/fcm-tokens/test`, {
             method: 'POST',

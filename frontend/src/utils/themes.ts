@@ -10,9 +10,10 @@ export interface Theme {
 
 export const themes: Record<string, Theme> = {
   all: {
-    primary: ['#003366', '#004c80', '#006699', '#009999'], // Deep Ocean Blue to Aqua Teal
-    secondary: ['#009999', '#006699', '#004c80'],
-    textColor: '#1a1a1a', // Maintaining dark text color for contrast globally where needed
+    primary: ['#CDEFF7', '#7ED6E8', '#2FB7D3', '#1FA9C6'], // Ocean Atmosphere Gradient
+    secondary: ['#0E6F86', '#1FA9C6', '#2FB7D3'],
+    textColor: '#0E6F86', // Deep ocean color
+
     accentColor: '#FF6F61', // Accent Coral
     bannerText: 'HOUSEFULL',
     saleText: 'SALE',

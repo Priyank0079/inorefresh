@@ -53,7 +53,7 @@ const mapWarehouseToFrontend = (warehouse: WarehouseType): Warehouse => {
 const isSystemDummyWarehouse = (warehouse: WarehouseType): boolean => {
     const email = (warehouse.email || '').toLowerCase();
     const name = (warehouse.warehouseName || '').toLowerCase();
-    return email === 'admin-warehouse@zetomart.com' || name === 'zeto mart admin warehouse';
+    return email === 'admin-warehouse@zetomart.com' || name === 'Inor Fresh admin warehouse';
 };
 
 const isMockWarehouse = (warehouse: WarehouseType): boolean => {

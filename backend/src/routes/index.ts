@@ -68,6 +68,8 @@ router.use("/auth/warehouse", warehouseAuthRoutes);
 router.use("/warehouse/auth", warehouseAuthRoutes); // Alias for compatibility
 router.use("/auth/customer", customerAuthRoutes);
 router.use("/auth/delivery", deliveryAuthRoutes);
+import authRoutes from './authRoutes';
+router.use("/auth", authRoutes);
 
 // FCM Token routes (protected - requires authentication)
 router.use("/fcm-tokens", authenticate, fcmTokenRoutes);

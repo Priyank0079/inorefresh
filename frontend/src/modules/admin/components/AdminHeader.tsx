@@ -84,8 +84,8 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
             className="hover:opacity-80 transition-opacity"
           >
             <img
-              src="/logo.svg"
-              alt="Zeto Mart"
+              src="/assets/Inor fresh.png"
+              alt="Inor Fresh"
               className="h-8 sm:h-10 w-auto object-contain cursor-pointer"
             />
           </button>

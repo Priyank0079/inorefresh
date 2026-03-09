@@ -246,9 +246,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <nav
               className="fixed bottom-0 left-0 right-0 z-50 md:hidden h-[70px] flex items-center justify-around px-2 border-t border-white/10"
               style={{
-                background: 'rgba(7, 47, 74, 0.95)',
+                background: '#1FA9C6',
                 backdropFilter: 'blur(20px)',
-                boxShadow: '0 -10px 40px rgba(0,0,0,0.5)'
+                boxShadow: '0 -10px 40px rgba(0,0,0,0.15)'
               }}
             >
               {[
@@ -299,20 +299,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     >
                       <div className={`
                         flex flex-col items-center justify-center transition-all duration-300
-                        ${isItemActive ? 'text-[#1CA7C7]' : 'text-[#BEEFFF] opacity-60'}
+                        ${isItemActive ? 'text-[#FFFFFF]' : 'text-[rgba(255,255,255,0.7)]'}
                       `}>
                         <div className="relative">
                           {isItemActive && (
                             <motion.div
                               layoutId="bottom-nav-glow"
-                              className="absolute inset-0 bg-[#1CA7C7]/20 rounded-full blur-[10px]"
+                              className="absolute inset-0 bg-[#FFFFFF]/20 rounded-full blur-[10px]"
                             />
                           )}
                           <div className="relative z-10 transition-transform duration-300 transform" style={{ scale: isItemActive ? 1.1 : 1 }}>
                             {item.icon}
                           </div>
                         </div>
-                        <span className={`text-[11px] mt-1 font-bold tracking-wide transition-all ${isItemActive ? 'text-[#1CA7C7]' : 'text-[#BEEFFF]'}`}>
+                        <span className={`text-[11px] mt-1 font-bold tracking-wide transition-all ${isItemActive ? 'text-[#FFFFFF]' : 'text-[rgba(255,255,255,0.7)]'}`}>
                           {item.name}
                         </span>
                       </div>
@@ -320,7 +320,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       {isItemActive && (
                         <motion.div
                           layoutId="bottom-indicator"
-                          className="absolute -bottom-2 w-10 h-[3px] bg-[#1CA7C7] rounded-full"
+                          className="absolute -bottom-2 w-10 h-[3px] bg-[#FFFFFF] rounded-full"
                           transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                         />
                       )}

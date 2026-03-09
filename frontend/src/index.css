@@ -127,10 +127,10 @@ video {
 /* 🌊 THEME CLASSES */
 .ocean-theme-bg {
   background: linear-gradient(180deg,
-      #072F4A 0%,
-      #0B3C5D 30%,
-      #1CA7C7 70%,
-      #BEEFFF 100%) !important;
+      #CDEFF7 0%,
+      #7ED6E8 35%,
+      #2FB7D3 70%,
+      #1FA9C6 100%) !important;
   background-size: 100% 200% !important;
   animation: oceanFlow 15s ease-in-out infinite !important;
   min-height: 100vh;

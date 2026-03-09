@@ -214,10 +214,11 @@ export default function ProductCard({
       whileHover={{ y: -2 }}
       whileTap={{ scale: 0.97 }}
       transition={{ duration: 0.2 }}
-      className={`${categoryStyle ? 'border-2' : 'bg-white shadow-[0_4px_12px_rgba(0,51,102,0.06)]'} rounded-[20px] overflow-hidden flex flex-col relative group`}
+      className={`rounded-[20px] overflow-hidden flex flex-col relative group`}
       style={{
-        backgroundColor: categoryStyle ? `${currentTheme.primary[3]}08` : 'white',
-        borderColor: categoryStyle ? `${currentTheme.primary[3]}20` : 'transparent'
+        background: 'linear-gradient(180deg, #7ED6E8, #2FB7D3)',
+        boxShadow: '0 10px 25px rgba(0,0,0,0.08)',
+        borderColor: 'transparent'
       }}
     >
       {/* 🌊 UNDERWATER CARD ENHANCEMENTS */}
@@ -233,7 +234,7 @@ export default function ProductCard({
         onClick={handleCardClick}
         className="cursor-pointer flex-1 flex flex-col"
       >
-        <div className={`w-full ${compact ? 'h-32 md:h-40' : categoryStyle ? 'h-28 md:h-36' : 'h-40 md:h-48'} bg-neutral-100 flex items-center justify-center overflow-hidden relative`}>
+        <div className={`w-full ${compact ? 'h-32 md:h-40' : categoryStyle ? 'h-28 md:h-36' : 'h-40 md:h-48'} bg-white/40 flex items-center justify-center overflow-hidden relative`}>
           {product.imageUrl || product.mainImage ? (
             <img
               ref={imageRef}
@@ -263,8 +264,8 @@ export default function ProductCard({
 
           {categoryStyle && showBadge && discount > 0 && (
             <div
-              className="absolute top-2 left-2 z-10 text-white text-[10px] font-semibold px-2 py-0.5 rounded"
-              style={{ backgroundColor: currentTheme.primary[3] }}
+              className="absolute top-2 left-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"
+              style={{ backgroundColor: '#7ED6E8', color: '#0E6F86' }}
             >
               {discount}% off
             </div>
@@ -272,8 +273,8 @@ export default function ProductCard({
 
           {!categoryStyle && showBadge && (badgeText || discount > 0) && (
             <Badge
-              variant="destructive"
-              className="absolute top-2 left-2 z-10 text-xs px-2 py-1"
+              className="absolute top-2 left-2 z-10 text-xs px-2 py-1 font-bold shadow-sm border-none"
+              style={{ backgroundColor: '#7ED6E8', color: '#0E6F86' }}
             >
               {badgeText || `${discount}% OFF`}
             </Badge>
@@ -282,7 +283,8 @@ export default function ProductCard({
           {showPackBadge && (
             <Badge
               variant="outline"
-              className="absolute top-2 right-2 z-10 text-xs px-2 py-1 font-medium"
+              className="absolute top-2 right-2 z-10 text-xs px-2 py-1 font-bold shadow-sm border-none"
+              style={{ backgroundColor: '#7ED6E8', color: '#0E6F86' }}
             >
               {product.variations?.[0]?.value || product.pack}
             </Badge>
@@ -340,14 +342,13 @@ export default function ProductCard({
                       e.stopPropagation();
                       handleAdd(e);
                     }}
-                    className={`w-full border rounded-full font-semibold text-xs h-7 px-3 flex items-center justify-center uppercase tracking-wide transition-all ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
+                    className={`w-full border rounded-full font-bold text-xs h-7 px-3 flex items-center justify-center uppercase tracking-wide transition-all ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
                       ? 'border-neutral-300 text-neutral-400 bg-neutral-50 cursor-not-allowed'
-                      : ''
+                      : 'hover:bg-[#1FA9C6] hover:border-[#1FA9C6] text-white shadow-sm'
                       }`}
                     style={!(product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")) ? {
-                      borderColor: currentTheme.primary[3],
-                      color: currentTheme.primary[3],
-                      backgroundColor: 'transparent'
+                      borderColor: '#0E6F86',
+                      backgroundColor: '#0E6F86'
                     } : {}}
                   >
                     {product.isAvailable === false ? 'Out of Range' : ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out") ? 'Out of Stock' : 'ADD'}
@@ -356,8 +357,8 @@ export default function ProductCard({
               </div>
             ) : (
               <div
-                className="flex items-center justify-center gap-1.5 bg-white border rounded-full px-1.5 py-0.5 h-7 w-full shadow-sm"
-                style={{ borderColor: currentTheme.primary[3] }}
+                className="flex items-center justify-center gap-1.5 border rounded-full px-1.5 py-0.5 h-7 w-full shadow-sm transition-colors"
+                style={{ backgroundColor: '#0E6F86', borderColor: '#0E6F86' }}
               >
                 <Button
                   variant="default"
@@ -366,13 +367,13 @@ export default function ProductCard({
                     e.stopPropagation();
                     handleDecrease(e);
                   }}
-                  className="w-5 h-5 p-0 bg-transparent shadow-none"
-                  style={{ color: currentTheme.primary[3] }}
+                  className="w-5 h-5 p-0 bg-transparent shadow-none hover:text-[#7ED6E8]"
+                  style={{ color: 'white' }}
                   aria-label="Decrease quantity"
                 >
                   −
                 </Button>
-                <span className="text-xs font-bold min-w-[1rem] text-center" style={{ color: currentTheme.primary[3] }}>
+                <span className="text-xs font-bold min-w-[1rem] text-center" style={{ color: 'white' }}>
                   {inCartQty}
                 </span>
                 <Button
@@ -383,9 +384,9 @@ export default function ProductCard({
                     e.stopPropagation();
                     handleIncrease(e);
                   }}
-                  className={`w-5 h-5 p-0 bg-transparent shadow-none ${product.isAvailable === false ? 'text-neutral-300 cursor-not-allowed' : ''
+                  className={`w-5 h-5 p-0 bg-transparent shadow-none hover:text-[#7ED6E8] ${product.isAvailable === false ? 'text-[#7ED6E8]/50 cursor-not-allowed' : ''
                     }`}
-                  style={product.isAvailable !== false ? { color: currentTheme.primary[3] } : {}}
+                  style={product.isAvailable !== false ? { color: 'white' } : {}}
                   aria-label="Increase quantity"
                 >
                   +
@@ -401,13 +402,13 @@ export default function ProductCard({
             <>
               {/* 1. Quantity */}
               {!showPackBadge && (product.pack || product.variations?.[0]?.value) && (
-                <p className="text-[9px] text-neutral-600 mb-0.5 leading-tight">
+                <p className="text-[9px] mb-0.5 leading-tight font-medium" style={{ color: '#4A6B73' }}>
                   {product.variations?.[0]?.value || product.pack}
                 </p>
               )}
 
               {/* 2. Name */}
-              <h3 className="text-[10px] font-bold text-neutral-900 mb-0.5 line-clamp-2 leading-tight min-h-[1.75rem] max-h-[1.75rem] overflow-hidden">
+              <h3 className="text-[10px] font-bold mb-0.5 line-clamp-2 leading-tight min-h-[1.75rem] max-h-[1.75rem] overflow-hidden" style={{ color: '#0E6F86' }}>
                 {product.name || product.productName || ''}
               </h3>
 
@@ -422,7 +423,7 @@ export default function ProductCard({
               </div>
 
               {/* 3. Time */}
-              <p className="text-[9px] text-neutral-600 mb-0.5 flex items-center gap-0.5 leading-tight">
+              <p className="text-[9px] mb-0.5 flex items-center gap-0.5 leading-tight font-medium" style={{ color: '#4A6B73' }}>
                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
                   <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
                   <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -432,7 +433,7 @@ export default function ProductCard({
 
               {/* 4. % OFF */}
               {discount > 0 && (
-                <p className="text-[9px] font-semibold mb-0.5 leading-tight" style={{ color: currentTheme.primary[3] }}>
+                <p className="text-[9px] font-black mb-0.5 leading-tight" style={{ color: '#0E6F86' }}>
                   {discount}% OFF
                 </p>
               )}
@@ -440,11 +441,11 @@ export default function ProductCard({
               {/* 5. Price with discount */}
               <div className="mt-auto">
                 <div className="flex items-baseline gap-1 flex-wrap">
-                  <span className="text-[11px] font-bold text-neutral-900 leading-tight">
+                  <span className="text-[12px] font-black leading-tight" style={{ color: '#0E6F86' }}>
                     ₹{displayPrice.toLocaleString('en-IN')}
                   </span>
                   {mrp && mrp > displayPrice && (
-                    <span className="text-[8px] text-neutral-500 line-through leading-tight">
+                    <span className="text-[9px] line-through leading-tight opacity-70" style={{ color: '#0E6F86' }}>
                       ₹{mrp.toLocaleString('en-IN')}
                     </span>
                   )}
@@ -455,12 +456,12 @@ export default function ProductCard({
             // Non-category style layout (original)
             <>
               {!showPackBadge && (
-                <p className={`${compact ? 'text-[10px] md:text-xs' : 'text-xs md:text-sm'} text-neutral-500 mb-1`}>
+                <p className={`${compact ? 'text-[10px] md:text-xs' : 'text-xs md:text-sm'} mb-1 font-medium`} style={{ color: '#4A6B73' }}>
                   {product.variations?.[0]?.value || product.pack}
                 </p>
               )}
 
-              <h3 className={`${compact ? 'text-xs md:text-sm' : 'text-sm md:text-base'} font-semibold text-neutral-900 ${compact ? 'mb-1' : 'mb-2'} line-clamp-2 ${compact ? 'min-h-[2rem]' : 'min-h-[2.5rem]'}`}>
+              <h3 className={`${compact ? 'text-xs md:text-sm' : 'text-sm md:text-base'} font-bold ${compact ? 'mb-1' : 'mb-2'} line-clamp-2 ${compact ? 'min-h-[2rem]' : 'min-h-[2.5rem]'}`} style={{ color: '#0E6F86' }}>
                 {product.name || product.productName || ''}
               </h3>
 
@@ -475,27 +476,27 @@ export default function ProductCard({
               </div>
 
               {showStockInfo && (
-                <p className="text-xs mb-2 font-medium" style={{ color: currentTheme.primary[3] }}>
+                <p className="text-xs mb-2 font-bold" style={{ color: '#0E6F86' }}>
                   Fast delivery
                 </p>
               )}
 
               {showVegetarianIcon && (
                 <div className="flex items-center gap-1 mb-2">
-                  <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: currentTheme.primary[3] }}>
+                  <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#0E6F86' }}>
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
-                  <span className="text-xs text-neutral-600">Vegetarian</span>
+                  <span className="text-xs font-medium" style={{ color: '#4A6B73' }}>Vegetarian</span>
                 </div>
               )}
 
               <div className="mt-auto mb-2">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-base font-bold text-neutral-900">
+                  <span className="text-base font-black" style={{ color: '#0E6F86' }}>
                     ₹{displayPrice}
                   </span>
                   {mrp && mrp > displayPrice && (
-                    <span className="text-xs text-neutral-500 line-through">
+                    <span className="text-xs line-through opacity-70" style={{ color: '#0E6F86' }}>
                       ₹{mrp}
                     </span>
                   )}
@@ -517,14 +518,13 @@ export default function ProductCard({
                   size="sm"
                   disabled={product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")}
                   onClick={handleAdd}
-                  className={`w-full border h-8 text-xs font-semibold uppercase tracking-wide transition-all ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
+                  className={`w-full border h-8 text-xs font-bold uppercase tracking-wide transition-all ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
                     ? 'border-neutral-300 text-neutral-400 bg-neutral-50 cursor-not-allowed'
-                    : ''
+                    : 'hover:bg-[#1FA9C6] hover:border-[#1FA9C6] text-white shadow-sm'
                     }`}
                   style={!(product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")) ? {
-                    borderColor: currentTheme.primary[3],
-                    color: currentTheme.primary[3],
-                    backgroundColor: 'transparent'
+                    borderColor: '#0E6F86',
+                    backgroundColor: '#0E6F86'
                   } : {}}
                 >
                   {product.isAvailable === false ? 'Out of Range' : ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out") ? 'Out of Stock' : 'Add'}
@@ -534,20 +534,20 @@ export default function ProductCard({
               </div>
             ) : (
               <div
-                className="flex items-center justify-center gap-2 bg-white border rounded-full px-2 py-0.5 h-8 shadow-sm"
-                style={{ borderColor: currentTheme.primary[3] }}
+                className="flex items-center justify-center gap-2 border rounded-full px-2 py-0.5 h-8 shadow-sm transition-colors"
+                style={{ backgroundColor: '#0E6F86', borderColor: '#0E6F86' }}
               >
                 <Button
                   variant="default"
                   size="icon"
                   onClick={handleDecrease}
-                  className="w-6 h-6 p-0 bg-transparent shadow-none"
-                  style={{ color: currentTheme.primary[3] }}
+                  className="w-6 h-6 p-0 bg-transparent shadow-none hover:text-[#7ED6E8]"
+                  style={{ color: 'white' }}
                   aria-label="Decrease quantity"
                 >
                   −
                 </Button>
-                <span className="text-xs font-bold min-w-[1.5rem] text-center" style={{ color: currentTheme.primary[3] }}>
+                <span className="text-xs font-bold min-w-[1.5rem] text-center" style={{ color: 'white' }}>
                   {inCartQty}
                 </span>
                 <Button
@@ -555,9 +555,9 @@ export default function ProductCard({
                   size="icon"
                   disabled={product.isAvailable === false}
                   onClick={handleIncrease}
-                  className={`w-6 h-6 p-0 bg-transparent shadow-none ${product.isAvailable === false ? 'text-neutral-300 cursor-not-allowed' : ''
+                  className={`w-6 h-6 p-0 bg-transparent shadow-none hover:text-[#7ED6E8] ${product.isAvailable === false ? 'text-[#7ED6E8]/50 cursor-not-allowed' : ''
                     }`}
-                  style={product.isAvailable !== false ? { color: currentTheme.primary[3] } : {}}
+                  style={product.isAvailable !== false ? { color: 'white' } : {}}
                   aria-label="Increase quantity"
                 >
                   +

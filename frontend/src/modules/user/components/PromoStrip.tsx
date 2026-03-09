@@ -149,7 +149,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                     title: card.title || category?.name || "",
                     categoryId: category?._id || card.categoryId,
                     slug: category?.slug || card.categoryId,
-                    imageUrl: category?.image,
+                    imageUrl: category?.image || category?.imageUrl || card?.image || card?.imageUrl,
                     bgColor: "bg-yellow-50",
                   };
                 });
@@ -186,6 +186,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
               badge: "Up to 50% OFF",
               title: c.name,
               categoryId: c.slug || c._id,
+              imageUrl: c.image || c.imageUrl,
               bgColor: c.color || "bg-yellow-50",
             }));
           }
@@ -289,7 +290,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
           </motion.p>
         </div>
 
-        <div className="max-w-[1280px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[40px]">
+        <div className="max-w-[1280px] mx-auto grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-[16px] md:gap-[24px]">
           {(categoryCards.length > 0 ? categoryCards : [
             { id: "aqua", title: "Aqua Fish", badge: "Premium", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality and taste.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua", bgColor: "transparent" },
             { id: "marin", title: "Marin Fish", badge: "Fresh", description: "Deep sea Bluefin & Tuna. Captured using sustainable methods for premium freshness.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marin", bgColor: "transparent" },
@@ -309,7 +310,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                 <div className="w-3 h-3 rounded-full shadow-[0_0_15px_rgba(28,167,199,0.8)] animate-pulse" style={{ backgroundColor: '#6FD3FF' }}></div>
               </div>
 
-              <div className="w-full h-[280px] rounded-[24px] relative overflow-hidden flex items-center justify-center p-8 mb-8 transition-transform duration-700 group-hover:rotate-1 border border-white/10" style={{ background: 'transparent' }}>
+              <div className="w-full h-[140px] md:h-[180px] rounded-[20px] relative overflow-hidden flex items-center justify-center p-4 mb-4 transition-transform duration-700 group-hover:rotate-1 border border-white/10" style={{ background: 'transparent' }}>
                 <motion.div
                   className="w-full h-full relative z-10 flex items-center justify-center"
                   animate={{ x: [-12, 12, -12], y: [0, -10, 0], rotate: [-3, 3, -3], scale: [1, 1.05, 1] }}
@@ -332,18 +333,18 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                 <div className="flex items-center gap-2 mb-2">
                   <span className="px-2 py-0.5 rounded-full bg-white/10 text-[#6FD3FF] text-[10px] font-bold uppercase tracking-wider">{category.badge}</span>
                 </div>
-                <h3 className="text-white text-[28px] font-black leading-tight mb-3 transition-colors group-hover:text-[#1CA7C7]" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                <h3 className="text-white text-[18px] md:text-[22px] font-black leading-tight mb-2 transition-colors group-hover:text-[#1CA7C7]" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
                   {category.title}
                 </h3>
-                <p className="text-[#DDF5FF] text-[16px] font-medium leading-relaxed mb-8 h-[72px] line-clamp-3 opacity-100">
+                <p className="text-[#DDF5FF] text-[12px] md:text-[14px] font-medium leading-relaxed mb-4 h-auto md:h-[60px] line-clamp-2 md:line-clamp-3 opacity-100">
                   {category.description || `Explore our premium ${category.title} range for the best quality and freshness.`}
                 </p>
-                <div className="flex items-center gap-3 group/btn">
-                  <span className="text-[16px] font-black text-[#9FE8FF] tracking-[0.2em] uppercase transition-all group-hover/btn:text-white" style={{ textShadow: '0 0 10px rgba(111,211,255,0.4)' }}>
-                    EXPLORE DEPTH
+                <div className="flex items-center gap-2 group/btn">
+                  <span className="text-[12px] md:text-[14px] font-black text-[#9FE8FF] tracking-[0.1em] uppercase transition-all group-hover/btn:text-white" style={{ textShadow: '0 0 10px rgba(111,211,255,0.4)' }}>
+                    EXPLORE
                   </span>
                   <motion.div className="flex items-center" animate={{ x: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6FD3FF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="transition-colors group-hover/btn:stroke-white">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6FD3FF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="transition-colors group-hover/btn:stroke-white">
                       <path d="M5 12h14m-7-7 7 7-7 7" />
                     </svg>
                   </motion.div>
