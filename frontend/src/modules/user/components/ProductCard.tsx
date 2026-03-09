@@ -7,11 +7,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useLocation } from '../../../hooks/useLocation';
 import { useToast } from '../../../context/ToastContext'; // Import useToast
 import { addToWishlist, removeFromWishlist, getWishlist } from '../../../services/api/customerWishlistService';
-import Button from '../../../components/ui/button';
-import Badge from '../../../components/ui/badge';
-import StarRating from '../../../components/ui/StarRating';
 import { calculateProductPrice } from '../../../utils/priceUtils';
-import { useThemeContext } from '../../../context/ThemeContext';
 
 interface ProductCardProps {
   product: Product;
@@ -30,11 +26,12 @@ interface ProductCardProps {
 
 export default function ProductCard({
   product,
+  showHeartIcon = true,
+  // Other props kept for compatibility but ignored for the redesign per user rules
   showBadge = false,
-  badgeText,
+  badgeText = '',
   showPackBadge = false,
   showStockInfo = false,
-  showHeartIcon = false,
   showRating = false,
   showVegetarianIcon = false,
   showOptionsText = false,
@@ -47,7 +44,6 @@ export default function ProductCard({
   const { isAuthenticated } = useAuth();
   const { location } = useLocation();
   const { showToast } = useToast(); // Get toast function
-  const { currentTheme } = useThemeContext();
   const imageRef = useRef<HTMLImageElement>(null);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -211,362 +207,101 @@ export default function ProductCard({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.97 }}
-      transition={{ duration: 0.2 }}
-      className={`rounded-[20px] overflow-hidden flex flex-col relative group`}
+      whileHover={{ y: -6, boxShadow: '0 18px 40px rgba(0,0,0,0.12)' }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      onClick={handleCardClick}
+      className="relative bg-[#ffffff] rounded-[24px] p-[22px] flex flex-col group transition-all duration-300 cursor-pointer overflow-hidden border border-gray-100/30"
       style={{
-        background: 'linear-gradient(180deg, #7ED6E8, #2FB7D3)',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.08)',
-        borderColor: 'transparent'
+        boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
+        fontFamily: 'Inter, Poppins, sans-serif'
       }}
     >
-      {/* 🌊 UNDERWATER CARD ENHANCEMENTS */}
-      {/* 1. Very faint top highlight reflection */}
-      <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none z-20" />
+      {/* 3 Availability Badge */}
+      <div className="absolute top-[16px] left-[16px] z-10 px-[10px] py-[4px] rounded-[10px] bg-[#eef2ff] text-[#2563eb] text-[12px] font-[500] uppercase tracking-wide">
+        {badgeText || (product.isAvailable === false ? 'Out of Range' : `${product.stock || 0} AVAILABLE`)}
+      </div>
 
-      {/* 2. Subtle inner glow at 4% opacity */}
-      <div className="absolute inset-0 rounded-[20px] shadow-[inset_0_0_20px_rgba(0,224,198,0.04)] pointer-events-none z-10" />
+      {/* 2 Product Image Area */}
+      <div className="relative mt-8 mb-4">
+        <div className="w-[120px] h-[120px] md:w-[140px] md:h-[140px] bg-[#f3f5f9] rounded-full flex items-center justify-center mx-auto transition-transform duration-500 group-hover:scale-105">
+          <img
+            ref={imageRef}
+            src={product.imageUrl || product.mainImage}
+            alt={product.name || product.productName || 'Product'}
+            className="w-[90px] h-auto md:w-[105px] object-contain drop-shadow-md"
+            referrerPolicy="no-referrer"
+            loading="lazy"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              const parent = target.parentElement;
+              if (parent && !parent.querySelector('.fallback-icon')) {
+                const fallback = document.createElement('div');
+                fallback.className = 'text-2xl font-bold text-gray-300 fallback-icon';
+                fallback.textContent = (product.name || product.productName || '?').charAt(0).toUpperCase();
+                parent.appendChild(fallback);
+              }
+            }}
+          />
+        </div>
+      </div>
 
-      {/* 3. Micro shimmer swipe animation on Hover */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.1] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none z-20" />
-      <div
-        onClick={handleCardClick}
-        className="cursor-pointer flex-1 flex flex-col"
-      >
-        <div className={`w-full ${compact ? 'h-32 md:h-40' : categoryStyle ? 'h-28 md:h-36' : 'h-40 md:h-48'} bg-white/40 flex items-center justify-center overflow-hidden relative`}>
-          {product.imageUrl || product.mainImage ? (
-            <img
-              ref={imageRef}
-              src={product.imageUrl || product.mainImage}
-              alt={product.name || product.productName || 'Product'}
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-              loading="lazy"
-              onError={(e) => {
-                // Hide broken image and show fallback
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                const parent = target.parentElement;
-                if (parent && !parent.querySelector('.fallback-icon')) {
-                  const fallback = document.createElement('div');
-                  fallback.className = 'w-full h-full flex items-center justify-center bg-neutral-100 text-neutral-400 text-4xl fallback-icon';
-                  fallback.textContent = (product.name || product.productName || '?').charAt(0).toUpperCase();
-                  parent.appendChild(fallback);
-                }
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-neutral-100 text-neutral-400 text-4xl">
-              {(product.name || product.productName || '?').charAt(0).toUpperCase()}
-            </div>
-          )}
+      {/* 4 & 5 Product Text Content */}
+      <div className="flex-1 flex flex-col pt-1">
+        <h3 className="text-[17px] font-[600] text-[#072F4A] line-clamp-1 leading-tight mb-1">
+          {product.name || product.productName || ''}
+        </h3>
+        <p className="text-[13px] text-[#6b7280] leading-[1.4] line-clamp-2 min-h-[2.8em]">
+          {product.smallDescription || product.description || `Fresh ${product.name} directly from source.`}
+        </p>
+      </div>
 
-          {categoryStyle && showBadge && discount > 0 && (
-            <div
-              className="absolute top-2 left-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"
-              style={{ backgroundColor: '#7ED6E8', color: '#0E6F86' }}
-            >
-              {discount}% off
-            </div>
-          )}
+      {/* 7 & 8 Bottom Action Area */}
+      <div className="flex justify-between items-center mt-[18px]">
+        <div className="flex flex-col">
+          <span className="text-[22px] font-[700] text-[#072F4A] tracking-tight">
+            ₹{displayPrice.toLocaleString('en-IN')}
+          </span>
+        </div>
 
-          {!categoryStyle && showBadge && (badgeText || discount > 0) && (
-            <Badge
-              className="absolute top-2 left-2 z-10 text-xs px-2 py-1 font-bold shadow-sm border-none"
-              style={{ backgroundColor: '#7ED6E8', color: '#0E6F86' }}
-            >
-              {badgeText || `${discount}% OFF`}
-            </Badge>
-          )}
-
-          {showPackBadge && (
-            <Badge
-              variant="outline"
-              className="absolute top-2 right-2 z-10 text-xs px-2 py-1 font-bold shadow-sm border-none"
-              style={{ backgroundColor: '#7ED6E8', color: '#0E6F86' }}
-            >
-              {product.variations?.[0]?.value || product.pack}
-            </Badge>
-          )}
-
+        <div className="flex items-center gap-[8px]">
           {showHeartIcon && (
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleWishlist(e);
-              }}
-              className="absolute top-2 right-2 z-30 w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all shadow-md group/heart"
+              onClick={toggleWishlist}
+              className="w-[36px] h-[36px] bg-[#eef2ff] rounded-[10px] flex items-center justify-center text-[#6366f1] hover:bg-[#e0e7ff] transition-all active:scale-95"
               aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             >
               <svg
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
-                fill={isWishlisted ? "#ef4444" : "none"}
+                fill={isWishlisted ? "#6366f1" : "none"}
                 xmlns="http://www.w3.org/2000/svg"
-                className={`transition-colors ${isWishlisted ? "text-red-500" : "text-neutral-400 group-hover/heart:text-red-400"}`}
+                stroke="currentColor"
+                strokeWidth="2"
               >
-                <path
-                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
             </button>
           )}
 
-          {(product.variations?.length || 0) >= 2 && (
-            <div className="absolute bottom-2 left-2 z-10">
-              <span className="text-[10px] font-bold text-neutral-700 bg-white/95 backdrop-blur-sm px-2 py-1 rounded shadow-sm border border-neutral-200">
-                {product.variations?.length} Options
-              </span>
-            </div>
-          )}
-        </div>
-
-        {categoryStyle && (
-          <div className="px-2.5 pt-1.5 pb-0">
-            {inCartQty === 0 ? (
-              <div className="flex flex-col items-center w-full">
-                <div className="flex justify-center w-full">
-                  <Button
-                    ref={addButtonRef}
-                    variant="outline"
-                    size="sm"
-                    disabled={product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAdd(e);
-                    }}
-                    className={`w-full border rounded-full font-bold text-xs h-7 px-3 flex items-center justify-center uppercase tracking-wide transition-all ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
-                      ? 'border-neutral-300 text-neutral-400 bg-neutral-50 cursor-not-allowed'
-                      : 'hover:bg-[#1FA9C6] hover:border-[#1FA9C6] text-white shadow-sm'
-                      }`}
-                    style={!(product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")) ? {
-                      borderColor: '#0E6F86',
-                      backgroundColor: '#0E6F86'
-                    } : {}}
-                  >
-                    {product.isAvailable === false ? 'Out of Range' : ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out") ? 'Out of Stock' : 'ADD'}
-                  </Button>
-                </div>
-              </div>
+          <button
+            ref={addButtonRef}
+            disabled={product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")}
+            onClick={handleAdd}
+            className={`w-[36px] h-[36px] rounded-[10px] flex items-center justify-center font-bold transition-all active:scale-95 ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-[#072F4A] text-white hover:bg-[#001D33]'
+              }`}
+          >
+            {inCartQty > 0 ? (
+              <span className="text-[15px]">{inCartQty}</span>
             ) : (
-              <div
-                className="flex items-center justify-center gap-1.5 border rounded-full px-1.5 py-0.5 h-7 w-full shadow-sm transition-colors"
-                style={{ backgroundColor: '#0E6F86', borderColor: '#0E6F86' }}
-              >
-                <Button
-                  variant="default"
-                  size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDecrease(e);
-                  }}
-                  className="w-5 h-5 p-0 bg-transparent shadow-none hover:text-[#7ED6E8]"
-                  style={{ color: 'white' }}
-                  aria-label="Decrease quantity"
-                >
-                  −
-                </Button>
-                <span className="text-xs font-bold min-w-[1rem] text-center" style={{ color: 'white' }}>
-                  {inCartQty}
-                </span>
-                <Button
-                  variant="default"
-                  size="icon"
-                  disabled={product.isAvailable === false}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleIncrease(e);
-                  }}
-                  className={`w-5 h-5 p-0 bg-transparent shadow-none hover:text-[#7ED6E8] ${product.isAvailable === false ? 'text-[#7ED6E8]/50 cursor-not-allowed' : ''
-                    }`}
-                  style={product.isAvailable !== false ? { color: 'white' } : {}}
-                  aria-label="Increase quantity"
-                >
-                  +
-                </Button>
-              </div>
+              <span className="text-[20px] mb-0.5">+</span>
             )}
-          </div>
-        )}
-
-        <div className={`${compact ? 'p-3 md:p-4' : categoryStyle ? 'px-2.5 md:px-3 pt-1.5 md:pt-2 pb-2 md:pb-3' : 'p-4 md:p-5'} flex-1 flex flex-col`}>
-          {categoryStyle ? (
-            // Category Style Layout: Quantity, Name, Time, % off, Price
-            <>
-              {/* 1. Quantity */}
-              {!showPackBadge && (product.pack || product.variations?.[0]?.value) && (
-                <p className="text-[9px] mb-0.5 leading-tight font-medium" style={{ color: '#4A6B73' }}>
-                  {product.variations?.[0]?.value || product.pack}
-                </p>
-              )}
-
-              {/* 2. Name */}
-              <h3 className="text-[10px] font-bold mb-0.5 line-clamp-2 leading-tight min-h-[1.75rem] max-h-[1.75rem] overflow-hidden" style={{ color: '#0E6F86' }}>
-                {product.name || product.productName || ''}
-              </h3>
-
-              {/* 2.5. Rating */}
-              <div className="mb-0.5">
-                <StarRating
-                  rating={(product.rating || (product as any).rating) || 0}
-                  reviewCount={(product.reviews || (product as any).reviewsCount) || 0}
-                  size="sm"
-                  showCount={true}
-                />
-              </div>
-
-              {/* 3. Time */}
-              <p className="text-[9px] mb-0.5 flex items-center gap-0.5 leading-tight font-medium" style={{ color: '#4A6B73' }}>
-                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-                  <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                <span>14 MINS</span>
-              </p>
-
-              {/* 4. % OFF */}
-              {discount > 0 && (
-                <p className="text-[9px] font-black mb-0.5 leading-tight" style={{ color: '#0E6F86' }}>
-                  {discount}% OFF
-                </p>
-              )}
-
-              {/* 5. Price with discount */}
-              <div className="mt-auto">
-                <div className="flex items-baseline gap-1 flex-wrap">
-                  <span className="text-[12px] font-black leading-tight" style={{ color: '#0E6F86' }}>
-                    ₹{displayPrice.toLocaleString('en-IN')}
-                  </span>
-                  {mrp && mrp > displayPrice && (
-                    <span className="text-[9px] line-through leading-tight opacity-70" style={{ color: '#0E6F86' }}>
-                      ₹{mrp.toLocaleString('en-IN')}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </>
-          ) : (
-            // Non-category style layout (original)
-            <>
-              {!showPackBadge && (
-                <p className={`${compact ? 'text-[10px] md:text-xs' : 'text-xs md:text-sm'} mb-1 font-medium`} style={{ color: '#4A6B73' }}>
-                  {product.variations?.[0]?.value || product.pack}
-                </p>
-              )}
-
-              <h3 className={`${compact ? 'text-xs md:text-sm' : 'text-sm md:text-base'} font-bold ${compact ? 'mb-1' : 'mb-2'} line-clamp-2 ${compact ? 'min-h-[2rem]' : 'min-h-[2.5rem]'}`} style={{ color: '#0E6F86' }}>
-                {product.name || product.productName || ''}
-              </h3>
-
-              {/* Always show rating */}
-              <div className={`${compact ? 'mb-1' : 'mb-2'}`}>
-                <StarRating
-                  rating={(product.rating || (product as any).rating) || 0}
-                  reviewCount={(product.reviews || (product as any).reviewsCount) || 0}
-                  size={compact ? 'sm' : 'md'}
-                  showCount={true}
-                />
-              </div>
-
-              {showStockInfo && (
-                <p className="text-xs mb-2 font-bold" style={{ color: '#0E6F86' }}>
-                  Fast delivery
-                </p>
-              )}
-
-              {showVegetarianIcon && (
-                <div className="flex items-center gap-1 mb-2">
-                  <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#0E6F86' }}>
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                  </div>
-                  <span className="text-xs font-medium" style={{ color: '#4A6B73' }}>Vegetarian</span>
-                </div>
-              )}
-
-              <div className="mt-auto mb-2">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-base font-black" style={{ color: '#0E6F86' }}>
-                    ₹{displayPrice}
-                  </span>
-                  {mrp && mrp > displayPrice && (
-                    <span className="text-xs line-through opacity-70" style={{ color: '#0E6F86' }}>
-                      ₹{mrp}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
+          </button>
         </div>
       </div>
-
-      {!categoryStyle && (
-        <div className={`${compact ? 'px-3 pb-3' : 'px-4 pb-4'}`}>
-          <div className="mt-auto">
-            {inCartQty === 0 ? (
-              <div>
-                <Button
-                  ref={addButtonRef}
-                  variant="outline"
-                  size="sm"
-                  disabled={product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")}
-                  onClick={handleAdd}
-                  className={`w-full border h-8 text-xs font-bold uppercase tracking-wide transition-all ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
-                    ? 'border-neutral-300 text-neutral-400 bg-neutral-50 cursor-not-allowed'
-                    : 'hover:bg-[#1FA9C6] hover:border-[#1FA9C6] text-white shadow-sm'
-                    }`}
-                  style={!(product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")) ? {
-                    borderColor: '#0E6F86',
-                    backgroundColor: '#0E6F86'
-                  } : {}}
-                >
-                  {product.isAvailable === false ? 'Out of Range' : ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out") ? 'Out of Stock' : 'Add'}
-                </Button>
-                <div className="h-4 mt-1">
-                </div>
-              </div>
-            ) : (
-              <div
-                className="flex items-center justify-center gap-2 border rounded-full px-2 py-0.5 h-8 shadow-sm transition-colors"
-                style={{ backgroundColor: '#0E6F86', borderColor: '#0E6F86' }}
-              >
-                <Button
-                  variant="default"
-                  size="icon"
-                  onClick={handleDecrease}
-                  className="w-6 h-6 p-0 bg-transparent shadow-none hover:text-[#7ED6E8]"
-                  style={{ color: 'white' }}
-                  aria-label="Decrease quantity"
-                >
-                  −
-                </Button>
-                <span className="text-xs font-bold min-w-[1.5rem] text-center" style={{ color: 'white' }}>
-                  {inCartQty}
-                </span>
-                <Button
-                  variant="default"
-                  size="icon"
-                  disabled={product.isAvailable === false}
-                  onClick={handleIncrease}
-                  className={`w-6 h-6 p-0 bg-transparent shadow-none hover:text-[#7ED6E8] ${product.isAvailable === false ? 'text-[#7ED6E8]/50 cursor-not-allowed' : ''
-                    }`}
-                  style={product.isAvailable !== false ? { color: 'white' } : {}}
-                  aria-label="Increase quantity"
-                >
-                  +
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </motion.div>
   );
 }

@@ -9,6 +9,7 @@ import { Product } from '../../../types/domain';
 import { useWishlist } from '../../../hooks/useWishlist';
 import { calculateProductPrice } from '../../../utils/priceUtils';
 import { UnderwaterEffect } from '../../../components/UnderwaterEffect';
+import ProductCard from './ProductCard';
 
 interface LowestPricesEverProps {
   activeTab?: string;
@@ -23,114 +24,7 @@ const truncateText = (text: string, maxLength: number = 60): string => {
 };
 
 // Product Card Component - Defined outside to prevent recreation on every render
-const ProductCard = memo(({
-  product,
-  cartQuantity,
-  onAddToCart,
-  onUpdateQuantity
-}: {
-  product: Product;
-  cartQuantity: number;
-  onAddToCart: (product: Product, element?: HTMLElement | null) => void;
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-}) => {
-  const navigate = useNavigate();
-  const { isWishlisted, toggleWishlist } = useWishlist(product.id);
-
-  // Get Price and MRP using utility
-  const { displayPrice, mrp, discount, hasDiscount } = calculateProductPrice(product);
-
-  // Use cartQuantity from props
-  const inCartQty = cartQuantity;
-
-  // Get product name, clean it (remove description suffixes), and truncate if needed
-  let productName = product.name || product.productName || '';
-  // Remove common description patterns like " - Fresh & Quality Assured", " - Premium Quality", etc.
-  productName = productName.replace(/\s*-\s*(Fresh|Quality|Assured|Premium|Best|Top|Hygienic|Carefully|Selected).*$/i, '').trim();
-  const displayName = truncateText(productName, 60);
-
-  return (
-    <div
-      className="flex-shrink-0 w-[140px]"
-      style={{ scrollSnapAlign: 'start' }}
-    >
-      <div
-        onClick={() => navigate(`/product/${product.id}`)}
-        className="water-card water-shimmer-border rounded-xl overflow-hidden flex flex-col relative h-full max-h-full cursor-pointer group"
-      >
-        {/* 🌊 UNDERWATER CARD ENHANCEMENTS */}
-        <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/[0.15] to-transparent pointer-events-none z-20" />
-
-        {/* Micro shimmer swipe animation on Hover */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.2] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none z-20" />
-
-        {/* Product Image Area */}
-        <div className="relative block bg-transparent">
-          <div className="w-full h-28 flex items-center justify-center overflow-hidden relative">
-            {product.imageUrl ? (
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="w-full h-full object-contain drop-shadow-[0_8px_15px_rgba(0,0,0,0.3)] group-hover:scale-105 transition-transform duration-500"
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-white/5 text-[#BEEFFF] text-4xl">
-                {(product.name || product.productName || '?').charAt(0).toUpperCase()}
-              </div>
-            )}
-
-            {/* Red Discount Badge - Top Left */}
-            {discount > 0 && (
-              <div className="absolute top-1.5 left-1.5 z-10 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-[0_0_10px_rgba(220,38,38,0.5)]">
-                {discount}% OFF
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Product Details */}
-        <div className="p-2 flex-1 flex flex-col min-h-0 bg-transparent">
-          {/* Product Name */}
-          <div className="mb-1">
-            <h3 className="text-[11px] font-bold text-white line-clamp-2 leading-tight min-h-[2.2rem] max-h-[2.2rem] overflow-hidden" title={productName}>
-              {displayName}
-            </h3>
-          </div>
-
-          {/* Price */}
-          <div className="mb-2">
-            <div className="flex items-baseline gap-1">
-              <span className="text-[14px] font-black text-[#1CA7C7]">
-                ₹{displayPrice.toLocaleString('en-IN')}
-              </span>
-              {hasDiscount && (
-                <span className="text-[10px] text-[#BEEFFF]/40 line-through">
-                  ₹{mrp.toLocaleString('en-IN')}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <Link
-            to={`/category/${product.categoryId || 'all'}`}
-            className="w-full bg-white/5 text-[#BEEFFF] text-[9px] font-bold py-1 rounded-lg flex items-center justify-between px-2 border border-white/5 hover:bg-white/10 transition-all mt-auto"
-          >
-            <span>Details</span>
-            <svg width="6" height="6" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0 0L8 4L0 8Z" fill="#1CA7C7" />
-            </svg>
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.product.id === nextProps.product.id &&
-    prevProps.cartQuantity === nextProps.cartQuantity
-  );
-});
+// Custom ProductCard removed to use global ProductCard component
 
 ProductCard.displayName = 'ProductCard';
 
@@ -349,15 +243,13 @@ export default function LowestPricesEver({ activeTab = 'all', products: adminPro
         style={{ scrollSnapType: 'x mandatory' }}
       >
         {discountedProducts.map((product) => {
-          const cartQuantity = cartItemsMap.get(product.id) || 0;
           return (
-            <ProductCard
-              key={product.id}
-              product={product}
-              cartQuantity={cartQuantity}
-              onAddToCart={handleAddToCart}
-              onUpdateQuantity={handleUpdateQuantity}
-            />
+            <div key={product.id} className="flex-shrink-0 w-[170px] md:w-[200px]">
+              <ProductCard
+                product={product}
+                badgeText={product.mrp && product.mrp > product.price ? `${Math.round(((product.mrp - product.price) / product.mrp) * 100)}% OFF` : undefined}
+              />
+            </div>
           );
         })}
       </div>

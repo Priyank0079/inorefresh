@@ -16,6 +16,7 @@ import { useLoading } from "../../context/LoadingContext";
 import PageLoader from "../../components/PageLoader";
 import CategoryTileSection from "./components/CategoryTileSection";
 import FishCategoryCards from "./components/FishCategoryCards";
+import ProductCard from "./components/ProductCard";
 
 import { useThemeContext } from "../../context/ThemeContext";
 
@@ -240,29 +241,9 @@ export default function Home() {
     };
   }, []);
 
-  const getFilteredProducts = (tabId: string) => {
-    const mapApiProduct = (p: any) => ({
-      id: p._id || p.id,
-      name: p.productName || p.name,
-      description: p.smallDescription || p.description || "",
-      price: p.price || 0,
-      stock: p.stock || 0,
-      rating: p.rating || 0,
-      pack: p.pack || "unit",
-      imageUrl: p.mainImage || p.imageUrl || "/images/image.png",
-      category: tabId,
-    });
-
-    if (tabProducts.length > 0) {
-      return tabProducts.map(mapApiProduct);
-    }
-
-    return [];
-  };
-
   const filteredProducts = useMemo(
-    () => getFilteredProducts(activeTab),
-    [activeTab, tabProducts]
+    () => tabProducts,
+    [tabProducts]
   );
 
   if (loading && tabProducts.length === 0) {
@@ -396,105 +377,10 @@ export default function Home() {
                   };
 
                   return (
-                    <motion.div
-                      key={`fish-card-${activeTab}-${type.id}-${i}`}
-                      className="water-card water-shimmer-border rounded-[24px] hover:-translate-y-2 transition-all duration-300 ease-out flex flex-col overflow-hidden relative group h-full"
-                    >
-                      {/* 🌊 UNDERWATER CARD ENHANCEMENTS */}
-                      <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/[0.15] to-transparent pointer-events-none z-20" />
-
-                      {/* Micro shimmer swipe animation on Hover */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.2] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none z-20" />
-
-                      {/* Image Area - Pure Studio Photography Style */}
-                      <div className="w-full pt-[85%] relative flex-shrink-0 bg-transparent">
-                        <div className="absolute inset-0 flex items-center justify-center p-4">
-                          <img
-                            src={type.imageUrl}
-                            alt={type.name}
-                            className={`w-full h-full object-contain drop-shadow-[0_12px_20px_rgba(0,0,0,0.3)] group-hover:scale-[1.05] transition-transform duration-500 ease-out z-10 ${isOutOfStock ? 'grayscale opacity-50' : ''}`}
-                            loading="lazy"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/images/image.png'; // Fallback
-                            }}
-                          />
-                        </div>
-                        {isOutOfStock ? (
-                          <div className="absolute top-3 right-3 z-30 bg-red-500 text-white text-[9px] font-black px-2 mt-1 py-1 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.5)]">
-                            OUT OF STOCK
-                          </div>
-                        ) : (
-                          <div className="absolute top-3 right-3 z-30 bg-[#1CA7C7]/80 backdrop-blur-md text-white text-[9px] font-black px-2 mt-1 py-1 rounded-full border border-white/20">
-                            {type.stock} AVAILABLE
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Content Area */}
-                      <div className="px-4 pb-4 md:px-5 md:pb-5 flex flex-col flex-grow z-10 bg-transparent">
-                        <div className="flex-grow">
-                          <h3 className="text-white font-bold text-[14px] md:text-[16px] leading-tight mb-1 truncate group-hover:text-[#6FD3FF] transition-colors duration-200">
-                            {type.name}
-                          </h3>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[#BEEFFF]/60 font-medium text-[11px] md:text-[12px] bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
-                              {type.pack}
-                            </span>
-                          </div>
-                          <p className="text-[#BEEFFF]/40 font-medium text-[10px] md:text-[11px] leading-snug line-clamp-2 mb-3">
-                            {type.description || (type as any).desc || `Premium quality fresh ${type.name} sourced directly.`}
-                          </p>
-                        </div>
-
-                        {/* Bottom Row: Rating, Price, Cart Button */}
-                        <div className="flex items-center justify-between mt-auto">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-baseline gap-[2px]">
-                              <span className="text-white font-black text-[18px] tracking-tight">
-                                {formattedPrice}
-                              </span>
-                              <span className="text-[#BEEFFF]/40 font-semibold text-[10px] uppercase">
-                                / KG
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Animated Add to Cart Button or Stepper */}
-                          {quantity > 0 ? (
-                            <div className="flex items-center bg-gradient-to-r from-[#1CA7C7] to-[#072F4A] rounded-full p-0.5 shadow-[0_0_20px_rgba(28,167,199,0.4)] animate-in fade-in zoom-in duration-300 border border-white/10">
-                              <button
-                                onClick={handleDecrement}
-                                className="w-8 h-8 flex items-center justify-center text-white hover:bg-white/10 rounded-full transition-all active:scale-90"
-                              >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                              </button>
-                              <span className="px-2 text-white font-black text-[14px] min-w-[24px] text-center">
-                                {quantity}
-                              </span>
-                              <button
-                                onClick={handleIncrement}
-                                className="w-8 h-8 flex items-center justify-center text-white hover:bg-white/10 rounded-full transition-all active:scale-90"
-                              >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={handleAddToCart}
-                              disabled={isOutOfStock}
-                              className={`h-10 px-4 rounded-full ${isOutOfStock ? 'bg-white/5 cursor-not-allowed text-white/20' : 'bg-gradient-to-br from-[#1CA7C7] to-[#072F4A] text-white hover:scale-105 active:scale-95'} flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(28,167,199,0.3)] transition-all duration-500 relative overflow-hidden group/btn border border-white/10`}
-                            >
-                              <span className="text-[11px] font-black tracking-wider uppercase">Add</span>
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-[14px] h-[14px] relative z-10" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                              </svg>
-                              {!isOutOfStock && <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
+                    <ProductCard
+                      key={`fish-card-${activeTab}-${type._id || type.id}-${i}`}
+                      product={type as Product}
+                    />
                   );
                 })
               )}

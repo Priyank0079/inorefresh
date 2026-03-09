@@ -277,79 +277,121 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
         paddingBottom: "0px",
         marginTop: 0,
       }}>
-      <div id="category-section" className="w-full py-[80px] px-5 md:px-[80px] relative z-10" style={{ background: 'transparent' }}>
-        <div className="max-w-[1280px] mx-auto mb-[60px] text-center md:text-left">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="inline-block px-4 py-1.5 rounded-full bg-[#1CA7C7]/20 text-[#6FD3FF] text-[12px] font-black tracking-[0.2em] uppercase mb-4 border border-[#1CA7C7]/30 backdrop-blur-md">
+      <div id="category-section" className="w-full pt-[30px] pb-[50px] px-5 md:px-[80px] relative z-10" style={{ background: 'transparent' }}>
+        <div className="max-w-[1280px] mx-auto mb-[20px] px-4 md:px-0 text-center md:text-left">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="inline-block px-4 py-1.5 rounded-full bg-[#003B5C]/10 text-[#003B5C] text-[12px] font-black tracking-[0.2em] uppercase mb-4 border border-[#003B5C]/20 backdrop-blur-md">
             Seafood Selection
           </motion.div>
-          <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="text-white text-4xl md:text-[56px] font-black leading-tight tracking-tighter mb-4" style={{ textShadow: '0 0 20px rgba(28,167,199,0.3)' }}>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-[#002D4A] text-[34px] font-[800] leading-tight mb-2 uppercase tracking-tight"
+          >
             Our Top <span className="text-[#1CA7C7]">Categories</span>
           </motion.h2>
-          <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="text-[#BEEFFF]/70 text-base md:text-xl max-w-[650px] font-medium">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-[#003B5C]/70 text-[16px] max-w-[650px] leading-relaxed font-medium"
+          >
             Explore our curated selection of ultra-fresh fish, delivered straight from the deep waters to your table.
           </motion.p>
         </div>
 
-        <div className="max-w-[1280px] mx-auto grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-[16px] md:gap-[24px]">
+        {/* Desktop Layout - Step 8 */}
+        <div className="max-w-[1280px] mx-auto hidden md:grid md:grid-cols-2 gap-[24px]">
           {(categoryCards.length > 0 ? categoryCards : [
-            { id: "aqua", title: "Aqua Fish", badge: "Premium", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality and taste.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua", bgColor: "transparent" },
-            { id: "marin", title: "Marin Fish", badge: "Fresh", description: "Deep sea Bluefin & Tuna. Captured using sustainable methods for premium freshness.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marin", bgColor: "transparent" },
-            { id: "bengali", title: "Bengali Fish", badge: "Tradition", description: "Premium Hilsa & Market favorites. The heartbeat of every traditional kitchen.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali", bgColor: "transparent" }
+            { id: "aqua", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality and taste.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua", bgColor: "transparent" },
+            { id: "marin", title: "Marin Fish", badge: "UP TO 45% OFF", description: "Deep sea Bluefin & Tuna. Captured using sustainable methods for premium freshness.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marin", bgColor: "transparent" },
+            { id: "bengali", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites. The heartbeat of every traditional kitchen.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali", bgColor: "transparent" }
           ]).map((category: any, idx) => (
             <motion.div
               key={category.id}
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: idx * 0.15 }}
-              whileHover={{ y: -12 }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              whileHover={{ y: -12, boxShadow: '0 25px 50px rgba(0,45,74,0.2)' }}
               onClick={() => navigate(category.slug ? `/?tab=${category.slug}` : `/category/${category.categoryId || category.id}`)}
-              className="water-card water-shimmer-border rounded-[32px] p-6 flex flex-col relative group cursor-pointer h-full"
+              className="bg-gradient-to-b from-white to-[#E0F2FE] rounded-[32px] p-8 flex flex-col relative transition-all duration-300 cursor-pointer min-h-[400px] justify-between border border-[#BEEFFF]"
+              style={{ boxShadow: '0 15px 35px rgba(0,45,74,0.12)' }}
             >
-              <div className="absolute top-8 right-8 z-30">
-                <div className="w-3 h-3 rounded-full shadow-[0_0_15px_rgba(28,167,199,0.8)] animate-pulse" style={{ backgroundColor: '#6FD3FF' }}></div>
-              </div>
+              <div className="flex flex-col">
+                {/* Step 6 - Discount Badge */}
+                <div className="absolute top-[20px] left-[20px] z-20 bg-[#002D4A] text-white text-[12px] px-[12px] py-[5px] rounded-[10px] font-bold tracking-wide">
+                  {category.badge}
+                </div>
 
-              <div className="w-full h-[140px] md:h-[180px] rounded-[20px] relative overflow-hidden flex items-center justify-center p-4 mb-4 transition-transform duration-700 group-hover:rotate-1 border border-white/10" style={{ background: 'transparent' }}>
-                <motion.div
-                  className="w-full h-full relative z-10 flex items-center justify-center"
-                  animate={{ x: [-12, 12, -12], y: [0, -10, 0], rotate: [-3, 3, -3], scale: [1, 1.05, 1] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                >
+                {/* Step 3 - Category Image Area */}
+                <div className="w-full h-[200px] rounded-[24px] overflow-hidden mb-4 bg-white/50 border border-[#BEEFFF]/30">
                   {category.imageUrl ? (
                     <img
                       src={category.imageUrl}
                       alt={category.title}
-                      className="w-full h-full object-contain filter drop-shadow(0 20px 40px rgba(0,0,0,0.5)) transition-transform duration-700 group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
                     />
                   ) : (
-                    <div className="text-6xl font-black text-white/20 select-none">{category.title.charAt(0)}</div>
+                    <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-[#BEEFFF]">
+                      {category.title.charAt(0)}
+                    </div>
                   )}
-                </motion.div>
-                <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none"></div>
-              </div>
-
-              <div className="px-2 pb-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2 py-0.5 rounded-full bg-white/10 text-[#6FD3FF] text-[10px] font-bold uppercase tracking-wider">{category.badge}</span>
                 </div>
-                <h3 className="text-white text-[18px] md:text-[22px] font-black leading-tight mb-2 transition-colors group-hover:text-[#1CA7C7]" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+
+                {/* Step 4 & 5 - Title and Description */}
+                <h3 className="text-[22px] font-[800] text-[#002D4A] mt-[4px] tracking-tight uppercase">
                   {category.title}
                 </h3>
-                <p className="text-[#DDF5FF] text-[12px] md:text-[14px] font-medium leading-relaxed mb-4 h-auto md:h-[60px] line-clamp-2 md:line-clamp-3 opacity-100">
-                  {category.description || `Explore our premium ${category.title} range for the best quality and freshness.`}
+                <p className="text-[15px] text-[#003B5C]/70 mt-[6px] leading-[1.5] line-clamp-2 font-medium">
+                  {category.description || `Explore our premium ${category.title} range for the best quality.`}
                 </p>
-                <div className="flex items-center gap-2 group/btn">
-                  <span className="text-[12px] md:text-[14px] font-black text-[#9FE8FF] tracking-[0.1em] uppercase transition-all group-hover/btn:text-white" style={{ textShadow: '0 0 10px rgba(111,211,255,0.4)' }}>
-                    EXPLORE
-                  </span>
-                  <motion.div className="flex items-center" animate={{ x: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6FD3FF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="transition-colors group-hover/btn:stroke-white">
-                      <path d="M5 12h14m-7-7 7 7-7 7" />
-                    </svg>
-                  </motion.div>
-                </div>
               </div>
+
+              {/* Step 7 - Explore Button */}
+              <button className="mt-[18px] bg-[#002D4A] hover:bg-[#001D33] text-white text-[15px] font-bold py-[12px] px-[16px] rounded-[14px] flex items-center justify-center gap-[8px] transition-all w-full shadow-lg shadow-[#002D4A]/20">
+                Explore <span>→</span>
+              </button>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Mobile Layout (Sliding Cards) - Step 9 & 10 */}
+        <div className="flex md:hidden overflow-x-auto scrollbar-hide snap-x mandatory gap-[16px] pb-[20px] px-8 scroll-smooth">
+          {(categoryCards.length > 0 ? categoryCards : [
+            { id: "aqua", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua" },
+            { id: "marin", title: "Marin Fish", badge: "UP TO 45% OFF", description: "Deep sea Bluefin & Tuna. Sustainable methods.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marin" },
+            { id: "bengali", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali" }
+          ]).map((category: any) => (
+            <motion.div
+              key={category.id}
+              onClick={() => navigate(category.slug ? `/?tab=${category.slug}` : `/category/${category.categoryId || category.id}`)}
+              className="flex-shrink-0 min-w-[72%] snap-center bg-gradient-to-b from-white to-[#E0F2FE] rounded-[28px] p-6 flex flex-col relative transition-all duration-300 min-h-[380px] justify-between border border-[#BEEFFF]"
+              style={{ boxShadow: '0 12px 30px rgba(0,45,74,0.12)' }}
+            >
+              <div className="flex flex-col">
+                <div className="absolute top-[16px] left-[16px] z-20 bg-[#002D4A] text-white text-[10px] px-[10px] py-[4px] rounded-[8px] font-bold">
+                  {category.badge}
+                </div>
+                <div className="w-full h-[200px] rounded-[22px] overflow-hidden mb-4 bg-white/50 border border-[#BEEFFF]/30">
+                  <img
+                    src={category.imageUrl}
+                    alt={category.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h3 className="text-[20px] font-[800] text-[#002D4A] mt-[4px] uppercase tracking-tight">
+                  {category.title}
+                </h3>
+                <p className="text-[14px] text-[#003B5C]/70 mt-[4px] leading-[1.5] line-clamp-2 font-medium">
+                  {category.description || `Explore our premium ${category.title} range.`}
+                </p>
+              </div>
+              <button className="mt-[16px] bg-[#002D4A] text-white text-[14px] font-bold py-[12px] px-[14px] rounded-[12px] flex items-center justify-center gap-[6px] w-full shadow-lg shadow-[#002D4A]/10">
+                Explore <span>→</span>
+              </button>
             </motion.div>
           ))}
         </div>
