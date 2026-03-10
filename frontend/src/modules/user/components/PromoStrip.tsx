@@ -321,11 +321,11 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
 
         {/* Desktop Layout - Step 8 */}
         <div className="max-w-[1280px] mx-auto hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-[24px]">
-          {(categoryCards.length > 0 ? categoryCards : [
-            { id: "aqua", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality and taste.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua", bgColor: "transparent" },
-            { id: "marin", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea Bluefin & Tuna. Captured using sustainable methods for premium freshness.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marin", bgColor: "transparent" },
-            { id: "bengali", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites. The heartbeat of every traditional kitchen.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali", bgColor: "transparent" }
-          ]).map((category: any, idx) => (
+          {[
+            { id: "aqua-fish", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality and taste.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua-fish", bgColor: "transparent" },
+            { id: "marine-fish", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea catch. Captured using sustainable methods for premium freshness.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marine-fish", bgColor: "transparent" },
+            { id: "bengali-fish", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites. The heartbeat of every traditional kitchen.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali-fish", bgColor: "transparent" }
+          ].map((category: any, idx) => (
             <motion.div
               key={category.id}
               initial={{ opacity: 0, y: 20 }}
@@ -385,11 +385,11 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
 
         {/* Mobile Layout (Sliding Cards) - Step 9 & 10 */}
         <div className="flex md:hidden overflow-x-auto scrollbar-hide snap-x mandatory gap-[16px] pb-[20px] px-8 scroll-smooth">
-          {(categoryCards.length > 0 ? categoryCards : [
-            { id: "aqua", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua" },
-            { id: "marin", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea Bluefin & Tuna. Sustainable methods.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marin" },
-            { id: "bengali", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali" }
-          ]).map((category: any) => (
+          {[
+            { id: "aqua-fish", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua-fish" },
+            { id: "marine-fish", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea catch. Sustainable methods.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marine-fish" },
+            { id: "bengali-fish", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali-fish" }
+          ].map((category: any) => (
             <motion.div
               key={category.id}
               onClick={() => navigate(category.slug ? `/?tab=${category.slug}` : `/category/${category.categoryId || category.id}`)}

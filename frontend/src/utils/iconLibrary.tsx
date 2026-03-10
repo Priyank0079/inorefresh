@@ -510,6 +510,67 @@ export const ICON_LIBRARY: IconDef[] = [
                 <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07" />
             </svg>
         )
+    },
+    {
+        name: 'masala',
+        label: 'Masala',
+        tags: ['spices', 'masala', 'food', 'flavor'],
+        svg: (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                <path d="M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" />
+                <path d="M18.4 18.4l-2.1-2.1M7.7 7.7l-2.1-2.1" />
+            </svg>
+        )
+    },
+    {
+        name: 'egg',
+        label: 'Egg',
+        tags: ['egg', 'breakfast', 'protein', 'food'],
+        svg: (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <ellipse cx="12" cy="12" rx="7" ry="9" />
+            </svg>
+        )
+    },
+    {
+        name: 'milk',
+        label: 'Milk',
+        tags: ['milk', 'dairy', 'drink', 'beverage'],
+        svg: (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 2h8l1 6H7l1-6z" />
+                <path d="M7 8l-1 14h12l-1-14H7z" />
+                <line x1="10" y1="12" x2="14" y2="12" />
+                <line x1="10" y1="16" x2="14" y2="16" />
+            </svg>
+        )
+    },
+    {
+        name: 'rice',
+        label: 'Rice',
+        tags: ['rice', 'grain', 'food', 'staple'],
+        svg: (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L4 10v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10l-8-8z" />
+                <path d="M12 7l-4 4M12 12l-4 4M12 17l-4 4" />
+                <path d="M16 11l-4 4M16 16l-4 4" />
+            </svg>
+        )
+    },
+    {
+        name: 'oil',
+        label: 'Oil',
+        tags: ['oil', 'cooking', 'bottle', 'fat'],
+        svg: (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 2h8v4H8V2z" />
+                <path d="M7 6v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6H7z" />
+                <path d="M12 10v6" />
+                <circle cx="12" cy="18" r="1" />
+            </svg>
+        )
     }
 ];
 

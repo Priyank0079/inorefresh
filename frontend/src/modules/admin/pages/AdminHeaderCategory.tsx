@@ -9,11 +9,16 @@ import {
 import { themes } from '../../../utils/themes';
 import { ICON_LIBRARY, getIconByName, IconDef } from '../../../utils/iconLibrary';
 
-const FISH_ICON_NAMES = ['aqua-fish', 'marin-fish', 'bengali-fish'];
+const FISH_ICON_NAMES = ['aqua-fish', 'marin-fish', 'bengali-fish', 'masala', 'egg', 'milk', 'rice', 'oil'];
 const FISH_RELATED_CATEGORIES = [
   { value: 'aqua-fish', label: 'Aqua fish' },
   { value: 'marine-fish', label: 'Marine fish' },
   { value: 'bangali-fish', label: 'Bangali fish' },
+  { value: 'masala', label: 'Masala' },
+  { value: 'egg', label: 'Egg' },
+  { value: 'milk', label: 'Milk' },
+  { value: 'rice', label: 'Rice' },
+  { value: 'oil', label: 'Oil' },
 ];
 
 export default function AdminHeaderCategory() {
@@ -293,7 +298,10 @@ export default function AdminHeaderCategory() {
                     teal: 'Teal',
                     dark: 'Dark',
                     hotpink: 'Hot Pink',
-                    gold: 'Gold'
+                    gold: 'Gold',
+                    'aqua-fish': 'Cyan (Aqua)',
+                    'marine-fish': 'Ocean Blue',
+                    'bangali-fish': 'Deep Orange'
                   };
 
                   const displayColor = colorNames[themeKey] || themeKey;

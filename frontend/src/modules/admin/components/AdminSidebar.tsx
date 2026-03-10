@@ -660,12 +660,15 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
 
   return (
     <aside
-      className="w-64 h-screen flex flex-col transition-colors duration-300"
-      style={{ backgroundColor: currentTheme.primary[0] }}
+      className="w-64 h-screen flex flex-col transition-colors duration-300 shadow-xl z-50 border-r border-white/5"
+      style={{
+        background: 'linear-gradient(180deg, #012138 0%, #001D33 100%)',
+        color: '#ffffff'
+      }}
     >
       <div
         className="flex justify-end p-4 lg:hidden"
-        style={{ borderBottom: `1px solid ${currentTheme.primary[1]}` }}
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       >
         <button
           onClick={onClose}
@@ -690,7 +693,7 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
 
       <div
         className="p-4"
-        style={{ borderBottom: `1px solid ${currentTheme.primary[1]}` }}
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       >
         <div className="relative">
           <input
@@ -700,8 +703,8 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
             placeholder="Search Menu Ctrl + F"
             className="w-full px-3 py-2 pl-10 border rounded text-white text-sm focus:outline-none focus:ring-2"
             style={{
-              backgroundColor: 'rgba(0,0,0,0.2)',
-              borderColor: currentTheme.primary[1],
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              borderColor: 'rgba(255,255,255,0.1)',
               color: 'white'
             }}
           />
@@ -727,7 +730,7 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
             : "text-white/70 hover:text-white"
             }`}
           style={{
-            backgroundColor: isActive("/admin") ? currentTheme.primary[1] : 'transparent'
+            backgroundColor: isActive("/admin") ? 'rgba(255,255,255,0.1)' : 'transparent'
           }}
         >
           <svg
@@ -750,14 +753,12 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
         </button>
       </div>
 
-      <nav
-        className="flex-1 py-4 overflow-y-auto admin-sidebar-nav"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+      <nav className="flex-1 py-4 overflow-y-auto admin-sidebar-nav">
         {filteredSections.map((section, sectionIndex) => (
           <div key={sectionIndex} className="mb-6">
             <h3
               className="px-4 mb-2 text-xs font-bold uppercase tracking-wider"
-              style={{ color: `${currentTheme.primary[3]}cc` }}
+              style={{ color: 'rgba(255,255,255,0.4)' }}
             >
               {section.title}
             </h3>
@@ -781,7 +782,7 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
                         : "text-white/70 hover:text-white hover:bg-white/10"
                         }`}
                       style={{
-                        backgroundColor: (active && !item.hasSubmenu) ? currentTheme.primary[1] : 'transparent'
+                        backgroundColor: (active && !item.hasSubmenu) ? 'rgba(255,255,255,0.1)' : 'transparent'
                       }}
                     >
                       <div className="flex items-center gap-2">
