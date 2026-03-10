@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Category from "../../../models/Category";
+import HeaderCategory from "../../../models/HeaderCategory";
 import SubCategory from "../../../models/SubCategory";
 import Product from "../../../models/Product";
 import mongoose from "mongoose";
@@ -153,6 +154,7 @@ export const getCategoryById = async (req: Request, res: Response) => {
 
     console.log(`[getCategoryById] Looking for category with id/slug: ${id}`);
     let category;
+    let isHeaderCategory = false;
 
     // Try to find by ObjectId first (only active categories for public endpoint)
     if (mongoose.Types.ObjectId.isValid(id)) {
@@ -160,22 +162,47 @@ export const getCategoryById = async (req: Request, res: Response) => {
         _id: id,
         status: "Active",
       }).lean();
+
+      if (!category) {
+        category = await HeaderCategory.findOne({
+          _id: id,
+          status: "Published"
+        }).lean();
+        if (category) isHeaderCategory = true;
+      }
     }
 
     // If not found by ID, try by slug (case-insensitive, only active categories)
     if (!category) {
-      // Try exact slug match first
+      // Try Category slug first
       category = await Category.findOne({
         slug: id,
         status: "Active",
       }).lean();
 
-      // Try case-insensitive slug match
+      if (!category) {
+        // Try HeaderCategory slug
+        category = await HeaderCategory.findOne({
+          slug: id,
+          status: "Published"
+        }).lean();
+        if (category) isHeaderCategory = true;
+      }
+
+      // Try case-insensitive slug match if still not found
       if (!category) {
         category = await Category.findOne({
           slug: { $regex: new RegExp(`^${id}$`, "i") },
           status: "Active",
         }).lean();
+
+        if (!category) {
+          category = await HeaderCategory.findOne({
+            slug: { $regex: new RegExp(`^${id}$`, "i") },
+            status: "Published"
+          }).lean();
+          if (category) isHeaderCategory = true;
+        }
       }
 
       // Try name match as fallback (case-insensitive)
@@ -187,13 +214,21 @@ export const getCategoryById = async (req: Request, res: Response) => {
           status: "Active",
         }).lean();
 
+        if (!category) {
+          category = await HeaderCategory.findOne({
+            name: { $regex: new RegExp(`^${namePattern}$`, "i") },
+            status: "Published"
+          }).lean();
+          if (category) isHeaderCategory = true;
+        }
+
         // If not found, try replacing " and " with " & " specifically for categories like "Vegetables & Fruits"
         if (!category && id.includes("and")) {
-           const withAmpersand = id.replace(/-and-/g, " & ").replace(/-/g, " ");
-           category = await Category.findOne({
-             name: { $regex: new RegExp(`^${withAmpersand}$`, "i") },
-             status: "Active",
-           }).lean();
+          const withAmpersand = id.replace(/-and-/g, " & ").replace(/-/g, " ");
+          category = await Category.findOne({
+            name: { $regex: new RegExp(`^${withAmpersand}$`, "i") },
+            status: "Active",
+          }).lean();
         }
       }
     }
@@ -240,20 +275,25 @@ export const getCategoryById = async (req: Request, res: Response) => {
     // Ensure category._id is treated as ObjectId for the query
     let catId = category._id;
     if (typeof catId === 'string') {
-        try {
-            catId = new mongoose.Types.ObjectId(catId);
-        } catch (e) {
-            console.error("Failed to cast category ID to ObjectId:", e);
-        }
+      try {
+        catId = new mongoose.Types.ObjectId(catId);
+      } catch (e) {
+        console.error("Failed to cast category ID to ObjectId:", e);
+      }
     }
 
     // Query for BOTH ObjectId and String representation to be safe against legacy data references
     // Use Category model to find subcategories (children) instead of separate SubCategory model
-    // Using parentId to find children
-    const subcategories = await Category.find({
-      parentId: { $in: [catId, catId.toString()] },
-      status: "Active"
-    })
+    // If it's a HeaderCategory, we find categories that have this headerCategoryId
+    // Otherwise we find categories that have this parentId
+    const subQuery: any = { status: "Active" };
+    if (isHeaderCategory) {
+      subQuery.headerCategoryId = { $in: [catId, catId.toString()] };
+    } else {
+      subQuery.parentId = { $in: [catId, catId.toString()] };
+    }
+
+    const subcategories = await Category.find(subQuery)
       .select("name image order slug icon")
       .sort({
         order: 1,

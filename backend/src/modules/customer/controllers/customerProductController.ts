@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Product from "../../../models/Product";
 import Category from "../../../models/Category";
+import HeaderCategory from "../../../models/HeaderCategory";
 import SubCategory from "../../../models/SubCategory";
 import mongoose from "mongoose";
 import { findSellersWithinRange } from "../../../utils/locationHelper";
@@ -53,8 +54,13 @@ export const getProducts = async (req: Request, res: Response) => {
 
       // Build query - only check status if model has status field (Category has it, SubCategory might not)
       const baseQuery: any = {};
-      if (modelName === "Category") {
+      if (modelName === "Category" || modelName === "HeaderCategory") {
         baseQuery.status = "Active";
+      }
+      // Special case for HeaderCategory which uses 'Published' status
+      if (modelName === "HeaderCategory") {
+        delete baseQuery.status;
+        baseQuery.status = "Published";
       }
 
       // Try exact slug match first
@@ -102,12 +108,25 @@ export const getProducts = async (req: Request, res: Response) => {
     };
 
     if (category) {
+      // 1. Try resolving as a regular Category (subcategory level)
       const categoryId = await resolveId(
         Category,
         category as string,
         "Category"
       );
-      if (categoryId) query.category = categoryId;
+      if (categoryId) {
+        query.category = categoryId;
+      } else {
+        // 2. Try resolving as a HeaderCategory (top level)
+        const headerId = await resolveId(
+          HeaderCategory,
+          category as string,
+          "HeaderCategory"
+        );
+        if (headerId) {
+          query.headerCategoryId = headerId;
+        }
+      }
     }
 
     if (subcategory) {
