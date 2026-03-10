@@ -45,12 +45,27 @@ export default function Categories() {
             if (id) mergedById.set(id, c);
           });
 
-          const categoryList = Array.from(mergedById.values());
+          const categoryList = Array.from(mergedById.values()).filter((c: any) => {
+            const name = (c.name || "").toLowerCase();
+            const slug = (c.slug || "").toLowerCase();
+            return (
+              name.includes("aqua") ||
+              name.includes("marine") ||
+              name.includes("bangali") ||
+              name.includes("bengali") ||
+              slug.includes("aqua") ||
+              slug.includes("marine") ||
+              slug.includes("bangali") ||
+              slug.includes("bengali")
+            );
+          });
+
           if (categoryList.length === 0) {
-            setError("No categories available right now.");
+            setError("No fish categories available right now.");
           }
 
           data.categories = categoryList;
+          data.homeSections = []; // Remove other dynamic sections as requested
           setHomeData(data);
         } else {
           setError("Failed to load categories. Please try again.");
@@ -122,11 +137,6 @@ export default function Categories() {
 
   return (
     <div className="pb-4 md:pb-8 bg-white min-h-screen">
-      {/* Page Header */}
-      <div className="px-4 py-4 md:px-6 md:py-6 bg-white border-b border-neutral-200 sticky top-0 z-10 shadow-sm">
-        <h1 className="text-xl md:text-2xl font-bold text-neutral-900">Categories</h1>
-      </div>
-
       <div className="bg-neutral-50 pt-1 space-y-5 md:space-y-8 md:pt-4">
         {/* Render all admin-created home sections */}
         {homeData.homeSections && homeData.homeSections.length > 0 ? (
@@ -190,9 +200,9 @@ export default function Categories() {
         {homeData.categories && homeData.categories.length > 0 ? (
           <div className="mt-4">
             <CategoryTileSection
-              title="All Categories"
+              title="Fish Categories"
               tiles={homeData.categories.map(mapCategoryToLink)}
-              columns={4}
+              columns={3}
             />
           </div>
         ) : (

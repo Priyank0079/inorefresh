@@ -84,6 +84,9 @@ export default function Home() {
   useEffect(() => {
     const fetchTabProducts = async () => {
       try {
+        setIsTabLoading(true); // Ensure loading state is active
+        setTabProducts([]); // Clear old products immediately for "fresh" feel
+
         const params: any = { limit: 40 };
         if (activeTab !== "all") {
           params.category = activeTab;
@@ -102,6 +105,8 @@ export default function Home() {
       } catch (error) {
         console.error(`Failed to fetch products for tab ${activeTab}:`, error);
         setTabProducts([]);
+      } finally {
+        setIsTabLoading(false);
       }
     };
 
@@ -308,7 +313,7 @@ export default function Home() {
                 opacity: 1,
                 y: 0,
                 transition: {
-                  duration: 0.20, // 200ms fade in as requested
+                  duration: 0.20,
                   ease: "easeOut"
                 }
               }}
@@ -316,13 +321,18 @@ export default function Home() {
                 opacity: 0,
                 y: 0,
                 transition: {
-                  duration: 0.15, // 150ms fade out as requested
+                  duration: 0.15,
                   ease: "easeIn"
                 }
               }}
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 md:gap-6 w-full"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 md:gap-6 w-full min-h-[400px]"
             >
-              {filteredProducts.length === 0 ? (
+              {isTabLoading ? (
+                <div className="col-span-full py-20 flex flex-col items-center justify-center">
+                  <FishLoader />
+                  <p className="text-[#6FD3FF] mt-4 font-bold animate-pulse uppercase tracking-[0.2em] text-[12px]">Diving Deeper...</p>
+                </div>
+              ) : filteredProducts.length === 0 ? (
                 <div className="col-span-full py-20 flex flex-col items-center justify-center text-center">
                   <div className="w-20 h-20 bg-white/5 backdrop-blur-md rounded-full flex items-center justify-center mb-4 border border-white/10">
                     <svg className="w-10 h-10 text-[#6FD3FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
