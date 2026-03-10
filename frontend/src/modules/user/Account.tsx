@@ -61,23 +61,29 @@ export default function Account() {
   // Show login/signup prompt for unregistered users
   if (!user) {
     return (
-      <div className="pb-24 md:pb-8 min-h-screen relative overflow-hidden flex items-center justify-center p-6">
-        <div className="water-card water-shimmer-border rounded-[32px] p-8 max-w-md w-full text-center relative z-10">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#1CA7C7] to-[#0B3C5D] flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(28,167,199,0.4)]">
+      <div className="pb-24 md:pb-8 min-h-screen relative overflow-hidden flex items-center justify-center p-6 bg-gradient-to-b from-[#CDEFF7] to-[#1FA9C6]">
+        {/* Decorative Background Fish Icons */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
+          <div className="absolute top-[10%] left-[5%] animate-pulse"><svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#0B3C5D" strokeWidth="0.5"><path d="M2 12c.5-2.5 2.5-4 5-4 4 0 7 4 12 4 1.5 0 3-1 3-3v10c0-2-1.5-3-3-3-5 0-8 4-12 4-2.5 0-4.5-1.5-5-4z" /></svg></div>
+          <div className="absolute bottom-[20%] right-[10%] rotate-12 animate-pulse"><svg width="160" height="160" viewBox="0 0 24 24" fill="none" stroke="#0B3C5D" strokeWidth="0.5"><path d="M2 12c.5-2.5 2.5-4 5-4 4 0 7 4 12 4 1.5 0 3-1 3-3v10c0-2-1.5-3-3-3-5 0-8 4-12 4-2.5 0-4.5-1.5-5-4z" /></svg></div>
+        </div>
+
+        <div className="bg-white/80 backdrop-blur-2xl rounded-[40px] p-10 max-w-md w-full text-center relative z-10 shadow-[0_25px_60px_rgba(7,47,74,0.15)] border border-white">
+          <div className="w-24 h-24 rounded-3xl bg-[#0B3C5D] flex items-center justify-center mx-auto mb-8 shadow-xl">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
           </div>
-          <h1 className="text-3xl font-black text-white mb-3 uppercase tracking-tighter">Welcome Mate!</h1>
-          <p className="text-[#BEEFFF] opacity-80 mb-8 font-medium">
+          <h1 className="text-[34px] font-black text-[#072F4A] mb-4 uppercase tracking-tighter leading-none italic">Welcome Mate!</h1>
+          <p className="text-[#0B3C5D]/70 mb-10 font-semibold text-lg leading-relaxed">
             Dive into your personal dashboard to track orders and manage your fresh catch.
           </p>
           <motion.button
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.02, y: -2 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/login')}
-            className="w-full py-4 rounded-2xl font-black text-white bg-gradient-to-r from-[#1CA7C7] to-[#0B3C5D] shadow-[0_10px_30px_rgba(28,167,199,0.3)] transition-all uppercase tracking-widest"
+            className="w-full py-5 rounded-2xl font-black text-white bg-gradient-to-r from-[#1CA7C7] to-[#0B3C5D] shadow-2xl transition-all uppercase tracking-widest text-sm"
           >
             Dive In (Login)
           </motion.button>

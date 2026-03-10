@@ -320,7 +320,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
         </div>
 
         {/* Desktop Layout - Step 8 */}
-        <div className="max-w-[1280px] mx-auto hidden md:grid md:grid-cols-2 gap-[24px]">
+        <div className="max-w-[1280px] mx-auto hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-[24px]">
           {(categoryCards.length > 0 ? categoryCards : [
             { id: "aqua", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality and taste.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua", bgColor: "transparent" },
             { id: "marin", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea Bluefin & Tuna. Captured using sustainable methods for premium freshness.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marin", bgColor: "transparent" },
@@ -344,12 +344,12 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                 </div>
 
                 {/* Step 3 - Category Image Area */}
-                <div className="w-full h-[200px] rounded-[24px] overflow-hidden mb-4 bg-white/50 border border-[#BEEFFF]/30 flex items-center justify-center">
+                <div className="w-full h-[200px] rounded-[24px] overflow-hidden mb-4 bg-white border border-[#BEEFFF]/40 flex items-center justify-center p-4">
                   {category.imageUrl ? (
                     <img
                       src={category.imageUrl}
                       alt={category.title}
-                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                      className="w-full h-full object-contain transition-transform duration-700 hover:scale-110"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         if (category.fallbackImageUrl && target.src !== window.location.origin + category.fallbackImageUrl) {
@@ -393,19 +393,19 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
             <motion.div
               key={category.id}
               onClick={() => navigate(category.slug ? `/?tab=${category.slug}` : `/category/${category.categoryId || category.id}`)}
-              className="flex-shrink-0 min-w-[72%] snap-center bg-gradient-to-b from-white to-[#E0F2FE] rounded-[28px] p-6 flex flex-col relative transition-all duration-300 min-h-[380px] justify-between border border-[#BEEFFF]"
+              className="flex-shrink-0 min-w-[300px] md:min-w-[72%] snap-center bg-gradient-to-b from-white to-[#E0F2FE] rounded-[28px] p-6 flex flex-col relative transition-all duration-300 min-h-[400px] justify-between border border-[#BEEFFF]"
               style={{ boxShadow: '0 12px 30px rgba(0,45,74,0.12)' }}
             >
               <div className="flex flex-col">
                 <div className="absolute top-[16px] left-[16px] z-20 bg-[#002D4A] text-white text-[10px] px-[10px] py-[4px] rounded-[8px] font-bold">
                   {category.badge}
                 </div>
-                <div className="w-full h-[200px] rounded-[22px] overflow-hidden mb-4 bg-white/50 border border-[#BEEFFF]/30 flex items-center justify-center">
+                <div className="w-full h-[200px] rounded-[22px] overflow-hidden mb-4 bg-white border border-[#BEEFFF]/40 flex items-center justify-center p-4">
                   {category.imageUrl ? (
                     <img
                       src={category.imageUrl}
                       alt={category.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         const lowerTitle = category.title.toLowerCase();
