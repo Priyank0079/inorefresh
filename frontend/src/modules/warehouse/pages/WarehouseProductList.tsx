@@ -46,7 +46,33 @@ export default function WarehouseProductList() {
       try {
         const response = await getCategories();
         if (response.success && response.data) {
-          setAllCategories(response.data);
+          const filtered = (response.data || []).filter((cat: any) => {
+            const name = (cat.name || "").toLowerCase();
+            return (
+              name.includes("aqua") ||
+              name.includes("marine") ||
+              name.includes("marin") ||
+              name.includes("bangali") ||
+              name.includes("bengali") ||
+              name.includes("bengoli") ||
+              name.includes("freshwater") ||
+              name.includes("ocean") ||
+              name.includes("traditional")
+            );
+          }).map((cat: any) => {
+            const name = (cat.name || "").toLowerCase();
+            if (name.includes("aqua") || name.includes("freshwater") || name.includes("river")) {
+              return { ...cat, name: "Aqua Fish" };
+            }
+            if (name.includes("marine") || name.includes("marin") || name.includes("ocean") || name.includes("sea")) {
+              return { ...cat, name: "Marine Fish" };
+            }
+            if (name.includes("bangali") || name.includes("bengali") || name.includes("bengoli") || name.includes("traditional")) {
+              return { ...cat, name: "Bengali Fish" };
+            }
+            return cat;
+          });
+          setAllCategories(filtered);
         }
       } catch (err) {
         console.error("Failed to fetch categories:", err);
@@ -86,7 +112,22 @@ export default function WarehouseProductList() {
 
       const response = await getProducts(params);
       if (response.success && response.data) {
-        setProducts(response.data);
+        // Only show products belonging to our three main fish categories
+        const filteredProducts = (response.data || []).filter((p: any) => {
+          const catName = (p.category?.name || "").toLowerCase();
+          return (
+            catName.includes("aqua") ||
+            catName.includes("marine") ||
+            catName.includes("marin") ||
+            catName.includes("bangali") ||
+            catName.includes("bengali") ||
+            catName.includes("bengoli") ||
+            catName.includes("freshwater") ||
+            catName.includes("ocean") ||
+            catName.includes("traditional")
+          );
+        });
+        setProducts(filteredProducts);
         // Extract pagination info if available
         if (response.pagination) {
           setTotalPages(response.pagination.pages);
@@ -155,6 +196,14 @@ export default function WarehouseProductList() {
 
   // ... (rest of logic: flatten, filter, sort)
 
+  const formatCategoryName = (name: string) => {
+    const n = (name || "").toLowerCase();
+    if (n.includes("aqua") || n.includes("freshwater") || n.includes("river")) return "Aqua Fish";
+    if (n.includes("marine") || n.includes("marin") || n.includes("ocean") || n.includes("sea")) return "Marine Fish";
+    if (n.includes("bangali") || n.includes("bengali") || n.includes("bengoli") || n.includes("traditional")) return "Bengali Fish";
+    return name;
+  };
+
   // Flatten products with variations for display
   // Handle products with no variations by creating a default variation entry
   const allVariations = products.flatMap((product) => {
@@ -169,7 +218,7 @@ export default function WarehouseProductList() {
           product.mainImageUrl ||
           "/assets/product-placeholder.jpg",
         brandName: (product.brand as any)?.name || "-",
-        category: (product.category as any)?.name || "-",
+        category: formatCategoryName((product.category as any)?.name || "-"),
         subCategory: (product.subcategory as any)?.name || "-",
         price: (product as any).price || 0,
         discPrice: (product as any).discPrice || 0,
@@ -188,7 +237,7 @@ export default function WarehouseProductList() {
         product.mainImageUrl ||
         "/assets/product-placeholder.jpg",
       brandName: (product.brand as any)?.name || "-",
-      category: (product.category as any)?.name || "-",
+      category: formatCategoryName((product.category as any)?.name || "-"),
       subCategory: (product.subcategory as any)?.name || "-",
       price: variation.price,
       discPrice: variation.discPrice,

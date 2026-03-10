@@ -16,7 +16,7 @@ interface Product {
     status: string;
 }
 
-// ─── Add Category Modal ──────────────────────────────────────────────────────
+// ─── Add Category Modal (Keep it code-wise but it will be hidden from UI) ───
 interface AddCategoryModalProps {
     onClose: () => void;
     onSuccess: (newCategory: Category) => void;
@@ -80,15 +80,12 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
     };
 
     return (
-        // Backdrop
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-            {/* Modal */}
             <div
                 className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fadeIn"
                 onClick={e => e.stopPropagation()}
             >
-                {/* Modal Header */}
                 <div className="bg-teal-700 text-white px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
@@ -106,7 +103,6 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                    {/* Error */}
                     {error && (
                         <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
                             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -115,8 +111,6 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
                             {error}
                         </div>
                     )}
-
-                    {/* Category Name */}
                     <div>
                         <label className="block text-sm font-medium text-neutral-700 mb-1.5">
                             Category Name <span className="text-red-500">*</span>
@@ -130,8 +124,6 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
                             autoFocus
                         />
                     </div>
-
-                    {/* Header Category */}
                     <div>
                         <label className="block text-sm font-medium text-neutral-700 mb-1.5">
                             Header Category <span className="text-red-500">*</span>
@@ -146,18 +138,12 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
                                 <option key={hc._id} value={hc._id}>{hc.name}</option>
                             ))}
                         </select>
-                        {headerCategories.length === 0 && (
-                            <p className="text-xs text-amber-600 mt-1">⚠️ No published header categories found. Ask admin to publish one first.</p>
-                        )}
                     </div>
-
-                    {/* Category Image */}
                     <div>
                         <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-                            Category Image <span className="text-neutral-400 text-xs">(optional)</span>
+                            Category Image
                         </label>
                         <div className="flex items-center gap-4">
-                            {/* Preview */}
                             <div className="w-16 h-16 bg-neutral-100 rounded-xl border-2 border-dashed border-neutral-300 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 {imagePreview ? (
                                     <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
@@ -165,7 +151,6 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
                                     <span className="text-2xl">📦</span>
                                 )}
                             </div>
-                            {/* Upload */}
                             <div>
                                 <label className="cursor-pointer inline-flex items-center gap-2 bg-teal-50 border border-teal-300 text-teal-700 hover:bg-teal-100 px-3 py-2 rounded-lg text-sm font-medium transition-colors">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -174,13 +159,9 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
                                     Upload Image
                                     <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                                 </label>
-                                {imageFile && <p className="text-xs text-teal-600 mt-1">✓ {imageFile.name}</p>}
-                                <p className="text-xs text-neutral-400 mt-1">JPG, PNG or WebP. Max 5MB.</p>
                             </div>
                         </div>
                     </div>
-
-                    {/* Actions */}
                     <div className="flex gap-3 pt-2">
                         <button
                             type="button"
@@ -194,15 +175,7 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
                             disabled={saving}
                             className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${saving ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed' : 'bg-teal-700 hover:bg-teal-800 text-white shadow-sm'}`}
                         >
-                            {saving ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                    </svg>
-                                    Creating...
-                                </span>
-                            ) : 'Create Category'}
+                            {saving ? 'Creating...' : 'Create Category'}
                         </button>
                     </div>
                 </form>
@@ -221,7 +194,6 @@ export default function WarehouseCategory() {
     const [showAddModal, setShowAddModal] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
 
-    // Selected category state
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [productsLoading, setProductsLoading] = useState(false);
@@ -233,7 +205,34 @@ export default function WarehouseCategory() {
         try {
             const response = await api.get('/categories', { params: { status: 'Active' } });
             if (response.data.success && response.data.data) {
-                setCategories(response.data.data);
+                // User strictly needs only 3 fish categories
+                const filtered = (response.data.data || []).filter((cat: any) => {
+                    const name = (cat.name || "").toLowerCase();
+                    return (
+                        name.includes("aqua") ||
+                        name.includes("marine") ||
+                        name.includes("marin") ||
+                        name.includes("bangali") ||
+                        name.includes("bengali") ||
+                        name.includes("bengoli") ||
+                        name.includes("freshwater") ||
+                        name.includes("ocean") ||
+                        name.includes("traditional")
+                    );
+                }).map((cat: any) => {
+                    const n = (cat.name || "").toLowerCase();
+                    if (n.includes("aqua") || n.includes("freshwater") || n.includes("river")) {
+                        return { ...cat, name: "Aqua Fish" };
+                    }
+                    if (n.includes("marine") || n.includes("marin") || n.includes("ocean") || n.includes("sea")) {
+                        return { ...cat, name: "Marine Fish" };
+                    }
+                    if (n.includes("bangali") || n.includes("bengali") || n.includes("bengoli") || n.includes("traditional")) {
+                        return { ...cat, name: "Bengali Fish" };
+                    }
+                    return cat;
+                });
+                setCategories(filtered);
             } else {
                 setError(response.data.message || 'Failed to fetch categories');
             }
@@ -246,7 +245,6 @@ export default function WarehouseCategory() {
 
     useEffect(() => { fetchCategories(); }, []);
 
-    // Fetch products for selected category
     const fetchProductsForCategory = async (category: Category) => {
         setSelectedCategory(category);
         setProductsLoading(true);
@@ -259,14 +257,11 @@ export default function WarehouseCategory() {
                     params: { category: category._id, limit: 50 }
                 });
             } catch (err: any) {
-                // Fallback for environments where products are exposed at /products.
                 if (err?.response?.status === 404) {
                     response = await api.get(`/products`, {
                         params: { category: category._id, limit: 50 }
                     });
-                } else {
-                    throw err;
-                }
+                } else { throw err; }
             }
             if (response.data.success) {
                 setProducts(response.data.data || []);
@@ -282,8 +277,8 @@ export default function WarehouseCategory() {
 
     const handleCategoryAdded = (newCategory: Category) => {
         setShowAddModal(false);
-        setCategories(prev => [...prev, newCategory]);
-        setSuccessMsg(`✅ Category "${newCategory.name}" created successfully!`);
+        fetchCategories(); // Refresh with filters
+        setSuccessMsg(`✅ Category created successfully!`);
         setTimeout(() => setSuccessMsg(''), 4000);
     };
 
@@ -291,11 +286,9 @@ export default function WarehouseCategory() {
         cat.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // ──── Category grid view ──────────────────────────────────────────────────
     if (!selectedCategory) {
         return (
             <div className="flex flex-col h-full">
-                {/* Modal */}
                 {showAddModal && (
                     <AddCategoryModal
                         onClose={() => setShowAddModal(false)}
@@ -303,11 +296,10 @@ export default function WarehouseCategory() {
                     />
                 )}
 
-                {/* Header */}
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <h1 className="text-2xl font-semibold text-neutral-800">Categories</h1>
-                        <p className="text-sm text-neutral-500 mt-0.5">Manage your product categories</p>
+                        <p className="text-sm text-neutral-500 mt-0.5">Manage your fish categories</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="text-sm text-blue-500">
@@ -315,20 +307,9 @@ export default function WarehouseCategory() {
                             {' '}<span className="text-neutral-400">/</span>{' '}
                             <span className="text-neutral-600">Category</span>
                         </div>
-                        {/* Add Category Button */}
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Add Category
-                        </button>
                     </div>
                 </div>
 
-                {/* Success banner */}
                 {successMsg && (
                     <div className="mb-4 flex items-center gap-2 p-3 bg-green-50 border border-green-300 text-green-700 rounded-lg text-sm animate-fadeIn">
                         <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -338,7 +319,6 @@ export default function WarehouseCategory() {
                     </div>
                 )}
 
-                {/* Search */}
                 <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-4 mb-4">
                     <div className="relative max-w-sm">
                         <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -346,7 +326,7 @@ export default function WarehouseCategory() {
                         </svg>
                         <input
                             type="text"
-                            placeholder="Search categories..."
+                            placeholder="Search among the 3 fish types..."
                             className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -369,24 +349,9 @@ export default function WarehouseCategory() {
                 {!loading && !error && (
                     <>
                         <p className="text-sm text-neutral-500 mb-3">
-                            {filteredCategories.length} {filteredCategories.length === 1 ? 'category' : 'categories'} — <span className="text-teal-600 font-medium">click a category to view &amp; manage products</span>
+                            {filteredCategories.length} fish categories available — <span className="text-teal-600 font-medium">click to manage products</span>
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {/* Add Category Tile */}
-                            <button
-                                onClick={() => setShowAddModal(true)}
-                                className="group bg-white rounded-xl shadow-sm border-2 border-dashed border-teal-300 hover:border-teal-500 p-4 flex flex-col items-center gap-3 hover:shadow-md transition-all cursor-pointer"
-                            >
-                                <div className="w-16 h-16 rounded-full bg-teal-50 group-hover:bg-teal-100 flex items-center justify-center border-2 border-dashed border-teal-300 group-hover:border-teal-500 transition-colors">
-                                    <svg className="w-7 h-7 text-teal-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                                    </svg>
-                                </div>
-                                <span className="text-sm font-medium text-teal-600 group-hover:text-teal-800 transition-colors text-center">
-                                    Add Category
-                                </span>
-                            </button>
-
                             {filteredCategories.map((category) => (
                                 <button
                                     key={category._id}
@@ -408,16 +373,10 @@ export default function WarehouseCategory() {
                                     <span className="text-sm font-medium text-neutral-700 text-center group-hover:text-teal-700 transition-colors line-clamp-2">
                                         {category.name}
                                     </span>
-                                    <div className="flex items-center gap-1 text-xs text-teal-600 bg-teal-50 rounded-full px-2 py-0.5 group-hover:bg-teal-100 transition-colors">
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                            <path d="M12 5v14M5 12h14" />
-                                        </svg>
-                                        Manage Products
-                                    </div>
                                 </button>
                             ))}
 
-                            {filteredCategories.length === 0 && searchTerm && (
+                            {filteredCategories.length === 0 && (
                                 <div className="col-span-full flex flex-col items-center justify-center py-16 text-neutral-400 gap-3">
                                     <svg className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607Z" />
@@ -432,10 +391,8 @@ export default function WarehouseCategory() {
         );
     }
 
-    // ──── Product list view for selected category ──────────────────────────────
     return (
         <div className="flex flex-col h-full">
-            {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
                     <button
@@ -450,41 +407,21 @@ export default function WarehouseCategory() {
                     <span className="text-neutral-400">/</span>
                     <h1 className="text-2xl font-semibold text-neutral-800">{selectedCategory.name}</h1>
                 </div>
-                <button
-                    onClick={() => navigate(`/warehouse/product/add?category=${selectedCategory._id}&categoryName=${encodeURIComponent(selectedCategory.name)}`)}
-                    className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Product to {selectedCategory.name}
-                </button>
             </div>
 
-            {/* Category badge */}
             <div className="flex items-center gap-3 mb-4 bg-teal-50 border border-teal-200 rounded-lg px-4 py-3">
                 {selectedCategory.image && (
                     <img src={selectedCategory.image} alt={selectedCategory.name} className="w-10 h-10 rounded-full object-cover border border-teal-300" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 )}
                 <div>
                     <p className="font-medium text-teal-800">{selectedCategory.name}</p>
-                    <p className="text-xs text-teal-600">{products.length} product(s) in this category from your warehouse</p>
+                    <p className="text-xs text-teal-600">{products.length} product(s) in this category</p>
                 </div>
             </div>
 
-            {/* Products table */}
             <div className="bg-white rounded-lg shadow-sm border border-neutral-200 flex-1 flex flex-col">
                 <div className="p-4 border-b border-neutral-100 flex justify-between items-center">
                     <span className="font-medium text-neutral-700">Products in {selectedCategory.name}</span>
-                    <button
-                        onClick={() => navigate(`/warehouse/product/add?category=${selectedCategory._id}&categoryName=${encodeURIComponent(selectedCategory.name)}`)}
-                        className="flex items-center gap-1 text-teal-600 hover:text-teal-800 text-sm font-medium transition-colors"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add New Product
-                    </button>
                 </div>
 
                 {productsLoading && (
@@ -544,23 +481,8 @@ export default function WarehouseCategory() {
                                 ))}
                                 {products.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="p-12 text-center">
-                                            <div className="flex flex-col items-center gap-4 text-neutral-400">
-                                                <span className="text-4xl">📭</span>
-                                                <div>
-                                                    <p className="font-medium text-neutral-600">No products yet in {selectedCategory.name}</p>
-                                                    <p className="text-sm mt-1">Add your first product to this category</p>
-                                                </div>
-                                                <button
-                                                    onClick={() => navigate(`/warehouse/product/add?category=${selectedCategory._id}&categoryName=${encodeURIComponent(selectedCategory.name)}`)}
-                                                    className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                                                    </svg>
-                                                    Add First Product
-                                                </button>
-                                            </div>
+                                        <td colSpan={5} className="p-12 text-center text-neutral-400">
+                                            No products found in this category.
                                         </td>
                                     </tr>
                                 )}

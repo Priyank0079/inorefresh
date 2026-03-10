@@ -80,17 +80,33 @@ export default function Home() {
     }
   }, [routerLocation.search, setActiveTab]);
 
-  // Fetch products for active tab (all tabs are backend-driven)
+  // Fetch products for active tab
   useEffect(() => {
     const fetchTabProducts = async () => {
       try {
-        setIsTabLoading(true); // Ensure loading state is active
-        setTabProducts([]); // Clear old products immediately for "fresh" feel
+        setIsTabLoading(true);
+        setTabProducts([]);
 
-        const params: any = { limit: 40 };
-        if (activeTab !== "all") {
+        const params: any = { limit: 120 }; // Fetch a generous amount
+
+        const virtualMap: Record<string, string> = {
+          "aqua-fish": "Aqua Fish",
+          "marine-fish": "Marine Fish",
+          "bangali-fish": "Bengali Fish"
+        };
+        const targetLabel = virtualMap[activeTab];
+
+        if (targetLabel && homeData.categories?.length > 0) {
+          // Find all real IDs that map to our standardized label
+          const matchedCategory = homeData.categories.find((c: any) => c.name === targetLabel);
+          if (matchedCategory?._id) {
+            params.category = matchedCategory._id;
+          }
+        } else if (activeTab !== "all" && !targetLabel) {
+          // Normal category ID (like from a URL directly)
           params.category = activeTab;
         }
+
         if (location?.latitude && location?.longitude) {
           params.latitude = location.latitude;
           params.longitude = location.longitude;
@@ -111,7 +127,36 @@ export default function Home() {
     };
 
     fetchTabProducts();
-  }, [activeTab, location?.latitude, location?.longitude]);
+  }, [activeTab, location?.latitude, location?.longitude, homeData.categories]);
+
+  // Client-side filtering for the 3 professional tabs
+  const filteredProducts = useMemo(() => {
+    if (activeTab === "all") return tabProducts;
+
+    const virtualMap: Record<string, string> = {
+      "aqua-fish": "Aqua Fish",
+      "marine-fish": "Marine Fish",
+      "bangali-fish": "Bangali Fish"
+    };
+
+    const targetLabel = virtualMap[activeTab];
+    if (!targetLabel) return tabProducts;
+
+    return tabProducts.filter((product: any) => {
+      const catName = (product.category?.name || "").toLowerCase();
+
+      if (targetLabel === "Aqua Fish") {
+        return catName.includes("aqua") || catName.includes("freshwater") || catName.includes("river");
+      }
+      if (targetLabel === "Marine Fish") {
+        return catName.includes("marine") || catName.includes("marin") || catName.includes("ocean") || catName.includes("sea");
+      }
+      if (targetLabel === "Bangali Fish") {
+        return catName.includes("bangali") || catName.includes("bengali") || catName.includes("bengoli") || catName.includes("traditional");
+      }
+      return false;
+    });
+  }, [tabProducts, activeTab]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,6 +167,59 @@ export default function Home() {
           location?.latitude,
           location?.longitude
         );
+
+        // Filter categories strictly to our 3 main types
+        if (data.categories) {
+          data.categories = data.categories.filter((c: any) => {
+            const name = (c.name || "").toLowerCase();
+            return (
+              name.includes("aqua") ||
+              name.includes("marine") ||
+              name.includes("marin") ||
+              name.includes("bangali") ||
+              name.includes("bengali") ||
+              name.includes("bengoli") ||
+              name.includes("freshwater") ||
+              name.includes("ocean") ||
+              name.includes("traditional")
+            );
+          }).map((c: any) => {
+            const n = (c.name || "").toLowerCase();
+            if (n.includes("aqua") || n.includes("freshwater") || n.includes("river")) return { ...c, name: "Aqua Fish" };
+            if (n.includes("marine") || n.includes("marin") || n.includes("ocean") || n.includes("sea")) return { ...c, name: "Marine Fish" };
+            if (n.includes("bangali") || n.includes("bengali") || n.includes("bengoli") || n.includes("traditional")) return { ...c, name: "Bangali Fish" };
+            return c;
+          });
+        }
+
+        if (data.homeSections) {
+          data.homeSections = data.homeSections.map((s: any) => {
+            if (s.data && Array.isArray(s.data)) {
+              s.data = s.data.filter((c: any) => {
+                const name = (c.name || c.title || "").toLowerCase();
+                return (
+                  name.includes("aqua") ||
+                  name.includes("marine") ||
+                  name.includes("marin") ||
+                  name.includes("bangali") ||
+                  name.includes("bengali") ||
+                  name.includes("bengoli") ||
+                  name.includes("freshwater") ||
+                  name.includes("ocean") ||
+                  name.includes("traditional")
+                );
+              }).map((c: any) => {
+                const n = (c.name || c.title || "").toLowerCase();
+                if (n.includes("aqua") || n.includes("freshwater") || n.includes("river")) return { ...c, name: "Aqua Fish", title: "Aqua Fish" };
+                if (n.includes("marine") || n.includes("marin") || n.includes("ocean") || n.includes("sea")) return { ...c, name: "Marine Fish", title: "Marine Fish" };
+                if (n.includes("bangali") || n.includes("bengali") || n.includes("bengoli") || n.includes("traditional")) return { ...c, name: "Bangali Fish", title: "Bangali Fish" };
+                return c;
+              });
+            }
+            return s;
+          }).filter((s: any) => s.displayType === 'products' || (s.data && s.data.length > 0));
+        }
+
         setHomeData(data);
         setError(null);
       } catch (err) {
@@ -245,11 +343,6 @@ export default function Home() {
       window.removeEventListener('touchstart', handleNavigationEvent, { capture: true });
     };
   }, []);
-
-  const filteredProducts = useMemo(
-    () => tabProducts,
-    [tabProducts]
-  );
 
   if (loading && tabProducts.length === 0) {
     return <PageLoader />;

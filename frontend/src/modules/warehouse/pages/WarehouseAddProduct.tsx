@@ -63,7 +63,38 @@ export default function WarehouseAddProduct() {
     const fetchCategories = async () => {
       try {
         const res = await api.get('/categories', { params: { status: 'Active' } });
-        if (res.data.success) setCategories(res.data.data || []);
+        if (res.data.success) {
+          const allCategories = res.data.data || [];
+          // User requested only three main fish categories
+          const allowedCategories = allCategories.filter((cat: any) => {
+            const name = (cat.name || "").toLowerCase();
+            return (
+              name.includes("aqua") ||
+              name.includes("marine") ||
+              name.includes("marin") ||
+              name.includes("bangali") ||
+              name.includes("bengali") ||
+              name.includes("bengoli") ||
+              name.includes("freshwater") ||
+              name.includes("ocean") ||
+              name.includes("traditional")
+            );
+          }).map((cat: any) => {
+            const name = (cat.name || "").toLowerCase();
+            // Force user-requested labels for the dropdown
+            if (name.includes("aqua") || name.includes("freshwater") || name.includes("river")) {
+              return { ...cat, name: "Aqua Fish" };
+            }
+            if (name.includes("marine") || name.includes("marin") || name.includes("ocean") || name.includes("sea")) {
+              return { ...cat, name: "Marine Fish" };
+            }
+            if (name.includes("bangali") || name.includes("bengali") || name.includes("bengoli") || name.includes("traditional")) {
+              return { ...cat, name: "Bengali Fish" };
+            }
+            return cat;
+          });
+          setCategories(allowedCategories);
+        }
       } catch (err) {
         console.error("Failed to fetch categories:", err);
       }
