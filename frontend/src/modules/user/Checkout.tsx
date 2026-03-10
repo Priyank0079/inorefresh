@@ -34,6 +34,7 @@ import { getProducts } from "../../services/api/customerProductService";
 import { addToWishlist } from "../../services/api/customerWishlistService";
 import { updateProfile, getProfile } from "../../services/api/customerService";
 import calculateProductPrice from "../../utils/priceUtils";
+import { getTotalCartWeight, parseWeight } from "../../utils/cartUtils";
 import RazorpayCheckout from "../../components/RazorpayCheckout";
 import { useThemeContext } from "../../context/ThemeContext";
 
@@ -69,6 +70,10 @@ export default function Checkout() {
   const [showPartyPopper, setShowPartyPopper] = useState(false);
   const [hasAppliedCouponBefore, setHasAppliedCouponBefore] = useState(false);
   const [showOrderSuccess, setShowOrderSuccess] = useState(false);
+  const [showMinWeightPopup, setShowMinWeightPopup] = useState(false);
+
+  const totalWeight = useMemo(() => getTotalCartWeight(cart.items), [cart.items]);
+  const isMinWeightMet = totalWeight >= 5;
 
   // Refresh cart delivery fee when selected address changes
   useEffect(() => {
@@ -1170,8 +1175,7 @@ export default function Checkout() {
           </div>
 
           <p className="text-[10px] text-neutral-600 mb-2.5">
-            Shipment of {displayCart.itemCount || 0}{" "}
-            {(displayCart.itemCount || 0) === 1 ? "item" : "items"}
+            Shipment of {totalWeight.toFixed(1)} kg
           </p>
 
           {/* Cart Items */}
@@ -1203,7 +1207,7 @@ export default function Checkout() {
                       {item.product?.name}
                     </h3>
                     <p className="text-[10px] text-neutral-600 mb-0.5">
-                      {item.quantity} × {item.product?.pack}
+                      {(parseWeight(item.product?.pack || "") * item.quantity).toFixed(1)} kg
                     </p>
                     <button
                       onClick={(e) => {
@@ -2435,32 +2439,76 @@ export default function Checkout() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-[60] shadow-lg">
         {selectedAddress ? (
           <button
-            onClick={handlePlaceOrder}
+            onClick={isMinWeightMet ? handlePlaceOrder : () => setShowMinWeightPopup(true)}
             disabled={cart.items.length === 0}
-            className={`w-full py-3 px-4 font-bold text-sm uppercase tracking-wide transition-colors ${cart.items.length > 0
+            className={`w-full py-3 px-4 font-bold text-sm uppercase tracking-wide transition-colors ${cart.items.length > 0 && isMinWeightMet
               ? "text-white hover:opacity-90"
-              : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+              : "bg-neutral-300 text-neutral-500"
               }`}
-            style={cart.items.length > 0 ? { backgroundColor: currentTheme.primary[3] } : {}}
+            style={cart.items.length > 0 && isMinWeightMet ? { backgroundColor: currentTheme.primary[3] } : {}}
           >
             Place Order
           </button>
         ) : (
           <button
-            onClick={() =>
-              navigate("/checkout/address", {
-                state: {
-                  editAddress: savedAddress,
-                },
-              })
-            }
-            className="w-full text-white py-3 px-4 font-bold text-sm uppercase tracking-wide hover:opacity-90 transition-colors"
-            style={{ backgroundColor: currentTheme.primary[3] }}
+            onClick={() => {
+              if (isMinWeightMet) {
+                navigate("/checkout/address", {
+                  state: {
+                    editAddress: savedAddress,
+                  },
+                });
+              } else {
+                setShowMinWeightPopup(true);
+              }
+            }}
+            className={`w-full text-white py-3 px-4 font-bold text-sm uppercase tracking-wide transition-colors ${isMinWeightMet
+              ? "hover:opacity-90"
+              : "bg-neutral-300 text-neutral-500"
+              }`}
+            style={isMinWeightMet ? { backgroundColor: currentTheme.primary[3] } : {}}
           >
             Choose address at next step
           </button>
         )}
       </div>
+
+      {/* Minimum Weight Popup */}
+      <Sheet open={showMinWeightPopup} onOpenChange={setShowMinWeightPopup}>
+        <SheetContent side="bottom" className="max-h-[40vh] rounded-t-[32px]">
+          <div className="p-6 text-center">
+            <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-amber-100">
+              <span className="text-4xl text-amber-500">🐟</span>
+            </div>
+            <h2 className="text-xl font-bold text-neutral-900 mb-2">Minimum Order Required</h2>
+            <p className="text-sm text-neutral-600 mb-6">
+              To maintain our quality standards and ensure fresh delivery, we require a minimum order of <span className="font-bold text-green-600">5.0 kg</span> for fish products.
+            </p>
+            <div className="bg-neutral-50 rounded-xl p-4 mb-6">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs text-neutral-500">Current Weight</span>
+                <span className="text-sm font-bold text-neutral-900">{totalWeight.toFixed(1)} kg</span>
+              </div>
+              <div className="w-full h-2 bg-neutral-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-amber-500 transition-all duration-500"
+                  style={{ width: `${Math.min(100, (totalWeight / 5) * 100)}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-amber-600 font-medium mt-2">
+                Please add {Math.max(0, 5 - totalWeight).toFixed(1)} kg more to place your order.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowMinWeightPopup(false)}
+              className="w-full py-4 rounded-xl text-white font-bold text-sm uppercase tracking-wide shadow-lg"
+              style={{ backgroundColor: currentTheme.primary[3] }}
+            >
+              Okay, I'll add more
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Animation Styles */}
       <style>{`

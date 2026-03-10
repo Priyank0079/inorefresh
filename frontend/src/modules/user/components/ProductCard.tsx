@@ -233,6 +233,42 @@ export default function ProductCard({
             loading="lazy"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
+
+              // Only try fallbacks once to prevent infinite loops
+              if (target.dataset.triedFallback === 'true') {
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent && !parent.querySelector('.fallback-icon')) {
+                  const fallback = document.createElement('div');
+                  fallback.className = 'text-2xl font-bold text-gray-300 fallback-icon';
+                  fallback.textContent = (product.name || product.productName || '?').charAt(0).toUpperCase();
+                  parent.appendChild(fallback);
+                }
+                return;
+              }
+
+              // Set flag that we've tried a fallback
+              target.dataset.triedFallback = 'true';
+
+              // Specific fallbacks for fish categories to ensure they load properly
+              const name = (product.name || product.productName || '').toLowerCase();
+              const catSlug = String(product.category || product.categoryId || '').toLowerCase();
+
+              if (name.includes('fish') || name.includes('machi') || name.includes('mach') ||
+                catSlug.includes('fish') || catSlug.includes('marin') || catSlug.includes('aqua') || catSlug.includes('bengali')) {
+
+                // Try to find the most appropriate generic fish image
+                if (catSlug.includes('marin') || name.includes('sea') || name.includes('marine')) {
+                  target.src = '/images/marin_fish.png';
+                } else if (catSlug.includes('bengali') || name.includes('bengali') || name.includes('ilis') || name.includes('mach')) {
+                  target.src = '/images/bengali_fish.png';
+                } else {
+                  target.src = '/images/aqua_fish.png';
+                }
+                return;
+              }
+
+              // Default behavior for other products
               target.style.display = 'none';
               const parent = target.parentElement;
               if (parent && !parent.querySelector('.fallback-icon')) {
@@ -290,8 +326,8 @@ export default function ProductCard({
             disabled={product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")}
             onClick={handleAdd}
             className={`w-[36px] h-[36px] rounded-[10px] flex items-center justify-center font-bold transition-all active:scale-95 ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-[#072F4A] text-white hover:bg-[#001D33]'
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-[#072F4A] text-white hover:bg-[#001D33]'
               }`}
           >
             {inCartQty > 0 ? (

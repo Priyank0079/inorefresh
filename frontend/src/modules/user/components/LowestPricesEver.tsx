@@ -26,8 +26,6 @@ const truncateText = (text: string, maxLength: number = 60): string => {
 // Product Card Component - Defined outside to prevent recreation on every render
 // Custom ProductCard removed to use global ProductCard component
 
-ProductCard.displayName = 'ProductCard';
-
 export default function LowestPricesEver({ activeTab = 'all', products: adminProducts }: LowestPricesEverProps) {
   const theme = getTheme(activeTab);
   const scrollContainerRef = useRef<HTMLDivElement>(null);

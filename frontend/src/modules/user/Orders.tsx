@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useOrders } from '../../hooks/useOrders';
 import { useThemeContext } from '../../context/ThemeContext';
+import { getTotalCartWeight } from '../../utils/cartUtils';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -84,7 +85,7 @@ export default function Orders() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="text-sm text-neutral-600">
-                  {order.totalItems} {order.totalItems === 1 ? 'item' : 'items'}
+                  {getTotalCartWeight(order.items).toFixed(1)} kg
                 </div>
                 <div className="text-lg font-bold text-neutral-900">
                   ₹{order.totalAmount.toFixed(0)}

@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { Product } from '../types/domain';
 import { useThemeContext } from '../context/ThemeContext';
+import { getTotalCartWeight } from '../utils/cartUtils';
+import { useMemo } from 'react';
 
 interface AddToCartAnimationProps {
   /**
@@ -46,6 +48,7 @@ export default function AddToCartAnimation({
   const removedThumbnailRef = useRef<HTMLDivElement>(null);
   const flyingThumbnailRef = useRef<HTMLDivElement>(null);
   const prevItemsRef = useRef(cart.items);
+  const totalWeight = useMemo(() => getTotalCartWeight(cart.items), [cart.items]);
 
   // Hide pill on checkout pages, order pages, and account page (if enabled)
   const isCheckoutPage = location.pathname === '/checkout' || location.pathname.startsWith('/checkout/');
@@ -366,7 +369,7 @@ export default function AddToCartAnimation({
               >
                 <span className="text-xs font-bold leading-tight drop-shadow-sm">View cart</span>
                 <span className="text-[10px] opacity-95 leading-tight font-medium">
-                  {cart.itemCount} {cart.itemCount === 1 ? 'item' : 'items'}
+                  {totalWeight.toFixed(1)} kg
                 </span>
               </motion.div>
 

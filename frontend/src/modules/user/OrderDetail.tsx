@@ -8,6 +8,7 @@ import GoogleMapsTracking from "../../components/GoogleMapsTracking";
 import { useDeliveryTracking } from "../../hooks/useDeliveryTracking";
 import DeliveryPartnerCard from "../../components/DeliveryPartnerCard";
 import { cancelOrder, updateOrderNotes, getSellerLocationsForOrder, refreshDeliveryOtp } from "../../services/api/customerOrderService";
+import { parseWeight } from "../../utils/cartUtils";
 
 // Icon Components
 const ArrowLeftIcon = ({ className }: { className?: string }) => (
@@ -1106,7 +1107,7 @@ export default function OrderDetail() {
                         <span className="w-2 h-2 rounded-full bg-green-600" />
                       </span>
                       <span>
-                        {item.quantity} x{" "}
+                        {(parseWeight(item.variant || item.product?.pack || "") * item.quantity).toFixed(1)} kg x{" "}
                         {item.product?.name || item.productName || "Product"}
                       </span>
                     </div>
@@ -1322,7 +1323,7 @@ export default function OrderDetail() {
                         {item.product?.name || item.productName}
                       </p>
                       <p className="text-sm text-gray-500">
-                        Qty: {item.quantity}
+                        Weight: {(parseWeight(item.variant || item.product?.pack || "") * item.quantity).toFixed(1)} kg
                       </p>
                       {item.variant && (
                         <p className="text-xs text-gray-500">{item.variant}</p>

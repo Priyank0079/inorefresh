@@ -222,7 +222,24 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
         }
         setHasData(fetchedCards.length > 0 || fetchedProducts.length > 0);
         if (fetchedCards.length > 0) {
-          fetchSubcategoryImages(fetchedCards);
+          // Pre-verify image availability or set fallbacks
+          const validatedCards = fetchedCards.map(card => {
+            const lowerTitle = (card.title || "").toLowerCase();
+            let fallbackImage = "";
+            if (lowerTitle.includes('marin')) fallbackImage = '/images/top_list_marin_fish_trans.png';
+            else if (lowerTitle.includes('aqua')) fallbackImage = '/images/top_list_aqua_fish_trans.png';
+            else if (lowerTitle.includes('bengali') || lowerTitle.includes('bangali')) fallbackImage = '/images/top_list_bengali_fish_trans.png';
+
+            const hdImageUrl = card.imageUrl || fallbackImage || '/images/top_list_marin_fish_trans.png';
+
+            return {
+              ...card,
+              imageUrl: hdImageUrl,
+              fallbackImageUrl: fallbackImage || '/images/top_list_marin_fish_trans.png'
+            };
+          });
+          setCategoryCards(validatedCards);
+          fetchSubcategoryImages(validatedCards);
         }
       } catch (error) {
         console.error("Error fetching home content for PromoStrip:", error);
@@ -287,7 +304,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-[#002D4A] text-[34px] font-[800] leading-tight mb-2 uppercase tracking-tight"
+            className="text-[#072F4A] text-[34px] font-[800] leading-tight mb-2 uppercase tracking-tight"
           >
             Our Top <span className="text-[#1CA7C7]">Categories</span>
           </motion.h2>
@@ -296,7 +313,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="text-[#003B5C]/70 text-[16px] max-w-[650px] leading-relaxed font-medium"
+            className="text-[#0B3C5D]/80 text-[16px] max-w-[650px] leading-relaxed font-semibold italic"
           >
             Explore our curated selection of ultra-fresh fish, delivered straight from the deep waters to your table.
           </motion.p>
@@ -306,7 +323,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
         <div className="max-w-[1280px] mx-auto hidden md:grid md:grid-cols-2 gap-[24px]">
           {(categoryCards.length > 0 ? categoryCards : [
             { id: "aqua", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality and taste.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua", bgColor: "transparent" },
-            { id: "marin", title: "Marin Fish", badge: "UP TO 45% OFF", description: "Deep sea Bluefin & Tuna. Captured using sustainable methods for premium freshness.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marin", bgColor: "transparent" },
+            { id: "marin", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea Bluefin & Tuna. Captured using sustainable methods for premium freshness.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marin", bgColor: "transparent" },
             { id: "bengali", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites. The heartbeat of every traditional kitchen.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali", bgColor: "transparent" }
           ]).map((category: any, idx) => (
             <motion.div
@@ -327,12 +344,20 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                 </div>
 
                 {/* Step 3 - Category Image Area */}
-                <div className="w-full h-[200px] rounded-[24px] overflow-hidden mb-4 bg-white/50 border border-[#BEEFFF]/30">
+                <div className="w-full h-[200px] rounded-[24px] overflow-hidden mb-4 bg-white/50 border border-[#BEEFFF]/30 flex items-center justify-center">
                   {category.imageUrl ? (
                     <img
                       src={category.imageUrl}
                       alt={category.title}
                       className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        if (category.fallbackImageUrl && target.src !== window.location.origin + category.fallbackImageUrl) {
+                          target.src = category.fallbackImageUrl;
+                        } else if (target.src !== window.location.origin + '/images/top_list_marin_fish_trans.png') {
+                          target.src = '/images/top_list_marin_fish_trans.png';
+                        }
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-[#BEEFFF]">
@@ -351,7 +376,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
               </div>
 
               {/* Step 7 - Explore Button */}
-              <button className="mt-[18px] bg-[#002D4A] hover:bg-[#001D33] text-white text-[15px] font-bold py-[12px] px-[16px] rounded-[14px] flex items-center justify-center gap-[8px] transition-all w-full shadow-lg shadow-[#002D4A]/20">
+              <button className="mt-[18px] bg-[#072F4A] hover:bg-[#0B3C5D] text-white text-[15px] font-bold py-[12px] px-[16px] rounded-[14px] flex items-center justify-center gap-[8px] transition-all w-full shadow-lg shadow-[#072F4A]/30">
                 Explore <span>→</span>
               </button>
             </motion.div>
@@ -362,7 +387,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
         <div className="flex md:hidden overflow-x-auto scrollbar-hide snap-x mandatory gap-[16px] pb-[20px] px-8 scroll-smooth">
           {(categoryCards.length > 0 ? categoryCards : [
             { id: "aqua", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua" },
-            { id: "marin", title: "Marin Fish", badge: "UP TO 45% OFF", description: "Deep sea Bluefin & Tuna. Sustainable methods.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marin" },
+            { id: "marin", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea Bluefin & Tuna. Sustainable methods.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marin" },
             { id: "bengali", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali" }
           ]).map((category: any) => (
             <motion.div
@@ -375,12 +400,29 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                 <div className="absolute top-[16px] left-[16px] z-20 bg-[#002D4A] text-white text-[10px] px-[10px] py-[4px] rounded-[8px] font-bold">
                   {category.badge}
                 </div>
-                <div className="w-full h-[200px] rounded-[22px] overflow-hidden mb-4 bg-white/50 border border-[#BEEFFF]/30">
-                  <img
-                    src={category.imageUrl}
-                    alt={category.title}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-full h-[200px] rounded-[22px] overflow-hidden mb-4 bg-white/50 border border-[#BEEFFF]/30 flex items-center justify-center">
+                  {category.imageUrl ? (
+                    <img
+                      src={category.imageUrl}
+                      alt={category.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        const lowerTitle = category.title.toLowerCase();
+                        let fallback = '/images/top_list_marin_fish_trans.png';
+                        if (lowerTitle.includes('aqua')) fallback = '/images/top_list_aqua_fish_trans.png';
+                        else if (lowerTitle.includes('bengali') || lowerTitle.includes('bangali')) fallback = '/images/top_list_bengali_fish_trans.png';
+
+                        if (target.src !== window.location.origin + fallback) {
+                          target.src = fallback;
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-[#BEEFFF]">
+                      {category.title.charAt(0)}
+                    </div>
+                  )}
                 </div>
                 <h3 className="text-[20px] font-[800] text-[#002D4A] mt-[4px] uppercase tracking-tight">
                   {category.title}
@@ -389,7 +431,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                   {category.description || `Explore our premium ${category.title} range.`}
                 </p>
               </div>
-              <button className="mt-[16px] bg-[#002D4A] text-white text-[14px] font-bold py-[12px] px-[14px] rounded-[12px] flex items-center justify-center gap-[6px] w-full shadow-lg shadow-[#002D4A]/10">
+              <button className="mt-[16px] bg-[#072F4A] active:bg-[#0B3C5D] text-white text-[14px] font-bold py-[12px] px-[14px] rounded-[12px] flex items-center justify-center gap-[6px] w-full shadow-lg shadow-[#072F4A]/25">
                 Explore <span>→</span>
               </button>
             </motion.div>

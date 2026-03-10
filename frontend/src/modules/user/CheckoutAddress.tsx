@@ -8,6 +8,7 @@ import { OrderAddress } from '../../types/order';
 import { getAddresses, addAddress, updateAddress, Address } from '../../services/api/customerAddressService';
 import { appConfig } from '../../services/configService';
 import { calculateProductPrice } from '../../utils/priceUtils';
+import { parseWeight } from '../../utils/cartUtils';
 import GoogleMapsLocationPicker from '../../components/GoogleMapsLocationPicker';
 
 export default function CheckoutAddress() {
@@ -35,7 +36,7 @@ export default function CheckoutAddress() {
   const [errors, setErrors] = useState<Partial<Record<keyof OrderAddress, string>>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [orderingFor, setOrderingFor] = useState<'myself' | 'someone-else'>('myself');
-  const [addressType, setAddressType] = useState<'home' | 'work' | 'hotel' | 'other'>('home');
+  const [addressType, setAddressType] = useState<'home' | 'hotel' | 'other'>('home');
 
   // Location picker state
   const [selectedLatitude, setSelectedLatitude] = useState<number>(0);
@@ -362,7 +363,6 @@ export default function CheckoutAddress() {
           <div className="flex items-center gap-2 flex-wrap">
             {[
               { id: 'home', label: 'Home', icon: '🏠' },
-              { id: 'work', label: 'Work', icon: '🏢' },
               { id: 'hotel', label: 'Hotel', icon: '🏨' },
               { id: 'other', label: 'Other', icon: '📍' },
             ].map((type) => (
@@ -505,7 +505,7 @@ export default function CheckoutAddress() {
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-neutral-900 truncate">{item.product.name}</div>
                     <div className="text-[10px] text-neutral-500">
-                      {item.product.pack} × {item.quantity}
+                      {(parseWeight(item.product.pack || '') * item.quantity).toFixed(1)} kg
                     </div>
                   </div>
                   <div className="font-semibold text-neutral-900 ml-2 flex-shrink-0">

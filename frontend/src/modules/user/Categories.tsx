@@ -95,10 +95,19 @@ export default function Categories() {
     const name = (c.name || c.title || "").toLowerCase();
     let link = '';
 
-    // Map special categories to home tabs
-    if (name.includes('aqua') || name.includes('auqa')) link = '/?tab=aqua-fish';
-    else if (name.includes('marin') || name.includes('marine')) link = '/?tab=marine-fish';
-    else if (name.includes('bengali') || name.includes('bengoli')) link = '/?tab=bangali-fish';
+    // Map special categories to home tabs and assign HD images
+    if (name.includes('aqua') || name.includes('auqa')) {
+      link = '/?tab=aqua-fish';
+      if (!c.image && !c.imageUrl) c.imageUrl = '/images/top_list_aqua_fish_trans.png';
+    }
+    else if (name.includes('marin') || name.includes('marine')) {
+      link = '/?tab=marine-fish';
+      if (!c.image && !c.imageUrl) c.imageUrl = '/images/top_list_marin_fish_trans.png';
+    }
+    else if (name.includes('bengali') || name.includes('bengoli')) {
+      link = '/?tab=bangali-fish';
+      if (!c.image && !c.imageUrl) c.imageUrl = '/images/top_list_bengali_fish_trans.png';
+    }
     else link = `/category/${c.slug || c._id || c.id}`;
 
     return {

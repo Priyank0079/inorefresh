@@ -5,21 +5,21 @@ export default function FishCategoryCards() {
         {
             id: 'marine-fish',
             name: 'Marine Fish',
-            image: '/images/fish/marine-fish.jpg',
+            image: '/images/marin_fish.png',
             slug: 'marine-fish',
             type: 'category'
         },
         {
             id: 'aqua-fish',
             name: 'Aqua Fish',
-            image: '/images/fish/freshwater-fish.jpg',
+            image: '/images/aqua_fish.png',
             slug: 'aqua-fish',
             type: 'category'
         },
         {
             id: 'bangali-fish',
             name: 'Bangali Fish',
-            image: '/images/fish/traditional-fish.jpg',
+            image: '/images/bengali_fish.png',
             slug: 'bangali-fish',
             type: 'category'
         }

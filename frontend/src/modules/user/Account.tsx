@@ -137,11 +137,11 @@ export default function Account() {
 
   return (
     <div className="pb-24 md:pb-8 min-h-screen">
-      <div className="bg-gradient-to-b from-[#072F4A] to-[#0B3C5D] pb-12 md:pb-16 pt-12 md:pt-16 rounded-b-[40px] shadow-[0_10px_30px_rgba(0,0,0,0.3)] relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(28,167,199,0.2),_transparent_70%)] pointer-events-none" />
+      <div className="bg-[#02111A] pb-12 md:pb-16 pt-12 md:pt-16 rounded-b-[40px] shadow-[0_15px_40px_rgba(0,0,0,0.4)] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(28,167,199,0.15),_transparent_75%)] pointer-events-none" />
         <div className="px-5 md:px-8 relative z-10">
-          <button onClick={() => navigate(-1)} className="mb-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18L9 12L15 6" /></svg>
+          <button onClick={() => navigate(-1)} className="mb-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-md border border-white/10">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18L9 12L15 6" /></svg>
           </button>
 
           <div className="flex flex-col items-center">
@@ -159,8 +159,8 @@ export default function Account() {
               </div>
             </motion.div>
 
-            <h1 className="text-2xl md:text-3xl font-black text-white mb-2 uppercase tracking-tight">{displayName}</h1>
-            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-[#BEEFFF] font-bold opacity-80">
+            <h1 className="text-3xl md:text-4xl font-black text-white mb-2 uppercase tracking-tight drop-shadow-md">{displayName}</h1>
+            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-[#BEEFFF] font-bold opacity-100">
               {displayPhone && (
                 <div className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
@@ -250,10 +250,10 @@ export default function Account() {
                 className="w-full flex items-center justify-between px-6 py-5 hover:bg-white/5 transition-colors group"
               >
                 <div className="flex items-center gap-4">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={item.danger ? '#FF6B6B' : '#1CA7C7'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={item.danger ? '#FF6B6B' : '#0F4A70'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all">
                     {item.icon}
                   </svg>
-                  <span className={`text-[13px] font-bold tracking-wide ${item.danger ? 'text-red-400' : 'text-white'}`}>{item.name}</span>
+                  <span className={`text-[13px] font-bold tracking-wide ${item.danger ? 'text-red-600' : 'text-[#072F4A]'}`}>{item.name}</span>
                 </div>
                 <span className="text-[#1CA7C7] opacity-40 group-hover:opacity-100 transition-opacity">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
