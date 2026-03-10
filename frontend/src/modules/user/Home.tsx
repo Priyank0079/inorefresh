@@ -320,7 +320,7 @@ export default function Home() {
                   ease: "easeIn"
                 }
               }}
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6 w-full"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 md:gap-6 w-full"
             >
               {filteredProducts.length === 0 ? (
                 <div className="col-span-full py-20 flex flex-col items-center justify-center text-center">

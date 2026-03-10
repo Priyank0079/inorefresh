@@ -210,25 +210,25 @@ export default function ProductCard({
       whileHover={{ y: -6, boxShadow: '0 18px 40px rgba(0,0,0,0.12)' }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
       onClick={handleCardClick}
-      className="relative bg-[#ffffff] rounded-[24px] p-[22px] flex flex-col group transition-all duration-300 cursor-pointer overflow-hidden border border-gray-100/30"
+      className="relative bg-[#ffffff] rounded-[20px] md:rounded-[24px] p-3 md:p-[22px] flex flex-col group transition-all duration-300 cursor-pointer overflow-hidden border border-gray-100/30"
       style={{
         boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
         fontFamily: 'Inter, Poppins, sans-serif'
       }}
     >
       {/* 3 Availability Badge */}
-      <div className="absolute top-[16px] left-[16px] z-10 px-[10px] py-[4px] rounded-[10px] bg-[#eef2ff] text-[#2563eb] text-[12px] font-[500] uppercase tracking-wide">
+      <div className="absolute top-[10px] left-[10px] md:top-[16px] md:left-[16px] z-10 px-[8px] py-[2px] md:px-[10px] md:py-[4px] rounded-[8px] md:rounded-[10px] bg-[#eef2ff] text-[#2563eb] text-[10px] md:text-[12px] font-[500] uppercase tracking-wide">
         {badgeText || (product.isAvailable === false ? 'Out of Range' : `${product.stock || 0} AVAILABLE`)}
       </div>
 
       {/* 2 Product Image Area */}
-      <div className="relative mt-8 mb-4">
-        <div className="w-[120px] h-[120px] md:w-[140px] md:h-[140px] bg-[#f3f5f9] rounded-full flex items-center justify-center mx-auto transition-transform duration-500 group-hover:scale-105">
+      <div className="relative mt-7 mb-3 md:mt-8 md:mb-4">
+        <div className="w-[100px] h-[100px] md:w-[140px] md:h-[140px] bg-[#f3f5f9] rounded-full flex items-center justify-center mx-auto transition-transform duration-500 group-hover:scale-105">
           <img
             ref={imageRef}
             src={product.imageUrl || product.mainImage}
             alt={product.name || product.productName || 'Product'}
-            className="w-[90px] h-auto md:w-[105px] object-contain drop-shadow-md"
+            className="w-[75px] h-auto md:w-[105px] object-contain drop-shadow-md"
             referrerPolicy="no-referrer"
             loading="lazy"
             onError={(e) => {
@@ -240,7 +240,7 @@ export default function ProductCard({
                 const parent = target.parentElement;
                 if (parent && !parent.querySelector('.fallback-icon')) {
                   const fallback = document.createElement('div');
-                  fallback.className = 'text-2xl font-bold text-gray-300 fallback-icon';
+                  fallback.className = 'text-xl md:text-2xl font-bold text-gray-300 fallback-icon';
                   fallback.textContent = (product.name || product.productName || '?').charAt(0).toUpperCase();
                   parent.appendChild(fallback);
                 }
@@ -273,7 +273,7 @@ export default function ProductCard({
               const parent = target.parentElement;
               if (parent && !parent.querySelector('.fallback-icon')) {
                 const fallback = document.createElement('div');
-                fallback.className = 'text-2xl font-bold text-gray-300 fallback-icon';
+                fallback.className = 'text-xl md:text-2xl font-bold text-gray-300 fallback-icon';
                 fallback.textContent = (product.name || product.productName || '?').charAt(0).toUpperCase();
                 parent.appendChild(fallback);
               }
@@ -283,38 +283,41 @@ export default function ProductCard({
       </div>
 
       {/* 4 & 5 Product Text Content */}
-      <div className="flex-1 flex flex-col pt-1">
-        <h3 className="text-[17px] font-[600] text-[#072F4A] line-clamp-1 leading-tight mb-1">
+      <div className="flex-1 flex flex-col pt-0 md:pt-1">
+        <h3 className="text-[14px] md:text-[17px] font-[600] text-[#072F4A] line-clamp-1 leading-tight mb-0.5 md:mb-1">
           {product.name || product.productName || ''}
         </h3>
-        <p className="text-[13px] text-[#6b7280] leading-[1.4] line-clamp-2 min-h-[2.8em]">
+        <p className="text-[11px] md:text-[13px] text-[#6b7280] leading-[1.3] md:leading-[1.4] line-clamp-2 min-h-[2.6em] md:min-h-[2.8em]">
           {product.smallDescription || product.description || `Fresh ${product.name} directly from source.`}
         </p>
       </div>
 
       {/* 7 & 8 Bottom Action Area */}
-      <div className="flex justify-between items-center mt-[18px]">
+      <div className="flex justify-between items-center mt-3 md:mt-[18px]">
         <div className="flex flex-col">
-          <span className="text-[22px] font-[700] text-[#072F4A] tracking-tight">
+          <span className="text-[18px] md:text-[22px] font-[700] text-[#072F4A] tracking-tight">
             ₹{displayPrice.toLocaleString('en-IN')}
           </span>
         </div>
 
-        <div className="flex items-center gap-[8px]">
+        <div className="flex items-center gap-[6px] md:gap-[8px]">
           {showHeartIcon && (
             <button
               onClick={toggleWishlist}
-              className="w-[36px] h-[36px] bg-[#eef2ff] rounded-[10px] flex items-center justify-center text-[#6366f1] hover:bg-[#e0e7ff] transition-all active:scale-95"
+              className="w-[30px] h-[30px] md:w-[36px] md:h-[36px] bg-[#eef2ff] rounded-[8px] md:rounded-[10px] flex items-center justify-center text-[#6366f1] hover:bg-[#e0e7ff] transition-all active:scale-95"
               aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             >
               <svg
-                width="20"
-                height="20"
+                width="16"
+                height="16"
+                md-width="20"
+                md-height="20"
                 viewBox="0 0 24 24"
                 fill={isWishlisted ? "#6366f1" : "none"}
                 xmlns="http://www.w3.org/2000/svg"
                 stroke="currentColor"
                 strokeWidth="2"
+                className="w-4 h-4 md:w-5 md:h-5"
               >
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
@@ -325,15 +328,15 @@ export default function ProductCard({
             ref={addButtonRef}
             disabled={product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")}
             onClick={handleAdd}
-            className={`w-[36px] h-[36px] rounded-[10px] flex items-center justify-center font-bold transition-all active:scale-95 ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
+            className={`w-[30px] h-[30px] md:w-[36px] md:h-[36px] rounded-[8px] md:rounded-[10px] flex items-center justify-center font-bold transition-all active:scale-95 ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
               ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
               : 'bg-[#072F4A] text-white hover:bg-[#001D33]'
               }`}
           >
             {inCartQty > 0 ? (
-              <span className="text-[15px]">{inCartQty}</span>
+              <span className="text-[13px] md:text-[15px]">{inCartQty}</span>
             ) : (
-              <span className="text-[20px] mb-0.5">+</span>
+              <span className="text-[18px] md:text-[20px] mb-0.5">+</span>
             )}
           </button>
         </div>
