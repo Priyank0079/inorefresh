@@ -1,9 +1,21 @@
-export const parseWeight = (pack: string, productName?: string, categoryName?: string): number => {
+const safeLower = (value: any): string => {
+    if (typeof value === 'string' || typeof value === 'number') {
+        return String(value).toLowerCase();
+    }
+    if (value && typeof value === 'object') {
+        if ((value as any).name) return String((value as any).name).toLowerCase();
+        if ((value as any).categoryName) return String((value as any).categoryName).toLowerCase();
+        if ((value as any).subcategoryName) return String((value as any).subcategoryName).toLowerCase();
+    }
+    return '';
+};
+
+export const parseWeight = (pack: string, productName?: any, categoryName?: any): number => {
     if (!pack) {
         // Default to 1kg for fish products if no pack info
         if (productName || categoryName) {
-            const name = (productName || "").toLowerCase();
-            const cat = (categoryName || "").toLowerCase();
+            const name = safeLower(productName);
+            const cat = safeLower(categoryName);
             const fishKeywords = ['fish', 'machi', 'mach', 'ilis', 'rohu', 'katla', 'prawn', 'shrimp', 'marin', 'aqua', 'bengali'];
             if (fishKeywords.some(kw => name.includes(kw) || cat.includes(kw))) {
                 return 1;
@@ -46,8 +58,8 @@ export const parseWeight = (pack: string, productName?: string, categoryName?: s
 
     // Final fallback: if it's a fish product but we couldn't parse the pack, return 1
     if (productName || categoryName) {
-        const name = (productName || "").toLowerCase();
-        const cat = (categoryName || "").toLowerCase();
+        const name = safeLower(productName);
+        const cat = safeLower(categoryName);
         const fishKeywords = ['fish', 'machi', 'mach', 'ilis', 'rohu', 'katla', 'prawn', 'shrimp', 'marin', 'aqua', 'bengali'];
         if (fishKeywords.some(kw => name.includes(kw) || cat.includes(kw))) {
             return 1;

@@ -23,7 +23,7 @@ interface AddToCartEvent {
 interface CartContextType {
   cart: Cart;
   addToCart: (product: Product, sourceElement?: HTMLElement | null) => Promise<void>;
-  removeFromCart: (productId: string) => Promise<void>;
+  removeFromCart: (productId: string, variantId?: string, variantTitle?: string) => Promise<void>;
   updateQuantity: (productId: string, quantity: number, variantId?: string, variantTitle?: string) => Promise<void>;
   clearCart: () => Promise<void>;
   refreshCart: (latitude?: number, longitude?: number) => Promise<void>;
@@ -414,7 +414,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     // Create a unique operation key for this product/variant combination
-    const operationKey = variantId ? `${productId}-${variantId}` : (variantTitle ? `${productId}-${variantTitle}` : productId);
+    const operationKey = variantId
+      ? `${productId}-${variantId}`
+      : (variantTitle ? `${productId}-${variantTitle}` : productId);
 
     // Prevent concurrent operations on the same product
     if (pendingOperationsRef.current.has(operationKey)) {
@@ -432,13 +434,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (variantId || variantTitle) {
         const itemVariantId = (item.product as any).variantId || (item.product as any).selectedVariant?._id;
         const itemVariantTitle = (item.product as any).variantTitle || (item.product as any).pack;
-        return itemVariantId === variantId || itemVariantTitle === variantTitle;
+        const itemVariantRaw = (item as any).variant;
+        return itemVariantId === variantId || itemVariantTitle === variantTitle || itemVariantRaw === variantId || itemVariantRaw === variantTitle;
       }
 
       // If no variant info, match items without variants
       const itemVariantId = (item.product as any).variantId || (item.product as any).selectedVariant?._id;
       const itemVariantTitle = (item.product as any).variantTitle;
-      return !itemVariantId && !itemVariantTitle;
+      const itemVariantRaw = (item as any).variant;
+      return !itemVariantId && !itemVariantTitle && !itemVariantRaw;
     });
 
     if (!itemToUpdate) {
@@ -448,25 +452,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     const isFish = isFishProduct(itemToUpdate.product);
-    const { min: minQty, step: stepQty } = getStepAndMinQuantity(itemToUpdate.product);
+    const { min: minQty } = getStepAndMinQuantity(itemToUpdate.product);
 
     let finalQuantity = quantity;
     if (isFish) {
-      if (quantity > itemToUpdate.quantity) {
-        finalQuantity = itemToUpdate.quantity + stepQty;
-      } else if (quantity < itemToUpdate.quantity) {
-        finalQuantity = itemToUpdate.quantity - stepQty;
-      }
-
-      if (finalQuantity < minQty) {
+      // If user tries to go below minimum, treat as remove
+      if (quantity < minQty) {
         removeFromCart(productId, variantId, variantTitle);
         return;
       }
-    } else {
-      if (quantity <= 0) {
-        removeFromCart(productId, variantId, variantTitle);
-        return;
-      }
+    } else if (quantity <= 0) {
+      removeFromCart(productId, variantId, variantTitle);
+      return;
     }
 
     const previousItems = [...items];
@@ -479,14 +476,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (variantId || variantTitle) {
           const itemVariantId = (item.product as any).variantId || (item.product as any).selectedVariant?._id;
           const itemVariantTitle = (item.product as any).variantTitle || (item.product as any).pack;
-          if (itemVariantId === variantId || itemVariantTitle === variantTitle) {
+          const itemVariantRaw = (item as any).variant;
+          if (itemVariantId === variantId || itemVariantTitle === variantTitle || itemVariantRaw === variantId || itemVariantRaw === variantTitle) {
             return { ...item, quantity: finalQuantity };
           }
         } else {
           // If no variant info, match items without variants
           const itemVariantId = (item.product as any).variantId || (item.product as any).selectedVariant?._id;
           const itemVariantTitle = (item.product as any).variantTitle;
-          if (!itemVariantId && !itemVariantTitle) {
+          const itemVariantRaw = (item as any).variant;
+          if (!itemVariantId && !itemVariantTitle && !itemVariantRaw) {
             return { ...item, quantity: finalQuantity };
           }
         }

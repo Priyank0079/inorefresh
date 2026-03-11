@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sendOTP, verifyOTP } from '../../services/api/auth/customerAuthService';
 import { useAuth } from '../../context/AuthContext';
 import OTPInput from '../../components/OTPInput';
 import { useThemeContext } from '../../context/ThemeContext';
 import api from '../../services/api/config';
+import GoogleMapsLocationPicker from '../../components/GoogleMapsLocationPicker';
 
 type UserType = 'horeca' | 'retailer' | null;
 type FlowStep = 'accountType' | 'login' | 'signupHoreca' | 'signupRetailer';
@@ -40,6 +41,7 @@ export default function Login() {
     highValueProducts: [], inorRepresentative: '', shopPhone: '', ownerName: '', ownerPhone: ''
   });
   const [files, setFiles] = useState<File[]>([]);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 12.9716, lng: 77.5946 });
 
   // Translations
   const translations = {
@@ -216,6 +218,36 @@ export default function Login() {
     } else {
       setFormData({ ...formData, highValueProducts: [...current, prod] });
     }
+  };
+
+  // Grab current position to center the picker for convenience
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setMapCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => { /* ignore errors, fallback stays */ },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
+  }, []);
+
+  const handleMapSelect = (lat: number, lng: number, address?: { street?: string; city?: string; state?: string; pincode?: string; landmark?: string }) => {
+    setMapCenter({ lat, lng });
+    setFormData((prev: any) => {
+      const addrParts = [
+        address?.street,
+        address?.landmark,
+        address?.city,
+        address?.state,
+        address?.pincode
+      ].filter(Boolean).join(', ');
+
+      return {
+        ...prev,
+        googleMapLink: `https://www.google.com/maps?q=${lat},${lng}`,
+        address: prev.address || addrParts
+      };
+    });
   };
 
   const renderLanguageSelector = () => (
@@ -411,10 +443,45 @@ export default function Login() {
                 <input required placeholder="Shop Owner Name *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, ownerName: e.target.value })} />
                 <input required placeholder="Owner Phone Number *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, ownerPhone: e.target.value })} />
                 <input required placeholder="Inor Representative *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, inorRepresentative: e.target.value })} />
-                <input required placeholder="Google Map Link *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, googleMapLink: e.target.value })} />
+                <div className="md:col-span-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-neutral-700">Pin your shop on the map *</p>
+                    <button
+                      type="button"
+                      className="text-xs font-semibold px-3 py-1 rounded-full border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors"
+                      onClick={() => navigator.geolocation && navigator.geolocation.getCurrentPosition(
+                        (pos) => handleMapSelect(pos.coords.latitude, pos.coords.longitude),
+                        () => handleMapSelect(mapCenter.lat, mapCenter.lng)
+                      )}
+                    >
+                      Use current location
+                    </button>
+                  </div>
+                  <GoogleMapsLocationPicker
+                    initialLat={mapCenter.lat}
+                    initialLng={mapCenter.lng}
+                    onLocationSelect={handleMapSelect}
+                    height="260px"
+                  />
+                  <p className="text-[11px] text-neutral-500">Drag the map to set your exact shop location. The link fills automatically.</p>
+                </div>
+                <input
+                  required
+                  placeholder="Google Map Link *"
+                  className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl"
+                  value={formData.googleMapLink}
+                  onChange={e => setFormData({ ...formData, googleMapLink: e.target.value })}
+                />
               </div>
 
-              <textarea required placeholder="Address Of The Shop *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" rows={2} onChange={e => setFormData({ ...formData, address: e.target.value })}></textarea>
+              <textarea
+                required
+                placeholder="Address Of The Shop *"
+                className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl"
+                rows={2}
+                value={formData.address}
+                onChange={e => setFormData({ ...formData, address: e.target.value })}
+              ></textarea>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <select required className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, deliveryTime: e.target.value })}>

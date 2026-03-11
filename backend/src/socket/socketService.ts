@@ -183,6 +183,20 @@ export const initializeSocket = (httpServer: HttpServer) => {
             socket.join(`delivery-${deliveryPartnerId}`);
         });
 
+        // Warehouse joins its notification room
+        socket.on('join-warehouse-room', (warehouseId: string) => {
+            const normalizedWarehouseId = String(warehouseId).trim();
+            console.log(`🏭 Warehouse ${normalizedWarehouseId} joined notifications room`);
+
+            socket.join(`warehouse-${normalizedWarehouseId}`);
+
+            socket.emit('joined-warehouse-room', {
+                success: true,
+                message: 'Successfully joined warehouse notifications room',
+                warehouseId: normalizedWarehouseId,
+            });
+        });
+
         // Seller joins their notification room
         socket.on('join-seller-room', (sellerId: string) => {
             const normalizedSellerId = String(sellerId).trim();

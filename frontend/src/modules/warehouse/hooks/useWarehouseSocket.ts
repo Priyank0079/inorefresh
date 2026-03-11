@@ -56,16 +56,16 @@ export const useWarehouseSocket = (onNotificationReceived?: (notification: Wareh
             console.log('✅ Warehouse connected to socket server');
             setIsConnected(true);
 
-            // Join Warehouse room
-            newSocket.emit('join-Warehouse-room', user.id);
+            // Join warehouse-specific room to receive order updates
+            newSocket.emit('join-warehouse-room', user.id);
         });
 
-        newSocket.on('joined-Warehouse-room', (data) => {
-            console.log('📦 Joined Warehouse notification room:', data.WarehouseId);
+        newSocket.on('joined-warehouse-room', (data) => {
+            console.log('📦 Joined warehouse notification room:', data.warehouseId);
         });
 
-        newSocket.on('Warehouse-notification', (notification: WarehouseNotification) => {
-            console.log('🔔 New Warehouse notification received:', notification);
+        newSocket.on('warehouse-notification', (notification: WarehouseNotification) => {
+            console.log('🔔 New warehouse notification received:', notification);
             if (onNotificationReceived) {
                 onNotificationReceived(notification);
             }

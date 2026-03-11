@@ -98,11 +98,13 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   const addOrder = async (order: Order): Promise<string | undefined> => {
     try {
       // ── Capture user's device location for warehouse fulfillment ──────────────
-      let userLat = order.address.latitude ?? 0;
-      let userLng = order.address.longitude ?? 0;
+      let userLat = Number(order.address.latitude ?? 0);
+      let userLng = Number(order.address.longitude ?? 0);
 
-      // Try to get a fresh GPS reading (more accurate than address lat/lng)
-      if (navigator.geolocation) {
+      // Only attempt to override with device GPS when we don't already have valid coordinates
+      const hasAddressCoords = Number.isFinite(userLat) && Number.isFinite(userLng) && (userLat !== 0 || userLng !== 0);
+
+      if (!hasAddressCoords && navigator.geolocation) {
         try {
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -114,14 +116,23 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
           userLat = position.coords.latitude;
           userLng = position.coords.longitude;
         } catch {
-          // Geolocation denied or timed out — fall back to address coordinates
+          // Geolocation denied or timed out — fall back to whatever we have
           console.warn('[Order] Geolocation unavailable, using address coordinates.');
         }
       }
       // ─────────────────────────────────────────────────────────────────────────
 
+      // Pass through a real email when available; don't fabricate one
+      const customerEmail = (() => {
+        const cleanedEmail = (user?.email || "").trim();
+        if (cleanedEmail && !cleanedEmail.endsWith("@dhakadsnazzy.temp")) {
+          return cleanedEmail;
+        }
+        return undefined;
+      })();
+
       // Construct payload
-      const payload = {
+      const payload: any = {
         address: {
           address: order.address.street || order.address.address || "",
           city: order.address.city,
@@ -145,6 +156,12 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
           platformFee: order.fees?.platformFee || 0,
         },
       };
+
+      if (customerEmail) {
+        payload.address.customerEmail = customerEmail; // Some backends nest contact info inside address
+        payload.customerEmail = customerEmail;
+        payload.email = customerEmail;
+      }
 
       const response = await createOrder(payload);
       await fetchOrders();

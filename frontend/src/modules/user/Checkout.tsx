@@ -122,8 +122,9 @@ export default function Checkout() {
   const [useWallet, setUseWallet] = useState<boolean>(false);
 
   // Check if user has placeholder data (needs profile completion)
+  const userName = user?.name || "";
   const isPlaceholderUser =
-    user?.name === "User" || user?.email?.endsWith("@dhakadsnazzy.temp");
+    !userName.trim() || userName === "User";
 
   // Redirect if empty
   useEffect(() => {
@@ -411,6 +412,31 @@ export default function Checkout() {
     setCouponError(null);
   };
 
+  const resolveVariantInfo = (cartItem: any) => {
+    const variantSource = cartItem?.variant ?? (cartItem?.product as any)?.selectedVariant;
+
+    const variantId =
+      typeof variantSource === "string"
+        ? variantSource
+        : variantSource?._id || variantSource?.id || variantSource?.variationId;
+
+    const variantTitle =
+      typeof variantSource === "object"
+        ? variantSource?.title || variantSource?.name || variantSource?.value || variantSource?.pack
+        : undefined;
+
+    const productVariantId = (cartItem?.product as any)?.variantId;
+    const productVariantTitle =
+      (cartItem?.product as any)?.variantTitle ||
+      (cartItem?.product as any)?.pack ||
+      (typeof variantSource === "string" ? variantSource : undefined);
+
+    return {
+      variantId: variantId || productVariantId || undefined,
+      variantTitle: variantTitle || productVariantTitle || undefined,
+    };
+  };
+
   const handleMoveToWishlist = async (product: any) => {
     if (!product?.id && !product?._id) return;
 
@@ -455,9 +481,10 @@ export default function Checkout() {
     if (!bypassProfileCheck && isPlaceholderUser) {
       setProfileFormData({
         name: user?.name === "User" ? "" : user?.name || "",
-        email: user?.email?.endsWith("@dhakadsnazzy.temp")
-          ? ""
-          : user?.email || "",
+        email:
+          user?.email && !user.email.endsWith("@dhakadsnazzy.temp")
+            ? user.email
+            : "",
       });
       setShowProfileModal(true);
       return;
@@ -470,12 +497,16 @@ export default function Checkout() {
       return;
     }
 
-    // Use user's current location as fallback if address doesn't have coordinates
-    const finalLatitude = selectedAddress.latitude ?? userLocation?.latitude;
-    const finalLongitude = selectedAddress.longitude ?? userLocation?.longitude;
+    // Prefer precise map selection, then saved address, then current location
+    const finalLatitude = parseFloat(String(
+      (isMapSelected && mapLocation?.lat) ?? selectedAddress.latitude ?? userLocation?.latitude ?? ''
+    ));
+    const finalLongitude = parseFloat(String(
+      (isMapSelected && mapLocation?.lng) ?? selectedAddress.longitude ?? userLocation?.longitude ?? ''
+    ));
 
     // Validate that we have location data (either from address or user's current location)
-    if (finalLatitude == null || finalLongitude == null) {
+    if (!Number.isFinite(finalLatitude) || !Number.isFinite(finalLongitude)) {
       console.error(
         "Address is missing location data (latitude/longitude) and user location is not available",
       );
@@ -605,14 +636,17 @@ export default function Checkout() {
 
   // Handle profile completion submission
   const handleProfileSubmit = async () => {
-    if (!profileFormData.name.trim() || !profileFormData.email.trim()) {
-      setProfileError("Please enter both name and email");
+    const trimmedName = profileFormData.name.trim();
+    const trimmedEmail = profileFormData.email.trim();
+
+    if (!trimmedName) {
+      setProfileError("Please enter your name");
       return;
     }
 
-    // Validate email format
+    // Validate email format only if provided
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(profileFormData.email)) {
+    if (trimmedEmail && !emailRegex.test(trimmedEmail)) {
       setProfileError("Please enter a valid email address");
       return;
     }
@@ -622,8 +656,9 @@ export default function Checkout() {
 
     try {
       const response = await updateProfile({
-        name: profileFormData.name.trim(),
-        email: profileFormData.email.trim(),
+        name: trimmedName,
+        // Send email if present; sending an empty string clears any placeholder on the backend
+        email: trimmedEmail,
       });
 
       if (response.success) {
@@ -680,7 +715,7 @@ export default function Checkout() {
                 Complete Your Profile
               </h2>
               <p className="text-sm text-neutral-600 mb-4">
-                Please provide your name and email to continue with your order.
+                Please provide your name to continue with your order. Email is optional and only used for receipts.
               </p>
 
               <div className="space-y-3">
@@ -705,7 +740,7 @@ export default function Checkout() {
 
                 <div>
                   <label className="block text-xs font-medium text-neutral-700 mb-1">
-                    Email Address
+                    Email Address (optional)
                   </label>
                   <input
                     type="email"
@@ -739,16 +774,14 @@ export default function Checkout() {
                     onClick={handleProfileSubmit}
                     disabled={
                       isUpdatingProfile ||
-                      !profileFormData.name.trim() ||
-                      !profileFormData.email.trim()
+                      !profileFormData.name.trim()
                     }
                     className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${isUpdatingProfile ||
-                      !profileFormData.name.trim() ||
-                      !profileFormData.email.trim()
+                      !profileFormData.name.trim()
                       ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
                       : "text-white hover:opacity-90"
                       }`}
-                    style={!(isUpdatingProfile || !profileFormData.name.trim() || !profileFormData.email.trim()) ? { backgroundColor: currentTheme.primary[3] } : {}}
+                    style={!(isUpdatingProfile || !profileFormData.name.trim()) ? { backgroundColor: currentTheme.primary[3] } : {}}
                   >
                     {isUpdatingProfile ? "Saving..." : "Save & Continue"}
                   </button>
@@ -1184,7 +1217,10 @@ export default function Checkout() {
           <div className="space-y-2.5">
             {displayItems
               .filter((item) => item.product)
-              .map((item) => (
+              .map((item) => {
+                const { variantId, variantTitle } = resolveVariantInfo(item);
+                const productId = String(item.product?.id || item.product?._id || "");
+                return (
                 <div
                   key={item.product?.id || Math.random()}
                   className="flex gap-2">
@@ -1205,9 +1241,17 @@ export default function Checkout() {
 
                   {/* Product Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-xs font-semibold text-neutral-900 mb-0.5 line-clamp-2">
-                      {item.product?.name}
-                    </h3>
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-xs font-semibold text-neutral-900 mb-0.5 line-clamp-2">
+                        {item.product?.name}
+                      </h3>
+                      <button
+                        onClick={() => removeFromCart(productId, variantId, variantTitle)}
+                        className="text-[10px] text-red-500 font-semibold hover:text-red-600 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
                     <p className="text-[10px] text-neutral-600 mb-0.5">
                       {(parseWeight(
                         item.product?.pack || "",
@@ -1229,12 +1273,7 @@ export default function Checkout() {
                       <div className="flex items-center gap-1.5 bg-white border-2 border-green-600 rounded-full px-1.5 py-0.5">
                         <button
                           onClick={() =>
-                            updateQuantity(
-                              String(item.product?.id || item.product?._id || ""),
-                              item.quantity - 1,
-                              item.variant?._id || item.variant?.id,
-                              item.variant?.title || item.variant?.pack
-                            )
+                            updateQuantity(productId, item.quantity - 1, variantId, variantTitle)
                           }
                           className="w-5 h-5 flex items-center justify-center text-green-600 font-bold hover:bg-green-50 rounded-full transition-colors text-xs">
                           −
@@ -1244,12 +1283,7 @@ export default function Checkout() {
                         </span>
                         <button
                           onClick={() =>
-                            updateQuantity(
-                              String(item.product?.id || item.product?._id || ""),
-                              item.quantity + 1,
-                              item.variant?._id || item.variant?.id,
-                              item.variant?.title || item.variant?.pack
-                            )
+                            updateQuantity(productId, item.quantity + 1, variantId, variantTitle)
                           }
                           className="w-5 h-5 flex items-center justify-center text-green-600 font-bold hover:bg-green-50 rounded-full transition-colors text-xs">
                           +
@@ -1276,7 +1310,8 @@ export default function Checkout() {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
           </div>
         </div>
       </div>
@@ -1301,6 +1336,7 @@ export default function Checkout() {
               return itemProductId === productId;
             });
             const inCartQty = inCartItem?.quantity || 0;
+            const { variantId: inCartVariantId, variantTitle: inCartVariantTitle } = resolveVariantInfo(inCartItem);
 
             return (
               <div
@@ -1401,8 +1437,8 @@ export default function Checkout() {
                                   updateQuantity(
                                     String(productId || ""),
                                     inCartQty - 1,
-                                    inCartItem?.variant?._id || inCartItem?.variant?.id,
-                                    inCartItem?.variant?.title || inCartItem?.variant?.pack
+                                    inCartVariantId,
+                                    inCartVariantTitle
                                   );
                                 }}
                                 className="w-4 h-4 flex items-center justify-center text-white font-bold hover:bg-green-700 rounded transition-colors p-0 leading-none"
@@ -1430,8 +1466,8 @@ export default function Checkout() {
                                   updateQuantity(
                                     String(productId || ""),
                                     inCartQty + 1,
-                                    inCartItem?.variant?._id || inCartItem?.variant?.id,
-                                    inCartItem?.variant?.title || inCartItem?.variant?.pack
+                                    inCartVariantId,
+                                    inCartVariantTitle
                                   );
                                 }}
                                 className="w-4 h-4 flex items-center justify-center text-white font-bold hover:bg-green-700 rounded transition-colors p-0 leading-none"

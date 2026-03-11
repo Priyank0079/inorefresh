@@ -108,21 +108,29 @@ export const updateProfile = asyncHandler(
       if (customer.ownerName !== undefined) customer.ownerName = name;
     }
 
-    if (email && customer.email !== undefined) {
-      // Check if email is already taken by another user in the SAME collection
-      const existingUser = await Model.findOne({
-        email,
-        _id: { $ne: userId },
-      });
+    // Allow updating or clearing email (optional for first-time checkout)
+    if (email !== undefined && customer.email !== undefined) {
+      const trimmedEmail = typeof email === "string" ? email.trim() : "";
 
-      if (existingUser) {
-        return res.status(409).json({
-          success: false,
-          message: "Email already in use",
+      if (trimmedEmail) {
+        // Check if email is already taken by another user in the SAME collection
+        const existingUser = await Model.findOne({
+          email: trimmedEmail,
+          _id: { $ne: userId },
         });
-      }
 
-      customer.email = email;
+        if (existingUser) {
+          return res.status(409).json({
+            success: false,
+            message: "Email already in use",
+          });
+        }
+
+        customer.email = trimmedEmail;
+      } else {
+        // Explicitly clear email when client sends an empty string
+        customer.set("email", undefined);
+      }
     }
 
     if (dateOfBirth && customer.dateOfBirth !== undefined) customer.dateOfBirth = new Date(dateOfBirth);

@@ -20,6 +20,8 @@ export interface CreateOrderData {
         quantity: number;
         variant?: string;
     }[];
+    customerEmail?: string;
+    email?: string;
     address: {
         addressLine?: string;
         city: string;
