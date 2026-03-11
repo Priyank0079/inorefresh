@@ -119,7 +119,7 @@ export async function sendPushNotification(
  */
 export async function sendNotificationToUser(
     userId: string,
-    userType: 'Customer' | 'Admin' | 'warehouse' | 'Delivery',
+    userType: 'Customer' | 'Admin' | 'Warehouse' | 'Delivery' | 'horeca' | 'retailer',
     payload: {
         title: string;
         body: string;
@@ -138,11 +138,17 @@ export async function sendNotificationToUser(
             case 'Admin':
                 UserModel = (await import('../models/Admin')).default;
                 break;
-            case 'warehouse':
+            case 'Warehouse':
                 UserModel = (await import('../models/Warehouse')).default;
                 break;
             case 'Delivery':
                 UserModel = (await import('../models/Delivery')).default;
+                break;
+            case 'horeca':
+                UserModel = (await import('../models/HorecaUser')).default;
+                break;
+            case 'retailer':
+                UserModel = (await import('../models/RetailerUser')).default;
                 break;
             default:
                 throw new Error(`Invalid user type: ${userType}`);

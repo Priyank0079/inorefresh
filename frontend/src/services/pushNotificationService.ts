@@ -10,7 +10,10 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.dhakadsna
 async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
     if ('serviceWorker' in navigator) {
         try {
-            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            console.log('🔄 Registering Service Worker...');
+            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                scope: '/'
+            });
             console.log('✅ Service Worker registered:', registration);
             return registration;
         } catch (error) {
@@ -62,7 +65,19 @@ async function getFCMToken(): Promise<string | null> {
             return null;
         }
 
-        await registration.update(); // Update service worker
+        // Wait for service worker to be fully activated before getting token
+        if (registration.installing) {
+            await new Promise((resolve) => {
+                registration.installing!.onstatechange = (e: any) => {
+                    if (e.target.state === 'activated') resolve(null);
+                };
+            });
+        }
+
+        await navigator.serviceWorker.ready;
+
+        // Small delay to ensure browser push service is synced
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         const token = await getToken(messaging, {
             vapidKey: VAPID_KEY,

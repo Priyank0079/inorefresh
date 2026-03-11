@@ -1152,27 +1152,29 @@ export default function Checkout() {
       <div className="px-4 md:px-6 lg:px-8 py-2 md:py-3 bg-white border-b border-neutral-200">
         <div className="bg-white rounded-lg border border-neutral-200 p-2.5">
           {/* Delivery info */}
-          <div className="flex items-center gap-1.5 mb-2">
-            <div className="w-5 h-5 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0">
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2" />
-                <path
-                  d="M12 6v6l4 2"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
+          {appConfig.estimatedDeliveryTime && (
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className="w-5 h-5 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2" />
+                  <path
+                    d="M12 6v6l4 2"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <span className="text-xs font-semibold text-neutral-900">
+                Delivery in {appConfig.estimatedDeliveryTime}
+              </span>
             </div>
-            <span className="text-xs font-semibold text-neutral-900">
-              Delivery in {appConfig.estimatedDeliveryTime}
-            </span>
-          </div>
+          )}
 
           <p className="text-[10px] text-neutral-600 mb-2.5">
             Shipment of {totalWeight.toFixed(1)} kg
@@ -1207,7 +1209,11 @@ export default function Checkout() {
                       {item.product?.name}
                     </h3>
                     <p className="text-[10px] text-neutral-600 mb-0.5">
-                      {(parseWeight(item.product?.pack || "") * item.quantity).toFixed(1)} kg
+                      {(parseWeight(
+                        item.product?.pack || "",
+                        item.product?.name || item.product?.productName,
+                        item.product?.category || item.product?.categoryId
+                      ) * item.quantity).toFixed(1)} kg
                     </p>
                     <button
                       onClick={(e) => {
@@ -1223,7 +1229,12 @@ export default function Checkout() {
                       <div className="flex items-center gap-1.5 bg-white border-2 border-green-600 rounded-full px-1.5 py-0.5">
                         <button
                           onClick={() =>
-                            updateQuantity(item.product?.id, item.quantity - 1)
+                            updateQuantity(
+                              String(item.product?.id || item.product?._id || ""),
+                              item.quantity - 1,
+                              item.variant?._id || item.variant?.id,
+                              item.variant?.title || item.variant?.pack
+                            )
                           }
                           className="w-5 h-5 flex items-center justify-center text-green-600 font-bold hover:bg-green-50 rounded-full transition-colors text-xs">
                           −
@@ -1233,7 +1244,12 @@ export default function Checkout() {
                         </span>
                         <button
                           onClick={() =>
-                            updateQuantity(item.product?.id, item.quantity + 1)
+                            updateQuantity(
+                              String(item.product?.id || item.product?._id || ""),
+                              item.quantity + 1,
+                              item.variant?._id || item.variant?.id,
+                              item.variant?.title || item.variant?.pack
+                            )
                           }
                           className="w-5 h-5 flex items-center justify-center text-green-600 font-bold hover:bg-green-50 rounded-full transition-colors text-xs">
                           +
@@ -1382,7 +1398,12 @@ export default function Checkout() {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  updateQuantity(productId, inCartQty - 1);
+                                  updateQuantity(
+                                    String(productId || ""),
+                                    inCartQty - 1,
+                                    inCartItem?.variant?._id || inCartItem?.variant?.id,
+                                    inCartItem?.variant?.title || inCartItem?.variant?.pack
+                                  );
                                 }}
                                 className="w-4 h-4 flex items-center justify-center text-white font-bold hover:bg-green-700 rounded transition-colors p-0 leading-none"
                                 style={{ lineHeight: 1, fontSize: "14px" }}>
@@ -1406,7 +1427,12 @@ export default function Checkout() {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  updateQuantity(productId, inCartQty + 1);
+                                  updateQuantity(
+                                    String(productId || ""),
+                                    inCartQty + 1,
+                                    inCartItem?.variant?._id || inCartItem?.variant?.id,
+                                    inCartItem?.variant?.title || inCartItem?.variant?.pack
+                                  );
                                 }}
                                 className="w-4 h-4 flex items-center justify-center text-white font-bold hover:bg-green-700 rounded transition-colors p-0 leading-none"
                                 style={{ lineHeight: 1, fontSize: "14px" }}>

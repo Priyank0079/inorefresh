@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IWalletTransaction extends Document {
     userId: mongoose.Types.ObjectId; // Generic user reference (seller or delivery boy)
-    userType: 'Warehouse' | 'DELIVERY_BOY' | 'CUSTOMER'; // Type of user
+    userType: 'Warehouse' | 'DELIVERY_BOY' | 'CUSTOMER' | 'horeca' | 'retailer'; // Type of user
     amount: number;
     type: 'Credit' | 'Debit';
     description: string;
@@ -23,7 +23,7 @@ const WalletTransactionSchema = new Schema<IWalletTransaction>(
         },
         userType: {
             type: String,
-            enum: ['Warehouse', 'DELIVERY_BOY', 'CUSTOMER'],
+            enum: ['Warehouse', 'DELIVERY_BOY', 'CUSTOMER', 'horeca', 'retailer'],
             required: [true, 'User type is required'],
         },
         amount: {

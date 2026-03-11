@@ -162,66 +162,72 @@ export default function Home() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await getHomeContent(
+        const response = await getHomeContent(
           undefined,
           location?.latitude,
           location?.longitude
         );
 
-        // Filter categories strictly to our 3 main types
-        if (data.categories) {
-          data.categories = data.categories.filter((c: any) => {
-            const name = (c.name || "").toLowerCase();
-            return (
-              name.includes("aqua") ||
-              name.includes("marine") ||
-              name.includes("marin") ||
-              name.includes("bangali") ||
-              name.includes("bengali") ||
-              name.includes("bengoli") ||
-              name.includes("freshwater") ||
-              name.includes("ocean") ||
-              name.includes("traditional")
-            );
-          }).map((c: any) => {
-            const n = (c.name || "").toLowerCase();
-            if (n.includes("aqua") || n.includes("freshwater") || n.includes("river")) return { ...c, name: "Aqua Fish" };
-            if (n.includes("marine") || n.includes("marin") || n.includes("ocean") || n.includes("sea")) return { ...c, name: "Marine Fish" };
-            if (n.includes("bangali") || n.includes("bengali") || n.includes("bengoli") || n.includes("traditional")) return { ...c, name: "Bangali Fish" };
-            return c;
-          });
-        }
+        if (response.success && response.data) {
+          const content = response.data;
 
-        if (data.homeSections) {
-          data.homeSections = data.homeSections.map((s: any) => {
-            if (s.data && Array.isArray(s.data)) {
-              s.data = s.data.filter((c: any) => {
-                const name = (c.name || c.title || "").toLowerCase();
-                return (
-                  name.includes("aqua") ||
-                  name.includes("marine") ||
-                  name.includes("marin") ||
-                  name.includes("bangali") ||
-                  name.includes("bengali") ||
-                  name.includes("bengoli") ||
-                  name.includes("freshwater") ||
-                  name.includes("ocean") ||
-                  name.includes("traditional")
-                );
-              }).map((c: any) => {
-                const n = (c.name || c.title || "").toLowerCase();
-                if (n.includes("aqua") || n.includes("freshwater") || n.includes("river")) return { ...c, name: "Aqua Fish", title: "Aqua Fish" };
-                if (n.includes("marine") || n.includes("marin") || n.includes("ocean") || n.includes("sea")) return { ...c, name: "Marine Fish", title: "Marine Fish" };
-                if (n.includes("bangali") || n.includes("bengali") || n.includes("bengoli") || n.includes("traditional")) return { ...c, name: "Bangali Fish", title: "Bangali Fish" };
-                return c;
-              });
-            }
-            return s;
-          }).filter((s: any) => s.displayType === 'products' || (s.data && s.data.length > 0));
-        }
+          // Filter categories strictly to our 3 main types
+          if (content.categories) {
+            content.categories = content.categories.filter((c: any) => {
+              const name = (c.name || "").toLowerCase();
+              return (
+                name.includes("aqua") ||
+                name.includes("marine") ||
+                name.includes("marin") ||
+                name.includes("bangali") ||
+                name.includes("bengali") ||
+                name.includes("bengoli") ||
+                name.includes("freshwater") ||
+                name.includes("ocean") ||
+                name.includes("traditional")
+              );
+            }).map((c: any) => {
+              const n = (c.name || "").toLowerCase();
+              if (n.includes("aqua") || n.includes("freshwater") || n.includes("river")) return { ...c, name: "Aqua Fish" };
+              if (n.includes("marine") || n.includes("marin") || n.includes("ocean") || n.includes("sea")) return { ...c, name: "Marine Fish" };
+              if (n.includes("bangali") || n.includes("bengali") || n.includes("bengoli") || n.includes("traditional")) return { ...c, name: "Bangali Fish" };
+              return c;
+            });
+          }
 
-        setHomeData(data);
-        setError(null);
+          if (content.homeSections) {
+            content.homeSections = content.homeSections.map((s: any) => {
+              if (s.data && Array.isArray(s.data)) {
+                s.data = s.data.filter((c: any) => {
+                  const name = (c.name || c.title || "").toLowerCase();
+                  return (
+                    name.includes("aqua") ||
+                    name.includes("marine") ||
+                    name.includes("marin") ||
+                    name.includes("bangali") ||
+                    name.includes("bengali") ||
+                    name.includes("bengoli") ||
+                    name.includes("freshwater") ||
+                    name.includes("ocean") ||
+                    name.includes("traditional")
+                  );
+                }).map((c: any) => {
+                  const n = (c.name || c.title || "").toLowerCase();
+                  if (n.includes("aqua") || n.includes("freshwater") || n.includes("river")) return { ...c, name: "Aqua Fish", title: "Aqua Fish" };
+                  if (n.includes("marine") || n.includes("marin") || n.includes("ocean") || n.includes("sea")) return { ...c, name: "Marine Fish", title: "Marine Fish" };
+                  if (n.includes("bangali") || n.includes("bengali") || n.includes("bengoli") || n.includes("traditional")) return { ...c, name: "Bangali Fish", title: "Bangali Fish" };
+                  return c;
+                });
+              }
+              return s;
+            }).filter((s: any) => s.displayType === 'products' || (s.data && s.data.length > 0));
+          }
+
+          setHomeData(content);
+          setError(null);
+        } else {
+          setError("Failed to load content. Please try again.");
+        }
       } catch (err) {
         console.error("Error fetching home content:", err);
         setError("Failed to load content. Please try again.");

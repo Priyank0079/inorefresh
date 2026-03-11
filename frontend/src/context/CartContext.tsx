@@ -92,7 +92,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Helper to sync cart from API
   const fetchCart = async (lat?: number, lng?: number) => {
-    if (!isAuthenticated || user?.userType !== 'Customer') {
+    if (!isAuthenticated || !['Customer', 'horeca', 'retailer'].includes(user?.userType || '')) {
       // If we cleared it above but had things in localStorage, we keep them for guests?
       // For now, if logged out, we clear if it was an authenticated session.
       // But if guest, we might want to keep it.
@@ -144,6 +144,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [estimatedFee, setEstimatedFee] = useState<number | undefined>(undefined);
   const [platformFee, setPlatformFee] = useState<number | undefined>(undefined);
   const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number | undefined>(undefined);
+
+  const isFishProduct = (product: Product): boolean => {
+    const name = (product.name || (product as any).productName || "").toLowerCase();
+    const categoryName = (product as any).categoryData?.name?.toLowerCase() || "";
+    const categoryId = String(product.category || product.categoryId || "").toLowerCase();
+
+    // Comprehensive fish identification keywords
+    const fishKeywords = [
+      'fish', 'machi', 'mach', 'ilis', 'rohu', 'katla', 'prawn', 'shrimp',
+      'lobster', 'sea', 'marin', 'aqua', 'bengali', 'bangali', 'river',
+      'ocean', 'freshwater', 'ayre', 'pabda', 'tengra', 'rui', 'mirgal'
+    ];
+
+    return fishKeywords.some(kw => name.includes(kw) || categoryName.includes(kw) || categoryId.includes(kw));
+  };
+
+  const getStepAndMinQuantity = (product: Product): { min: number; step: number } => {
+    return isFishProduct(product) ? { min: 5, step: 1 } : { min: 1, step: 1 };
+  };
 
   const cart: Cart = useMemo(() => {
     // Filter out any items with null products before computing totals
@@ -232,6 +251,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return itemProductId === productId && !itemVariantId && !itemVariantTitle;
       });
 
+      const { min: minQty, step: stepQty } = getStepAndMinQuantity(product);
+
       if (existingItem) {
         return validItems.map((item) => {
           const itemProductId = item.product.id || item.product._id;
@@ -244,15 +265,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
             : itemProductId === productId && !itemVariantId && !itemVariantTitle;
 
           return isMatch
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + stepQty }
             : item;
         });
       }
-      return [...validItems, { product: normalizedProduct, quantity: 1 }];
+      return [...validItems, { product: normalizedProduct, quantity: minQty }];
     });
 
     // Only sync to API if user is authenticated
-    if (isAuthenticated && user?.userType === 'Customer') {
+    if (isAuthenticated && ['Customer', 'horeca', 'retailer'].includes(user?.userType || '')) {
       try {
         // Pass variation info to API if available
         // If product has variations but no variantId/selectedVariant is provided (e.g. from Home page),
@@ -274,9 +295,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
         // Only sync to API if user is authenticated AND the product exists in DB (valid ID)
         if (isMongoId(productId)) {
+          const { step: stepQty } = getStepAndMinQuantity(product);
           const response = await apiAddToCart(
             productId,
-            1,
+            stepQty,
             variation,
             location?.latitude,
             location?.longitude
@@ -308,23 +330,58 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const removeFromCart = async (productId: string) => {
-    // Prevent concurrent operations on the same product
-    if (pendingOperationsRef.current.has(productId)) {
+  const removeFromCart = async (productId: string, variantId?: string, variantTitle?: string) => {
+    // Create a unique key for this specific product + variant combination
+    const operationKey = variantId ? `${productId}-${variantId}` : `${productId}`;
+
+    // Prevent concurrent operations on the same item
+    if (pendingOperationsRef.current.has(operationKey)) {
       return;
     }
-    pendingOperationsRef.current.add(productId);
+    pendingOperationsRef.current.add(operationKey);
 
-    // Find item matching either id or _id
-    const itemToRemove = items.find(item => item?.product && (item.product.id === productId || item.product._id === productId));
+    // Find the specific item matching product ID and variant
+    const itemToRemove = items.find(item => {
+      if (!item?.product) return false;
+      const idMatch = item.product.id === productId || item.product._id === productId;
+      if (!idMatch) return false;
+
+      const itemVariantId = (item.product as any).variantId || (item.product as any).selectedVariant?._id;
+      const itemVariantTitle = (item.product as any).variantTitle || (item.product as any).pack || (item as any).variation;
+
+      if (variantId || variantTitle) {
+        return itemVariantId === variantId || itemVariantTitle === variantTitle;
+      }
+      return !itemVariantId && !itemVariantTitle;
+    });
+
+    if (!itemToRemove) {
+      pendingOperationsRef.current.delete(operationKey);
+      return;
+    }
 
     const previousItems = [...items];
-    setItems((prevItems) => prevItems.filter((item) => item?.product && item.product.id !== productId && item.product._id !== productId));
+    setItems((prevItems) =>
+      prevItems.filter((item) => {
+        if (!item?.product) return false;
+        const idMatch = item.product.id === productId || item.product._id === productId;
+        if (!idMatch) return true; // Keep other products
+
+        const itemVariantId = (item.product as any).variantId || (item.product as any).selectedVariant?._id;
+        const itemVariantTitle = (item.product as any).variantTitle || (item.product as any).pack || (item as any).variation;
+
+        // Match specific variant to remove it (return false to filter it out)
+        if (variantId || variantTitle) {
+          return !(itemVariantId === variantId || itemVariantTitle === variantTitle);
+        }
+        return !(!itemVariantId && !itemVariantTitle);
+      })
+    );
 
     // Only sync to API if user is authenticated and item has a valid MongoDB ID
     const isMongoId = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
 
-    if (isAuthenticated && user?.userType === 'Customer' && itemToRemove?.id && isMongoId(itemToRemove.id)) {
+    if (isAuthenticated && ['Customer', 'horeca', 'retailer'].includes(user?.userType || '') && itemToRemove?.id && isMongoId(itemToRemove.id)) {
       try {
         const response = await apiRemoveFromCart(
           itemToRemove.id,
@@ -342,11 +399,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setItems(previousItems);
       } finally {
         // Remove from pending operations
-        pendingOperationsRef.current.delete(productId);
+        pendingOperationsRef.current.delete(operationKey);
       }
     } else {
       // For unregistered users, remove from pending operations immediately
-      pendingOperationsRef.current.delete(productId);
+      pendingOperationsRef.current.delete(operationKey);
     }
   };
 
@@ -384,6 +441,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return !itemVariantId && !itemVariantTitle;
     });
 
+    if (!itemToUpdate) {
+      console.warn(`[CartContext] Item not found for update: ${productId}`);
+      pendingOperationsRef.current.delete(operationKey);
+      return;
+    }
+
+    const isFish = isFishProduct(itemToUpdate.product);
+    const { min: minQty, step: stepQty } = getStepAndMinQuantity(itemToUpdate.product);
+
+    let finalQuantity = quantity;
+    if (isFish) {
+      if (quantity > itemToUpdate.quantity) {
+        finalQuantity = itemToUpdate.quantity + stepQty;
+      } else if (quantity < itemToUpdate.quantity) {
+        finalQuantity = itemToUpdate.quantity - stepQty;
+      }
+
+      if (finalQuantity < minQty) {
+        removeFromCart(productId, variantId, variantTitle);
+        return;
+      }
+    } else {
+      if (quantity <= 0) {
+        removeFromCart(productId, variantId, variantTitle);
+        return;
+      }
+    }
+
     const previousItems = [...items];
     setItems((prevItems) =>
       prevItems.filter(item => item?.product).map((item) => {
@@ -395,14 +480,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
           const itemVariantId = (item.product as any).variantId || (item.product as any).selectedVariant?._id;
           const itemVariantTitle = (item.product as any).variantTitle || (item.product as any).pack;
           if (itemVariantId === variantId || itemVariantTitle === variantTitle) {
-            return { ...item, quantity };
+            return { ...item, quantity: finalQuantity };
           }
         } else {
           // If no variant info, match items without variants
           const itemVariantId = (item.product as any).variantId || (item.product as any).selectedVariant?._id;
           const itemVariantTitle = (item.product as any).variantTitle;
           if (!itemVariantId && !itemVariantTitle) {
-            return { ...item, quantity };
+            return { ...item, quantity: finalQuantity };
           }
         }
         return item;
@@ -412,11 +497,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Only sync to API if user is authenticated and item has valid CartItemID (Mongo ID)
     const isMongoId = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
 
-    if (isAuthenticated && user?.userType === 'Customer' && itemToUpdate?.id && isMongoId(itemToUpdate.id)) {
+    if (isAuthenticated && ['Customer', 'horeca', 'retailer'].includes(user?.userType || '') && itemToUpdate?.id && isMongoId(itemToUpdate.id)) {
       try {
         const response = await apiUpdateCartItem(
           itemToUpdate.id,
-          quantity,
+          finalQuantity,
           location?.latitude,
           location?.longitude
         );

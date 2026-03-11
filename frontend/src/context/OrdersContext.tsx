@@ -58,7 +58,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     const userType =
       user?.userType || (isAuthenticated && user ? "Customer" : undefined);
 
-    if (!isAuthenticated || userType !== "Customer") {
+    if (!isAuthenticated || !['Customer', 'horeca', 'retailer'].includes(userType || '')) {
       setLoading(false);
       return;
     }

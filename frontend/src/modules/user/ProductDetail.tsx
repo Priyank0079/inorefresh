@@ -17,6 +17,7 @@ import WishlistButton from '../../components/WishlistButton';
 import StarRating from "../../components/ui/StarRating";
 import { calculateProductPrice } from '../../utils/priceUtils';
 import { useThemeContext } from "../../context/ThemeContext";
+import { appConfig } from "../../services/configService";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -529,31 +530,33 @@ export default function ProductDetail() {
         {/* Product Details Card - White section */}
         <div className="bg-white rounded-t-3xl -mt-6 relative z-10 px-4 md:px-6 lg:px-8 pt-2.5 md:pt-4 pb-2 md:pb-4">
           {/* Delivery time */}
-          <div className="flex items-center gap-0.5 mb-1">
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg">
-              <circle
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-              <path
-                d="M12 6v6l4 2"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-            <span className="text-sm text-neutral-700 font-medium">
-              17 MINS
-            </span>
-          </div>
+          {appConfig.estimatedDeliveryTime && (
+            <div className="flex items-center gap-0.5 mb-1">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M12 6v6l4 2"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="text-sm text-neutral-700 font-medium uppercase">
+                {appConfig.estimatedDeliveryTime}
+              </span>
+            </div>
+          )}
 
           {/* Product name */}
           <h2 className="text-lg md:text-2xl font-bold text-neutral-900 mb-0 leading-tight">
@@ -1108,7 +1111,7 @@ export default function ProductDetail() {
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     updateQuantity(
-                                      similarProduct.id,
+                                      String(similarProduct.id || ""),
                                       similarInCartQty - 1
                                     );
                                   }}
@@ -1136,7 +1139,7 @@ export default function ProductDetail() {
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     updateQuantity(
-                                      similarProduct.id,
+                                      String(similarProduct.id || ""),
                                       similarInCartQty + 1
                                     );
                                   }}
@@ -1244,7 +1247,7 @@ export default function ProductDetail() {
                     onClick={() => {
                       const productId = product.id || product._id;
                       const variantId = selectedVariant?._id;
-                      updateQuantity(productId, inCartQty - 1, variantId, variantTitle);
+                      updateQuantity(String(productId || ""), inCartQty - 1, variantId, variantTitle);
                     }}
                     className="w-6 h-6 flex items-center justify-center font-bold rounded-full transition-colors border p-0 leading-none text-base"
                     style={{
@@ -1269,7 +1272,7 @@ export default function ProductDetail() {
                     onClick={() => {
                       const productId = product.id || product._id;
                       const variantId = selectedVariant?._id;
-                      updateQuantity(productId, inCartQty + 1, variantId, variantTitle);
+                      updateQuantity(String(productId || ""), inCartQty + 1, variantId, variantTitle);
                     }}
                     className="w-6 h-6 flex items-center justify-center font-bold rounded-full transition-colors border p-0 leading-none text-base"
                     style={{

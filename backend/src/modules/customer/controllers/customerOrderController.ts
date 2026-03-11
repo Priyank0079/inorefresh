@@ -3,6 +3,8 @@ import Order from "../../../models/Order";
 import Product from "../../../models/Product";
 import OrderItem from "../../../models/OrderItem";
 import Customer from "../../../models/Customer";
+import HorecaUser from "../../../models/HorecaUser";
+import RetailerUser from "../../../models/RetailerUser";
 
 import Warehouse from "../../../models/Warehouse";
 import mongoose from "mongoose";
@@ -85,13 +87,23 @@ export const createOrder = async (req: Request, res: Response) => {
             });
         }
 
-        // Fetch customer details
-        const customer = await Customer.findById(userId);
-        if (!customer) {
+        // Fetch buyer details based on userType
+        let buyer: any = null;
+        const userType = req.user!.userType;
+
+        if (userType === 'horeca') {
+            buyer = await HorecaUser.findById(userId);
+        } else if (userType === 'retailer') {
+            buyer = await RetailerUser.findById(userId);
+        } else {
+            buyer = await Customer.findById(userId);
+        }
+
+        if (!buyer) {
             if (session) await session.abortTransaction();
             return res.status(404).json({
                 success: false,
-                message: "Customer not found",
+                message: "User not found",
             });
         }
 
@@ -130,9 +142,9 @@ export const createOrder = async (req: Request, res: Response) => {
         // Initialize Order first to get an ID
         const newOrder = new Order({
             customer: new mongoose.Types.ObjectId(userId),
-            customerName: customer.name,
-            customerEmail: customer.email,
-            customerPhone: customer.phone,
+            customerName: buyer.name || buyer.shopName || buyer.ownerName,
+            customerEmail: buyer.email || "",
+            customerPhone: buyer.phone || buyer.shopPhone || buyer.ownerPhone,
             deliveryAddress: {
                 address: address.address || address.street || 'N/A',
                 city: address.city || 'N/A',
@@ -452,31 +464,26 @@ export const createOrder = async (req: Request, res: Response) => {
         let payableAmount = finalTotal;
 
         if (useWallet) {
-            // Find customer again to get latest balance (and lock if in transaction)
-            const customerData = session
-                ? await Customer.findById(userId).session(session)
-                : await Customer.findById(userId);
-
-            if (customerData && customerData.walletAmount > 0) {
+            if (buyer && buyer.walletAmount > 0) {
                 // Calculate amount to use
-                walletAmountUsed = Math.min(finalTotal, customerData.walletAmount);
+                walletAmountUsed = Math.min(finalTotal, buyer.walletAmount);
                 if (walletAmountUsed > 0) {
                     payableAmount = finalTotal - walletAmountUsed;
 
                     // Deduct from wallet
-                    customerData.walletAmount -= walletAmountUsed;
+                    buyer.walletAmount -= walletAmountUsed;
                     // Stats update moved to the end to be universal
 
                     if (session) {
-                        await customerData.save({ session });
+                        await buyer.save({ session });
                     } else {
-                        await customerData.save();
+                        await buyer.save();
                     }
 
                     // Create Wallet Transaction
                     const walletTxn = new WalletTransaction({
-                        userId: customerData._id,
-                        userType: 'CUSTOMER',
+                        userId: buyer._id,
+                        userType: userType === 'horeca' || userType === 'retailer' ? userType : 'CUSTOMER',
                         amount: walletAmountUsed,
                         type: 'Debit',
                         description: `Used for order payment`,
@@ -500,32 +507,16 @@ export const createOrder = async (req: Request, res: Response) => {
             }
         }
 
-        // Always update Customer Stats (totalSpent, totalOrders)
+        // Always update Buyer Stats (totalSpent, totalOrders)
         // This ensures stats are updated regardless of wallet usage or payment method
-        const customerToUpdate = session
-            ? await Customer.findById(userId).session(session)
-            : await Customer.findById(userId);
-
-        if (customerToUpdate) {
-            // If wallet was used, we already deducted balance in the 'if (useWallet)' block above
-            // But we need to make sure we don't double count or miss the stats update.
-            // Since we moved stats update here, we should REMOVE it from the wallet block above to avoid confusion,
-            // OR just ensure we are using the freshly fetched 'customerToUpdate' here.
-
-            // Wait, the previous block might have modified 'customerData' and saved it.
-            // If we fetch again here, we get the updated wallet balance.
-
-            // Let's Simplify: 
-            // 1. Remove stats update from the wallet block.
-            // 2. Perform stats update HERE for everyone.
-
-            customerToUpdate.totalSpent = (customerToUpdate.totalSpent || 0) + finalTotal;
-            customerToUpdate.totalOrders = (customerToUpdate.totalOrders || 0) + 1;
+        if (buyer) {
+            buyer.totalSpent = (buyer.totalSpent || 0) + finalTotal;
+            buyer.totalOrders = (buyer.totalOrders || 0) + 1;
 
             if (session) {
-                await customerToUpdate.save({ session });
+                await buyer.save({ session });
             } else {
-                await customerToUpdate.save();
+                await buyer.save();
             }
         }
 
@@ -700,9 +691,20 @@ export const getOrderById = async (req: Request, res: Response) => {
             });
         }
 
-        // Get customer's permanent delivery OTP
-        const customer = await Customer.findById(userId).select('deliveryOtp');
-        const deliveryOtp = customer?.deliveryOtp;
+        // Get buyer's permanent delivery OTP
+        let deliveryOtp = null;
+        const userType = req.user!.userType;
+
+        if (userType === 'horeca') {
+            const buyer = await HorecaUser.findById(userId).select('deliveryOtp');
+            deliveryOtp = buyer?.deliveryOtp;
+        } else if (userType === 'retailer') {
+            const buyer = await RetailerUser.findById(userId).select('deliveryOtp');
+            deliveryOtp = buyer?.deliveryOtp;
+        } else {
+            const buyer = await Customer.findById(userId).select('deliveryOtp');
+            deliveryOtp = buyer?.deliveryOtp;
+        }
 
         // Transform order to match frontend Order type
         const orderObj = order.toObject();

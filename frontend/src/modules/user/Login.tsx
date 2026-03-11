@@ -103,8 +103,20 @@ export default function Login() {
     try {
       const response = await api.post('/auth/login', { phone: mobileNumber, userType });
       if (response.data.success) {
-        // Assume OTP logic or direct login depending on backend iteration
-        // For now, mock OTP sent
+        if (response.data.token && response.data.user) {
+          login(response.data.token, {
+            id: response.data.user._id || response.data.user.id,
+            name: response.data.user.name || response.data.user.ownerName || 'User',
+            phone: response.data.user.phone || response.data.user.ownerPhone,
+            email: response.data.user.email,
+            walletAmount: response.data.user.walletAmount || 0,
+            refCode: response.data.user.refCode || '',
+            status: response.data.user.status || 'Active',
+            userType: response.data.user.userType || (userType as any),
+          });
+          navigate('/');
+          return;
+        }
         setShowOTP(true);
       }
     } catch (err: any) {
@@ -126,18 +138,38 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      const response = await verifyOTP(mobileNumber, otp, sessionId);
-      if (response.success && response.data) {
-        login(response.data.token, {
-          id: response.data.user.id,
-          name: response.data.user.name,
-          phone: response.data.user.phone,
-          email: response.data.user.email,
-          walletAmount: response.data.user.walletAmount,
-          refCode: response.data.user.refCode,
-          status: response.data.user.status,
-        });
-        navigate('/');
+      if (userType === 'horeca' || userType === 'retailer') {
+        const response = await api.post('/auth/login', { phone: mobileNumber, userType, otp });
+        if (response.data.success && response.data.token) {
+          login(response.data.token, {
+            id: response.data.user._id || response.data.user.id,
+            name: response.data.user.name || response.data.user.ownerName || 'User',
+            phone: response.data.user.phone || response.data.user.ownerPhone,
+            email: response.data.user.email,
+            walletAmount: response.data.user.walletAmount || 0,
+            refCode: response.data.user.refCode || '',
+            status: response.data.user.status || 'Active',
+            userType: response.data.user.userType || (userType as any),
+          });
+          navigate('/');
+        } else {
+          setError(response.data.message || 'Verification failed');
+        }
+      } else {
+        const response = await verifyOTP(mobileNumber, otp, sessionId);
+        if (response.success && response.data) {
+          login(response.data.token, {
+            id: response.data.user.id,
+            name: response.data.user.name,
+            phone: response.data.user.phone,
+            email: response.data.user.email,
+            walletAmount: response.data.user.walletAmount,
+            refCode: response.data.user.refCode,
+            status: response.data.user.status,
+            userType: "Customer",
+          });
+          navigate('/');
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid OTP. Please try again.');

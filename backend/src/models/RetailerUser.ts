@@ -16,6 +16,9 @@ export interface IRetailerUser extends Document {
     createdAt: Date;
     walletAmount: number;
     refCode?: string;
+    deliveryOtp?: string;
+    fcmTokens?: string[];
+    fcmTokenMobile?: string[];
 }
 
 const RetailerUserSchema: Schema = new Schema(
@@ -34,8 +37,19 @@ const RetailerUserSchema: Schema = new Schema(
         status: { type: String, enum: ['Pending', 'Active', 'Inactive'], default: 'Pending' },
         walletAmount: { type: Number, default: 0 },
         refCode: { type: String },
+        deliveryOtp: { type: String, trim: true },
+        fcmTokens: { type: [String], default: [] },
+        fcmTokenMobile: { type: [String], default: [] },
     },
     { timestamps: true }
 );
+
+// Generate deliveryOtp before saving if not provided
+RetailerUserSchema.pre('save', async function (next) {
+    if (!(this as any).deliveryOtp) {
+        (this as any).deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    }
+    next();
+});
 
 export default mongoose.models.RetailerUser || mongoose.model<IRetailerUser>('RetailerUser', RetailerUserSchema, 'retailer_users');

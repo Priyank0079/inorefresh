@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, TokenPayload } from '../services/jwtService';
 
-export type AuthUserType = 'Admin' | 'Warehouse' | 'Customer' | 'Delivery';
+export type AuthUserType = 'Admin' | 'Warehouse' | 'Customer' | 'Delivery' | 'horeca' | 'retailer';
 
 // Extend Express Request to include user info
 declare global {

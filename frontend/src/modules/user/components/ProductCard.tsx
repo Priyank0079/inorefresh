@@ -128,6 +128,22 @@ export default function ProductCard({
   // Get Price and MRP using utility
   const { displayPrice, mrp, discount } = calculateProductPrice(product);
 
+  const isFishProduct = (p: Product): boolean => {
+    const name = (p.name || (p as any).productName || "").toLowerCase();
+    const categoryName = (p as any).categoryData?.name?.toLowerCase() || "";
+    const categoryId = String(p.category || p.categoryId || "").toLowerCase();
+
+    const fishKeywords = [
+      'fish', 'machi', 'mach', 'ilis', 'rohu', 'katla', 'prawn', 'shrimp',
+      'lobster', 'sea', 'marin', 'aqua', 'bengali', 'bangali', 'river',
+      'ocean', 'freshwater', 'ayre', 'pabda', 'tengra', 'rui', 'mirgal'
+    ];
+
+    return fishKeywords.some(kw => name.includes(kw) || categoryName.includes(kw) || categoryId.includes(kw));
+  };
+
+  const isFish = isFishProduct(product);
+
   const handleCardClick = () => {
     navigate(`/product/${((product as any).id || product._id) as string}`);
   };
@@ -161,14 +177,22 @@ export default function ProductCard({
     e.preventDefault();
 
     // Prevent any operation while another is in progress
-    if (isOperationPendingRef.current || inCartQty <= 0) {
+    if (isOperationPendingRef.current || inCartQty <= 0 || !cartItem) {
       return;
     }
 
     isOperationPendingRef.current = true;
 
     try {
-      await updateQuantity(((product as any).id || product._id) as string, inCartQty - 1);
+      const variantId = (cartItem.product as any).variantId || (cartItem.product as any).selectedVariant?._id;
+      const variantTitle = (cartItem.product as any).variantTitle || (cartItem.product as any).pack || (cartItem as any).variation;
+
+      await updateQuantity(
+        ((product as any).id || product._id) as string,
+        inCartQty - 1,
+        variantId,
+        variantTitle
+      );
     } finally {
       // Reset the flag after the operation truly completes
       isOperationPendingRef.current = false;
@@ -192,8 +216,16 @@ export default function ProductCard({
     isOperationPendingRef.current = true;
 
     try {
-      if (inCartQty > 0) {
-        await updateQuantity(((product as any).id || product._id) as string, inCartQty + 1);
+      if (inCartQty > 0 && cartItem) {
+        const variantId = (cartItem.product as any).variantId || (cartItem.product as any).selectedVariant?._id;
+        const variantTitle = (cartItem.product as any).variantTitle || (cartItem.product as any).pack || (cartItem as any).variation;
+
+        await updateQuantity(
+          ((product as any).id || product._id) as string,
+          inCartQty + 1,
+          variantId,
+          variantTitle
+        );
       } else {
         await addToCart(product, addButtonRef.current);
       }
@@ -217,8 +249,15 @@ export default function ProductCard({
       }}
     >
       {/* 3 Availability Badge */}
-      <div className="absolute top-[10px] left-[10px] md:top-[16px] md:left-[16px] z-10 px-[8px] py-[2px] md:px-[10px] md:py-[4px] rounded-[8px] md:rounded-[10px] bg-[#eef2ff] text-[#2563eb] text-[10px] md:text-[12px] font-[500] uppercase tracking-wide">
-        {badgeText || (product.isAvailable === false ? 'Out of Range' : `${product.stock || 0} AVAILABLE`)}
+      <div className="absolute top-[10px] left-[10px] md:top-[16px] md:left-[16px] z-10 flex flex-col gap-1">
+        <div className="px-[8px] py-[2px] md:px-[10px] md:py-[4px] rounded-[8px] md:rounded-[10px] bg-[#eef2ff] text-[#2563eb] text-[10px] md:text-[12px] font-[500] uppercase tracking-wide">
+          {badgeText || (product.isAvailable === false ? 'Out of Range' : `${product.stock || 0} AVAILABLE`)}
+        </div>
+        {isFish && (
+          <div className="px-[8px] py-[2px] md:px-[10px] md:py-[4px] rounded-[8px] md:rounded-[10px] bg-[#fff7ed] text-[#ea580c] text-[10px] md:text-[12px] font-[700] uppercase tracking-wide border border-[#fdba74]">
+            🐟 MIN 5KG
+          </div>
+        )}
       </div>
 
       {/* 2 Product Image Area */}

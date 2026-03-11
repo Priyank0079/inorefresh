@@ -182,7 +182,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <div className="md:w-full md:bg-transparent md:min-h-screen overflow-x-hidden">
         <div className="md:w-full md:min-h-screen md:flex md:flex-col overflow-x-hidden relative z-10">
           {/* New OceanMart Navbar - Replaces both old navbar and sticky header */}
-          {isHomePage && <OceanNavbar />}
+          {!isCheckoutPage && !isCartPage && <OceanNavbar />}
 
 
           {/* Scrollable Main Content */}

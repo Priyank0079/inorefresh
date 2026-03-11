@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import Customer from "../../../models/Customer";
+import HorecaUser from "../../../models/HorecaUser";
+import RetailerUser from "../../../models/RetailerUser";
 import { asyncHandler } from "../../../utils/asyncHandler";
 
 /**
@@ -8,45 +10,57 @@ import { asyncHandler } from "../../../utils/asyncHandler";
 export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
 
-  if (!userId || (req as any).user?.userType !== "Customer") {
+  if (!userId || !["Customer", "horeca", "retailer"].includes((req as any).user?.userType)) {
     return res.status(401).json({
       success: false,
       message: "Unauthorized or not a customer",
     });
   }
 
-  const customer = await Customer.findById(userId);
+  const userType = (req as any).user?.userType;
+
+  let customer;
+  if (userType === 'horeca') {
+    customer = await HorecaUser.findById(userId);
+  } else if (userType === 'retailer') {
+    customer = await RetailerUser.findById(userId);
+  } else {
+    customer = await Customer.findById(userId);
+  }
 
   if (!customer) {
     return res.status(404).json({
       success: false,
-      message: "Customer not found",
+      message: "User profile not found",
     });
   }
+
+  // Normalize data for frontend
+  const normalizedData = {
+    id: customer._id,
+    name: customer.name || customer.ownerName || customer.shopName,
+    phone: customer.phone || customer.ownerPhone || customer.shopPhone,
+    email: customer.email || "",
+    dateOfBirth: customer.dateOfBirth,
+    registrationDate: customer.registrationDate || customer.createdAt,
+    status: customer.status,
+    refCode: customer.refCode,
+    walletAmount: customer.walletAmount,
+    totalOrders: customer.totalOrders || 0,
+    totalSpent: customer.totalSpent || 0,
+    latitude: customer.latitude,
+    longitude: customer.longitude,
+    address: customer.address,
+    city: customer.city,
+    state: customer.state,
+    pincode: customer.pincode,
+    locationUpdatedAt: customer.locationUpdatedAt,
+  };
 
   return res.status(200).json({
     success: true,
     message: "Profile retrieved successfully",
-    data: {
-      id: customer._id,
-      name: customer.name,
-      phone: customer.phone,
-      email: customer.email,
-      dateOfBirth: customer.dateOfBirth,
-      registrationDate: customer.registrationDate,
-      status: customer.status,
-      refCode: customer.refCode,
-      walletAmount: customer.walletAmount,
-      totalOrders: customer.totalOrders,
-      totalSpent: customer.totalSpent,
-      latitude: customer.latitude,
-      longitude: customer.longitude,
-      address: customer.address,
-      city: customer.city,
-      state: customer.state,
-      pincode: customer.pincode,
-      locationUpdatedAt: customer.locationUpdatedAt,
-    },
+    data: normalizedData,
   });
 });
 
@@ -59,43 +73,65 @@ export const updateProfile = asyncHandler(
     const { name, email, dateOfBirth, notificationPreferences, accountPrivacy } = req.body;
 
 
-    if (!userId || (req as any).user?.userType !== "Customer") {
+    if (!userId || !["Customer", "horeca", "retailer"].includes((req as any).user?.userType)) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized or not a customer",
       });
     }
 
-    const customer = await Customer.findById(userId);
+    const userType = (req as any).user?.userType;
+
+    let customer;
+    let Model: any;
+
+    if (userType === 'horeca') {
+      Model = HorecaUser;
+    } else if (userType === 'retailer') {
+      Model = RetailerUser;
+    } else {
+      Model = Customer;
+    }
+
+    customer = await Model.findById(userId);
 
     if (!customer) {
       return res.status(404).json({
         success: false,
-        message: "Customer not found",
+        message: "User profile not found",
       });
     }
 
     // Update fields if provided
-    if (name) customer.name = name;
-    if (email) {
-      // Check if email is already taken by another customer
-      const existingCustomer = await Customer.findOne({
+    if (name) {
+      if (customer.name !== undefined) customer.name = name;
+      if (customer.ownerName !== undefined) customer.ownerName = name;
+    }
+
+    if (email && customer.email !== undefined) {
+      // Check if email is already taken by another user in the SAME collection
+      const existingUser = await Model.findOne({
         email,
         _id: { $ne: userId },
       });
 
-      if (existingCustomer) {
+      if (existingUser) {
         return res.status(409).json({
           success: false,
-          message: "Email already in use by another customer",
+          message: "Email already in use",
         });
       }
 
       customer.email = email;
     }
-    if (dateOfBirth) customer.dateOfBirth = new Date(dateOfBirth);
-    if (notificationPreferences) customer.notificationPreferences = { ...customer.notificationPreferences, ...notificationPreferences };
-    if (accountPrivacy) customer.accountPrivacy = { ...customer.accountPrivacy, ...accountPrivacy };
+
+    if (dateOfBirth && customer.dateOfBirth !== undefined) customer.dateOfBirth = new Date(dateOfBirth);
+    if (notificationPreferences && customer.notificationPreferences) {
+      customer.notificationPreferences = { ...customer.notificationPreferences, ...notificationPreferences };
+    }
+    if (accountPrivacy && customer.accountPrivacy) {
+      customer.accountPrivacy = { ...customer.accountPrivacy, ...accountPrivacy };
+    }
 
 
     await customer.save();
@@ -105,16 +141,16 @@ export const updateProfile = asyncHandler(
       message: "Profile updated successfully",
       data: {
         id: customer._id,
-        name: customer.name,
-        phone: customer.phone,
-        email: customer.email,
+        name: customer.name || customer.ownerName || customer.shopName,
+        phone: customer.phone || customer.ownerPhone || customer.shopPhone,
+        email: customer.email || "",
         dateOfBirth: customer.dateOfBirth,
-        registrationDate: customer.registrationDate,
+        registrationDate: customer.registrationDate || customer.createdAt,
         status: customer.status,
         refCode: customer.refCode,
         walletAmount: customer.walletAmount,
-        totalOrders: customer.totalOrders,
-        totalSpent: customer.totalSpent,
+        totalOrders: customer.totalOrders || 0,
+        totalSpent: customer.totalSpent || 0,
         latitude: customer.latitude,
         longitude: customer.longitude,
         address: customer.address,
@@ -138,7 +174,7 @@ export const updateLocation = asyncHandler(
     const userId = req.user?.userId;
     const { latitude, longitude, address, city, state, pincode } = req.body;
 
-    if (!userId || (req as any).user?.userType !== "Customer") {
+    if (!userId || !["Customer", "horeca", "retailer"].includes((req as any).user?.userType)) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized or not a customer",
@@ -152,12 +188,23 @@ export const updateLocation = asyncHandler(
       });
     }
 
-    const customer = await Customer.findById(userId);
+    const userType = (req as any).user?.userType;
+    let Model: any;
+
+    if (userType === 'horeca') {
+      Model = HorecaUser;
+    } else if (userType === 'retailer') {
+      Model = RetailerUser;
+    } else {
+      Model = Customer;
+    }
+
+    const customer = await Model.findById(userId);
 
     if (!customer) {
       return res.status(404).json({
         success: false,
-        message: "Customer not found",
+        message: "User profile not found",
       });
     }
 
@@ -194,21 +241,32 @@ export const updateLocation = asyncHandler(
 export const getLocation = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
 
-  if (!userId || (req as any).user?.userType !== "Customer") {
+  if (!userId || !["Customer", "horeca", "retailer"].includes((req as any).user?.userType)) {
     return res.status(401).json({
       success: false,
       message: "Unauthorized or not a customer",
     });
   }
 
-  const customer = await Customer.findById(userId).select(
+  const userType = (req as any).user?.userType;
+  let Model: any;
+
+  if (userType === 'horeca') {
+    Model = HorecaUser;
+  } else if (userType === 'retailer') {
+    Model = RetailerUser;
+  } else {
+    Model = Customer;
+  }
+
+  const customer = await Model.findById(userId).select(
     "latitude longitude address city state pincode locationUpdatedAt"
   );
 
   if (!customer) {
     return res.status(404).json({
       success: false,
-      message: "Customer not found",
+      message: "User profile not found",
     });
   }
 

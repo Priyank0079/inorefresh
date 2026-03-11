@@ -105,13 +105,13 @@ router.post(
     next();
   },
   authenticate,
-  requireUserType("Customer"),
+  requireUserType("Customer", "horeca", "retailer"),
   createOrder
 );
-router.get("/customer/orders", authenticate, requireUserType("Customer"), getMyOrders);
-router.get("/customer/orders/:id", authenticate, requireUserType("Customer"), getOrderById);
-router.post("/customer/orders/:id/cancel", authenticate, requireUserType("Customer"), cancelOrder);
-router.patch("/customer/orders/:id/notes", authenticate, requireUserType("Customer"), updateOrderNotes);
+router.get("/customer/orders", authenticate, requireUserType("Customer", "horeca", "retailer"), getMyOrders);
+router.get("/customer/orders/:id", authenticate, requireUserType("Customer", "horeca", "retailer"), getOrderById);
+router.post("/customer/orders/:id/cancel", authenticate, requireUserType("Customer", "horeca", "retailer"), cancelOrder);
+router.patch("/customer/orders/:id/notes", authenticate, requireUserType("Customer", "horeca", "retailer"), updateOrderNotes);
 
 router.use("/customer/coupons", customerCouponRoutes);
 router.use("/customer/addresses", customerAddressRoutes);
