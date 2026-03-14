@@ -39,6 +39,7 @@ export default function ProductDetail() {
   const [error, setError] = useState<string | null>(null);
   const [isAvailableAtLocation, setIsAvailableAtLocation] =
     useState<boolean>(true);
+  const [isBuying, setIsBuying] = useState(false);
 
 
   const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(0);
@@ -250,7 +251,17 @@ export default function ProductDetail() {
       ? { name: product.category.name, id: product.category._id }
       : null;
 
-  const handleAddToCart = () => {
+  const buildProductWithVariant = () => ({
+    ...product,
+    price: variantPrice,
+    mrp: variantMrp,
+    pack: variantTitle,
+    selectedVariant: selectedVariant,
+    variantId: selectedVariant?._id,
+    variantTitle: variantTitle,
+  });
+
+  const handleAddToCart = async () => {
     if (!isAvailableAtLocation) {
       // Show alert if trying to add item outside delivery area
       alert("This product is not available for delivery at your location.");
@@ -260,17 +271,22 @@ export default function ProductDetail() {
       alert("This variant is currently out of stock.");
       return;
     }
-    // Create product with selected variant info
-    const productWithVariant = {
-      ...product,
-      price: variantPrice,
-      mrp: variantMrp,
-      pack: variantTitle,
-      selectedVariant: selectedVariant,
-      variantId: selectedVariant?._id,
-      variantTitle: variantTitle,
-    };
-    addToCart(productWithVariant, addButtonRef.current);
+    const productWithVariant = buildProductWithVariant();
+    await addToCart(productWithVariant, addButtonRef.current);
+  };
+
+  const handleBuyNow = async () => {
+    if (!isAvailableAtLocation || !isVariantAvailable || isBuying) return;
+    setIsBuying(true);
+    try {
+      const productWithVariant = buildProductWithVariant();
+      if (inCartQty === 0) {
+        await addToCart(productWithVariant, addButtonRef.current);
+      }
+      navigate('/checkout');
+    } finally {
+      setIsBuying(false);
+    }
   };
 
   return (
@@ -1197,7 +1213,7 @@ export default function ProductDetail() {
           </div>
 
           {/* Right side - Add to cart button or Quantity Stepper */}
-          <div className="ml-3 flex items-center">
+          <div className="ml-3 flex items-center gap-2">
             <AnimatePresence mode="wait">
               {inCartQty === 0 ? (
                 <motion.div
@@ -1222,8 +1238,8 @@ export default function ProductDetail() {
                       !isAvailableAtLocation
                         ? "Not available at your location"
                         : !isVariantAvailable
-                          ? "This variant is out of stock"
-                          : ""
+                      ? "This variant is out of stock"
+                      : ""
                     }>
                     {!isAvailableAtLocation
                       ? "Unavailable"
@@ -1275,17 +1291,26 @@ export default function ProductDetail() {
                       updateQuantity(String(productId || ""), inCartQty + 1, variantId, variantTitle);
                     }}
                     className="w-6 h-6 flex items-center justify-center font-bold rounded-full transition-colors border p-0 leading-none text-base"
-                    style={{
-                      lineHeight: 1,
-                      color: currentTheme.primary[3],
-                      borderColor: currentTheme.primary[3],
-                      backgroundColor: 'transparent'
-                    }}>
-                    <span className="relative top-[-1px]">+</span>
-                  </motion.button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  style={{
+                    lineHeight: 1,
+                    color: currentTheme.primary[3],
+                    borderColor: currentTheme.primary[3],
+                    backgroundColor: 'transparent'
+                  }}>
+                  <span className="relative top-[-1px]">+</span>
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+            <Button
+              variant="default"
+              size="default"
+              onClick={handleBuyNow}
+              disabled={!isAvailableAtLocation || !isVariantAvailable || isBuying}
+              className="px-5 py-2 text-sm font-semibold h-[36px]"
+              style={(!isAvailableAtLocation || !isVariantAvailable) ? {} : { backgroundColor: currentTheme.primary[3] }}>
+              {isBuying ? "Processing..." : "Buy Now"}
+            </Button>
           </div>
         </div>
       </div>

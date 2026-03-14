@@ -40,7 +40,7 @@ export default function AdminStockManagement() {
   const [error, setError] = useState<string | null>(null);
 
   const [filterCategory, setFilterCategory] = useState("All Category");
-  const [filterSeller, setFilterSeller] = useState("All Sellers");
+  const [filterSeller, setFilterSeller] = useState("All Warehouses");
   const [filterStatus, setFilterStatus] = useState("All Products");
   const [filterStock, setFilterStock] = useState("All Products");
 
@@ -149,11 +149,17 @@ export default function AdminStockManagement() {
         }
       }
 
-      const sellerName =
-        typeof product.seller === "object" && product.seller !== null
+      const warehouseName =
+        (product as any).warehouse?.warehouseName ||
+        (product as any).warehouseName ||
+        (typeof product.seller === "object" && product.seller !== null
           ? product.seller.storeName || product.seller.sellerName
-          : "Unknown Seller";
-      const sellerId = typeof product.seller === "object" ? "" : product.seller || "";
+          : product.seller) ||
+        "Unknown Warehouse";
+      const sellerId =
+        (product as any).warehouse?._id ||
+        (typeof product.seller === "object" ? "" : product.seller) ||
+        "";
 
       // If product has variations, create a row for each variation
       if (product.variations && product.variations.length > 0) {
@@ -162,7 +168,7 @@ export default function AdminStockManagement() {
             id: `${product._id}-${index}`,
             productId: product._id,
             name: product.productName,
-            seller: sellerName,
+            seller: warehouseName,
             sellerId: sellerId,
             image: product.mainImage || product.galleryImages[0] || "",
             variation: `${variation.name}: ${variation.value}`,
@@ -181,7 +187,7 @@ export default function AdminStockManagement() {
           id: product._id,
           productId: product._id,
           name: product.productName,
-          seller: sellerName,
+          seller: warehouseName,
           sellerId: sellerId,
           image: product.mainImage || product.galleryImages[0] || "",
           variation: "Default",
@@ -215,11 +221,11 @@ export default function AdminStockManagement() {
   const sellers = useMemo(() => {
     const sellerSet = new Set<string>();
     productVariations.forEach((p) => {
-      if (p.seller && p.seller !== "Unknown Seller") {
+      if (p.seller && p.seller !== "Unknown Warehouse") {
         sellerSet.add(p.seller);
       }
     });
-    return ["All Sellers", ...Array.from(sellerSet).sort()];
+    return ["All Warehouses", ...Array.from(sellerSet).sort()];
   }, [productVariations]);
 
   // Filter products
@@ -229,7 +235,7 @@ export default function AdminStockManagement() {
         filterCategory === "All Category" ||
         product.categoryId === filterCategory;
       const matchesSeller =
-        filterSeller === "All Sellers" || product.seller === filterSeller;
+        filterSeller === "All Warehouses" || product.seller === filterSeller;
       const matchesStatus =
         filterStatus === "All Products" || product.status === filterStatus;
       const matchesStock =
@@ -316,7 +322,7 @@ export default function AdminStockManagement() {
     const headers = [
       "Variation Id",
       "Name",
-      "Seller",
+      "Warehouse",
       "Variation",
       "Stock",
       "Status",
@@ -384,7 +390,7 @@ export default function AdminStockManagement() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-neutral-700 mb-1">
-                  Filter by Sellers
+                  Filter by Warehouses
                 </label>
                 <select
                   value={filterSeller}
@@ -398,8 +404,8 @@ export default function AdminStockManagement() {
                       {seller}
                     </option>
                   ))}
-                </select>
-              </div>
+              </select>
+            </div>
               <div>
                 <label className="block text-xs font-medium text-neutral-700 mb-1">
                   Filter by Status
@@ -514,7 +520,7 @@ export default function AdminStockManagement() {
                     className="p-4 cursor-pointer hover:bg-neutral-100 transition-colors"
                     onClick={() => handleSort("seller")}>
                     <div className="flex items-center">
-                      Seller <SortIcon column="seller" />
+                      Warehouse <SortIcon column="seller" />
                     </div>
                   </th>
                   <th
