@@ -200,7 +200,7 @@ function App() {
                             <Route
                               path="/warehouse/signup"
                               element={
-                                <PublicRoute>
+                                <PublicRoute userType="Warehouse">
                                   <Suspense fallback={<IconLoader forceShow />}>
                                     <WarehouseSignUp />
                                   </Suspense>
@@ -210,7 +210,7 @@ function App() {
                             <Route
                               path="/delivery/login"
                               element={
-                                <PublicRoute>
+                                <PublicRoute userType="Delivery">
                                   <Suspense fallback={<IconLoader forceShow />}>
                                     <DeliveryLogin />
                                   </Suspense>
@@ -220,7 +220,7 @@ function App() {
                             <Route
                               path="/delivery/signup"
                               element={
-                                <PublicRoute>
+                                <PublicRoute userType="Delivery">
                                   <Suspense fallback={<IconLoader forceShow />}>
                                     <DeliverySignUp />
                                   </Suspense>
@@ -230,7 +230,7 @@ function App() {
                             <Route
                               path="/admin/login"
                               element={
-                                <PublicRoute>
+                                <PublicRoute userType="Admin">
                                   <Suspense fallback={<IconLoader forceShow />}>
                                     <AdminLogin />
                                   </Suspense>
@@ -397,8 +397,26 @@ function App() {
                                       <Route path="/categories" element={<Categories />} />
                                       <Route path="/category/:id" element={<Category />} />
                                       <Route path="/address-book" element={<AddressBook />} />
-                                      <Route path="/checkout" element={<Checkout />} />
-                                      <Route path="/checkout/address" element={<CheckoutAddress />} />
+                                      <Route
+                                        path="/checkout"
+                                        element={
+                                          <ProtectedRoute redirectTo="/login">
+                                            <Suspense fallback={<IconLoader forceShow />}>
+                                              <Checkout />
+                                            </Suspense>
+                                          </ProtectedRoute>
+                                        }
+                                      />
+                                      <Route
+                                        path="/checkout/address"
+                                        element={
+                                          <ProtectedRoute redirectTo="/login">
+                                            <Suspense fallback={<IconLoader forceShow />}>
+                                              <CheckoutAddress />
+                                            </Suspense>
+                                          </ProtectedRoute>
+                                        }
+                                      />
                                       <Route path="/product/:id" element={<ProductDetail />} />
                                       <Route path="/invoice/:id" element={<Invoice />} />
                                       <Route path="/cart" element={<Cart />} />

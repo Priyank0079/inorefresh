@@ -1107,8 +1107,8 @@ export default function OrderDetail() {
                         <span className="w-2 h-2 rounded-full bg-green-600" />
                       </span>
                       <span>
-                        {(parseWeight(item.variant || item.product?.pack || "") * item.quantity).toFixed(1)} kg x{" "}
-                        {item.product?.name || item.productName || "Product"}
+                        {(parseWeight(item.variant || item.product?.pack || "", item.product?.productName || item.productName) * item.quantity).toFixed(1)} kg x{" "}
+                        {item.product?.productName || item.productName || "Product"}
                       </span>
                     </div>
                   ))}
@@ -1323,7 +1323,7 @@ export default function OrderDetail() {
                         {item.product?.name || item.productName}
                       </p>
                       <p className="text-sm text-gray-500">
-                        Weight: {(parseWeight(item.variant || item.product?.pack || "") * item.quantity).toFixed(1)} kg
+                        Weight: {(parseWeight(item.variant || item.product?.pack || "", item.product?.productName || item.productName) * item.quantity).toFixed(1)} kg
                       </p>
                       {item.variant && (
                         <p className="text-xs text-gray-500">{item.variant}</p>

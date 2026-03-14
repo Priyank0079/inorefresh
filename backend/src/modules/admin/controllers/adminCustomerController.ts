@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import Customer from "../../../models/Customer";
+import HorecaUser from "../../../models/HorecaUser";
+import RetailerUser from "../../../models/RetailerUser";
 import Order from "../../../models/Order";
 import WalletTransaction from "../../../models/WalletTransaction";
 
@@ -238,4 +240,107 @@ export const addWalletBalance = asyncHandler(
     });
   }
 );
+
+/**
+ * Get all retail users
+ */
+export const getAllRetailers = asyncHandler(
+  async (req: Request, res: Response) => {
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      search,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
+
+    const query: any = {};
+    if (status) query.status = status;
+    if (search) {
+      query.$or = [
+        { ownerName: { $regex: search as string, $options: "i" } },
+        { shopName: { $regex: search as string, $options: "i" } },
+        { ownerPhone: { $regex: search as string, $options: "i" } },
+        { shopPhone: { $regex: search as string, $options: "i" } },
+      ];
+    }
+
+    const sort: any = {};
+    sort[sortBy as string] = sortOrder === "asc" ? 1 : -1;
+
+    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+
+    const [retailers, total] = await Promise.all([
+      RetailerUser.find(query)
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit as string)),
+      RetailerUser.countDocuments(query),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: retailers,
+      pagination: {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        total,
+        pages: Math.ceil(total / parseInt(limit as string)),
+      },
+    });
+  }
+);
+
+/**
+ * Get all horeca users
+ */
+export const getAllHorecaUsers = asyncHandler(
+  async (req: Request, res: Response) => {
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      search,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
+
+    const query: any = {};
+    if (status) query.status = status;
+    if (search) {
+      query.$or = [
+        { ownerName: { $regex: search as string, $options: "i" } },
+        { shopName: { $regex: search as string, $options: "i" } },
+        { ownerPhone: { $regex: search as string, $options: "i" } },
+        { shopPhone: { $regex: search as string, $options: "i" } },
+      ];
+    }
+
+    const sort: any = {};
+    sort[sortBy as string] = sortOrder === "asc" ? 1 : -1;
+
+    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+
+    const [horecaUsers, total] = await Promise.all([
+      HorecaUser.find(query)
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit as string)),
+      HorecaUser.countDocuments(query),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: horecaUsers,
+      pagination: {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        total,
+        pages: Math.ceil(total / parseInt(limit as string)),
+      },
+    });
+  }
+);
+
 

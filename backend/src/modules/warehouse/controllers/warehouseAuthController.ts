@@ -56,6 +56,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
         warehouseName: warehouse.warehouseName,
         mobile: warehouse.mobile,
         email: warehouse.email,
+        userType: "Warehouse",
         storeName: warehouse.warehouseName,
         status: warehouse.status,
         logo: (warehouse as any).logo,

@@ -152,6 +152,8 @@ router.post("/customers/:id/add-wallet", customerController.addWalletBalance);
 router.patch("/customers/:id/status", customerController.updateCustomerStatus);
 router.put("/customers/:id", customerController.updateCustomer);
 router.get("/customers/:id/orders", customerController.getCustomerOrders);
+router.get("/retailers", customerController.getAllRetailers);
+router.get("/horeca", customerController.getAllHorecaUsers);
 
 // ==================== Delivery Routes ====================
 router.post("/delivery", deliveryController.createDeliveryBoy);

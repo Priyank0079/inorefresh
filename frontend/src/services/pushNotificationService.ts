@@ -79,16 +79,27 @@ async function getFCMToken(): Promise<string | null> {
         // Small delay to ensure browser push service is synced
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        const token = await getToken(messaging, {
-            vapidKey: VAPID_KEY,
-            serviceWorkerRegistration: registration
-        });
+        // Retry logic for getting token
+        let token = null;
+        let retries = 3;
+        while (retries > 0 && !token) {
+            try {
+                token = await getToken(messaging, {
+                    vapidKey: VAPID_KEY,
+                    serviceWorkerRegistration: registration
+                });
+            } catch (err: any) {
+                console.warn(`⚠️ FCM token attempt failed (${retries} retries left):`, err.message);
+                retries--;
+                if (retries > 0) await new Promise(r => setTimeout(r, 1000));
+            }
+        }
 
         if (token) {
             console.log('✅ FCM Token obtained:', token);
             return token;
         } else {
-            console.log('❌ No FCM token available');
+            console.log('❌ No FCM token available after retries');
             return null;
         }
     } catch (error: any) {

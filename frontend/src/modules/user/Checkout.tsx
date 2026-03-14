@@ -499,10 +499,10 @@ export default function Checkout() {
 
     // Prefer precise map selection, then saved address, then current location
     const finalLatitude = parseFloat(String(
-      (isMapSelected && mapLocation?.lat) ?? selectedAddress.latitude ?? userLocation?.latitude ?? ''
+      (isMapSelected ? mapLocation?.lat : undefined) ?? selectedAddress.latitude ?? userLocation?.latitude ?? ''
     ));
     const finalLongitude = parseFloat(String(
-      (isMapSelected && mapLocation?.lng) ?? selectedAddress.longitude ?? userLocation?.longitude ?? ''
+      (isMapSelected ? mapLocation?.lng : undefined) ?? selectedAddress.longitude ?? userLocation?.longitude ?? ''
     ));
 
     // Validate that we have location data (either from address or user's current location)

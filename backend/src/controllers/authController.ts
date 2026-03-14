@@ -4,6 +4,8 @@ import RetailerUser from '../models/RetailerUser';
 import { uploadDocumentFromBuffer } from '../services/cloudinaryService';
 import { CLOUDINARY_FOLDERS } from '../config/cloudinary';
 import { generateToken } from '../services/jwtService';
+import Notification from '../models/Notification';
+
 
 // Mock SMS OTP integration
 const MOCK_OTP = "1234";
@@ -74,8 +76,20 @@ export const signupHoreca = async (req: Request, res: Response): Promise<any> =>
 
         const newHoreca = new HorecaUser(userData);
         await newHoreca.save();
+
+        // Create notification for Admin
+        await Notification.create({
+            recipientType: 'Admin',
+            title: 'New HORECA Registration',
+            message: `New HORECA user ${newHoreca.shopName} (${newHoreca.ownerName}) has registered.`,
+            type: 'System',
+            priority: 'High',
+            link: '/admin/customers'
+        });
+
         res.status(201).json({ success: true, message: 'HORECA user signed up successfully', user: newHoreca });
     } catch (error: any) {
+
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -109,8 +123,20 @@ export const signupRetailer = async (req: Request, res: Response): Promise<any> 
 
         const newRetailer = new RetailerUser(userData);
         await newRetailer.save();
+
+        // Create notification for Admin
+        await Notification.create({
+            recipientType: 'Admin',
+            title: 'New Retailer Registration',
+            message: `New Retailer user ${newRetailer.shopName} (${newRetailer.ownerName}) has registered.`,
+            type: 'System',
+            priority: 'High',
+            link: '/admin/customers'
+        });
+
         res.status(201).json({ success: true, message: 'Retailer user signed up successfully', user: newRetailer });
     } catch (error: any) {
+
         res.status(500).json({ success: false, message: error.message });
     }
 };

@@ -131,3 +131,27 @@ export const updateCustomer = async (
   );
   return response.data;
 };
+
+/**
+ * Get all retailer users
+ */
+export const getAllRetailers = async (
+  params?: GetCustomersParams
+): Promise<ApiResponse<any[]>> => {
+  const response = await api.get<ApiResponse<any[]>>("/admin/retailers", {
+    params,
+  });
+  return response.data;
+};
+
+/**
+ * Get all horeca users
+ */
+export const getAllHorecaUsers = async (
+  params?: GetCustomersParams
+): Promise<ApiResponse<any[]>> => {
+  const response = await api.get<ApiResponse<any[]>>("/admin/horeca", {
+    params,
+  });
+  return response.data;
+};

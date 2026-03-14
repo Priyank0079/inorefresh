@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   getAllCustomers,
+  getAllRetailers,
+  getAllHorecaUsers,
   addWalletBalance,
   updateCustomer,
   type Customer,
@@ -32,6 +34,9 @@ export default function AdminManageCustomer() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"Customer" | "Retailer" | "Horeca">("Customer");
+  const [retailers, setRetailers] = useState<any[]>([]);
+  const [horecaUsers, setHorecaUsers] = useState<any[]>([]);
 
   // Wallet Modal State
   const [showWalletModal, setShowWalletModal] = useState(false);
@@ -87,9 +92,16 @@ export default function AdminManageCustomer() {
           params.search = searchQuery;
         }
 
-        const response = await getAllCustomers(params);
-        if (response.success) {
-          setCustomers(response.data);
+        let response;
+        if (activeTab === "Customer") {
+          response = await getAllCustomers(params);
+          if (response.success) setCustomers(response.data);
+        } else if (activeTab === "Retailer") {
+          response = await getAllRetailers(params);
+          if (response.success) setRetailers(response.data);
+        } else {
+          response = await getAllHorecaUsers(params);
+          if (response.success) setHorecaUsers(response.data);
         }
       } catch (err) {
         console.error("Error fetching customers:", err);
@@ -117,6 +129,7 @@ export default function AdminManageCustomer() {
     entriesPerPage,
     statusFilter,
     searchQuery,
+    activeTab,
   ]);
 
   const handleSort = (field: SortField) => {
@@ -129,7 +142,8 @@ export default function AdminManageCustomer() {
   };
 
   const filteredAndSortedCustomers = useMemo(() => {
-    let filtered = [...customers];
+    let rawData = activeTab === "Customer" ? customers : activeTab === "Retailer" ? retailers : horecaUsers;
+    let filtered = [...rawData];
 
     if (sortField) {
       filtered = [...filtered].sort((a, b) => {
@@ -142,16 +156,16 @@ export default function AdminManageCustomer() {
             bValue = b._id || "";
             break;
           case "name":
-            aValue = a.name || "";
-            bValue = b.name || "";
+            aValue = a.name || a.ownerName || a.shopName || "";
+            bValue = b.name || b.ownerName || b.shopName || "";
             break;
           case "email":
             aValue = a.email || "";
             bValue = b.email || "";
             break;
           case "phone":
-            aValue = a.phone || "";
-            bValue = b.phone || "";
+            aValue = a.phone || a.ownerPhone || a.shopPhone || "";
+            bValue = b.phone || b.ownerPhone || b.shopPhone || "";
             break;
           case "registrationDate":
             aValue = a.registrationDate || "";
@@ -347,6 +361,27 @@ export default function AdminManageCustomer() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="bg-white px-4 sm:px-6 border-b border-neutral-200">
+        <div className="flex gap-8">
+          {(["Customer", "Retailer", "Horeca"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => {
+                setActiveTab(tab);
+                setCurrentPage(1);
+              }}
+              className={`py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
+                ? "border-teal-600 text-teal-600"
+                : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300"
+                }`}
+            >
+              {tab === "Customer" ? "Regular Customers" : tab === "Retailer" ? "Retailers" : "HORECA"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-neutral-50">
         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
@@ -453,7 +488,7 @@ export default function AdminManageCustomer() {
                     className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
                     onClick={() => handleSort("name")}>
                     <div className="flex items-center justify-between">
-                      Name <SortIcon field="name" />
+                      {activeTab === "Customer" ? "Name" : "Owner/Shop Name"} <SortIcon field="name" />
                     </div>
                   </th>
                   <th
@@ -531,17 +566,17 @@ export default function AdminManageCustomer() {
                         {customer._id.slice(-6)}
                       </td>
                       <td className="p-4 border border-neutral-200">
-                        {customer.name}
+                        {customer.name || `${customer.ownerName} (${customer.shopName})`}
                       </td>
                       <td className="p-4 border border-neutral-200">
                         {customer.email}
                       </td>
                       <td className="p-4 border border-neutral-200">
-                        {customer.phone}
+                        {customer.phone || customer.ownerPhone}
                       </td>
                       <td className="p-4 border border-neutral-200">
-                        {customer.registrationDate
-                          ? new Date(customer.registrationDate).toLocaleString()
+                        {customer.registrationDate || customer.createdAt
+                          ? new Date(customer.registrationDate || customer.createdAt).toLocaleString()
                           : "-"}
                       </td>
                       <td className="p-4 border border-neutral-200">

@@ -181,11 +181,15 @@ export const getOrderById = asyncHandler(
           if (variationByPrice) {
             unit = variationByPrice.value;
             variationMatched = true;
-          } else if (product.variations.length === 1) {
-            // 3. Last Resort: If there is only one variation, assume it's that one
+        // 3. Last Resort: If there is only one variation, assume it's that one
             unit = product.variations[0].value;
           }
         }
+      }
+
+      // Fish weight fallback - default to 1kg if no variation found
+      if ((unit === 'N/A' || unit === 'Default') && (product?.productName?.toLowerCase().includes('fish') || product?.name?.toLowerCase().includes('fish'))) {
+        unit = '1kg';
       }
 
       return {
@@ -292,7 +296,7 @@ export const updateOrderStatus = asyncHandler(
           const fullOrder = await Order.findById(order._id)
             .populate({
               path: 'items',
-              populate: { path: 'Warehouse' }
+              populate: { path: 'warehouse' }
             })
             .lean();
 

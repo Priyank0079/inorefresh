@@ -334,6 +334,7 @@ export default function WarehouseOrderDetail() {
   const formatUnit = (unit: string, qty: number) => {
     if (!unit || unit === 'N/A') return 'N/A';
 
+    // Handle fish or items with units like '1.5kg' or '500g'
     // improved regex to handle decimals and various spacing
     const match = unit.match(/^(\d+(?:\.\d+)?)\s*([a-zA-Z]+)$/);
     if (match) {
@@ -346,6 +347,12 @@ export default function WarehouseOrderDetail() {
         return `${parseFloat(total.toFixed(2))}${u}`;
       }
     }
+
+    // Special case for fish if it somehow still says "fish"
+    if (unit.toLowerCase().includes('fish')) {
+      return `${1 * qty}kg`;
+    }
+
     return `${unit} x ${qty}`;
   };
 

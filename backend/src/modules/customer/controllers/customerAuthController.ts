@@ -6,6 +6,7 @@ import {
 } from "../../../services/otpService";
 import { generateToken } from "../../../services/jwtService";
 import { asyncHandler } from "../../../utils/asyncHandler";
+import Notification from "../../../models/Notification";
 
 /**
  * Send SMS OTP to customer mobile number
@@ -92,6 +93,16 @@ export const verifySmsOtp = asyncHandler(
         totalSpent: 0,
       });
       isNewUser = true;
+
+      // Create notification for Admin
+      await Notification.create({
+        recipientType: "Admin",
+        title: "New Customer Registration",
+        message: `New customer with phone ${mobile} has registered.`,
+        type: "System",
+        priority: "Medium",
+        link: "/admin/customers",
+      });
     }
 
     // Generate JWT token

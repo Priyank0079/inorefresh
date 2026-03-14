@@ -107,6 +107,7 @@ export const verifySmsOtp = asyncHandler(
           name: delivery.name,
           mobile: delivery.mobile,
           email: delivery.email,
+          userType: "Delivery",
           city: delivery.city,
           status: delivery.status,
         },
