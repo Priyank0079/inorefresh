@@ -5,6 +5,8 @@ import { validateImageFile, createImagePreview } from "../../../utils/imageUploa
 import { createProduct, updateProduct, getProductById, ProductVariation } from "../../../services/api/productService";
 import { getSubcategories, SubCategory } from "../../../services/api/categoryService";
 import api from "../../../services/api/config";
+import ProductLabelCard from "../components/ProductLabelCard";
+import { useAuth } from "../../../context/AuthContext";
 
 interface Category {
   _id: string;
@@ -14,11 +16,16 @@ interface Category {
 }
 
 export default function WarehouseAddProduct() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const prefilledCategory = searchParams.get('category') || '';
   const prefilledCategoryName = searchParams.get('categoryName') || '';
+
+  // ── Label Modal state ────────────────────────────────────────
+  const [labelModalOpen, setLabelModalOpen] = useState(false);
+  const [newlyCreatedProduct, setNewlyCreatedProduct] = useState<any>(null);
 
   // ── Form state ───────────────────────────────────────────────
   const [formData, setFormData] = useState({
@@ -241,11 +248,19 @@ export default function WarehouseAddProduct() {
 
       if (response.success) {
         setSuccessMessage(id ? "Product updated successfully!" : "Product added successfully!");
-        setTimeout(() => {
-          navigate(prefilledCategory
-            ? `/warehouse/category`
-            : "/warehouse/product/list");
-        }, 1200);
+        
+        if (!id && response.data) {
+          // If adding new, show the label modal
+          setNewlyCreatedProduct(response.data);
+          setLabelModalOpen(true);
+        } else {
+          // If editing, just go back
+          setTimeout(() => {
+            navigate(prefilledCategory
+              ? `/warehouse/category`
+              : "/warehouse/product/list");
+          }, 1200);
+        }
       } else {
         setUploadError(response.message || "Failed to save product");
       }
@@ -635,6 +650,55 @@ export default function WarehouseAddProduct() {
           </button>
         </div>
       </form>
+
+      {/* Post-Creation Label Modal */}
+      {labelModalOpen && newlyCreatedProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-100 opacity-100 animate-in zoom-in-95 duration-200">
+            <div className="bg-teal-600 p-4 flex justify-between items-center text-white">
+              <h3 className="font-bold flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Product Saved! Print Label?
+              </h3>
+              <button onClick={() => navigate("/warehouse/product/list")} className="hover:bg-white/20 p-1 rounded-lg transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-8 bg-neutral-50 flex justify-center">
+              <ProductLabelCard 
+                name={newlyCreatedProduct.productName}
+                tag={newlyCreatedProduct.product_tag}
+                category={categories.find(c => c._id === newlyCreatedProduct.category)?.name || "Aqua Fish"}
+                warehouse={user?.storeName || "Main Warehouse"}
+                variation="Standard"
+              />
+            </div>
+
+            <div className="p-4 border-t border-neutral-100 flex justify-end gap-3 bg-white">
+              <button
+                onClick={() => navigate("/warehouse/product/list")}
+                className="px-4 py-2 rounded-lg border border-neutral-300 text-neutral-700 font-medium hover:bg-neutral-50 transition-colors"
+              >
+                Go to Product List
+              </button>
+              <button
+                onClick={() => window.print()}
+                className="px-6 py-2 rounded-lg bg-teal-600 text-white font-bold hover:bg-teal-700 transition-all shadow-sm flex items-center gap-2"
+              >
+                <svg className="w-5 h-5 font-bold" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4" />
+                </svg>
+                Print Label Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

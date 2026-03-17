@@ -11,6 +11,7 @@ import {
   Category as apiCategory,
 } from "../../../services/api/categoryService";
 import { useAuth } from "../../../context/AuthContext";
+import ProductLabelCard from "../components/ProductLabelCard";
 
 // ... (interfaces remain same)
 
@@ -164,6 +165,8 @@ export default function WarehouseProductList() {
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [labelModalOpen, setLabelModalOpen] = useState(false);
+  const [selectedProductForLabel, setSelectedProductForLabel] = useState<any>(null);
 
   const handleDeleteClick = (productId: string) => {
     setProductToDelete(productId);
@@ -225,6 +228,7 @@ export default function WarehouseProductList() {
         variation: "Default",
         isPopular: product.popular,
         productId: product._id,
+        productTag: (product as any).product_tag || "N/A",
       }];
     }
     // If product has variations, map them
@@ -245,6 +249,7 @@ export default function WarehouseProductList() {
         variation.title || variation.value || variation.name || "Default",
       isPopular: product.popular,
       productId: product._id,
+      productTag: (product as any).product_tag || "N/A",
     }));
   });
 
@@ -520,6 +525,11 @@ export default function WarehouseProductList() {
                       Product Id
                     </div>
                   </th>
+                  <th className="p-4 border border-neutral-200">
+                    <div className="flex items-center justify-between">
+                      Tag
+                    </div>
+                  </th>
                   <th
                     className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
                     onClick={() => handleSort("variationId")}>
@@ -637,7 +647,21 @@ export default function WarehouseProductList() {
                         </div>
                       </td>
                       <td className="p-4 align-middle border border-neutral-200">
-                        {variation.variationId}
+                        <button
+                          onClick={() => {
+                            setSelectedProductForLabel(variation);
+                            setLabelModalOpen(true);
+                          }}
+                          className="bg-teal-50 px-2 py-1 rounded text-teal-700 font-mono text-xs border border-teal-200 hover:bg-teal-100 transition-colors cursor-pointer"
+                          title="Click to view/print label"
+                        >
+                          {variation.productTag}
+                        </button>
+                      </td>
+                      <td className="p-4 align-middle border border-neutral-200">
+                        <span className="text-neutral-500 text-xs truncate max-w-[100px] block">
+                          {variation.variationId}
+                        </span>
                       </td>
                       <td className="p-4 align-middle border border-neutral-200">
                         <div className="flex flex-col gap-1">
@@ -696,6 +720,28 @@ export default function WarehouseProductList() {
                               strokeLinecap="round"
                               strokeLinejoin="round">
                               <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedProductForLabel(variation);
+                              setLabelModalOpen(true);
+                            }}
+                            className="p-1.5 text-teal-600 hover:bg-teal-50 rounded transition-colors"
+                            title="Generate Tag/Label">
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round">
+                              <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                              <line x1="7" y1="8" x2="17" y2="8"></line>
+                              <line x1="7" y1="12" x2="17" y2="12"></line>
+                              <line x1="7" y1="16" x2="12" y2="16"></line>
                             </svg>
                           </button>
                           <button
@@ -894,6 +940,55 @@ export default function WarehouseProductList() {
                   Delete Product
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Product Tag / Label Modal */}
+      {labelModalOpen && selectedProductForLabel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
+            <div className="p-4 border-b border-neutral-100 flex justify-between items-center bg-neutral-50">
+              <h3 className="text-lg font-bold text-neutral-800 flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-teal-600">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                </svg>
+                Product Tag & Label
+              </h3>
+              <button 
+                onClick={() => setLabelModalOpen(false)}
+                className="text-neutral-400 hover:text-neutral-600 transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            
+            <div className="p-8 max-h-[70vh] overflow-y-auto bg-neutral-100 flex justify-center">
+              <ProductLabelCard 
+                name={selectedProductForLabel.productName}
+                tag={selectedProductForLabel.productTag}
+                category={selectedProductForLabel.category}
+                warehouse={selectedProductForLabel.WarehouseName}
+                variation={selectedProductForLabel.variation}
+              />
+            </div>
+
+            <div className="p-4 border-t border-neutral-100 flex justify-end gap-3 bg-white no-print">
+              <button
+                onClick={() => setLabelModalOpen(false)}
+                className="px-4 py-2 rounded-lg border border-neutral-300 text-neutral-700 font-medium hover:bg-neutral-50 transition-colors"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => window.print()}
+                className="px-6 py-2 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors shadow-sm flex items-center gap-2"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                Print Label
+              </button>
             </div>
           </div>
         </div>

@@ -90,6 +90,7 @@ export interface IProduct extends Document {
   // Shop by Store
   isShopByStoreOnly?: boolean;
   shopId?: mongoose.Types.ObjectId;
+  product_tag?: string;
 
   createdAt: Date;
   updatedAt: Date;
@@ -331,6 +332,12 @@ const ProductSchema = new Schema<IProduct>(
     shopId: {
       type: Schema.Types.ObjectId,
       ref: "Shop",
+    },
+    product_tag: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
     },
   },
   {

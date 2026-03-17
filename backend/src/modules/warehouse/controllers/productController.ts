@@ -115,7 +115,33 @@ export const createProduct = asyncHandler(
       newProductData.shopId = null;
     }
 
+    // Generate unique product_tag: PRD-XXXXXX (random 6 characters)
+    const generateTag = () => {
+      const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      let result = "PRD-";
+      for (let i = 0; i < 6; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    };
+
+    // Ensure uniqueness (simple retry logic)
+    let productTag = generateTag();
+    let isUnique = false;
+    let attempts = 0;
+    while (!isUnique && attempts < 5) {
+      const existing = await Product.findOne({ product_tag: productTag });
+      if (!existing) {
+        isUnique = true;
+      } else {
+        productTag = generateTag();
+        attempts++;
+      }
+    }
+    newProductData.product_tag = productTag;
+
     const product = await Product.create(newProductData);
+
 
     return res.status(201).json({
       success: true,
@@ -148,6 +174,7 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   if (search) {
     query.$or = [
       { productName: { $regex: search, $options: "i" } },
+      { product_tag: { $regex: search, $options: "i" } },
       { smallDescription: { $regex: search, $options: "i" } },
       { tags: { $in: [new RegExp(search as string, "i")] } },
     ];
