@@ -161,7 +161,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const getStepAndMinQuantity = (product: Product): { min: number; step: number } => {
-    return isFishProduct(product) ? { min: 5, step: 1 } : { min: 1, step: 1 };
+    // Keep cart quantity behavior consistent with backend add-to-cart (starts from 1).
+    // Fish minimum order rules are enforced by total checkout weight, not per-item cart quantity.
+    return { min: 1, step: 1 };
   };
 
   const cart: Cart = useMemo(() => {
