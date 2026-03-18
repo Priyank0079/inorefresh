@@ -143,7 +143,7 @@ export default function Account() {
 
   return (
     <div className="pb-24 md:pb-8 min-h-screen">
-      <div className="bg-[#02111A] pb-12 md:pb-16 pt-12 md:pt-16 rounded-b-[40px] shadow-[0_15px_40px_rgba(0,0,0,0.4)] relative overflow-hidden">
+      <div className="bg-[#1FA9C6] pb-12 md:pb-16 pt-12 md:pt-16 rounded-b-[40px] shadow-[0_15px_40px_rgba(15,74,112,0.22)] relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(28,167,199,0.15),_transparent_75%)] pointer-events-none" />
         <div className="px-5 md:px-8 relative z-10">
           <button onClick={() => navigate(-1)} className="mb-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-md border border-white/10">
