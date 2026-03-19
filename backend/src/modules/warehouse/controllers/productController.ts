@@ -1,7 +1,157 @@
 import { Request, Response } from "express";
 import Product from "../../../models/Product";
 import Shop from "../../../models/Shop";
+import Category from "../../../models/Category";
 import { asyncHandler } from "../../../utils/asyncHandler";
+import mongoose from "mongoose";
+
+type FishGroupKey = "aqua-fish" | "marine-fish" | "bangali-fish";
+
+const normalizeText = (value: unknown): string =>
+  String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
+
+const normalizeFishGroupKey = (value: string): FishGroupKey | null => {
+  const key = value.toLowerCase().replace(/_/g, "-").replace(/\s+/g, "-");
+
+  if (
+    [
+      "aqua",
+      "aqua-fish",
+      "freshwater",
+      "freshwater-fish",
+      "river",
+      "river-fish",
+    ].includes(key)
+  ) {
+    return "aqua-fish";
+  }
+
+  if (
+    [
+      "marine",
+      "marine-fish",
+      "marin",
+      "marin-fish",
+      "sea",
+      "sea-fish",
+      "ocean",
+      "ocean-fish",
+    ].includes(key)
+  ) {
+    return "marine-fish";
+  }
+
+  if (
+    [
+      "bangali",
+      "bangali-fish",
+      "bengali",
+      "bengali-fish",
+      "bengoli",
+      "bengoli-fish",
+      "traditional",
+      "traditional-fish",
+    ].includes(key)
+  ) {
+    return "bangali-fish";
+  }
+
+  return null;
+};
+
+const buildFishCategoryMatcher = (group: FishGroupKey) => {
+  if (group === "aqua-fish") {
+    return {
+      $or: [
+        { name: /aqua/i },
+        { name: /freshwater/i },
+        { name: /river/i },
+        { slug: /aqua/i },
+        { slug: /freshwater/i },
+        { slug: /river/i },
+      ],
+    };
+  }
+
+  if (group === "marine-fish") {
+    return {
+      $or: [
+        { name: /marine/i },
+        { name: /marin/i },
+        { name: /ocean/i },
+        { name: /sea/i },
+        { slug: /marine/i },
+        { slug: /marin/i },
+        { slug: /ocean/i },
+        { slug: /sea/i },
+      ],
+    };
+  }
+
+  return {
+    $or: [
+      { name: /bangali/i },
+      { name: /bengali/i },
+      { name: /bengoli/i },
+      { name: /traditional/i },
+      { slug: /bangali/i },
+      { slug: /bengali/i },
+      { slug: /bengoli/i },
+      { slug: /traditional/i },
+    ],
+  };
+};
+
+const resolveCategoryIds = async (rawCategory: string): Promise<string[]> => {
+  const parts = rawCategory
+    .split(",")
+    .map((part) => normalizeText(part))
+    .filter(Boolean);
+
+  const resolvedIds = new Set<string>();
+
+  for (const part of parts) {
+    if (mongoose.Types.ObjectId.isValid(part)) {
+      resolvedIds.add(part);
+      continue;
+    }
+
+    const fishGroup = normalizeFishGroupKey(part);
+    if (fishGroup) {
+      const matcher = buildFishCategoryMatcher(fishGroup);
+      const fishCategories = await Category.find({
+        status: "Active",
+        ...matcher,
+      })
+        .select("_id")
+        .lean();
+
+      for (const fishCategory of fishCategories) {
+        resolvedIds.add((fishCategory as any)._id.toString());
+      }
+      continue;
+    }
+
+    const escaped = part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const single = await Category.findOne({
+      $or: [
+        { slug: part.toLowerCase() },
+        { slug: { $regex: new RegExp(`^${escaped}$`, "i") } },
+        { name: { $regex: new RegExp(`^${escaped}$`, "i") } },
+      ],
+    })
+      .select("_id")
+      .lean();
+
+    if (single?._id) {
+      resolvedIds.add(single._id.toString());
+    }
+  }
+
+  return [...resolvedIds];
+};
 
 /**
  * Create a new product
@@ -182,7 +332,14 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
 
   // Category filter
   if (category) {
-    query.category = category;
+    const categoryIds = await resolveCategoryIds(String(category));
+    if (categoryIds.length === 1) {
+      query.category = categoryIds[0];
+    } else if (categoryIds.length > 1) {
+      query.category = { $in: categoryIds };
+    } else {
+      query.category = { $in: [] };
+    }
   }
 
   // Status filter (publish, popular, dealOfDay)

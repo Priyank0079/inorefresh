@@ -6,6 +6,118 @@ import SubCategory from "../../../models/SubCategory";
 import mongoose from "mongoose";
 import { findSellersWithinRange } from "../../../utils/locationHelper";
 
+type FishGroupKey = "aqua-fish" | "marine-fish" | "bangali-fish";
+
+const normalizeText = (value: unknown): string =>
+  String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
+
+const normalizeFishGroupKey = (value: string): FishGroupKey | null => {
+  const key = value.toLowerCase().replace(/_/g, "-").replace(/\s+/g, "-");
+
+  if (
+    [
+      "aqua",
+      "aqua-fish",
+      "freshwater",
+      "freshwater-fish",
+      "river",
+      "river-fish",
+      "auqa",
+      "auqa-fish",
+    ].includes(key)
+  ) {
+    return "aqua-fish";
+  }
+
+  if (
+    [
+      "marine",
+      "marine-fish",
+      "marin",
+      "marin-fish",
+      "sea",
+      "sea-fish",
+      "ocean",
+      "ocean-fish",
+    ].includes(key)
+  ) {
+    return "marine-fish";
+  }
+
+  if (
+    [
+      "bangali",
+      "bangali-fish",
+      "bengali",
+      "bengali-fish",
+      "bengoli",
+      "bengoli-fish",
+      "traditional",
+      "traditional-fish",
+    ].includes(key)
+  ) {
+    return "bangali-fish";
+  }
+
+  return null;
+};
+
+const buildFishCategoryMatcher = (group: FishGroupKey) => {
+  if (group === "aqua-fish") {
+    return {
+      $or: [
+        { name: /aqua/i },
+        { name: /freshwater/i },
+        { name: /river/i },
+        { slug: /aqua/i },
+        { slug: /freshwater/i },
+        { slug: /river/i },
+      ],
+    };
+  }
+
+  if (group === "marine-fish") {
+    return {
+      $or: [
+        { name: /marine/i },
+        { name: /marin/i },
+        { name: /ocean/i },
+        { name: /sea/i },
+        { slug: /marine/i },
+        { slug: /marin/i },
+        { slug: /ocean/i },
+        { slug: /sea/i },
+      ],
+    };
+  }
+
+  return {
+    $or: [
+      { name: /bangali/i },
+      { name: /bengali/i },
+      { name: /bengoli/i },
+      { name: /traditional/i },
+      { slug: /bangali/i },
+      { slug: /bengali/i },
+      { slug: /bengoli/i },
+      { slug: /traditional/i },
+    ],
+  };
+};
+
+const resolveFishCategoryIds = async (group: FishGroupKey): Promise<string[]> => {
+  const fishCategories = await Category.find({
+    status: "Active",
+    ...buildFishCategoryMatcher(group),
+  })
+    .select("_id")
+    .lean();
+
+  return fishCategories.map((cat: any) => String(cat._id));
+};
+
 // Get products with filtering options (public)
 export const getProducts = async (req: Request, res: Response) => {
   try {
@@ -108,43 +220,60 @@ export const getProducts = async (req: Request, res: Response) => {
     };
 
     if (category) {
-      // 1. Try resolving as a regular Category (subcategory level)
-      const categoryId = await resolveId(
-        Category,
-        category as string,
-        "Category"
-      );
-      if (categoryId) {
-        query.category = categoryId;
+      const normalizedCategory = normalizeText(category as string);
+      const fishGroup = normalizeFishGroupKey(normalizedCategory);
+
+      if (fishGroup) {
+        const fishCategoryIds = await resolveFishCategoryIds(fishGroup);
+        query.category = fishCategoryIds.length > 0 ? { $in: fishCategoryIds } : { $in: [] };
       } else {
-        // 2. Try resolving as a HeaderCategory (top level)
-        const headerId = await resolveId(
-          HeaderCategory,
-          category as string,
-          "HeaderCategory"
+        // 1. Try resolving as a regular Category (subcategory level)
+        const categoryId = await resolveId(
+          Category,
+          normalizedCategory,
+          "Category"
         );
-        if (headerId) {
-          query.headerCategoryId = headerId;
+        if (categoryId) {
+          query.category = categoryId;
+        } else {
+          // 2. Try resolving as a HeaderCategory (top level)
+          const headerId = await resolveId(
+          HeaderCategory,
+          normalizedCategory,
+          "HeaderCategory"
+          );
+          if (headerId) {
+            query.headerCategoryId = headerId;
+          } else {
+            // Invalid category filter should not return all products
+            query.category = { $in: [] };
+          }
         }
       }
     }
 
     if (subcategory) {
+      const normalizedSubcategory = normalizeText(subcategory as string);
       // Try to resolve from Category model first (new structure where subcategories are categories with parentId)
       let subcategoryId = await resolveId(
         Category,
-        subcategory as string,
+        normalizedSubcategory,
         "Category"
       );
       // If not found in Category, try old SubCategory model (backward compatibility)
       if (!subcategoryId) {
         subcategoryId = await resolveId(
           SubCategory,
-          subcategory as string,
+          normalizedSubcategory,
           "SubCategory"
         );
       }
-      if (subcategoryId) query.subcategory = subcategoryId;
+      if (subcategoryId) {
+        query.subcategory = subcategoryId;
+      } else {
+        // Invalid subcategory filter should not return all products
+        query.subcategory = { $in: [] };
+      }
     }
 
     if (brand) {

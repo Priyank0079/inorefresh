@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import HomeHero from "./components/HomeHero";
 import PromoStrip from "./components/PromoStrip";
 import LowestPricesEver from "./components/LowestPricesEver";
-import FishLoader from "../../components/FishLoader";
 import { getHomeContent } from "../../services/api/customerHomeService";
 import { getProducts as getCustomerProducts } from "../../services/api/customerProductService";
 import { getHeaderCategoriesPublic } from "../../services/api/headerCategoryService";
@@ -19,6 +18,141 @@ import FishCategoryCards from "./components/FishCategoryCards";
 import ProductCard from "./components/ProductCard";
 
 import { useThemeContext } from "../../context/ThemeContext";
+
+const isVirtualFishTab = (tab: string) =>
+  tab === "aqua-fish" || tab === "marine-fish" || tab === "bangali-fish";
+
+const normalizeTabId = (tab: string) => {
+  const normalized = (tab || "")
+    .toLowerCase()
+    .trim()
+    .replace(/_/g, "-")
+    .replace(/\s+/g, "-");
+
+  if (
+    [
+      "aqua",
+      "aqua-fish",
+      "auqa",
+      "auqa-fish",
+      "freshwater",
+      "freshwater-fish",
+      "river",
+      "river-fish",
+    ].includes(normalized)
+  ) {
+    return "aqua-fish";
+  }
+
+  if (
+    [
+      "marine",
+      "marine-fish",
+      "marin",
+      "marin-fish",
+      "sea",
+      "sea-fish",
+      "ocean",
+      "ocean-fish",
+    ].includes(normalized)
+  ) {
+    return "marine-fish";
+  }
+
+  if (
+    [
+      "bangali",
+      "bangali-fish",
+      "bengali",
+      "bengali-fish",
+      "bengoli",
+      "bengoli-fish",
+      "traditional",
+      "traditional-fish",
+    ].includes(normalized)
+  ) {
+    return "bangali-fish";
+  }
+
+  return normalized || "all";
+};
+
+const VIRTUAL_FISH_TAB_ALIASES: Record<string, string[]> = {
+  "aqua-fish": [
+    "aqua fish",
+    "aqua",
+    "freshwater-fish",
+    "freshwater fish",
+    "freshwater",
+    "river-fish",
+    "river fish",
+  ],
+  "marine-fish": [
+    "marine fish",
+    "marin-fish",
+    "marin fish",
+    "sea-fish",
+    "sea fish",
+    "ocean-fish",
+    "ocean fish",
+  ],
+  "bangali-fish": [
+    "bangali fish",
+    "bengali-fish",
+    "bengali fish",
+    "bengoli-fish",
+    "bengoli fish",
+    "traditional-fish",
+    "traditional fish",
+  ],
+};
+
+const getProductCategoryHaystack = (product: any) => {
+  const rawCategory = product?.category;
+  const rawCategoryText =
+    typeof rawCategory === "string"
+      ? rawCategory
+      : `${rawCategory?.name || ""} ${rawCategory?.slug || ""}`;
+  const categoryDataText = `${product?.categoryData?.name || ""} ${product?.categoryData?.slug || ""}`;
+  const tagsText = Array.isArray(product?.tags) ? product.tags.join(" ") : "";
+
+  return `${rawCategoryText} ${product?.categoryId || ""} ${categoryDataText} ${tagsText}`
+    .toLowerCase()
+    .replace(/[_-]/g, " ");
+};
+
+const belongsToVirtualFishTab = (tab: string, product: any) => {
+  const haystack = getProductCategoryHaystack(product);
+  const normalizedTab = normalizeTabId(tab);
+
+  if (normalizedTab === "aqua-fish") {
+    return (
+      haystack.includes("aqua") ||
+      haystack.includes("freshwater") ||
+      haystack.includes("river")
+    );
+  }
+
+  if (normalizedTab === "marine-fish") {
+    return (
+      haystack.includes("marine") ||
+      haystack.includes("marin") ||
+      haystack.includes("ocean") ||
+      haystack.includes("sea")
+    );
+  }
+
+  if (normalizedTab === "bangali-fish") {
+    return (
+      haystack.includes("bangali") ||
+      haystack.includes("bengali") ||
+      haystack.includes("bengoli") ||
+      haystack.includes("traditional")
+    );
+  }
+
+  return true;
+};
 
 export default function Home() {
   const navigate = useNavigate();
@@ -32,6 +166,8 @@ export default function Home() {
   const setActiveTab = setActiveCategory;
   const contentRef = useRef<HTMLDivElement>(null);
   const scrollHandledRef = useRef(false);
+  const tabProductsCacheRef = useRef<Record<string, any[]>>({});
+  const tabFetchResolvedRef = useRef<Record<string, boolean>>({});
   const SCROLL_POSITION_KEY = 'home-scroll-position';
 
   // State for dynamic data
@@ -49,15 +185,15 @@ export default function Home() {
 
   const [tabProducts, setTabProducts] = useState<any[]>([]);
   const [isTabLoading, setIsTabLoading] = useState(false);
-
-  // Simulation of tab switch loading (premium feel)
-  useEffect(() => {
-    setIsTabLoading(true);
-    const timer = setTimeout(() => {
-      setIsTabLoading(false);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [activeTab]);
+  const activeLocationKey =
+    location?.latitude && location?.longitude
+      ? `${location.latitude.toFixed(3)}:${location.longitude.toFixed(3)}`
+      : "no-location";
+  const normalizedActiveTab = normalizeTabId(activeTab);
+  const activeTabCacheKey = `${normalizedActiveTab}:${activeLocationKey}`;
+  const hasResolvedActiveTab =
+    Boolean(tabFetchResolvedRef.current[activeTabCacheKey]) ||
+    Boolean(tabProductsCacheRef.current[activeTabCacheKey]);
 
   // Sync React Router Tab Parameter to Global App State
   useEffect(() => {
@@ -65,10 +201,11 @@ export default function Home() {
     const tabParam = searchParams.get('tab');
 
     if (tabParam) {
-      setActiveTab(tabParam);
+      const normalizedTab = normalizeTabId(tabParam);
+      setActiveTab(normalizedTab);
 
       // Simple auto-scroll to products if a category is selected via URL
-      if (tabParam !== 'all') {
+      if (normalizedTab !== 'all') {
         const timer = setTimeout(() => {
           const section = document.getElementById('fish-products-section');
           if (section) {
@@ -83,43 +220,96 @@ export default function Home() {
   // Fetch products for active tab
   useEffect(() => {
     const fetchTabProducts = async () => {
+      const locationKey =
+        location?.latitude && location?.longitude
+          ? `${location.latitude.toFixed(3)}:${location.longitude.toFixed(3)}`
+          : "no-location";
+      const cacheKey = `${normalizedActiveTab}:${locationKey}`;
+      const allProductsCacheKey = `all:${locationKey}`;
+
+      const cachedProducts = tabProductsCacheRef.current[cacheKey];
+      if (cachedProducts) {
+        tabFetchResolvedRef.current[cacheKey] = true;
+        setTabProducts(cachedProducts);
+        return;
+      }
+
       try {
         setIsTabLoading(true);
-        setTabProducts([]);
 
-        const params: any = { limit: 120 }; // Fetch a generous amount
-
-        const virtualMap: Record<string, string> = {
-          "aqua-fish": "Aqua Fish",
-          "marine-fish": "Marine Fish",
-          "bangali-fish": "Bengali Fish"
-        };
-        const targetLabel = virtualMap[activeTab];
-
-        if (targetLabel && homeData.categories?.length > 0) {
-          // Find all real IDs that map to our standardized label
-          const matchedCategory = homeData.categories.find((c: any) => c.name === targetLabel);
-          if (matchedCategory?._id) {
-            params.category = matchedCategory._id;
-          }
-        } else if (activeTab !== "all" && !targetLabel) {
-          // Normal category ID (like from a URL directly)
-          params.category = activeTab;
-        }
+        const baseParams: any = { limit: 120 }; // Fetch a generous amount
 
         if (location?.latitude && location?.longitude) {
-          params.latitude = location.latitude;
-          params.longitude = location.longitude;
+          baseParams.latitude = location.latitude;
+          baseParams.longitude = location.longitude;
         }
 
-        const res = await getCustomerProducts(params);
-        if (res.success) {
-          setTabProducts(res.data || []);
+        const fetchByCategory = async (categoryValue: string) => {
+          const res = await getCustomerProducts({
+            ...baseParams,
+            category: categoryValue,
+          });
+          if (!res.success) return [];
+          return res.data || [];
+        };
+
+        let nextProducts: any[] = [];
+
+        if (normalizedActiveTab === "all") {
+          const res = await getCustomerProducts(baseParams);
+          nextProducts = res.success ? res.data || [] : [];
+          tabProductsCacheRef.current[allProductsCacheKey] = nextProducts;
+        } else if (isVirtualFishTab(normalizedActiveTab)) {
+          const directProducts = await fetchByCategory(normalizedActiveTab);
+          const directFiltered = directProducts.filter((product: any) =>
+            belongsToVirtualFishTab(normalizedActiveTab, product)
+          );
+
+          if (directFiltered.length > 0) {
+            nextProducts = directFiltered;
+          } else if (directProducts.length > 0) {
+            // Keep API-filtered payload if category metadata is sparse
+            nextProducts = directProducts;
+          }
+
+          if (nextProducts.length === 0) {
+            const aliasCandidates = VIRTUAL_FISH_TAB_ALIASES[normalizedActiveTab] || [];
+            for (const alias of aliasCandidates) {
+              const aliasProducts = await fetchByCategory(alias);
+              if (aliasProducts.length === 0) continue;
+
+              const aliasFiltered = aliasProducts.filter((product: any) =>
+                belongsToVirtualFishTab(normalizedActiveTab, product)
+              );
+
+              nextProducts = aliasFiltered.length > 0 ? aliasFiltered : aliasProducts;
+              if (nextProducts.length > 0) break;
+            }
+          }
+
+          if (nextProducts.length === 0) {
+            let allProducts = tabProductsCacheRef.current[allProductsCacheKey];
+
+            if (!allProducts) {
+              const res = await getCustomerProducts({ ...baseParams, limit: 320 });
+              allProducts = res.success ? res.data || [] : [];
+              tabProductsCacheRef.current[allProductsCacheKey] = allProducts;
+            }
+
+            nextProducts = (allProducts || []).filter((product: any) =>
+              belongsToVirtualFishTab(normalizedActiveTab, product)
+            );
+          }
         } else {
-          setTabProducts([]);
+          nextProducts = await fetchByCategory(normalizedActiveTab);
         }
+
+        tabProductsCacheRef.current[cacheKey] = nextProducts;
+        tabFetchResolvedRef.current[cacheKey] = true;
+        setTabProducts(nextProducts);
       } catch (error) {
         console.error(`Failed to fetch products for tab ${activeTab}:`, error);
+        tabFetchResolvedRef.current[cacheKey] = true;
         setTabProducts([]);
       } finally {
         setIsTabLoading(false);
@@ -127,35 +317,17 @@ export default function Home() {
     };
 
     fetchTabProducts();
-  }, [activeTab, location?.latitude, location?.longitude, homeData.categories]);
+  }, [activeTab, location?.latitude, location?.longitude]);
 
   // Client-side filtering for the 3 professional tabs
   const filteredProducts = useMemo(() => {
-    if (activeTab === "all") return tabProducts;
+    if (normalizedActiveTab === "all") return tabProducts;
 
-    const virtualMap: Record<string, string> = {
-      "aqua-fish": "Aqua Fish",
-      "marine-fish": "Marine Fish",
-      "bangali-fish": "Bangali Fish"
-    };
+    if (!isVirtualFishTab(normalizedActiveTab)) return tabProducts;
 
-    const targetLabel = virtualMap[activeTab];
-    if (!targetLabel) return tabProducts;
-
-    return tabProducts.filter((product: any) => {
-      const catName = (product.category?.name || "").toLowerCase();
-
-      if (targetLabel === "Aqua Fish") {
-        return catName.includes("aqua") || catName.includes("freshwater") || catName.includes("river");
-      }
-      if (targetLabel === "Marine Fish") {
-        return catName.includes("marine") || catName.includes("marin") || catName.includes("ocean") || catName.includes("sea");
-      }
-      if (targetLabel === "Bangali Fish") {
-        return catName.includes("bangali") || catName.includes("bengali") || catName.includes("bengoli") || catName.includes("traditional");
-      }
-      return false;
-    });
+    return tabProducts.filter((product: any) =>
+      belongsToVirtualFishTab(normalizedActiveTab, product)
+    );
   }, [tabProducts, activeTab]);
 
   useEffect(() => {
@@ -426,10 +598,10 @@ export default function Home() {
               }}
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 md:gap-6 w-full min-h-[400px]"
             >
-              {isTabLoading ? (
+              {(isTabLoading || !hasResolvedActiveTab) ? (
                 <div className="col-span-full py-20 flex flex-col items-center justify-center">
-                  <FishLoader />
-                  <p className="text-[#6FD3FF] mt-4 font-bold animate-pulse uppercase tracking-[0.2em] text-[12px]">Diving Deeper...</p>
+                  <div className="h-10 w-10 rounded-full border-4 border-[#6FD3FF]/30 border-t-[#6FD3FF] animate-spin" />
+                  <p className="text-[#D6E6F2] mt-3 text-sm font-semibold">Loading products...</p>
                 </div>
               ) : filteredProducts.length === 0 ? (
                 <div className="col-span-full py-20 flex flex-col items-center justify-center text-center">

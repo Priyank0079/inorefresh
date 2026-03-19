@@ -8,12 +8,46 @@ import {
 } from "../../../services/api/productService";
 import {
   getCategories,
-  Category as apiCategory,
 } from "../../../services/api/categoryService";
 import { useAuth } from "../../../context/AuthContext";
 import ProductLabelCard from "../components/ProductLabelCard";
 
 // ... (interfaces remain same)
+
+type FishGroupKey = "aqua-fish" | "marine-fish" | "bangali-fish";
+
+interface CategoryFilterOption {
+  id: FishGroupKey;
+  name: string;
+}
+
+const toFishGroupKey = (name: string, slug: string = ""): FishGroupKey | null => {
+  const joined = `${name || ""} ${slug || ""}`.toLowerCase();
+  if (
+    joined.includes("aqua") ||
+    joined.includes("freshwater") ||
+    joined.includes("river")
+  ) {
+    return "aqua-fish";
+  }
+  if (
+    joined.includes("marine") ||
+    joined.includes("marin") ||
+    joined.includes("ocean") ||
+    joined.includes("sea")
+  ) {
+    return "marine-fish";
+  }
+  if (
+    joined.includes("bangali") ||
+    joined.includes("bengali") ||
+    joined.includes("bengoli") ||
+    joined.includes("traditional")
+  ) {
+    return "bangali-fish";
+  }
+  return null;
+};
 
 export default function WarehouseProductList() {
   const navigate = useNavigate();
@@ -38,7 +72,7 @@ export default function WarehouseProductList() {
     total: number;
     pages: number;
   } | null>(null);
-  const [allCategories, setAllCategories] = useState<apiCategory[]>([]);
+  const [allCategories, setAllCategories] = useState<CategoryFilterOption[]>([]);
   const { user } = useAuth();
 
   // Fetch categories
@@ -47,33 +81,25 @@ export default function WarehouseProductList() {
       try {
         const response = await getCategories();
         if (response.success && response.data) {
-          const filtered = (response.data || []).filter((cat: any) => {
-            const name = (cat.name || "").toLowerCase();
-            return (
-              name.includes("aqua") ||
-              name.includes("marine") ||
-              name.includes("marin") ||
-              name.includes("bangali") ||
-              name.includes("bengali") ||
-              name.includes("bengoli") ||
-              name.includes("freshwater") ||
-              name.includes("ocean") ||
-              name.includes("traditional")
-            );
-          }).map((cat: any) => {
-            const name = (cat.name || "").toLowerCase();
-            if (name.includes("aqua") || name.includes("freshwater") || name.includes("river")) {
-              return { ...cat, name: "Aqua Fish" };
-            }
-            if (name.includes("marine") || name.includes("marin") || name.includes("ocean") || name.includes("sea")) {
-              return { ...cat, name: "Marine Fish" };
-            }
-            if (name.includes("bangali") || name.includes("bengali") || name.includes("bengoli") || name.includes("traditional")) {
-              return { ...cat, name: "Bengali Fish" };
-            }
-            return cat;
-          });
-          setAllCategories(filtered);
+          const groups = new Set<FishGroupKey>();
+          for (const cat of response.data || []) {
+            const key = toFishGroupKey((cat as any).name || "", (cat as any).slug || "");
+            if (key) groups.add(key);
+          }
+
+          const ordered = (["aqua-fish", "marine-fish", "bangali-fish"] as FishGroupKey[])
+            .filter((key) => groups.has(key))
+            .map((key) => ({
+              id: key,
+              name:
+                key === "aqua-fish"
+                  ? "Aqua Fish"
+                  : key === "marine-fish"
+                  ? "Marine Fish"
+                  : "Bengali Fish",
+            }));
+
+          setAllCategories(ordered);
         }
       } catch (err) {
         console.error("Failed to fetch categories:", err);
@@ -113,22 +139,7 @@ export default function WarehouseProductList() {
 
       const response = await getProducts(params);
       if (response.success && response.data) {
-        // Only show products belonging to our three main fish categories
-        const filteredProducts = (response.data || []).filter((p: any) => {
-          const catName = (p.category?.name || "").toLowerCase();
-          return (
-            catName.includes("aqua") ||
-            catName.includes("marine") ||
-            catName.includes("marin") ||
-            catName.includes("bangali") ||
-            catName.includes("bengali") ||
-            catName.includes("bengoli") ||
-            catName.includes("freshwater") ||
-            catName.includes("ocean") ||
-            catName.includes("traditional")
-          );
-        });
-        setProducts(filteredProducts);
+        setProducts(response.data || []);
         // Extract pagination info if available
         if (response.pagination) {
           setTotalPages(response.pagination.pages);
@@ -165,31 +176,46 @@ export default function WarehouseProductList() {
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [labelModalOpen, setLabelModalOpen] = useState(false);
   const [selectedProductForLabel, setSelectedProductForLabel] = useState<any>(null);
 
   const handleDeleteClick = (productId: string) => {
+    setDeleteError("");
     setProductToDelete(productId);
     setDeleteModalOpen(true);
   };
 
+  const closeDeleteModal = () => {
+    if (isDeleting) return;
+    setDeleteModalOpen(false);
+    setProductToDelete(null);
+    setDeleteError("");
+  };
+
   const confirmDelete = async () => {
-    if (!productToDelete) return;
+    if (!productToDelete || isDeleting) return;
 
     try {
+      setIsDeleting(true);
+      setDeleteError("");
       const response = await deleteProduct(productToDelete);
       if (
         response.success ||
         response.message === "Product deleted successfully"
       ) {
-        fetchProducts();
-        setDeleteModalOpen(false);
-        setProductToDelete(null);
+        await fetchProducts();
+        closeDeleteModal();
       } else {
-        console.error("Failed to delete product");
+        setDeleteError(response.message || "Failed to delete product");
       }
-    } catch (error) {
-      console.error("Error deleting product:", error);
+    } catch (error: any) {
+      setDeleteError(
+        error?.response?.data?.message || "Error deleting product"
+      );
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -325,9 +351,6 @@ export default function WarehouseProductList() {
     </span>
   );
 
-  // Get unique categories for filter
-  const categories = allCategories.map((cat) => cat.name);
-
   return (
     <div className="flex flex-col h-full">
       {/* Page Header */}
@@ -361,7 +384,7 @@ export default function WarehouseProductList() {
                 className="bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer">
                 <option value="">All Category</option>
                 {allCategories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
+                  <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
                 ))}
@@ -598,7 +621,7 @@ export default function WarehouseProductList() {
                       Variation <SortIcon column="variation" />
                     </div>
                   </th>
-                  <th className="p-4 border border-neutral-200">
+                  <th className="p-4 border border-neutral-200 sticky right-0 z-10 bg-neutral-50 min-w-[170px]">
                     <div className="flex items-center justify-center">Action</div>
                   </th>
                 </tr>
@@ -619,7 +642,7 @@ export default function WarehouseProductList() {
                   return (
                     <tr
                       key={`${variation.productId}-${variation.variationId}`}
-                      className="hover:bg-neutral-50 transition-colors text-sm text-neutral-700">
+                      className="group hover:bg-neutral-50 transition-colors text-sm text-neutral-700">
                       <td className="p-4 align-middle border border-neutral-200">
                         <div className="flex items-center gap-2">
                           {isFirstVariation && hasMultipleVariations && (
@@ -704,7 +727,7 @@ export default function WarehouseProductList() {
                       <td className="p-4 align-middle border border-neutral-200">
                         {variation.variation}
                       </td>
-                      <td className="p-4 align-middle border border-neutral-200">
+                      <td className="p-4 align-middle border border-neutral-200 sticky right-0 bg-white group-hover:bg-neutral-50 min-w-[170px]">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleEdit(variation.productId)}
@@ -746,11 +769,11 @@ export default function WarehouseProductList() {
                           </button>
                           <button
                             onClick={() => handleDeleteClick(variation.productId)}
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            className="inline-flex items-center gap-1 px-2 py-1 text-red-700 border border-red-200 bg-red-50 hover:bg-red-100 rounded transition-colors"
                             title="Delete Product">
                             <svg
-                              width="16"
-                              height="16"
+                              width="14"
+                              height="14"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
@@ -762,6 +785,7 @@ export default function WarehouseProductList() {
                               <line x1="10" y1="11" x2="10" y2="17"></line>
                               <line x1="14" y1="11" x2="14" y2="17"></line>
                             </svg>
+                            <span className="text-xs font-semibold">Delete</span>
                           </button>
                         </div>
                       </td>
@@ -771,7 +795,7 @@ export default function WarehouseProductList() {
                 {displayedVariations.length === 0 && (
                   <tr>
                     <td
-                      colSpan={12}
+                      colSpan={13}
                       className="p-8 text-center text-neutral-400 border border-neutral-200">
                       No products found.
                     </td>
@@ -930,16 +954,21 @@ export default function WarehouseProductList() {
               </p>
               <div className="flex gap-3 justify-center">
                 <button
-                  onClick={() => setDeleteModalOpen(false)}
-                  className="px-5 py-2.5 rounded-lg border border-neutral-300 text-neutral-700 font-medium hover:bg-neutral-50 transition-colors">
+                  onClick={closeDeleteModal}
+                  disabled={isDeleting}
+                  className="px-5 py-2.5 rounded-lg border border-neutral-300 text-neutral-700 font-medium hover:bg-neutral-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
                   Cancel
                 </button>
                 <button
                   onClick={confirmDelete}
-                  className="px-5 py-2.5 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors shadow-sm">
-                  Delete Product
+                  disabled={isDeleting}
+                  className="px-5 py-2.5 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed">
+                  {isDeleting ? "Deleting..." : "Delete Product"}
                 </button>
               </div>
+              {deleteError && (
+                <p className="mt-4 text-sm text-red-600">{deleteError}</p>
+              )}
             </div>
           </div>
         </div>

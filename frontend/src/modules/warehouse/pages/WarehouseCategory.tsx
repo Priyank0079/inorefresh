@@ -16,6 +16,36 @@ interface Product {
     status: string;
 }
 
+type FishGroupKey = 'aqua-fish' | 'marine-fish' | 'bangali-fish';
+
+interface WarehouseFishCategory {
+    _id: FishGroupKey;
+    name: string;
+    image?: string;
+    sourceCategoryIds: string[];
+}
+
+const FISH_GROUP_META: Record<FishGroupKey, { label: string; order: number }> = {
+    'aqua-fish': { label: 'Aqua Fish', order: 1 },
+    'marine-fish': { label: 'Marine Fish', order: 2 },
+    'bangali-fish': { label: 'Bengali Fish', order: 3 },
+};
+
+const getFishGroupKey = (name: string, slug?: string): FishGroupKey | null => {
+    const joined = `${name || ''} ${slug || ''}`.toLowerCase();
+
+    if (joined.includes('aqua') || joined.includes('freshwater') || joined.includes('river')) {
+        return 'aqua-fish';
+    }
+    if (joined.includes('marine') || joined.includes('marin') || joined.includes('ocean') || joined.includes('sea')) {
+        return 'marine-fish';
+    }
+    if (joined.includes('bangali') || joined.includes('bengali') || joined.includes('bengoli') || joined.includes('traditional')) {
+        return 'bangali-fish';
+    }
+    return null;
+};
+
 // ─── Add Category Modal (Keep it code-wise but it will be hidden from UI) ───
 interface AddCategoryModalProps {
     onClose: () => void;
@@ -187,14 +217,14 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
 // ─── Main Component ──────────────────────────────────────────────────────────
 export default function WarehouseCategory() {
     const navigate = useNavigate();
-    const [categories, setCategories] = useState<Category[]>([]);
+    const [categories, setCategories] = useState<WarehouseFishCategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
 
-    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<WarehouseFishCategory | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [productsLoading, setProductsLoading] = useState(false);
     const [productsError, setProductsError] = useState('');
@@ -205,34 +235,40 @@ export default function WarehouseCategory() {
         try {
             const response = await api.get('/categories', { params: { status: 'Active' } });
             if (response.data.success && response.data.data) {
-                // User strictly needs only 3 fish categories
-                const filtered = (response.data.data || []).filter((cat: any) => {
-                    const name = (cat.name || "").toLowerCase();
-                    return (
-                        name.includes("aqua") ||
-                        name.includes("marine") ||
-                        name.includes("marin") ||
-                        name.includes("bangali") ||
-                        name.includes("bengali") ||
-                        name.includes("bengoli") ||
-                        name.includes("freshwater") ||
-                        name.includes("ocean") ||
-                        name.includes("traditional")
-                    );
-                }).map((cat: any) => {
-                    const n = (cat.name || "").toLowerCase();
-                    if (n.includes("aqua") || n.includes("freshwater") || n.includes("river")) {
-                        return { ...cat, name: "Aqua Fish" };
+                const grouped: Partial<Record<FishGroupKey, WarehouseFishCategory>> = {};
+
+                for (const cat of response.data.data || []) {
+                    const groupKey = getFishGroupKey(cat.name || '', cat.slug || '');
+                    if (!groupKey) continue;
+
+                    if (!grouped[groupKey]) {
+                        grouped[groupKey] = {
+                            _id: groupKey,
+                            name: FISH_GROUP_META[groupKey].label,
+                            image: cat.image || '',
+                            sourceCategoryIds: cat._id ? [cat._id] : [],
+                        };
+                        continue;
                     }
-                    if (n.includes("marine") || n.includes("marin") || n.includes("ocean") || n.includes("sea")) {
-                        return { ...cat, name: "Marine Fish" };
+
+                    if (cat._id) {
+                        grouped[groupKey]!.sourceCategoryIds.push(cat._id);
                     }
-                    if (n.includes("bangali") || n.includes("bengali") || n.includes("bengoli") || n.includes("traditional")) {
-                        return { ...cat, name: "Bengali Fish" };
+                    if (!grouped[groupKey]!.image && cat.image) {
+                        grouped[groupKey]!.image = cat.image;
                     }
-                    return cat;
-                });
-                setCategories(filtered);
+                }
+
+                const normalized = (Object.keys(FISH_GROUP_META) as FishGroupKey[])
+                    .map((key) => grouped[key])
+                    .filter(Boolean)
+                    .map((group) => ({
+                        ...group!,
+                        sourceCategoryIds: Array.from(new Set(group!.sourceCategoryIds)),
+                    }))
+                    .sort((a, b) => FISH_GROUP_META[a._id].order - FISH_GROUP_META[b._id].order);
+
+                setCategories(normalized);
             } else {
                 setError(response.data.message || 'Failed to fetch categories');
             }
@@ -245,24 +281,15 @@ export default function WarehouseCategory() {
 
     useEffect(() => { fetchCategories(); }, []);
 
-    const fetchProductsForCategory = async (category: Category) => {
+    const fetchProductsForCategory = async (category: WarehouseFishCategory) => {
         setSelectedCategory(category);
         setProductsLoading(true);
         setProductsError('');
         setProducts([]);
         try {
-            let response;
-            try {
-                response = await api.get(`/warehouse/products`, {
-                    params: { category: category._id, limit: 50 }
-                });
-            } catch (err: any) {
-                if (err?.response?.status === 404) {
-                    response = await api.get(`/products`, {
-                        params: { category: category._id, limit: 50 }
-                    });
-                } else { throw err; }
-            }
+            const response = await api.get(`/products`, {
+                params: { category: category._id, limit: 200 }
+            });
             if (response.data.success) {
                 setProducts(response.data.data || []);
             } else {
