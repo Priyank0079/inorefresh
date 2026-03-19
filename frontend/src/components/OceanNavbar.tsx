@@ -107,7 +107,7 @@ export default function OceanNavbar() {
 
     const navLinks = [
         {
-            name: 'Home',
+            name: 'ALL',
             id: 'all',
             icon: getIcon('Home', 'all')
         },

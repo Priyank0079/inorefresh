@@ -5,7 +5,7 @@ export default function FishCategoryCards() {
         {
             id: 'marine-fish',
             name: 'Marine Fish',
-            image: '/images/marin_fish.png',
+            image: '/images/fish/marine-fish.jpg',
             link: '/?tab=marine-fish'
         },
         {

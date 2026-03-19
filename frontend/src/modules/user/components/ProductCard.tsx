@@ -55,7 +55,7 @@ export default function ProductCard({
 
   const FISH_CATEGORY_FALLBACK_IMAGES: Record<FishCategoryKey, string> = {
     aqua: '/images/aqua_fish.png',
-    marine: '/images/marin_fish.png',
+    marine: '/images/fish/marine-fish.jpg',
     bengali: '/images/bengali_fish.png',
   };
 
@@ -113,6 +113,7 @@ export default function ProductCard({
     product.mainImage;
 
   const isFish = isFishProduct(product);
+  const isMarineCategoryImage = fishCategoryKey === 'marine';
   const resolvedDisplayPrice = Number(displayPrice) > 0
     ? Number(displayPrice)
     : Number(mrp) > 0
@@ -237,12 +238,22 @@ export default function ProductCard({
 
       {/* 2 Product Image Area */}
       <div className="relative mt-7 mb-3 md:mt-8 md:mb-4">
-        <div className="w-[100px] h-[100px] md:w-[140px] md:h-[140px] bg-[#f3f5f9] rounded-full flex items-center justify-center mx-auto transition-transform duration-500 group-hover:scale-105">
+        <div
+          className={`flex items-center justify-center mx-auto transition-transform duration-500 group-hover:scale-105 ${
+            isMarineCategoryImage
+              ? 'w-full h-[110px] md:h-[150px] bg-transparent rounded-[12px]'
+              : 'w-[100px] h-[100px] md:w-[140px] md:h-[140px] bg-[#f3f5f9] rounded-full'
+          }`}
+        >
           <img
             ref={imageRef}
             src={productImageSrc}
             alt={product.name || product.productName || 'Product'}
-            className="w-[75px] h-auto md:w-[105px] object-contain drop-shadow-md"
+            className={
+              isMarineCategoryImage
+                ? 'w-full h-full object-contain drop-shadow-md'
+                : 'w-[75px] h-auto md:w-[105px] object-contain drop-shadow-md'
+            }
             referrerPolicy="no-referrer"
             loading="lazy"
             onError={(e) => {

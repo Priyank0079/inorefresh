@@ -52,13 +52,45 @@ export interface CategoryListResponse {
     data: Category[];
 }
 
+const roundCoord = (value?: number): number | undefined => {
+    if (value === undefined || value === null || !Number.isFinite(value)) return undefined;
+    return Number(value.toFixed(3));
+};
+
+const buildProductsCacheKey = (params?: GetProductsParams): string => {
+    if (!params) return "customer-products:{}";
+
+    const normalized: Record<string, unknown> = { ...params };
+
+    if (normalized.latitude !== undefined) {
+        normalized.latitude = roundCoord(Number(normalized.latitude));
+    }
+    if (normalized.longitude !== undefined) {
+        normalized.longitude = roundCoord(Number(normalized.longitude));
+    }
+
+    const orderedEntries = Object.entries(normalized)
+        .filter(([, value]) => value !== undefined && value !== null && value !== "")
+        .sort(([a], [b]) => a.localeCompare(b));
+
+    return `customer-products:${JSON.stringify(orderedEntries)}`;
+};
+
 /**
  * Get products with filters (Public)
  * Location (latitude/longitude) is required to filter products by seller's service radius
  */
 export const getProducts = async (params?: GetProductsParams): Promise<ProductListResponse> => {
-    const response = await api.get<ProductListResponse>('/customer/products', { params });
-    return response.data;
+    const cacheKey = buildProductsCacheKey(params);
+
+    return apiCache.getOrFetch(
+        cacheKey,
+        async () => {
+            const response = await api.get<ProductListResponse>('/customer/products', { params });
+            return response.data;
+        },
+        2 * 60 * 1000 // 2 minutes for list pages
+    );
 };
 
 /**
@@ -68,11 +100,20 @@ export const getProducts = async (params?: GetProductsParams): Promise<ProductLi
 export const getProductById = async (id: string, latitude?: number, longitude?: number): Promise<ProductDetailResponse> => {
     const params: any = {};
     if (latitude !== undefined && longitude !== undefined) {
-        params.latitude = latitude;
-        params.longitude = longitude;
+        params.latitude = roundCoord(latitude);
+        params.longitude = roundCoord(longitude);
     }
-    const response = await api.get<ProductDetailResponse>(`/customer/products/${id}`, { params });
-    return response.data;
+
+    const cacheKey = `customer-product-detail:${id}:${params.latitude ?? "na"}:${params.longitude ?? "na"}`;
+
+    return apiCache.getOrFetch(
+        cacheKey,
+        async () => {
+            const response = await api.get<ProductDetailResponse>(`/customer/products/${id}`, { params });
+            return response.data;
+        },
+        3 * 60 * 1000 // 3 minutes for detail pages
+    );
 };
 
 /**

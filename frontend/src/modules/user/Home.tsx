@@ -1,9 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate, useLocation as useRouterLocation } from "react-router-dom";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useLocation as useRouterLocation } from "react-router-dom";
 import { useLocation } from "../../hooks/useLocation";
-import { useCart } from "../../context/CartContext";
-import { useToast } from "../../context/ToastContext";
-import { Product } from "../../types/domain";
 import { motion, AnimatePresence } from "framer-motion";
 import HomeHero from "./components/HomeHero";
 import PromoStrip from "./components/PromoStrip";
@@ -11,9 +8,7 @@ import LowestPricesEver from "./components/LowestPricesEver";
 import { getHomeContent } from "../../services/api/customerHomeService";
 import { getProducts as getCustomerProducts } from "../../services/api/customerProductService";
 import { getHeaderCategoriesPublic } from "../../services/api/headerCategoryService";
-import { useLoading } from "../../context/LoadingContext";
 import PageLoader from "../../components/PageLoader";
-import CategoryTileSection from "./components/CategoryTileSection";
 import FishCategoryCards from "./components/FishCategoryCards";
 import ProductCard from "./components/ProductCard";
 
@@ -107,6 +102,20 @@ const VIRTUAL_FISH_TAB_ALIASES: Record<string, string[]> = {
   ],
 };
 
+const PRODUCTS_PAGE_SIZE = 20;
+
+type ProductSourcePlan =
+  | { type: "all" }
+  | { type: "category"; category: string }
+  | { type: "all-filtered" };
+
+interface TabProductsCacheEntry {
+  items: any[];
+  nextPage: number;
+  hasMore: boolean;
+  sourcePlan: ProductSourcePlan | null;
+}
+
 const getProductCategoryHaystack = (product: any) => {
   const rawCategory = product?.category;
   const rawCategoryText =
@@ -155,19 +164,18 @@ const belongsToVirtualFishTab = (tab: string, product: any) => {
 };
 
 export default function Home() {
-  const navigate = useNavigate();
   const routerLocation = useRouterLocation();
   const { location } = useLocation();
-  const { cart, addToCart, updateQuantity } = useCart();
-  const { showToast } = useToast();
   const { activeCategory, setActiveCategory } = useThemeContext();
-  const { startRouteLoading, stopRouteLoading } = useLoading();
   const activeTab = activeCategory; // mapping for existing code compatibility
   const setActiveTab = setActiveCategory;
   const contentRef = useRef<HTMLDivElement>(null);
   const scrollHandledRef = useRef(false);
-  const tabProductsCacheRef = useRef<Record<string, any[]>>({});
+  const tabProductsCacheRef = useRef<Record<string, TabProductsCacheEntry>>({});
   const tabFetchResolvedRef = useRef<Record<string, boolean>>({});
+  const preloadedLocationKeysRef = useRef<Set<string>>(new Set());
+  const activeSourcePlanRef = useRef<ProductSourcePlan | null>(null);
+  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
   const SCROLL_POSITION_KEY = 'home-scroll-position';
 
   // State for dynamic data
@@ -185,9 +193,20 @@ export default function Home() {
 
   const [tabProducts, setTabProducts] = useState<any[]>([]);
   const [isTabLoading, setIsTabLoading] = useState(false);
+  const [isLoadingMoreProducts, setIsLoadingMoreProducts] = useState(false);
+  const [nextProductsPage, setNextProductsPage] = useState(2);
+  const [hasMoreProducts, setHasMoreProducts] = useState(false);
+  const normalizedLatitude =
+    typeof location?.latitude === "number" && Number.isFinite(location.latitude)
+      ? Number(location.latitude.toFixed(3))
+      : undefined;
+  const normalizedLongitude =
+    typeof location?.longitude === "number" && Number.isFinite(location.longitude)
+      ? Number(location.longitude.toFixed(3))
+      : undefined;
   const activeLocationKey =
-    location?.latitude && location?.longitude
-      ? `${location.latitude.toFixed(3)}:${location.longitude.toFixed(3)}`
+    normalizedLatitude !== undefined && normalizedLongitude !== undefined
+      ? `${normalizedLatitude}:${normalizedLongitude}`
       : "no-location";
   const normalizedActiveTab = normalizeTabId(activeTab);
   const activeTabCacheKey = `${normalizedActiveTab}:${activeLocationKey}`;
@@ -217,107 +236,248 @@ export default function Home() {
     }
   }, [routerLocation.search, setActiveTab]);
 
-  // Fetch products for active tab
-  useEffect(() => {
-    const fetchTabProducts = async () => {
-      const locationKey =
-        location?.latitude && location?.longitude
-          ? `${location.latitude.toFixed(3)}:${location.longitude.toFixed(3)}`
-          : "no-location";
-      const cacheKey = `${normalizedActiveTab}:${locationKey}`;
-      const allProductsCacheKey = `all:${locationKey}`;
+  const getProductKey = useCallback((product: any) => {
+    return String(product?._id || product?.id || product?.product_tag || product?.productName || "");
+  }, []);
 
-      const cachedProducts = tabProductsCacheRef.current[cacheKey];
-      if (cachedProducts) {
+  const buildBaseProductParams = useCallback(
+    (page: number) => {
+      const params: any = {
+        page,
+        limit: PRODUCTS_PAGE_SIZE,
+      };
+
+      if (normalizedLatitude !== undefined && normalizedLongitude !== undefined) {
+        params.latitude = normalizedLatitude;
+        params.longitude = normalizedLongitude;
+      }
+
+      return params;
+    },
+    [normalizedLatitude, normalizedLongitude]
+  );
+
+  const fetchProductsPageByPlan = useCallback(
+    async (plan: ProductSourcePlan, page: number) => {
+      const params = buildBaseProductParams(page);
+      if (plan.type === "category") {
+        params.category = plan.category;
+      }
+
+      const response = await getCustomerProducts(params);
+      const responseItems = response.success ? response.data || [] : [];
+      const pagination = response.pagination;
+      const serverHasMore =
+        pagination && Number.isFinite(pagination.page) && Number.isFinite(pagination.pages)
+          ? pagination.page < pagination.pages
+          : responseItems.length >= PRODUCTS_PAGE_SIZE;
+
+      if (plan.type === "all-filtered") {
+        return {
+          items: responseItems.filter((product: any) =>
+            belongsToVirtualFishTab(normalizedActiveTab, product)
+          ),
+          hasMore: serverHasMore,
+        };
+      }
+
+      return {
+        items: responseItems,
+        hasMore: serverHasMore,
+      };
+    },
+    [buildBaseProductParams, normalizedActiveTab]
+  );
+
+  const loadMoreProducts = useCallback(async () => {
+    if (isTabLoading || isLoadingMoreProducts || !hasMoreProducts) {
+      return;
+    }
+
+    const sourcePlan = activeSourcePlanRef.current;
+    if (!sourcePlan) return;
+
+    const cacheKey = `${normalizedActiveTab}:${activeLocationKey}`;
+
+    setIsLoadingMoreProducts(true);
+    try {
+      const pageData = await fetchProductsPageByPlan(sourcePlan, nextProductsPage);
+
+      setTabProducts((prev) => {
+        const existingKeys = new Set(prev.map((item) => getProductKey(item)));
+        const appended = pageData.items.filter((item: any) => {
+          const key = getProductKey(item);
+          return key && !existingKeys.has(key);
+        });
+        const merged = [...prev, ...appended];
+
+        tabProductsCacheRef.current[cacheKey] = {
+          items: merged,
+          nextPage: nextProductsPage + 1,
+          hasMore: pageData.hasMore,
+          sourcePlan,
+        };
+
+        return merged;
+      });
+
+      setNextProductsPage((prev) => prev + 1);
+      setHasMoreProducts(pageData.hasMore);
+    } catch (error) {
+      console.error(`Failed to load more products for tab ${normalizedActiveTab}:`, error);
+    } finally {
+      setIsLoadingMoreProducts(false);
+    }
+  }, [
+    isTabLoading,
+    isLoadingMoreProducts,
+    hasMoreProducts,
+    normalizedActiveTab,
+    activeLocationKey,
+    fetchProductsPageByPlan,
+    nextProductsPage,
+    getProductKey,
+  ]);
+
+  // Fetch first page of products for active tab
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchFirstPage = async () => {
+      const cacheKey = `${normalizedActiveTab}:${activeLocationKey}`;
+      const cachedEntry = tabProductsCacheRef.current[cacheKey];
+
+      if (cachedEntry) {
+        if (cancelled) return;
+        activeSourcePlanRef.current = cachedEntry.sourcePlan;
         tabFetchResolvedRef.current[cacheKey] = true;
-        setTabProducts(cachedProducts);
+        setTabProducts(cachedEntry.items);
+        setNextProductsPage(cachedEntry.nextPage);
+        setHasMoreProducts(cachedEntry.hasMore);
+        setIsLoadingMoreProducts(false);
         return;
       }
 
+      setTabProducts([]);
+      setNextProductsPage(2);
+      setHasMoreProducts(false);
+      setIsLoadingMoreProducts(false);
+      setIsTabLoading(true);
+
       try {
-        setIsTabLoading(true);
-
-        const baseParams: any = { limit: 120 }; // Fetch a generous amount
-
-        if (location?.latitude && location?.longitude) {
-          baseParams.latitude = location.latitude;
-          baseParams.longitude = location.longitude;
-        }
-
-        const fetchByCategory = async (categoryValue: string) => {
-          const res = await getCustomerProducts({
-            ...baseParams,
-            category: categoryValue,
-          });
-          if (!res.success) return [];
-          return res.data || [];
+        const getServerPage = async (category?: string) => {
+          const params = buildBaseProductParams(1);
+          if (category) params.category = category;
+          const res = await getCustomerProducts(params);
+          const items = res.success ? res.data || [] : [];
+          const hasMore =
+            res.pagination && Number.isFinite(res.pagination.page) && Number.isFinite(res.pagination.pages)
+              ? res.pagination.page < res.pagination.pages
+              : items.length >= PRODUCTS_PAGE_SIZE;
+          return { items, hasMore };
         };
 
-        let nextProducts: any[] = [];
+        let sourcePlan: ProductSourcePlan | null = null;
+        let firstItems: any[] = [];
+        let hasMore = false;
 
         if (normalizedActiveTab === "all") {
-          const res = await getCustomerProducts(baseParams);
-          nextProducts = res.success ? res.data || [] : [];
-          tabProductsCacheRef.current[allProductsCacheKey] = nextProducts;
-        } else if (isVirtualFishTab(normalizedActiveTab)) {
-          const directProducts = await fetchByCategory(normalizedActiveTab);
-          const directFiltered = directProducts.filter((product: any) =>
-            belongsToVirtualFishTab(normalizedActiveTab, product)
-          );
-
-          if (directFiltered.length > 0) {
-            nextProducts = directFiltered;
-          } else if (directProducts.length > 0) {
-            // Keep API-filtered payload if category metadata is sparse
-            nextProducts = directProducts;
-          }
-
-          if (nextProducts.length === 0) {
-            const aliasCandidates = VIRTUAL_FISH_TAB_ALIASES[normalizedActiveTab] || [];
-            for (const alias of aliasCandidates) {
-              const aliasProducts = await fetchByCategory(alias);
-              if (aliasProducts.length === 0) continue;
-
-              const aliasFiltered = aliasProducts.filter((product: any) =>
-                belongsToVirtualFishTab(normalizedActiveTab, product)
-              );
-
-              nextProducts = aliasFiltered.length > 0 ? aliasFiltered : aliasProducts;
-              if (nextProducts.length > 0) break;
-            }
-          }
-
-          if (nextProducts.length === 0) {
-            let allProducts = tabProductsCacheRef.current[allProductsCacheKey];
-
-            if (!allProducts) {
-              const res = await getCustomerProducts({ ...baseParams, limit: 320 });
-              allProducts = res.success ? res.data || [] : [];
-              tabProductsCacheRef.current[allProductsCacheKey] = allProducts;
-            }
-
-            nextProducts = (allProducts || []).filter((product: any) =>
-              belongsToVirtualFishTab(normalizedActiveTab, product)
-            );
-          }
+          sourcePlan = { type: "all" };
+          const pageData = await getServerPage();
+          firstItems = pageData.items;
+          hasMore = pageData.hasMore;
+        } else if (!isVirtualFishTab(normalizedActiveTab)) {
+          sourcePlan = { type: "category", category: normalizedActiveTab };
+          const pageData = await getServerPage(normalizedActiveTab);
+          firstItems = pageData.items;
+          hasMore = pageData.hasMore;
         } else {
-          nextProducts = await fetchByCategory(normalizedActiveTab);
+          const candidates = [normalizedActiveTab, ...(VIRTUAL_FISH_TAB_ALIASES[normalizedActiveTab] || [])];
+
+          for (const candidate of candidates) {
+            const pageData = await getServerPage(candidate);
+            if (pageData.items.length === 0) continue;
+
+            const filtered = pageData.items.filter((item: any) =>
+              belongsToVirtualFishTab(normalizedActiveTab, item)
+            );
+
+            sourcePlan = { type: "category", category: candidate };
+            firstItems = filtered.length > 0 ? filtered : pageData.items;
+            hasMore = pageData.hasMore;
+            break;
+          }
+
+          if (!sourcePlan) {
+            sourcePlan = { type: "all-filtered" };
+            const pageData = await fetchProductsPageByPlan(sourcePlan, 1);
+            firstItems = pageData.items;
+            hasMore = pageData.hasMore;
+          }
         }
 
-        tabProductsCacheRef.current[cacheKey] = nextProducts;
+        if (cancelled) return;
+
+        activeSourcePlanRef.current = sourcePlan;
+        const cacheEntry: TabProductsCacheEntry = {
+          items: firstItems,
+          nextPage: 2,
+          hasMore,
+          sourcePlan,
+        };
+        tabProductsCacheRef.current[cacheKey] = cacheEntry;
         tabFetchResolvedRef.current[cacheKey] = true;
-        setTabProducts(nextProducts);
+        setTabProducts(firstItems);
+        setNextProductsPage(2);
+        setHasMoreProducts(hasMore);
       } catch (error) {
-        console.error(`Failed to fetch products for tab ${activeTab}:`, error);
+        console.error(`Failed to fetch products for tab ${normalizedActiveTab}:`, error);
+        if (cancelled) return;
         tabFetchResolvedRef.current[cacheKey] = true;
         setTabProducts([]);
+        setHasMoreProducts(false);
+        setNextProductsPage(2);
       } finally {
-        setIsTabLoading(false);
+        if (!cancelled) {
+          setIsTabLoading(false);
+        }
       }
     };
 
-    fetchTabProducts();
-  }, [activeTab, location?.latitude, location?.longitude]);
+    fetchFirstPage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    normalizedActiveTab,
+    activeLocationKey,
+    buildBaseProductParams,
+    fetchProductsPageByPlan,
+  ]);
+
+  // Infinite scroll trigger
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel || !hasMoreProducts || isTabLoading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting) {
+          loadMoreProducts();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "260px 0px",
+        threshold: 0.01,
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMoreProducts, isTabLoading, loadMoreProducts]);
 
   // Client-side filtering for the 3 professional tabs
   const filteredProducts = useMemo(() => {
@@ -328,7 +488,7 @@ export default function Home() {
     return tabProducts.filter((product: any) =>
       belongsToVirtualFishTab(normalizedActiveTab, product)
     );
-  }, [tabProducts, activeTab]);
+  }, [tabProducts, normalizedActiveTab]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -336,8 +496,8 @@ export default function Home() {
         setLoading(true);
         const response = await getHomeContent(
           undefined,
-          location?.latitude,
-          location?.longitude
+          normalizedLatitude,
+          normalizedLongitude
         );
 
         if (response.success && response.data) {
@@ -409,29 +569,36 @@ export default function Home() {
     };
 
     fetchData();
-  }, [location?.latitude, location?.longitude]);
+  }, [normalizedLatitude, normalizedLongitude]);
 
   // Preload common category data for snappier navigation
   useEffect(() => {
+    if (preloadedLocationKeysRef.current.has(activeLocationKey)) {
+      return;
+    }
+
+    let isCancelled = false;
     const preloadHeaderCategories = async () => {
       try {
+        preloadedLocationKeysRef.current.add(activeLocationKey);
         const headerCategories = await getHeaderCategoriesPublic();
         const slugsToPreload = (headerCategories || [])
           .map((c: any) => c.slug)
           .filter((slug: string) => typeof slug === "string" && slug.trim().length > 0)
-          .slice(0, 6);
+          .slice(0, 3);
 
         if (slugsToPreload.length === 0) return;
 
         const batchSize = 2;
         for (let i = 0; i < slugsToPreload.length; i += batchSize) {
+          if (isCancelled) return;
           const batch = slugsToPreload.slice(i, i + batchSize);
           await Promise.all(
             batch.map(slug =>
               getHomeContent(
                 slug,
-                location?.latitude,
-                location?.longitude,
+                normalizedLatitude,
+                normalizedLongitude,
                 true,
                 5 * 60 * 1000,
                 true
@@ -449,8 +616,17 @@ export default function Home() {
       }
     };
 
-    preloadHeaderCategories();
-  }, [location?.latitude, location?.longitude]);
+    const timer = window.setTimeout(() => {
+      if (!isCancelled) {
+        preloadHeaderCategories();
+      }
+    }, 1200);
+
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [activeLocationKey, normalizedLatitude, normalizedLongitude]);
 
   // Restore scroll position when returning to this page
   useEffect(() => {
@@ -552,8 +728,13 @@ export default function Home() {
       <div className="absolute top-[20%] left-[-10%] w-[40%] h-[40%] bg-[#1CA7C7]/10 blur-[120px] pointer-events-none rounded-full" />
       <div className="absolute top-[60%] right-[-10%] w-[30%] h-[30%] bg-[#6FD3FF]/10 blur-[100px] pointer-events-none rounded-full" />
 
-      {/* Hero Header with Gradient and Tabs */}
-      <HomeHero activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* Hero Header only for ALL tab */}
+      {activeTab === "all" ? (
+        <HomeHero activeTab={activeTab} onTabChange={setActiveTab} />
+      ) : (
+        // Keep space for fixed top navbar when hero is hidden
+        <div className="h-[90px] md:h-[100px]" aria-hidden="true" />
+      )}
 
       {activeTab === 'all' && (
         <div className="relative z-10">
@@ -615,58 +796,26 @@ export default function Home() {
                 </div>
               ) : (
                 filteredProducts.map((type, i) => {
-                  const priceValue = type.price;
-                  const formattedPrice = `₹${priceValue}`;
-                  const pseudoRandomRating = (type.rating || 4.5).toFixed(1);
-
-                  // Find if item is in cart
-                  const cartItem = cart.items.find(item => (item.product.id || (item.product as any)._id) === type.id);
-                  const quantity = cartItem?.quantity || 0;
-                  const isOutOfStock = type.stock !== undefined && type.stock <= 0;
-
-                  const handleAddToCart = async (e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    if (isOutOfStock) {
-                      showToast("Out of stock", "info");
-                      return;
-                    }
-                    if (quantity >= (type.stock || 99)) {
-                      showToast("Maximum stock reached", "info");
-                      return;
-                    }
-
-                    try {
-                      await addToCart(type as Product, e.currentTarget as HTMLElement);
-                      showToast(`${type.name} added to cart`, "success");
-                    } catch (err) {
-                      // Context handles error toast
-                    }
-                  };
-
-                  const handleIncrement = (e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    if (quantity >= (type.stock || 99)) {
-                      showToast("Maximum stock reached", "info");
-                      return;
-                    }
-                    updateQuantity(type.id, quantity + 1);
-                  };
-
-                  const handleDecrement = (e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    updateQuantity(type.id, quantity - 1);
-                  };
-
                   return (
                     <ProductCard
                       key={`fish-card-${activeTab}-${type._id || type.id}-${i}`}
-                      product={type as Product}
+                      product={type}
                     />
                   );
                 })
               )}
             </motion.div>
           </AnimatePresence>
+
+          {!isTabLoading && filteredProducts.length > 0 && (
+            <div ref={loadMoreSentinelRef} className="h-1 w-full" />
+          )}
+
+          {isLoadingMoreProducts && (
+            <div className="py-6 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full border-4 border-[#6FD3FF]/30 border-t-[#6FD3FF] animate-spin" />
+            </div>
+          )}
         </div>
       </div>
     </div>

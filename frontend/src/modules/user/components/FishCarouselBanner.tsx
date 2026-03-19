@@ -12,7 +12,7 @@ const slides = [
     id: 'marin',
     title: 'MARIN FISH',
     desc: 'Deeper ocean tone with premium sea profile',
-    image: '/images/marin_fish.png',
+    image: '/images/fish/marine-fish.jpg',
   },
   {
     id: 'bengali',
