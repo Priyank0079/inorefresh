@@ -25,10 +25,12 @@ export async function notifyWarehousesOfOrderUpdate(
             orderItems = await OrderItem.find({ order: order._id });
         }
 
-        const warehouseIds = [...new Set(orderItems.map((item: any) => {
+        const rawIds = orderItems.map((item: any) => {
             const wId = item.warehouse?._id || item.warehouse;
-            return wId ? wId.toString() : null;
-        }).filter(id => id))];
+            return wId ? wId.toString() : (null as any);
+        }).filter((id: any): id is string => !!id);
+        
+        const warehouseIds: string[] = Array.from(new Set(rawIds)) as string[];
 
         console.log(`🔔 Notifying ${warehouseIds.length} warehouses about ${type} for order ${order.orderNumber}:`, warehouseIds);
 
