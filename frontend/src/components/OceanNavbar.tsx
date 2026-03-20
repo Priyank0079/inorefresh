@@ -12,6 +12,7 @@ export default function OceanNavbar() {
     const { activeCategory, setActiveCategory } = useThemeContext();
     const routerLocation = useLocation();
     const isHome = routerLocation.pathname === '/' || routerLocation.pathname === '/user/home';
+    const isCategorySection = routerLocation.pathname === '/categories' || routerLocation.pathname.startsWith('/category/');
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -114,6 +115,43 @@ export default function OceanNavbar() {
         ...fishCategoryLinks
     ];
 
+    const navSurfaceClass = isHome
+        ? 'bg-gradient-to-b from-[#0C4A69]/95 via-[#0E5D82]/92 to-[#0B4F71]/88 border-b border-white/20 shadow-[0_12px_32px_rgba(5,30,45,0.35)]'
+        : isCategorySection
+            ? 'bg-gradient-to-b from-[#0C4A69]/95 via-[#0E5D82]/92 to-[#0B4F71]/88 border-b border-white/20 shadow-[0_12px_32px_rgba(5,30,45,0.35)]'
+            : 'bg-gradient-to-b from-[#D8F5FF]/96 via-[#BEEFFF]/92 to-[#9DE7FF]/85 border-b border-[#4AAFD1]/25 shadow-[0_10px_26px_rgba(17,111,146,0.16)]';
+
+    const activeIconClass = isHome
+        ? 'text-white'
+        : isCategorySection
+            ? 'text-[#8BE7FF]'
+            : 'text-[#0C7DA8]';
+    const inactiveIconClass = isHome
+        ? 'text-[#E9F9FF] group-hover:text-white'
+        : isCategorySection
+            ? 'text-[#DDF6FF] group-hover:text-[#8BE7FF]'
+            : 'text-[#2D89AE] group-hover:text-[#0C7DA8]';
+    const activeLabelClass = isHome
+        ? 'text-white'
+        : isCategorySection
+            ? 'text-white'
+            : 'text-[#07516E]';
+    const inactiveLabelClass = isHome
+        ? 'text-[#D7F0FF] group-hover:text-white'
+        : isCategorySection
+            ? 'text-[#D6F2FF] group-hover:text-white'
+            : 'text-[#236E8E] group-hover:text-[#07516E]';
+    const activeLabelShadow = isHome
+        ? '0 2px 12px rgba(255,255,255,0.45)'
+        : isCategorySection
+            ? '0 2px 12px rgba(139,231,255,0.4)'
+            : '0 2px 8px rgba(7,81,110,0.2)';
+    const activeCircleClass = isHome
+        ? 'bg-white/25'
+        : isCategorySection
+            ? 'bg-[#8BE7FF]/35'
+            : 'bg-[#6FD3FF]/20';
+
 
     const handleNavClick = (id: string) => {
         // Find if this is a named category like 'aqua' but the ID is a mongoID or has a typo
@@ -141,7 +179,9 @@ export default function OceanNavbar() {
             className={`fixed top-0 left-0 right-0 z-[100] h-[100px] flex items-center justify-center transition-all duration-500 transform ${isVisible ? 'translate-y-0' : '-translate-y-full'
                 }`}
         >
-            <div className="w-full flex items-center justify-center gap-[28px] md:gap-[60px]">
+            {/* Route-aware nav surface for stronger contrast on category pages */}
+            <div className={`absolute inset-0 ${navSurfaceClass} backdrop-blur-[10px] pointer-events-none`} />
+            <div className="w-full flex items-center justify-center px-14 sm:px-16 md:px-20 gap-4 sm:gap-7 md:gap-[60px]">
                 {navLinks.map((link) => (
                     <button
                         key={link.id}
@@ -160,14 +200,14 @@ export default function OceanNavbar() {
                                 {activeCategory === link.id && (
                                     <motion.div
                                         layoutId="activeCircle"
-                                        className="absolute inset-0 bg-[#6FD3FF]/20 rounded-full blur-[6px]"
+                                        className={`absolute inset-0 rounded-full blur-[6px] ${activeCircleClass}`}
                                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                     />
                                 )}
 
                                 <div className={`
                                     transition-all duration-300
-                                    ${activeCategory === link.id ? 'text-[#6FD3FF]' : 'text-[#D6E6F2] group-hover:text-[#6FD3FF]'}
+                                    ${activeCategory === link.id ? activeIconClass : inactiveIconClass}
                                 `}
                                     style={{
                                         filter: activeCategory === link.id ? 'drop-shadow(0 0 10px rgba(111,211,255,1))' : 'none',
@@ -179,10 +219,10 @@ export default function OceanNavbar() {
 
                             <span className={`
                                 text-[13px] md:text-[14px] font-bold mt-[4px] transition-all duration-300 tracking-[0.05em]
-                                ${activeCategory === link.id ? 'text-white' : 'text-[#D6E6F2] group-hover:text-white'}
+                                ${activeCategory === link.id ? activeLabelClass : inactiveLabelClass}
                             `}
                                 style={{
-                                    textShadow: activeCategory === link.id ? '0 0 12px rgba(111,211,255,0.8)' : 'none'
+                                    textShadow: activeCategory === link.id ? activeLabelShadow : 'none'
                                 }}
                             >
                                 {link.name}

@@ -159,17 +159,20 @@ export default function Categories() {
       <div className="absolute top-[40%] right-[-10%] w-[40%] h-[40%] bg-[#6FD3FF]/10 blur-[100px] pointer-events-none rounded-full" />
       <div className="absolute bottom-[10%] left-[5%] w-[30%] h-[30%] bg-[#BEEFFF]/10 blur-[90px] pointer-events-none rounded-full" />
 
+      {/* Space for fixed OceanNavbar to prevent overlap */}
+      <div className="h-14 md:h-16" aria-hidden="true" />
+
       {/* HEADER SECTION */}
-      <div className="relative pt-8 pb-6 px-4 md:px-8 max-w-[1280px] mx-auto text-center md:text-left">
+      <div className="relative pt-4 pb-6 px-4 md:px-8 max-w-[1280px] mx-auto text-center md:text-left">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-3xl md:text-5xl font-black text-[#072F4A] tracking-tighter mb-2">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl leading-tight font-black text-[#072F4A] tracking-tighter mb-2">
             Explore <span className="text-[#1CA7C7]">Categories</span>
           </h1>
-          <p className="text-[#072F4A]/50 text-sm md:text-lg font-medium tracking-wide">
+          <p className="text-[#072F4A]/50 text-xs sm:text-sm md:text-lg font-medium tracking-wide">
             Dive into our premium selection of fresh aquatic delicacies
           </p>
         </motion.div>

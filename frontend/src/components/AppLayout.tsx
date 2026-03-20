@@ -10,6 +10,7 @@ import { checkServiceability } from '../services/api/customerHomeService';
 import AmbientFishBackground from './AmbientFishBackground';
 import { UnderwaterEffect } from './UnderwaterEffect';
 import OceanNavbar from './OceanNavbar';
+import GlobalBackButton from './GlobalBackButton';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -166,6 +167,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const isSearchPage = location.pathname === '/search';
   const isCheckoutPage = location.pathname === '/checkout' || location.pathname.startsWith('/checkout/');
   const isCartPage = location.pathname === '/cart';
+  const isAccountPage = location.pathname === '/account';
+  const isExploreCategoriesPage = location.pathname === '/categories';
+  const showOceanNavbar = !isCheckoutPage && !isCartPage && !isAccountPage && !isExploreCategoriesPage;
+  const showBackButton = !showLocationRequest && !showLocationChangeModal && !isAccountPage && !isHomePage;
   const showHeader = isSearchPage && !isCheckoutPage && !isCartPage;
   const showSearchBar = isSearchPage && !isCheckoutPage && !isCartPage;
   const showFooter = !isCheckoutPage && !isProductDetailPage;
@@ -182,7 +187,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <div className="md:w-full md:bg-transparent md:min-h-screen overflow-x-hidden">
         <div className="md:w-full md:min-h-screen md:flex md:flex-col overflow-x-hidden relative z-10">
           {/* New OceanMart Navbar - Replaces both old navbar and sticky header */}
-          {!isCheckoutPage && !isCartPage && <OceanNavbar />}
+          {showOceanNavbar && <OceanNavbar />}
+
+          {showBackButton && (
+            <GlobalBackButton
+              theme={showOceanNavbar ? 'ocean' : 'light'}
+              topOffsetClass={showOceanNavbar ? 'top-4 md:top-5' : 'top-4 md:top-5'}
+              zIndexClass={showOceanNavbar ? 'z-[115]' : 'z-40'}
+              fallbackPath="/"
+            />
+          )}
 
 
           {/* Scrollable Main Content */}

@@ -733,7 +733,7 @@ export default function Home() {
         <HomeHero activeTab={activeTab} onTabChange={setActiveTab} />
       ) : (
         // Keep space for fixed top navbar when hero is hidden
-        <div className="h-[90px] md:h-[100px]" aria-hidden="true" />
+        <div className="h-[104px] md:h-[108px]" aria-hidden="true" />
       )}
 
       {activeTab === 'all' && (

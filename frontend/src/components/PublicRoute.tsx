@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import GlobalBackButton from "./GlobalBackButton";
 
 interface PublicRouteProps {
     children?: React.ReactNode;
@@ -40,5 +41,15 @@ export default function PublicRoute({ children, userType: allowedUserType }: Pub
         return <Navigate to="/" replace />;
     }
 
-    return children ? <>{children}</> : <Outlet />;
+    return (
+        <>
+            <GlobalBackButton
+                fallbackPath="/"
+                topOffsetClass="top-4 md:top-5"
+                zIndexClass="z-40"
+                theme="light"
+            />
+            {children ? <>{children}</> : <Outlet />}
+        </>
+    );
 }

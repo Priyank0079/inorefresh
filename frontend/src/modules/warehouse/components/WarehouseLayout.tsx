@@ -3,6 +3,7 @@ import WarehouseHeader from './WarehouseHeader';
 import WarehouseSidebar from './WarehouseSidebar';
 import { useWarehouseSocket, WarehouseNotification } from '../hooks/useWarehouseSocket';
 import WarehouseNotificationAlert from './WarehouseNotificationAlert';
+import GlobalBackButton from '../../../components/GlobalBackButton';
 
 interface WarehouseLayoutProps {
   children: ReactNode;
@@ -59,6 +60,12 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
       >
         {/* Header */}
         <WarehouseHeader onMenuClick={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+        <GlobalBackButton
+          fallbackPath="/warehouse"
+          topOffsetClass="top-[112px] sm:top-[96px] md:top-[88px]"
+          zIndexClass="z-40"
+          theme="light"
+        />
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 bg-neutral-50">{children}</main>
