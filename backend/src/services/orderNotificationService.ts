@@ -49,6 +49,7 @@ export interface OrderNotificationState {
     notifiedDeliveryBoys: Set<string>;
     rejectedDeliveryBoys: Set<string>;
     acceptedBy: string | null;
+    notificationTime?: Date;
 }
 
 export const notificationStates = new Map<string, OrderNotificationState>();
@@ -229,9 +230,14 @@ export async function findDeliveryBoysNearwarehouseLocations(
         // Get unique warehouse IDs from order items
         const warehouseIds = [...new Set(
             order.items
-                ?.map((item: any) => item.warehouse?.toString())
-                .filter((id: string) => id) || []
-        )];
+                ?.map((item: any) => {
+                    const wh = item.warehouse;
+                    if (!wh) return null;
+                    if (typeof wh === 'object' && wh._id) return wh._id.toString();
+                    return wh.toString();
+                })
+                .filter((id: string | null) => id) || []
+        )] as string[];
 
         if (warehouseIds.length === 0) {
             console.log('No warehouses found in order, falling back to all available delivery boys');
@@ -301,9 +307,23 @@ export async function findDeliveryBoysNearwarehouseLocations(
  */
 export async function notifyDeliveryBoysOfNewOrder(
     io: SocketIOServer,
-    order: any
+    orderOrId: any
 ): Promise<void> {
     try {
+        let order = orderOrId;
+        
+        // Fetch full order if only ID is provided
+        if (typeof orderOrId === 'string' || mongoose.isValidObjectId(orderOrId)) {
+            console.log(`📦 Fetching full order details for notification trigger: ${orderOrId}`);
+            order = await Order.findById(orderOrId).populate('items.warehouse');
+        }
+
+        if (!order || !order.items) {
+            console.error(`❌ Order or order items not found for notification: ${orderOrId}`);
+            return;
+        }
+
+        // Find delivery boys near warehouse locations (within service radius)
         // Find delivery boys near warehouse locations (within service radius)
         let nearbyDeliveryBoyIds = await findDeliveryBoysNearwarehouseLocations(order);
 
@@ -365,7 +385,9 @@ export async function notifyDeliveryBoysOfNewOrder(
         const notifiedIds = new Set<string>();
 
         // Only add delivery boys who are actually connected to the notification room
-        for (const id of nearbyDeliveryBoyIds) {
+        for (const item of nearbyDeliveryBoyIds) {
+            // Robust ID extraction (in case findAvailableDeliveryBoys returns result objects)
+            const id = (item as any).deliveryBoyId || item;
             const idString = id.toString().trim();
             const roomName = `delivery-${idString}`;
             const room = io.sockets.adapter.rooms.get(roomName);
@@ -375,22 +397,27 @@ export async function notifyDeliveryBoysOfNewOrder(
                 io.to(roomName).emit('new-order', orderData);
                 console.log(`📤 Emitted new-order to connected delivery boy room: ${roomName}`);
             } else {
-                console.log(`⏩ Skipping disconnected delivery boy: ${idString}`);
+                console.log(`⏩ Skipping disconnected delivery boy (No active room): ${idString}`);
             }
         }
+        
+        // Broadcast to general notification room as a fallback
+        io.to('delivery-notifications').emit('new-order', orderData);
+        console.log(`📡 Broadcasted new-order to all connected delivery boys (General Room)`);
+        // We still create the state even if individual rooms skipped her (broadcast handles it)
+        // If we want to strictly track who can accept, we might need a different approach,
+        // but for now, let's just make sure the state exists so they can accept.
 
-        if (notifiedIds.size === 0) {
-            console.log('⚠️ No connected delivery boys found to notify');
-            // Don't emit to general room as it includes offline delivery boys
-            return;
-        }
-
+        // Always create state so that broadcasted delivery boys can also accept
         notificationStates.set(orderId, {
             orderId,
             notifiedDeliveryBoys: notifiedIds,
-            rejectedDeliveryBoys: new Set(),
+            notificationTime: new Date(),
+            rejectedDeliveryBoys: new Set<string>(),
             acceptedBy: null,
         });
+        
+        console.log(`✅ Notification state initialized for order ${orderId} (Notified: ${notifiedIds.size})`);
 
         // Only notify individual active delivery boys, not the general room
         // This prevents offline delivery boys from receiving notifications
@@ -420,10 +447,11 @@ export async function handleOrderAcceptance(
                 return { success: false, message: 'Order already accepted by another delivery boy' };
             }
 
-            // Check if this delivery boy was notified
+            // Check if this delivery boy was notified (log only as warning)
             if (!state.notifiedDeliveryBoys.has(normalizedDeliveryBoyId)) {
-                console.warn(`⚠️ Delivery boy ${normalizedDeliveryBoyId} not in notified list for acceptance of order ${orderId}. Notified:`, Array.from(state.notifiedDeliveryBoys));
-                return { success: false, message: 'You were not notified about this order' };
+               console.log(`ℹ️ Delivery boy ${normalizedDeliveryBoyId} accepted via broadcast/dashboard (not in initial target list)`);
+               // Add them to the set so further logic works
+               state.notifiedDeliveryBoys.add(normalizedDeliveryBoyId);
             }
 
             // Check if this delivery boy already rejected

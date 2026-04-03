@@ -7,7 +7,6 @@ import { getDeliveryProfile } from '../../../services/api/delivery/deliveryServi
 import { useDeliveryOrderNotifications } from '../../../hooks/useDeliveryOrderNotifications';
 import OrderNotificationCard from './OrderNotificationCard';
 import { AnimatePresence } from 'framer-motion';
-import GlobalBackButton from '../../../components/GlobalBackButton';
 
 interface DeliveryLayoutContentProps {
   children: ReactNode;
@@ -40,12 +39,7 @@ function DeliveryLayoutContent({ children }: DeliveryLayoutContentProps) {
 
   return (
     <div className={`flex flex-col min-h-screen bg-neutral-100 transition-all duration-300 ${!isOnline ? 'grayscale' : ''}`}>
-      <GlobalBackButton
-        fallbackPath="/delivery"
-        topOffsetClass="top-4 md:top-5"
-        zIndexClass="z-40"
-        theme="light"
-      />
+
       <main className="flex-1 overflow-y-auto scrollbar-hide pb-20">
         {children}
       </main>

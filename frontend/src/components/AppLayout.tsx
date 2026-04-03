@@ -170,7 +170,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const isAccountPage = location.pathname === '/account';
   const isExploreCategoriesPage = location.pathname === '/categories';
   const showOceanNavbar = !isCheckoutPage && !isCartPage && !isAccountPage && !isExploreCategoriesPage;
-  const showBackButton = !showLocationRequest && !showLocationChangeModal && !isAccountPage && !isHomePage;
+  const showBackButton = !showLocationRequest && !showLocationChangeModal && !isAccountPage && !isHomePage && !isCheckoutPage;
   const showHeader = isSearchPage && !isCheckoutPage && !isCartPage;
   const showSearchBar = isSearchPage && !isCheckoutPage && !isCartPage;
   const showFooter = !isCheckoutPage && !isProductDetailPage;

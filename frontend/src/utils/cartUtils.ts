@@ -10,63 +10,69 @@ const safeLower = (value: any): string => {
     return '';
 };
 
+const FISH_KEYWORDS = [
+    'fish', 'machi', 'mach', 'ilis', 'rohu', 'katla', 'prawn', 'shrimp', 
+    'lobster', 'sea', 'marine', 'marin', 'aqua', 'bengali', 'bangali', 'river', 
+    'ocean', 'freshwater', 'ayre', 'pabda', 'tengra', 'rui', 'mirgal',
+    'parl', 'pomfret', 'crab', 'seafood', 'bhetki', 'vetki',
+    'snapper', 'surmai', 'kingfish', 'vanjaram', 'seer', 'mackerel',
+    'bangda', 'pomphret', 'hilsa', 'boal', 'chital', 'shol', 'magur',
+    'singi', 'kajuli', 'batasi', 'mourola', 'puti', 'putti', 'koi',
+    'rupchanda', 'tilapia', 'squid', 'octopus', 'calamari', 'mussel',
+    'oyster', 'clams', 'anchovy', 'sardine', 'tuna', 'salmon', 'trout',
+    'cod', 'bass', 'perch', 'grouper', 'mullet', 'basa', 'pangus', 'catfish',
+    'barracuda', 'carp', 'aar', 'maral', 'gajal'
+];
+
+const isFishMatch = (name: string, cat: string): boolean => {
+    const n = name.toLowerCase();
+    const c = cat.toLowerCase();
+    return FISH_KEYWORDS.some(kw => n.includes(kw) || c.includes(kw));
+};
+
 export const parseWeight = (pack: string, productName?: any, categoryName?: any): number => {
+    const nameStr = safeLower(productName);
+    const catStr = safeLower(categoryName);
+    const isFish = isFishMatch(nameStr, catStr);
+
     if (!pack) {
-        // Default to 1kg for fish products if no pack info
-        if (productName || categoryName) {
-            const name = safeLower(productName);
-            const cat = safeLower(categoryName);
-            const fishKeywords = ['fish', 'machi', 'mach', 'ilis', 'rohu', 'katla', 'prawn', 'shrimp', 'marin', 'aqua', 'bengali'];
-            if (fishKeywords.some(kw => name.includes(kw) || cat.includes(kw))) {
-                return 1;
-            }
-        }
-        return 0;
+        return isFish ? 1 : 0;
     }
 
     const lowerPack = pack.toLowerCase().trim();
 
-    // Handle ranges like "1-2 kg"
-    const rangeMatch = lowerPack.match(/^([\d.]+)-([\d.]+)\s*(kg|g|gm|gsm)$/);
+    // 1. Try to match ranges like "1-2 kg" or "2 to 3 kg"
+    const rangeMatch = lowerPack.match(/([\d.]+)\s*(-|to)\s*([\d.]+)\s*(kg|g|gm|gsm)/);
     if (rangeMatch) {
         const val = parseFloat(rangeMatch[1]);
-        const unit = rangeMatch[3];
-        return unit === 'kg' ? val : val / 1000;
+        const unit = rangeMatch[4];
+        return (unit === 'kg') ? val : val / 1000;
     }
 
-    // Handle simple "1kg" or "500g"
-    const simpleMatch = lowerPack.match(/^([\d.]+)\s*(kg|g|gm|gsm)$/);
+    // 2. Try to match simple "1kg" or "500g" anywhere in string (e.g. "Size: 5kg up")
+    const simpleMatch = lowerPack.match(/([\d.]+)\s*(kg|g|gm|gsm)/);
     if (simpleMatch) {
         const val = parseFloat(simpleMatch[1]);
         const unit = simpleMatch[2];
-        return unit === 'kg' ? val : val / 1000;
+        return (unit === 'kg') ? val : val / 1000;
     }
 
-    // Handle "500g-1kg"
-    const mixedRangeMatch = lowerPack.match(/^([\d.]+)(g|gm|gsm)-([\d.]+)(kg)$/);
+    // 3. Handle "500g-1kg"
+    const mixedRangeMatch = lowerPack.match(/([\d.]+)(g|gm|gsm)-([\d.]+)(kg)/);
     if (mixedRangeMatch) {
         const val = parseFloat(mixedRangeMatch[1]);
         return val / 1000;
     }
 
-    // Fallback for just "1" or "2" - assume kg
-    const justNumMatch = lowerPack.match(/^([\d.]+)$/);
+    // 4. Fallback for just "1" or "2" - assume kg
+    const justNumMatch = lowerPack.match(/([\d.]+)/);
     if (justNumMatch) {
         const val = parseFloat(justNumMatch[1]);
-        return val > 0 ? val : 1; // Return 1 if it's 0.0 or something invalid
+        if (val > 0) return val;
     }
 
-    // Final fallback: if it's a fish product but we couldn't parse the pack, return 1
-    if (productName || categoryName) {
-        const name = safeLower(productName);
-        const cat = safeLower(categoryName);
-        const fishKeywords = ['fish', 'machi', 'mach', 'ilis', 'rohu', 'katla', 'prawn', 'shrimp', 'marin', 'aqua', 'bengali'];
-        if (fishKeywords.some(kw => name.includes(kw) || cat.includes(kw))) {
-            return 1;
-        }
-    }
-
-    return 0;
+    // 5. Final fallback for fish
+    return isFish ? 1 : 0;
 };
 
 export const getTotalCartWeight = (items: any[]): number => {
@@ -80,3 +86,4 @@ export const getTotalCartWeight = (items: any[]): number => {
         return sum + (weightPerUnit * (item.quantity || 0));
     }, 0);
 };
+

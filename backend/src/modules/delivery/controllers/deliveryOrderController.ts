@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Request, Response } from "express";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import Order from "../../../models/Order";
@@ -225,6 +226,8 @@ export const getOrderDetails = asyncHandler(
       createdAt: order.createdAt,
       distance: null,
       deliveryEarning: commission ? commission.commissionAmount : 0,
+      deliveryBoy: order.deliveryBoy,
+      warehousePickups: order.warehousePickups || [],
     };
 
     return res.status(200).json({
@@ -250,10 +253,24 @@ export const updateOrderStatus = asyncHandler(
         .json({ success: false, message: "Order not found" });
     }
 
-    if (order.deliveryBoy?.toString() != deliveryId) {
+    // Check if order belongs to or is available for this delivery boy
+    const isUnassigned = !order.deliveryBoy;
+    const isAssignedToMe = order.deliveryBoy?.toString() === deliveryId;
+
+    if (!isAssignedToMe && !isUnassigned) {
       return res
         .status(403)
-        .json({ success: false, message: "This order is not assigned to you" });
+        .json({ success: false, message: "This order is already assigned to another delivery partner" });
+    }
+
+    // If accepting an unassigned order
+    if (isUnassigned && status === 'Processed') {
+       order.deliveryBoy = new mongoose.Types.ObjectId(deliveryId);
+       order.deliveryBoyStatus = 'Assigned';
+       order.assignedAt = new Date();
+    } else if (isUnassigned && status !== 'Processed') {
+       // Cannot update status of unassigned order to anything other than Processed
+       return res.status(400).json({ success: false, message: "You must accept the order first" });
     }
 
     // Save previous status before updating
@@ -414,6 +431,7 @@ export const getWarehouseLocationsForOrder = asyncHandler(
       .filter((w) => w.location && w.location.coordinates) // Only include Warehouses with location data
       .map((w) => ({
         WarehouseId: w._id.toString(),
+        sellerId: w._id.toString(), // Alias for frontend
         storeName: w.warehouseName,
         address: w.address,
         city: "",
@@ -612,15 +630,16 @@ export const verifyDeliveryOtpController = asyncHandler(
 export const checkWarehouseProximity = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { WarehouseId, latitude, longitude } = req.body;
+    const { WarehouseId, sellerId, latitude, longitude } = req.body;
+    const effectiveWarehouseId = WarehouseId || sellerId;
     const deliveryId = req.user?.userId;
 
-    if (!WarehouseId || latitude === undefined || longitude === undefined) {
+    if (!effectiveWarehouseId || latitude === undefined || longitude === undefined) {
       return res
         .status(400)
         .json({
           success: false,
-          message: "Warehouse ID, latitude, and longitude are required",
+          message: "Warehouse/Seller ID, latitude, and longitude are required",
         });
     }
 
@@ -638,13 +657,13 @@ export const checkWarehouseProximity = asyncHandler(
     }
 
     // Get Warehouse location
-    const warehouseDoc = await Warehouse.findById(WarehouseId).select(
+    const warehouseDoc = await Warehouse.findById(effectiveWarehouseId).select(
       "location warehouseName",
     );
     if (!warehouseDoc || !warehouseDoc.location || !warehouseDoc.location.coordinates) {
       return res
         .status(404)
-        .json({ success: false, message: "Warehouse location not found" });
+        .json({ success: false, message: "Warehouse/Seller location not found" });
     }
 
     // Calculate distance using locationHelper
@@ -677,15 +696,16 @@ export const checkWarehouseProximity = asyncHandler(
 export const confirmWarehousePickup = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { WarehouseId, latitude, longitude } = req.body;
+    const { WarehouseId, sellerId, latitude, longitude } = req.body;
+    const effectiveWarehouseId = WarehouseId || sellerId;
     const deliveryId = req.user?.userId;
 
-    if (!WarehouseId || latitude === undefined || longitude === undefined) {
+    if (!effectiveWarehouseId || latitude === undefined || longitude === undefined) {
       return res
         .status(400)
         .json({
           success: false,
-          message: "Warehouse ID, latitude, and longitude are required",
+          message: "Warehouse/Seller ID, latitude, and longitude are required",
         });
     }
 
@@ -703,13 +723,13 @@ export const confirmWarehousePickup = asyncHandler(
     }
 
     // Verify proximity to Warehouse
-    const warehouseDoc = await Warehouse.findById(WarehouseId).select(
+    const warehouseDoc = await Warehouse.findById(effectiveWarehouseId).select(
       "location warehouseName",
     );
     if (!warehouseDoc || !warehouseDoc.location || !warehouseDoc.location.coordinates) {
       return res
         .status(404)
-        .json({ success: false, message: "Warehouse location not found" });
+        .json({ success: false, message: "Warehouse/Seller location not found" });
     }
 
     const { calculateDistance } = await import("../../../utils/locationHelper");
@@ -728,15 +748,15 @@ export const confirmWarehousePickup = asyncHandler(
       });
     }
 
-    // Check if this Warehouse is already picked up
+    // Check if this warehouse is already picked up
     const existingPickup = order.warehousePickups?.find(
-      (pickup: any) => pickup.Warehouse.toString() === WarehouseId,
+      (pickup: any) => pickup.warehouse.toString() === effectiveWarehouseId,
     );
 
     if (existingPickup && existingPickup.pickedUpAt) {
       return res.status(400).json({
         success: false,
-        message: "This Warehouse has already been picked up",
+        message: "This warehouse has already been picked up",
       });
     }
 
@@ -746,18 +766,18 @@ export const confirmWarehousePickup = asyncHandler(
       ...new Set(orderItems.map((item) => item.warehouse.toString())),
     ];
 
-    // Initialize WarehousePickups array if it doesn't exist
+    // Initialize warehousePickups array if it doesn't exist
     if (!order.warehousePickups) {
       order.warehousePickups = [];
     }
 
-    // Add or update pickup confirmation for this Warehouse
+    // Add or update pickup confirmation for this warehouse
     const pickupIndex = order.warehousePickups.findIndex(
-      (pickup: any) => pickup.Warehouse.toString() === WarehouseId,
+      (pickup: any) => pickup.warehouse.toString() === effectiveWarehouseId,
     );
 
     const pickupData = {
-      Warehouse: WarehouseId,
+      warehouse: effectiveWarehouseId,
       pickedUpAt: new Date(),
       pickedUpBy: deliveryId,
       latitude,
@@ -770,13 +790,13 @@ export const confirmWarehousePickup = asyncHandler(
       order.warehousePickups.push(pickupData as any);
     }
 
-    // Check if all Warehouses have been picked up
+    // Check if all warehouses have been picked up
     const pickedUpWarehouseIds = order.warehousePickups
       .filter((pickup: any) => pickup.pickedUpAt)
-      .map((pickup: any) => pickup.Warehouse.toString());
+      .map((pickup: any) => pickup.warehouse.toString());
 
-    const allPickedUp = allWarehouseIds.every((WarehouseId) =>
-      pickedUpWarehouseIds.includes(WarehouseId),
+    const allPickedUp = allWarehouseIds.every((warehouseId) =>
+      pickedUpWarehouseIds.includes(warehouseId),
     );
 
     // If all Warehouses picked up, automatically change status to "Out for Delivery"

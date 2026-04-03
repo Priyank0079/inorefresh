@@ -433,8 +433,64 @@ export default function DeliveryDashboard() {
           accentColor="#16a34a"
         />
 
-        {/* Today's Pending Order Section */}
-        <div className="mt-6">
+        {/* Available Orders Section (New Nearby Orders) */}
+        {!isOnline && (
+          <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-4">
+             <p className="text-orange-700 text-xs font-medium flex items-center gap-2">
+               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+               Go Online to view and accept nearby orders
+             </p>
+          </div>
+        )}
+
+        {isOnline && stats?.availableOrders && stats.availableOrders.length > 0 && (
+          <div className="mt-2 mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-neutral-900 text-lg font-semibold flex items-center gap-2">
+                New Available Orders
+                <span className="flex h-2 w-2 rounded-full bg-teal-500"></span>
+              </h2>
+            </div>
+            
+            <div className="space-y-3">
+              {stats.availableOrders.map((order: any) => (
+                <div
+                  key={order.id}
+                  className="bg-white rounded-xl p-4 shadow-md border-2 border-teal-100 cursor-pointer active:scale-[0.98] transition-all"
+                  onClick={() => navigate(`/delivery/orders/${order.id}`)}>
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="text-neutral-900 font-bold text-sm">
+                        {order.orderId}
+                      </p>
+                      <p className="text-neutral-500 text-[10px] mt-0.5">
+                        Posted {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    <span className="bg-teal-50 text-teal-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-teal-200 uppercase tracking-wider">
+                      Nearby
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-neutral-600 text-xs mb-3">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span className="line-clamp-1">{order.address}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-50">
+                    <p className="text-neutral-900 font-bold text-base">
+                      ₹ {order.totalAmount}
+                    </p>
+                    <button className="bg-teal-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm active:bg-teal-700">
+                      VIEW & ACCEPT
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Existing Todays Pending Order Section */}
+        <div className="mt-2">
           <h2 className="text-neutral-900 text-lg font-semibold mb-4">
             Todays Pending Order
           </h2>

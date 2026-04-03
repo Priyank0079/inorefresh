@@ -8,51 +8,14 @@ import mongoose from 'mongoose';
 import AppSettings from '../../../models/AppSettings';
 import { getRoadDistances } from '../../../services/mapService';
 import Seller from '../../../models/Seller';
+import { calculateItemPrice } from '../../../utils/priceUtils';
 
-// const getOwnerId = (product: any): string | null => {
-//     if (!product) return null;
-//     // Support legacy field casing from older documents.
-//     const owner = product.seller || product.warehouse || product.Seller || product.Warehouse;
-//     if (!owner) return null;
-//     if (typeof owner === 'object' && owner._id) return owner._id.toString();
-//     return owner.toString();
-// };
-
-// Helper to calculate item price matching frontend logic
-const calculateItemPrice = (product: any, variationSelector: any) => {
-    let variation = null;
-    let variationId = variationSelector;
-
-    // Handle if variationSelector is an object (some implementations store it differently)
-    if (variationSelector && typeof variationSelector === 'object' && variationSelector._id) {
-        variationId = variationSelector._id;
-    }
-
-    if (variationId && product.variations?.length) {
-        variation = product.variations.find((v: any) =>
-            (v._id && v._id.toString() === variationId.toString()) ||
-            (v.id && v.id === variationId)
-        );
-    }
-
-    let finalPrice = variation?.price || product.price || 0;
-
-    // Priority: Variation Discount -> Product Discount -> Variation Price -> Product Price
-    if (variation?.discPrice && variation.discPrice > 0) {
-        finalPrice = variation.discPrice;
-    } else if (product.discPrice && product.discPrice > 0) {
-        finalPrice = product.discPrice;
-    }
-
-    console.log(`[DEBUG Price] VarId: ${variationId}, Found: ${!!variation}, ProdDisc: ${product.discPrice}, Final: ${finalPrice}`);
-    return finalPrice;
-};
 
 // Helper to calculate cart total with location filtering
 const calculateCartTotal = async (cartId: any) => {
     const items = await CartItem.find({ cart: cartId }).populate({
         path: 'product',
-        select: 'price discPrice variations seller warehouse status publish productName'
+        select: 'price discPrice variations seller warehouse status publish productName description tags'
     });
 
     let total = 0;
@@ -168,7 +131,7 @@ export const getCart = async (req: Request, res: Response) => {
             path: 'items',
             populate: {
                 path: 'product',
-                select: 'productName price mainImage stock pack mrp category seller warehouse status publish discPrice variations'
+                select: 'productName price mainImage stock pack mrp category seller warehouse status publish discPrice variations description tags'
             }
         });
 
@@ -279,7 +242,7 @@ export const addToCart = async (req: Request, res: Response) => {
             path: 'items',
             populate: {
                 path: 'product',
-                select: 'productName price mainImage stock pack mrp category seller warehouse status publish discPrice variations'
+                select: 'productName price mainImage stock pack mrp category seller warehouse status publish discPrice variations description tags'
             }
         });
 
@@ -359,7 +322,7 @@ export const updateCartItem = async (req: Request, res: Response) => {
             path: 'items',
             populate: {
                 path: 'product',
-                select: 'productName price mainImage stock pack mrp category seller warehouse status publish discPrice variations'
+                select: 'productName price mainImage stock pack mrp category seller warehouse status publish discPrice variations description tags'
             }
         });
 
@@ -423,7 +386,7 @@ export const removeFromCart = async (req: Request, res: Response) => {
             path: 'items',
             populate: {
                 path: 'product',
-                select: 'productName price mainImage stock pack mrp category seller warehouse status publish discPrice variations'
+                select: 'productName price mainImage stock pack mrp category seller warehouse status publish discPrice variations description tags'
             }
         });
 

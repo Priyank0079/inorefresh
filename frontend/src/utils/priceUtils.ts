@@ -28,6 +28,63 @@ const fishKeywords = [
   "ocean",
   "freshwater",
   "traditional",
+  "parl",
+  "pomfret",
+  "crab",
+  "seafood",
+  "bhetki",
+  "vetki",
+  "rui",
+  "mirgal",
+  "ayre",
+  "pabda",
+  "tengra",
+  "snapper",
+  "surmai",
+  "kingfish",
+  "vanjaram",
+  "seer",
+  "mackerel",
+  "bangda",
+  "pomphret",
+  "hilsa",
+  "boal",
+  "chital",
+  "shol",
+  "magur",
+  "singi",
+  "kajuli",
+  "batasi",
+  "mourola",
+  "puti",
+  "putti",
+  "koi",
+  "rupchanda",
+  "tilapia",
+  "squid",
+  "octopus",
+  "calamari",
+  "mussel",
+  "oyster",
+  "clams",
+  "anchovy",
+  "sardine",
+  "tuna",
+  "salmon",
+  "trout",
+  "cod",
+  "bass",
+  "perch",
+  "grouper",
+  "mullet",
+  "basa",
+  "pangus",
+  "catfish",
+  "barracuda",
+  "carp",
+  "aar",
+  "maral",
+  "gajal"
 ];
 
 const normalizeText = (value: unknown): string =>
@@ -109,19 +166,9 @@ export const calculateProductPrice = (product: any, variationSelector?: number |
     variation = product.variations[0];
   }
 
-  const fishFixedPrice = getDeterministicFishPrice(product);
-  if (fishFixedPrice !== null) {
-    return {
-      displayPrice: fishFixedPrice,
-      mrp: fishFixedPrice,
-      discount: 0,
-      hasDiscount: false,
-    };
-  }
-
   const firstVariation = product.variations?.[0];
 
-  const displayPrice = firstPositive(
+  let displayPrice = firstPositive(
     variation?.discPrice,
     variation?.salePrice,
     product.discPrice,
@@ -134,6 +181,19 @@ export const calculateProductPrice = (product: any, variationSelector?: number |
     product.mrp,
     product.compareAtPrice
   );
+
+  // Fallback for fish products if no price is found in data
+  if (displayPrice === 0) {
+    const fishFixedPrice = getDeterministicFishPrice(product);
+    if (fishFixedPrice !== null) {
+      return {
+        displayPrice: fishFixedPrice,
+        mrp: fishFixedPrice,
+        discount: 0,
+        hasDiscount: false,
+      };
+    }
+  }
 
   const mrp = firstPositive(
     variation?.price,

@@ -231,6 +231,26 @@ export const getDashboardStats = asyncHandler(
         : "N/A",
     }));
 
+    // Fetch list of Available Orders (Accepted by warehouse but not yet assigned)
+    // In a real production app, we would filter by radius here
+    const availableOrdersList = await Order.find({
+      status: "Accepted",
+      $or: [{ deliveryBoy: { $exists: false } }, { deliveryBoy: null }]
+    })
+      .select("orderNumber customerName deliveryAddress status total estimatedDeliveryDate createdAt")
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    const formattedAvailableList = availableOrdersList.map((order) => ({
+      id: order._id,
+      orderId: order.orderNumber,
+      customerName: order.customerName,
+      status: "Available", 
+      address: `${order.deliveryAddress?.address || ""}, ${order.deliveryAddress?.city || ""}`,
+      totalAmount: order.total,
+      createdAt: order.createdAt,
+    }));
+
     // Fetch Wallet Balance
     let walletBalance = 0;
     try {
@@ -257,6 +277,7 @@ export const getDashboardStats = asyncHandler(
         todayDeliveredCount: result.todayDeliveredCount,
         totalDeliveredCount: result.totalDeliveredCount,
         pendingOrdersList: formattedPendingList,
+        availableOrders: formattedAvailableList,
       },
     });
   },

@@ -85,7 +85,7 @@ const Icons = {
     )
 };
 
-type DeliveryOrderStatus = 'Pending' | 'Ready for pickup' | 'Picked up' | 'Out for Delivery' | 'Delivered' | 'Cancelled' | 'Returned';
+type DeliveryOrderStatus = 'Pending' | 'Accepted' | 'Processed' | 'Ready for pickup' | 'Picked up' | 'Out for Delivery' | 'Delivered' | 'Cancelled' | 'Returned';
 
 export default function DeliveryOrderDetail() {
     const { id } = useParams();
@@ -319,11 +319,13 @@ export default function DeliveryOrderDetail() {
                             break;
                     }
                 },
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                { enableHighAccuracy: true, timeout: 30000, maximumAge: 10000 }
             );
         };
 
         getCurrentLocation();
+        const interval = setInterval(getCurrentLocation, 10000); // Check every 10 seconds instead of just once
+        return () => clearInterval(interval);
     }, []);
 
 
@@ -448,9 +450,11 @@ export default function DeliveryOrderDetail() {
                                 locationPermissionDeniedRef.current = true;
                                 console.warn('Location permission denied.');
                             }
+                        } else if (error.code === error.TIMEOUT) {
+                            console.warn('Location tracking timed out, retrying...');
                         }
                     },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    { enableHighAccuracy: true, timeout: 30000, maximumAge: 5000 }
                 );
             };
 
@@ -497,7 +501,7 @@ export default function DeliveryOrderDetail() {
         );
     }
 
-    const statusFlow: DeliveryOrderStatus[] = ['Pending', 'Ready for pickup', 'Picked up', 'Out for Delivery', 'Delivered'];
+    const statusFlow: DeliveryOrderStatus[] = ['Pending', 'Accepted', 'Processed', 'Ready for pickup', 'Picked up', 'Out for Delivery', 'Delivered'];
 
     let currentStatusIndex = statusFlow.indexOf(order.status as DeliveryOrderStatus);
     // Handle cases where status might not be in the flow (e.g. Cancelled)
@@ -514,12 +518,19 @@ export default function DeliveryOrderDetail() {
             // Verify the update was successful and update local state
             if (updatedOrder && updatedOrder.data) {
                 setOrder(updatedOrder.data);
+                if (newStatus === 'Processed') {
+                   alert("Order Accepted! It's now assigned to you.");
+                }
             } else {
                 // Fallback - re-fetch everything
                 await fetchOrder();
             }
         } catch (err: any) {
-            alert(err.message || "Failed to update status");
+            if (err.message?.includes('403') || err.response?.status === 403) {
+                alert("Order already accepted by another partner");
+            } else {
+                alert(err.message || "Failed to update status");
+            }
             setLoading(false);
         }
     };
@@ -555,12 +566,17 @@ export default function DeliveryOrderDetail() {
                 <span className="ml-2 font-semibold text-lg text-neutral-800">Order Details</span>
 
                 <div className="ml-auto">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
-                        order.status === 'Picked up' ? 'bg-indigo-100 text-indigo-700' :
-                            order.status === 'Ready for pickup' ? 'bg-yellow-100 text-yellow-700' :
-                                'bg-orange-100 text-orange-700'
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${
+                        order.status === 'Delivered' ? 'bg-green-50 text-green-700 border-green-200' :
+                        (order.status === 'Accepted' && !order.deliveryBoy) ? 'bg-teal-50 text-teal-700 border-teal-200' :
+                        order.status === 'Picked up' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                        order.status === 'Ready for pickup' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                        'bg-orange-50 text-orange-700 border-orange-200'
                         }`}>
-                        {order.status}
+                        {order.status === 'Accepted' && !order.deliveryBoy ? 'NEW ORDER' : 
+                         order.status === 'Accepted' ? 'READY' : 
+                         order.status === 'Processed' ? 'ACCEPTED' : 
+                         order.status}
                     </span>
                 </div>
             </div>
@@ -638,8 +654,8 @@ export default function DeliveryOrderDetail() {
                         </h3>
                         <div className="space-y-3">
                             {sellerLocations.map((seller: any, idx: number) => {
-                                const isPickedUp = order?.sellerPickups?.some(
-                                    (p: any) => p.seller === seller.sellerId && p.pickedUpAt
+                                const isPickedUp = order?.warehousePickups?.some(
+                                    (p: any) => (p.warehouse === seller.sellerId || p.warehouse?._id === seller.sellerId) && p.pickedUpAt
                                 );
                                 const proximity = sellerProximity[seller.sellerId];
                                 const withinRange = proximity?.withinRange || false;
@@ -726,7 +742,10 @@ export default function DeliveryOrderDetail() {
                             <div className="flex justify-between text-[10px] text-neutral-500 font-medium mt-2">
                                 {statusFlow.map((step, idx) => (
                                     <span key={idx} className={`text-center flex-1 transition-colors ${idx === currentStatusIndex ? 'text-blue-600 font-bold' : ''}`}>
-                                        {step === 'Ready for pickup' ? 'Ready' : step}
+                                        {step === 'Pending' ? 'Waiting' : 
+                                         step === 'Accepted' ? 'Shop Accepted' :
+                                         step === 'Processed' ? 'Assigned' :
+                                         step === 'Ready for pickup' ? 'Ready' : step}
                                     </span>
                                 ))}
                             </div>
@@ -903,25 +922,7 @@ export default function DeliveryOrderDetail() {
                 </div>
             )}
 
-            {/* Floating Glassmorphic Action Button Dock - Order Taken button or status update */}
-            {/* Hide this button when order is "Out for Delivery" because OTP section is shown instead */}
-            {nextStatus && order.status !== 'Picked up' && order.status !== 'Out for Delivery' && !showOtpInput && (
-                <div className="fixed bottom-24 left-6 right-6 z-30">
-                    <button
-                        onClick={() => handleStatusChange(nextStatus)}
-                        className="w-full py-4 rounded-2xl bg-black/75 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] text-white font-bold text-lg transition-transform active:scale-[0.98] flex items-center justify-center gap-3 overflow-hidden group"
-                        disabled={loading}
-                    >
-                        <span className="relative z-10">
-                            {loading ? 'Updating...' : nextStatus === 'Picked up' ? 'Order Taken' : `Mark as ${nextStatus}`}
-                        </span>
-                        {!loading && <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center relative z-10 group-hover:bg-white/30 transition-colors">
-                            <Icons.ChevronLeft className="rotate-180" size={18} />
-                        </div>}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
-                    </button>
-                </div>
-            )}
+
         </div>
     );
 }

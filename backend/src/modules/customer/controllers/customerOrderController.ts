@@ -17,6 +17,7 @@ import { Server as SocketIOServer } from "socket.io";
 import { getOrderItemCommissionRate } from "../../../services/commissionService";
 import WalletTransaction from "../../../models/WalletTransaction";
 import { findNearestWarehouseWithStock } from "../../../services/warehouseFulfillmentService";
+import { calculateItemPrice } from "../../../utils/priceUtils";
 
 
 // Create a new order
@@ -276,26 +277,7 @@ export const createOrder = async (req: Request, res: Response) => {
                 warehouseIds.add(product.warehouse.toString());
             }
 
-            // Determine the price based on variation and discounts
-            let selectedVariation;
-            if (variationValue && product.variations) {
-                selectedVariation = product.variations.find((v: any) =>
-                    (v._id && v._id.toString() === variationValue) ||
-                    v.value === variationValue ||
-                    v.title === variationValue ||
-                    v.pack === variationValue
-                );
-            }
-            if (!selectedVariation && product.variations && product.variations.length > 0) {
-                // Fallback to first if no variation spec or not found (consistent with stock fallback)
-                selectedVariation = product.variations[0];
-            }
-
-            const itemPrice = (selectedVariation?.discPrice && selectedVariation.discPrice > 0)
-                ? selectedVariation.discPrice
-                : (product.discPrice && product.discPrice > 0)
-                    ? product.discPrice
-                    : (selectedVariation?.price || product.price || 0);
+            const itemPrice = calculateItemPrice(product, variationValue);
             const itemTotal = itemPrice * qty;
             calculatedSubtotal += itemTotal;
 
@@ -622,7 +604,7 @@ export const getMyOrders = async (req: Request, res: Response) => {
         const orders = await Order.find(query)
             .populate({
                 path: 'items',
-                populate: { path: 'product', select: 'productName mainImage price' }
+                populate: { path: 'product', select: 'productName mainImage price description tags' }
             })
             .sort({ createdAt: -1 })
             .skip(skip)
@@ -678,7 +660,7 @@ export const getOrderById = async (req: Request, res: Response) => {
             .populate({
                 path: 'items',
                 populate: [
-                    { path: 'product', select: 'productName mainImage pack manufacturer price' },
+                    { path: 'product', select: 'productName mainImage pack manufacturer price description tags' },
                     { path: 'warehouse', select: 'warehouseName address mobile managerName' }
                 ]
             })

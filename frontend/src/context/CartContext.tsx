@@ -153,8 +153,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Comprehensive fish identification keywords
     const fishKeywords = [
       'fish', 'machi', 'mach', 'ilis', 'rohu', 'katla', 'prawn', 'shrimp',
-      'lobster', 'sea', 'marin', 'aqua', 'bengali', 'bangali', 'river',
-      'ocean', 'freshwater', 'ayre', 'pabda', 'tengra', 'rui', 'mirgal'
+      'lobster', 'sea', 'marine', 'marin', 'aqua', 'bengali', 'bangali', 'river',
+      'ocean', 'freshwater', 'ayre', 'pabda', 'tengra', 'rui', 'mirgal',
+      'snapper', 'surmai', 'kingfish', 'vanjaram', 'seer', 'mackerel',
+      'bangda', 'pomphret', 'hilsa', 'boal', 'chital', 'shol', 'magur',
+      'singi', 'kajuli', 'batasi', 'mourola', 'puti', 'putti', 'koi',
+      'rupchanda', 'tilapia', 'squid', 'octopus', 'calamari', 'mussel',
+      'oyster', 'clams', 'anchovy', 'sardine', 'tuna', 'salmon', 'trout',
+      'cod', 'bass', 'perch', 'grouper', 'mullet', 'basa', 'pangus', 'catfish',
+      'barracuda', 'carp', 'aar', 'maral', 'gajal'
     ];
 
     return fishKeywords.some(kw => name.includes(kw) || categoryName.includes(kw) || categoryId.includes(kw));
