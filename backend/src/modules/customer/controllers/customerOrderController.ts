@@ -10,7 +10,7 @@ import Warehouse from "../../../models/Warehouse";
 import mongoose from "mongoose";
 import { calculateDistance } from "../../../utils/locationHelper";
 import { notifyWarehousesOfOrderUpdate } from "../../../services/warehouseNotificationService";
-import { generateDeliveryOtp } from "../../../services/deliveryOtpService";
+import { generateDeliveryOtp, getOrCreateDeliveryOtp } from "../../../services/deliveryOtpService";
 import AppSettings from "../../../models/AppSettings";
 import { getRoadDistances } from "../../../services/mapService";
 import { Server as SocketIOServer } from "socket.io";
@@ -105,6 +105,19 @@ export const createOrder = async (req: Request, res: Response) => {
             return res.status(404).json({
                 success: false,
                 message: "User not found",
+            });
+        }
+
+        // Check user approval status
+        if (buyer.status !== 'Active') {
+            if (session) await session.abortTransaction();
+            const statusMessage = buyer.status === 'Pending' 
+                ? "Your account is pending admin approval. You can place orders once approved."
+                : "Your account is currently inactive. Please contact support.";
+            
+            return res.status(403).json({
+                success: false,
+                message: statusMessage,
             });
         }
 
@@ -673,20 +686,8 @@ export const getOrderById = async (req: Request, res: Response) => {
             });
         }
 
-        // Get buyer's permanent delivery OTP
-        let deliveryOtp = null;
-        const userType = req.user!.userType;
-
-        if (userType === 'horeca') {
-            const buyer = await HorecaUser.findById(userId).select('deliveryOtp');
-            deliveryOtp = buyer?.deliveryOtp;
-        } else if (userType === 'retailer') {
-            const buyer = await RetailerUser.findById(userId).select('deliveryOtp');
-            deliveryOtp = buyer?.deliveryOtp;
-        } else {
-            const buyer = await Customer.findById(userId).select('deliveryOtp');
-            deliveryOtp = buyer?.deliveryOtp;
-        }
+        // Get buyer's permanent delivery OTP using self-healing helper
+        const deliveryOtp = await getOrCreateDeliveryOtp(userId);
 
         // Transform order to match frontend Order type
         const orderObj = order.toObject();

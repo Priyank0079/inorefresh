@@ -122,9 +122,32 @@ export default function Checkout() {
   const [useWallet, setUseWallet] = useState<boolean>(false);
 
   // Check if user has placeholder data (needs profile completion)
+  // Refresh user profile data on load to get latest status (e.g. from Pending to Active)
+  useEffect(() => {
+    const refreshProfile = async () => {
+      try {
+        const response = await getProfile();
+        if (response.success && response.data) {
+          // Keep the existing userType as it's used for login context
+          updateUser({ ...response.data, userType: user?.userType });
+        }
+      } catch (error) {
+        console.error("Failed to refresh user profile:", error);
+      }
+    };
+
+    if (user?.id) {
+      refreshProfile();
+    }
+  }, []);
+
   const userName = user?.name || "";
   const isPlaceholderUser =
     !userName.trim() || userName === "User";
+  
+  const isPendingUser = user?.status === "Pending";
+  const isInactiveUser = user?.status === "Inactive";
+  const isAllowedToOrder = user?.status === "Active" || !user?.status; // Default to true if status missing for backward compatibility
 
   // Redirect if empty
   useEffect(() => {
@@ -2497,19 +2520,30 @@ export default function Checkout() {
         </SheetContent>
       </Sheet>
 
+      {/* User Status Warning */}
+      {!isAllowedToOrder && (
+        <div className="fixed bottom-[48px] left-0 right-0 bg-amber-50 border-t border-amber-200 px-4 py-2 z-[60]">
+          <p className="text-[10px] text-amber-700 font-medium text-center">
+            {isPendingUser 
+              ? "Your account is pending admin approval. You can place orders once approved." 
+              : "Your account is currently inactive. Please contact support."}
+          </p>
+        </div>
+      )}
+
       {/* Bottom Sticky Button */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-[60] shadow-lg">
         {selectedAddress ? (
           <button
             onClick={isMinWeightMet ? handlePlaceOrder : () => setShowMinWeightPopup(true)}
-            disabled={cart.items.length === 0}
-            className={`w-full py-3 px-4 font-bold text-sm uppercase tracking-wide transition-colors ${cart.items.length > 0 && isMinWeightMet
+            disabled={cart.items.length === 0 || !isAllowedToOrder}
+            className={`w-full py-3 px-4 font-bold text-sm uppercase tracking-wide transition-colors ${cart.items.length > 0 && isMinWeightMet && isAllowedToOrder
               ? "text-white hover:opacity-90"
               : "bg-neutral-300 text-neutral-500"
               }`}
-            style={cart.items.length > 0 && isMinWeightMet ? { backgroundColor: currentTheme.primary[3] } : {}}
+            style={cart.items.length > 0 && isMinWeightMet && isAllowedToOrder ? { backgroundColor: currentTheme.primary[3] } : {}}
           >
-            Place Order
+            {isPendingUser ? "Awaiting Approval" : isInactiveUser ? "Account Inactive" : "Place Order"}
           </button>
         ) : (
           <button

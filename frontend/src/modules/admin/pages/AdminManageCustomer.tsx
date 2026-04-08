@@ -520,6 +520,7 @@ export default function AdminManageCustomer() {
                     </div>
                   </th>
                   <th className="p-4 border border-neutral-200">Ref Code</th>
+                  <th className="p-4 border border-neutral-200">Category</th>
                   <th className="p-4 border border-neutral-200">Wallet</th>
                   {/* Total Orders column removed as requested */}
                   <th
@@ -592,6 +593,15 @@ export default function AdminManageCustomer() {
                         {customer.refCode}
                       </td>
                       <td className="p-4 border border-neutral-200">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          activeTab === 'Horeca' ? 'bg-purple-100 text-purple-800' : 
+                          activeTab === 'Retailer' ? 'bg-blue-100 text-blue-800' : 
+                          'bg-neutral-100 text-neutral-800'
+                        }`}>
+                          {activeTab === 'Horeca' ? 'HORECA' : activeTab === 'Retailer' ? 'Retailer' : 'Regular'}
+                        </span>
+                      </td>
+                      <td className="p-4 border border-neutral-200">
                         ₹{(customer.walletAmount || 0).toFixed(2)}
                       </td>
                       {/* Total Orders Removed 
@@ -599,7 +609,7 @@ export default function AdminManageCustomer() {
                         {customer.totalOrders}
                       </td> */}
                       <td className="p-4 border border-neutral-200">
-                        ₹{customer.totalSpent.toFixed(2)}
+                        ₹{(customer.totalSpent || 0).toFixed(2)}
                       </td>
                       <td className="p-4 border border-neutral-200">
                         <div className="flex items-center gap-2">

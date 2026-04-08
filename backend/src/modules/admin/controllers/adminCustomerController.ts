@@ -84,37 +84,54 @@ export const getCustomerById = asyncHandler(
 );
 
 /**
- * Update customer status
+ * Update user status (Customer, Retailer, or HORECA)
  */
 export const updateCustomerStatus = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!["Active", "Inactive"].includes(status)) {
+    if (!["Active", "Inactive", "Pending", "Suspended"].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Status must be Active or Inactive",
+        message: "Invalid status value",
       });
     }
 
-    const customer = await Customer.findByIdAndUpdate(
+    // Try finding and updating in sequential order
+    let user = await Customer.findByIdAndUpdate(
       id,
       { status },
       { new: true, runValidators: true }
     );
 
-    if (!customer) {
+    if (!user) {
+      user = await RetailerUser.findByIdAndUpdate(
+        id,
+        { status },
+        { new: true, runValidators: true }
+      );
+    }
+
+    if (!user) {
+      user = await HorecaUser.findByIdAndUpdate(
+        id,
+        { status },
+        { new: true, runValidators: true }
+      );
+    }
+
+    if (!user) {
       return res.status(404).json({
         success: false,
-        message: "Customer not found",
+        message: "User not found in any category",
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Customer status updated successfully",
-      data: customer,
+      message: "User status updated successfully",
+      data: user,
     });
   }
 );

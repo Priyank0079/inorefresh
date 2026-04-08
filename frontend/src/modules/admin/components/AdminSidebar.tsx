@@ -384,24 +384,6 @@ const menuSections: MenuSection[] = [
     title: "Miscellaneous",
     items: [
       {
-        label: "Manage Customer",
-        path: "/admin/customers",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-          </svg>
-        ),
-      },
-      {
         label: "Users",
         path: "/admin/users",
         icon: (
@@ -660,9 +642,9 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
 
   return (
     <aside
-      className="w-64 h-screen flex flex-col transition-colors duration-300 shadow-xl z-50 border-r border-white/5"
+      className="w-64 h-full flex flex-col transition-colors duration-300 z-50 border-r border-white/5 overflow-hidden"
       style={{
-        background: 'linear-gradient(180deg, #012138 0%, #001D33 100%)',
+        background: '#0D9488',
         color: '#ffffff'
       }}
     >
@@ -722,7 +704,7 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
         </div>
       </div>
 
-      <div className="px-4 py-2 border-b border-teal-600">
+      <div className="px-4 py-2 border-b border-white/10">
         <button
           onClick={() => handleNavigation("/admin")}
           className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${isActive("/admin")
@@ -753,7 +735,11 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
         </button>
       </div>
 
-      <nav className="flex-1 py-4 overflow-y-auto admin-sidebar-nav">
+      <nav 
+        className="flex-1 py-4 overflow-y-auto min-h-0 admin-sidebar-nav"
+        data-lenis-prevent
+        style={{ touchAction: 'pan-y' }}
+      >
         {filteredSections.map((section, sectionIndex) => (
           <div key={sectionIndex} className="mb-6">
             <h3

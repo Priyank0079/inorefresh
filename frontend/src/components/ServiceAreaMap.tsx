@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, DrawingManager, Polygon, Marker } from '@react-google-maps/api';
 
-const libraries: ("drawing" | "places" | "geometry")[] = ['places', 'drawing', 'geometry'];
+import { GOOGLE_MAPS_LIBRARIES } from '../constants/googleMaps';
 
 interface ServiceAreaMapProps {
     initialLat?: number;
@@ -26,7 +26,7 @@ export default function ServiceAreaMap({
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-        libraries
+        libraries: GOOGLE_MAPS_LIBRARIES
     });
 
     const [map, setMap] = useState<google.maps.Map | null>(null);

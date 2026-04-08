@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getUsers, updateUserStatus, type User as UserType } from '../../../services/api/admin/adminMiscService';
+import api from '../../../services/api/config';
 import { useAuth } from '../../../context/AuthContext';
 
 interface User {
@@ -28,6 +29,9 @@ export default function AdminUsers() {
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [totalPages, setTotalPages] = useState(1);
     const [totalUsers, setTotalUsers] = useState(0);
+    const [activeTab, setActiveTab] = useState<'Customer' | 'Retailer' | 'Horeca'>('Customer');
+    const [retailers, setRetailers] = useState<any[]>([]);
+    const [horecaUsers, setHorecaUsers] = useState<any[]>([]);
 
     // Fetch users on component mount
     useEffect(() => {
@@ -60,14 +64,21 @@ export default function AdminUsers() {
                     params.sortOrder = sortDirection;
                 }
 
-                const response = await getUsers(params);
+                let response;
+                if (activeTab === 'Customer') {
+                    response = await api.get('/admin/customers', { params });
+                } else if (activeTab === 'Retailer') {
+                    response = await api.get('/admin/retailers', { params });
+                } else {
+                    response = await api.get('/admin/horeca', { params });
+                }
 
-                if (response.success) {
-                    setUsers(response.data);
+                if (response.data.success) {
+                    setUsers(response.data.data);
                     // Update pagination info from backend
-                    if (response.pagination) {
-                        setTotalPages(response.pagination.pages);
-                        setTotalUsers(response.pagination.total);
+                    if (response.data.pagination) {
+                        setTotalPages(response.data.pagination.pages);
+                        setTotalUsers(response.data.pagination.total);
                     }
                 } else {
                     setError('Failed to load users');
@@ -81,7 +92,7 @@ export default function AdminUsers() {
         };
 
         fetchUsers();
-    }, [isAuthenticated, token, currentPage, entriesPerPage, statusFilter, searchTerm, sortColumn, sortDirection]);
+    }, [isAuthenticated, token, currentPage, entriesPerPage, statusFilter, searchTerm, sortColumn, sortDirection, activeTab]);
 
     const handleSort = (column: string) => {
         // Map frontend column names to backend field names
@@ -198,6 +209,24 @@ export default function AdminUsers() {
 
             {/* Page Content */}
             <div className="flex-1 px-6 pb-6">
+                {/* Tabs */}
+                <div className="flex gap-8 border-b border-neutral-200 mb-6 font-semibold">
+                    {(['Customer', 'Retailer', 'Horeca'] as const).map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => {
+                                setActiveTab(tab);
+                                setCurrentPage(1);
+                            }}
+                            className={`py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
+                                ? 'border-teal-600 text-teal-600'
+                                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
+                                }`}
+                        >
+                            {tab === 'Customer' ? 'Regular Customers' : tab === 'Retailer' ? 'Retailers' : 'HORECA'}
+                        </button>
+                    ))}
+                </div>
                 {/* Main Panel */}
                 <div className="bg-white rounded-lg shadow-sm border border-neutral-200">
                     {/* Header */}
@@ -219,6 +248,25 @@ export default function AdminUsers() {
                                 <option value={100}>100</option>
                             </select>
                             <span className="text-sm">entries</span>
+                        </div>
+                    </div>
+                    
+                    {/* Search Bar */}
+                    <div className="p-4 border-b border-neutral-200 bg-neutral-50 flex justify-end">
+                        <div className="w-full max-w-sm relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">
+                                Search:
+                            </span>
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                className="w-full pl-16 pr-4 py-2 bg-neutral-100 border-none rounded text-sm focus:ring-1 focus:ring-teal-500"
+                                placeholder="Search by name, email, phone..."
+                            />
                         </div>
                     </div>
 
@@ -289,6 +337,7 @@ export default function AdminUsers() {
                                             Total Spent <SortIcon column="totalSpent" />
                                         </div>
                                     </th>
+                                    <th className="p-4">Type</th>
                                     <th className="p-4">
                                         Action
                                     </th>
@@ -320,16 +369,18 @@ export default function AdminUsers() {
                                     displayedUsers.map((user, index) => (
                                         <tr key={user._id} className="hover:bg-neutral-50 transition-colors text-sm text-neutral-700 border-b border-neutral-200">
                                             <td className="p-4 align-middle">{startIndex + index + 1}</td>
-                                            <td className="p-4 align-middle">{user.name}</td>
+                                            <td className="p-4 align-middle">{user.name || (user as any).ownerName || (user as any).shopName}</td>
                                             <td className="p-4 align-middle">
-                                                <div className="text-xs">
-                                                    <div>{user.email}</div>
-                                                    {user.phone && (
-                                                        <div className="text-neutral-500">{user.phone}</div>
-                                                    )}
+                                                <div className="text-xs space-y-1">
+                                                    {user.email && <div>{user.email}</div>}
+                                                    <div className="text-neutral-600 font-medium">
+                                                        {user.phone || (user as any).ownerPhone || (user as any).shopPhone || '-'}
+                                                    </div>
                                                 </div>
                                             </td>
-                                            <td className="p-4 align-middle">{new Date(user.registrationDate).toLocaleString()}</td>
+                                            <td className="p-4 align-middle">
+                                                {new Date(user.registrationDate || (user as any).createdAt).toLocaleDateString()}
+                                            </td>
                                             <td className="p-4 align-middle">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.status === 'Active'
                                                     ? 'bg-green-100 text-green-800'
@@ -341,9 +392,18 @@ export default function AdminUsers() {
                                                 </span>
                                             </td>
                                             <td className="p-4 align-middle">{user.refCode || '-'}</td>
-                                            <td className="p-4 align-middle">?{user.walletAmount.toFixed(2)}</td>
-                                            <td className="p-4 align-middle">{user.totalOrders}</td>
-                                            <td className="p-4 align-middle">?{user.totalSpent.toFixed(2)}</td>
+                                            <td className="p-4 align-middle">₹{(user.walletAmount || 0).toFixed(2)}</td>
+                                            <td className="p-4 align-middle">{user.totalOrders || 0}</td>
+                                            <td className="p-4 align-middle">₹{(user.totalSpent || 0).toFixed(2)}</td>
+                                            <td className="p-4 align-middle">
+                                                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                  activeTab === 'Horeca' ? 'bg-purple-100 text-purple-800' : 
+                                                  activeTab === 'Retailer' ? 'bg-blue-100 text-blue-800' : 
+                                                  'bg-neutral-100 text-neutral-800'
+                                                }`}>
+                                                  {activeTab === 'Horeca' ? 'HORECA' : activeTab === 'Retailer' ? 'Retailer' : 'Regular'}
+                                                </span>
+                                            </td>
                                             <td className="p-4 align-middle">
                                                 <div className="flex items-center gap-2">
                                                     <button

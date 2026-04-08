@@ -10,8 +10,7 @@ interface GoogleMapsAutocompleteProps {
   required?: boolean;
 }
 
-type Libraries = ("places" | "drawing" | "geometry" | "visualization")[];
-const libraries: Libraries = ['places', 'drawing', 'geometry'];
+import { GOOGLE_MAPS_LIBRARIES } from '../constants/googleMaps';
 
 // Clean address by removing Plus Codes and unwanted identifiers
 const cleanAddress = (address: string): string => {
@@ -51,7 +50,7 @@ export default function GoogleMapsAutocomplete({
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries: libraries,
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
 
   // Store the latest onChange in a ref to avoid re-initializing the autocomplete listener

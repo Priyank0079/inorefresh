@@ -92,6 +92,15 @@ export const useDeliveryOrderNotifications = () => {
             console.log('📦 New order notification received:', orderData);
 
             setState(prev => {
+                // Deduplicate: check if this order is already being shown or in the queue
+                const isDuplicate = prev.currentNotification?.orderId === orderData.orderId || 
+                                  prev.notificationQueue.some(notif => notif.orderId === orderData.orderId);
+                
+                if (isDuplicate) {
+                    console.log('⚠️ Ignoring duplicate order notification:', orderData.orderId);
+                    return prev;
+                }
+
                 // If there's already a current notification, queue this one
                 if (prev.currentNotification) {
                     return {

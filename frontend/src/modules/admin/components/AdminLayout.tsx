@@ -47,7 +47,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 bg-neutral-50">{children}</main>
+        <main 
+          className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 bg-neutral-50"
+          data-lenis-prevent
+          style={{ touchAction: 'pan-y' }}
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

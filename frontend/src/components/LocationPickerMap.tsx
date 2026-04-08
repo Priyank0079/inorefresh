@@ -18,8 +18,7 @@ const defaultCenter = {
   lng: 78.9629,
 };
 
-type Libraries = ("places" | "drawing" | "geometry" | "visualization")[];
-const libraries: Libraries = ['places', 'drawing', 'geometry'];
+import { GOOGLE_MAPS_LIBRARIES } from '../constants/googleMaps';
 
 export default function LocationPickerMap({
   initialLat,
@@ -31,7 +30,7 @@ export default function LocationPickerMap({
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries: libraries,
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
 
   const [map, setMap] = useState<google.maps.Map | null>(null);

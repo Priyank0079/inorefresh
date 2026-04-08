@@ -1,5 +1,7 @@
 import Order from '../models/Order';
 import Customer from '../models/Customer';
+import HorecaUser from '../models/HorecaUser';
+import RetailerUser from '../models/RetailerUser';
 
 /**
  * Generate delivery OTP is no longer needed for regular orders.
@@ -18,9 +20,13 @@ export async function generateDeliveryOtp(orderId: string): Promise<{ success: b
       throw new Error('Order is already delivered');
     }
 
-    // No longer generate per-order OTP - customer has permanent deliveryOtp
-    // Just return success as the customer's permanent OTP will be used
-    console.log(`[Delivery OTP] Using customer's permanent delivery OTP for order ${orderId}`);
+    // Check if the user has an OTP, if not generate it using shared helper
+    const userId = order.customer.toString();
+    const customerOtp = await getOrCreateDeliveryOtp(userId);
+
+    if (!customerOtp) {
+      throw new Error('Customer not found for this order');
+    }
 
     return {
       success: true,
@@ -33,11 +39,30 @@ export async function generateDeliveryOtp(orderId: string): Promise<{ success: b
 }
 
 /**
+ * Global helper to get or create a permanent delivery OTP for any user type
+ */
+export async function getOrCreateDeliveryOtp(userId: string): Promise<string | null> {
+  let buyer: any = await Customer.findById(userId) || 
+                   await HorecaUser.findById(userId) || 
+                   await RetailerUser.findById(userId);
+
+  if (!buyer) return null;
+
+  if (!buyer.deliveryOtp) {
+    console.log(`[Delivery OTP] Generating missing delivery OTP on-the-fly for user ${userId}`);
+    buyer.deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    await buyer.save();
+  }
+
+  return buyer.deliveryOtp;
+}
+
+/**
  * Verify delivery OTP using customer's permanent OTP
  */
 export async function verifyDeliveryOtp(orderId: string, otp: string): Promise<{ success: boolean; message: string }> {
   try {
-    const order = await Order.findById(orderId).populate('customer');
+    const order = await Order.findById(orderId);
 
     if (!order) {
       throw new Error('Order not found');
@@ -47,16 +72,11 @@ export async function verifyDeliveryOtp(orderId: string, otp: string): Promise<{
       throw new Error('Order is already delivered');
     }
 
-    // Get customer's permanent delivery OTP
-    let customerOtp: string | undefined;
+    // Use global ID normalization
+    const userId = order.customer.toString();
 
-    if (order.customer && typeof order.customer === 'object' && 'deliveryOtp' in order.customer) {
-      customerOtp = (order.customer as any).deliveryOtp;
-    } else if (order.customer) {
-      // If not populated, fetch customer
-      const customer = await Customer.findById(order.customer);
-      customerOtp = customer?.deliveryOtp;
-    }
+    // Get customer's permanent delivery OTP using self-healing helper
+    const customerOtp = await getOrCreateDeliveryOtp(userId);
 
     if (!customerOtp) {
       throw new Error('Customer delivery OTP not found. Please contact support.');
