@@ -98,13 +98,13 @@ export default function WarehouseWallet() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="m-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg"
+        className="m-4 bg-gradient-to-r from-[#12b2a2] to-[#0d9488] rounded-2xl p-6 text-white shadow-lg"
       >
         <p className="text-sm opacity-90 mb-1">Wallet Balance</p>
         <h1 className="text-4xl font-bold mb-4">₹{balance.toFixed(2)}</h1>
         <button
           onClick={() => setShowWithdrawModal(true)}
-          className="bg-white text-blue-600 px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-50 transition-all shadow-md"
+          className="bg-white text-[#12b2a2] px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-50 transition-all shadow-md"
         >
           Request Withdrawal
         </button>
@@ -117,7 +117,7 @@ export default function WarehouseWallet() {
           <button
             onClick={() => setActiveTab('transactions')}
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'transactions'
-              ? 'text-blue-600 border-b-2 border-blue-600'
+              ? 'text-[#12b2a2] border-b-2 border-[#12b2a2]'
               : 'text-gray-600'
               }`}
           >
@@ -126,7 +126,7 @@ export default function WarehouseWallet() {
           <button
             onClick={() => setActiveTab('withdrawals')}
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'withdrawals'
-              ? 'text-blue-600 border-b-2 border-blue-600'
+              ? 'text-[#12b2a2] border-b-2 border-[#12b2a2]'
               : 'text-gray-600'
               }`}
           >
@@ -135,7 +135,7 @@ export default function WarehouseWallet() {
           <button
             onClick={() => setActiveTab('commissions')}
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'commissions'
-              ? 'text-blue-600 border-b-2 border-blue-600'
+              ? 'text-[#12b2a2] border-b-2 border-[#12b2a2]'
               : 'text-gray-600'
               }`}
           >
@@ -179,7 +179,7 @@ export default function WarehouseWallet() {
                           </span>
                         )}
                         {item.status === 'Completed' && (
-                          <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                          <span className="bg-teal-50 text-#0e7490 text-xs px-2 py-0.5 rounded-full font-medium">
                             Success
                           </span>
                         )}
@@ -194,7 +194,7 @@ export default function WarehouseWallet() {
                         })}
                       </p>
                     </div>
-                    <p className={`font-bold text-lg ${item.type === 'Credit' ? 'text-green-600' : 'text-red-600'} ${item.status === 'Pending' ? 'opacity-60' : ''}`}>
+                    <p className={`font-bold text-lg ${item.type === 'Credit' ? 'text-#12b2a2' : 'text-red-600'} ${item.status === 'Pending' ? 'opacity-60' : ''}`}>
                       {item.type === 'Credit' ? '+' : '-'}₹{item.amount.toFixed(2)}
                     </p>
                   </div>
@@ -218,7 +218,7 @@ export default function WarehouseWallet() {
                       </div>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-semibold ${withdrawal.status === 'Completed'
-                          ? 'bg-green-100 text-green-700'
+                          ? 'bg-teal-100 text-[#12b2a2]'
                           : withdrawal.status === 'Approved'
                             ? 'bg-blue-100 text-blue-700'
                             : withdrawal.status === 'Rejected'
@@ -258,7 +258,7 @@ export default function WarehouseWallet() {
                         <p className="font-medium text-gray-900">Order Commission</p>
                         <p className="text-xs text-gray-600">Rate: {comm.rate}%</p>
                       </div>
-                      <p className="font-bold text-green-600">₹{comm.amount.toFixed(2)}</p>
+                      <p className="font-bold text-#12b2a2">₹{comm.amount.toFixed(2)}</p>
                     </div>
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>Order Amount: ₹{comm.orderAmount.toFixed(2)}</span>
@@ -290,7 +290,7 @@ export default function WarehouseWallet() {
                     type="number"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg pl-8 pr-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-lg pl-8 pr-4 py-2.5 focus:ring-2 focus:ring-[#12b2a2] focus:border-transparent"
                     placeholder="Enter amount"
                     min="0"
                     step="0.01"
@@ -303,7 +303,7 @@ export default function WarehouseWallet() {
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value as any)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#12b2a2] focus:border-transparent"
                 >
                   <option value="Bank Transfer">Bank Transfer</option>
                   <option value="UPI">UPI</option>
@@ -322,7 +322,7 @@ export default function WarehouseWallet() {
                 </button>
                 <button
                   onClick={handleWithdrawRequest}
-                  className="flex-1 bg-blue-600 text-white rounded-lg py-2.5 font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+                  className="flex-1 bg-[#12b2a2] text-white rounded-lg py-2.5 font-semibold hover:bg-[#0d9488] transition disabled:opacity-50"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Request'}

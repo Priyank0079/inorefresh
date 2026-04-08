@@ -80,7 +80,7 @@ export default function AdminSellerLocation() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return 'bg-green-100 text-green-800';
+        return 'bg-teal-50 text-[#12b2a2]';
       case 'INACTIVE':
         return 'bg-yellow-100 text-yellow-800';
       case 'BLOCKED':

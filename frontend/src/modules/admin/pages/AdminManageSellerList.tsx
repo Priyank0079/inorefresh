@@ -293,7 +293,7 @@ export default function AdminManageWarehouseList() {
                                             <td className="p-4">
                                                 <span
                                                     className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                        w.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                                        w.status === 'ACTIVE' ? 'bg-teal-50 text-[#12b2a2]' : 'bg-red-100 text-red-800'
                                                     }`}
                                                 >
                                                     {w.status}

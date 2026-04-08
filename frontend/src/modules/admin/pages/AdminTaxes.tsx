@@ -443,7 +443,7 @@ export default function AdminTaxes() {
                         <td className="p-4 align-middle border border-neutral-200">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tax.status === "Active"
-                                ? "bg-green-100 text-green-800"
+                                ? "bg-teal-50 text-[#12b2a2]"
                                 : "bg-red-100 text-red-800"
                               }`}>
                             {tax.status}

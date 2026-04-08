@@ -208,41 +208,41 @@ export default function LowestPricesEver({ activeTab = 'all', products: adminPro
       </div>
 
       {/* LOWEST PRICES EVER Banner */}
-      <div className="px-6 relative z-10 mb-8" data-section="lowest-prices">
-        <div className="flex items-center justify-center gap-6">
-          <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-[#1CA7C7]/50 to-[#1CA7C7]"></div>
+      <div className="px-4 md:px-6 relative z-10 mb-6 md:mb-8" data-section="lowest-prices">
+        <div className="flex items-center justify-center gap-3 md:gap-6">
+          <div className="hidden sm:block flex-1 h-[1px] bg-gradient-to-r from-transparent via-[#1CA7C7]/50 to-[#1CA7C7]"></div>
 
           <h2
-            className="font-black text-center whitespace-nowrap"
+            className="font-black text-center flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-4"
             style={{
               fontFamily: '"Poppins", sans-serif',
-              fontSize: '32px',
               color: '#FFFFFF',
               opacity: fontLoaded ? 1 : 0,
               transition: 'opacity 0.2s ease-in',
               textShadow: '0 0 20px rgba(28,167,199,0.8), 0 0 40px rgba(28,167,199,0.4)',
-              letterSpacing: '0.1em',
+              letterSpacing: '0.05em md:0.1em',
               fontWeight: 900,
               lineHeight: '1.1',
               transform: 'perspective(500px) rotateX(5deg)',
             } as React.CSSProperties}
           >
-            LOWEST PRICES EVER
+            <span className="text-[28px] sm:text-[30px] md:text-[32px] whitespace-nowrap">LOWEST PRICES</span>
+            <span className="text-[28px] sm:text-[30px] md:text-[32px] whitespace-nowrap">EVER</span>
           </h2>
 
-          <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent via-[#1CA7C7]/50 to-[#1CA7C7]"></div>
+          <div className="hidden sm:block flex-1 h-[1px] bg-gradient-to-l from-transparent via-[#1CA7C7]/50 to-[#1CA7C7]"></div>
         </div>
       </div>
 
       {/* Horizontal Scrollable Product Cards */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-4"
+        className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-hide px-4 md:px-6 pb-4"
         style={{ scrollSnapType: 'x mandatory' }}
       >
         {discountedProducts.map((product) => {
           return (
-            <div key={product.id} className="flex-shrink-0 w-[170px] md:w-[200px]">
+            <div key={product.id} className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[200px] snap-start">
               <ProductCard
                 product={product}
                 badgeText={product.mrp && product.mrp > product.price ? `${Math.round(((product.mrp - product.price) / product.mrp) * 100)}% OFF` : undefined}

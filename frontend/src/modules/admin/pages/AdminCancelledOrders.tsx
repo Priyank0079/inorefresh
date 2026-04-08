@@ -202,7 +202,7 @@ export default function AdminCancelledOrders() {
       case 'Out For Delivery':
         return 'bg-orange-100 text-orange-800';
       case 'Delivered':
-        return 'bg-green-100 text-green-800';
+        return 'bg-teal-50 text-[#12b2a2]';
       case 'Cancelled':
         return 'bg-red-100 text-red-800';
       default:
@@ -213,7 +213,7 @@ export default function AdminCancelledOrders() {
   const getDeliveryBoyStatusColor = (status: string) => {
     switch (status) {
       case 'Assigned':
-        return 'bg-green-100 text-green-800';
+        return 'bg-teal-50 text-[#12b2a2]';
       case 'Not Assigned':
         return 'bg-red-100 text-red-800';
       default:
@@ -245,7 +245,7 @@ export default function AdminCancelledOrders() {
         {/* White Card Container */}
         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
           {/* Green Banner */}
-          <div className="bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3">
+          <div className="bg-#12b2a2 text-white px-4 sm:px-6 py-2 sm:py-3">
             <h2 className="text-base sm:text-lg font-semibold">View Order List</h2>
           </div>
 
@@ -306,7 +306,7 @@ export default function AdminCancelledOrders() {
                     setSeller(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2"
                 >
                   <option>All Sellers</option>
                   <option>Seller 1</option>
@@ -326,7 +326,7 @@ export default function AdminCancelledOrders() {
                     setStatus(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2"
                 >
                   <option>Cancelled</option>
                   <option>All Status</option>
@@ -347,7 +347,7 @@ export default function AdminCancelledOrders() {
                     setEntriesPerPage(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2"
                 >
                   <option>10</option>
                   <option>25</option>
@@ -361,7 +361,7 @@ export default function AdminCancelledOrders() {
                 <div className="relative">
                   <button
                     onClick={handleExport}
-                    className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded text-xs sm:text-sm font-medium transition-colors w-full sm:w-auto"
+                    className="flex items-center justify-center gap-2 bg-#12b2a2 hover:bg-#0e7490 text-white px-3 sm:px-4 py-2 rounded text-xs sm:text-sm font-medium transition-colors w-full sm:w-auto"
                   >
                     <svg
                       width="16"
@@ -411,7 +411,7 @@ export default function AdminCancelledOrders() {
                     setSearchQuery(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="flex-1 w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                  className="flex-1 w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2"
                   placeholder="Search by Order ID, Customer, or Amount"
                 />
               </div>

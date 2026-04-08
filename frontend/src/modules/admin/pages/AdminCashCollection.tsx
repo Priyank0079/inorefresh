@@ -168,11 +168,11 @@ export default function AdminCashCollection() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-teal-600 px-4 sm:px-6 py-4 rounded-t-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+      <div className="bg-gradient-to-r from-[#12b2a2] to-[#0d9488] px-4 sm:px-6 py-4 rounded-t-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 shadow-sm">
         <h1 className="text-white text-xl sm:text-2xl font-semibold">
           Delivery Boy Cash Collection List
         </h1>
-        <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm font-medium flex items-center gap-2 transition-colors">
+        <button className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2 rounded text-sm font-medium flex items-center gap-2 transition-colors backdrop-blur-sm">
           <svg
             width="16"
             height="16"
@@ -229,7 +229,7 @@ export default function AdminCashCollection() {
                       value={fromDate}
                       onChange={(e) => setFromDate(e.target.value)}
                       placeholder="MM/DD/YYYY"
-                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 min-w-[140px]"
+                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[140px]"
                     />
                   </div>
                   <span className="text-neutral-500">-</span>
@@ -260,7 +260,7 @@ export default function AdminCashCollection() {
                       value={toDate}
                       onChange={(e) => setToDate(e.target.value)}
                       placeholder="MM/DD/YYYY"
-                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 min-w-[140px]"
+                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[140px]"
                     />
                   </div>
                   <button
@@ -282,7 +282,7 @@ export default function AdminCashCollection() {
                     setSelectedDeliveryBoy(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-2 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 min-w-[150px]">
+                  className="px-3 py-2 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[150px]">
                   <option value="all">All Delivery Boys</option>
                   {deliveryBoys.map((boy) => (
                     <option key={boy._id} value={boy._id}>
@@ -303,7 +303,7 @@ export default function AdminCashCollection() {
                     setSelectedMethod(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-2 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 min-w-[100px]">
+                  className="px-3 py-2 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[100px]">
                   {methods.map((method) => (
                     <option
                       key={method}
@@ -326,7 +326,7 @@ export default function AdminCashCollection() {
                     setEntriesPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-2 py-1 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500">
+                  className="px-2 py-1 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]">
                   <option value={10}>10</option>
                   <option value={25}>25</option>
                   <option value={50}>50</option>
@@ -337,7 +337,7 @@ export default function AdminCashCollection() {
               {/* Export Button */}
               <button
                 onClick={handleExport}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm font-medium flex items-center gap-2 transition-colors">
+                className="bg-[#12b2a2] hover:bg-[#0e8f82] text-white px-4 py-2 rounded text-sm font-medium flex items-center gap-2 transition-colors">
                 <svg
                   width="16"
                   height="16"
@@ -376,7 +376,7 @@ export default function AdminCashCollection() {
                     setCurrentPage(1);
                   }}
                   placeholder="Search:"
-                  className="px-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 min-w-[150px]"
+                  className="px-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[150px]"
                 />
               </div>
             </div>
@@ -640,7 +640,7 @@ export default function AdminCashCollection() {
       {/* Footer */}
       <div className="bg-neutral-800 text-white text-center text-sm py-4">
         Copyright © 2025. Developed By{" "}
-        <a href="#" className="text-blue-400 hover:text-blue-300">
+        <a href="#" className="text-[#12b2a2] hover:text-[#0e8f82]">
           Inor fresh - 10 Minute App
         </a>
       </div>

@@ -583,7 +583,7 @@ export default function AdminManageCustomer() {
                       <td className="p-4 border border-neutral-200">
                         <span
                           className={`px-2 py-1 rounded text-xs font-medium ${customer.status === "Active"
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-teal-50 text-[#12b2a2]"
                             : "bg-red-100 text-red-800"
                             }`}>
                           {customer.status}
@@ -630,7 +630,7 @@ export default function AdminManageCustomer() {
                           </button>
                           <button
                             onClick={() => handleOpenEditModal(customer)}
-                            className="p-1.5 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                            className="p-1.5 bg-#12b2a2 hover:bg-#0e7490 text-white rounded transition-colors"
                             title="Edit">
                             <svg
                               width="14"
@@ -802,7 +802,7 @@ export default function AdminManageCustomer() {
                 </div>
                 <div>
                   <p className="text-xs text-neutral-500 mb-1">Status</p>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${selectedCustomer.status === "Active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${selectedCustomer.status === "Active" ? "bg-teal-50 text-[#12b2a2]" : "bg-red-100 text-red-800"}`}>
                     {selectedCustomer.status}
                   </span>
                 </div>

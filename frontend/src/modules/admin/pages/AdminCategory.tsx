@@ -434,7 +434,7 @@ export default function AdminCategory() {
       <div className="px-3 sm:px-4 md:px-6">
         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
           {/* Green Banner */}
-          <div className="bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3">
+          <div className="bg-#12b2a2 text-white px-4 sm:px-6 py-2 sm:py-3">
             <h2 className="text-base sm:text-lg font-semibold">
               Category Management
             </h2>
@@ -521,7 +521,7 @@ export default function AdminCategory() {
               {/* Export Button */}
               <button
                 onClick={handleExport}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium flex items-center gap-2 transition-colors w-full sm:w-auto">
+                className="bg-#12b2a2 hover:bg-#0e7490 text-white px-4 py-2 rounded text-sm font-medium flex items-center gap-2 transition-colors w-full sm:w-auto">
                 <svg
                   width="16"
                   height="16"

@@ -633,7 +633,7 @@ export default function AdminSubCategory() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleEdit(subCategory._id)}
-                              className="p-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded transition-colors"
+                              className="p-1.5 bg-teal-50 hover:bg-green-200 text-#0e7490 rounded transition-colors"
                               title="Edit">
                               <svg
                                 width="16"

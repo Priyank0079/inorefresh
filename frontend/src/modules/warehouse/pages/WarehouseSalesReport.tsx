@@ -92,15 +92,15 @@ export default function WarehouseSalesReport() {
     return (
         <div className="flex flex-col h-full min-h-screen bg-neutral-50">
             {/* Top Navigation/Header */}
-            <div className="bg-white border-b border-neutral-200 px-4 sm:px-6 py-4">
+            <div className="bg-[#12b2a2] text-white border-b border-teal-700 px-4 sm:px-6 py-4 shadow-sm">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h1 className="text-2xl font-semibold text-neutral-900">Sales Report</h1>
+                    <h1 className="text-2xl font-bold">Sales Report</h1>
                     <div className="flex items-center gap-2 text-sm">
-                        <Link to="/Warehouse" className="text-blue-600 hover:text-blue-700">
+                        <Link to="/Warehouse" className="text-teal-50 hover:text-white font-medium transition-colors">
                             Home
                         </Link>
-                        <span className="text-neutral-400">/</span>
-                        <span className="text-neutral-900">Sales Report</span>
+                        <span className="text-teal-200">/</span>
+                        <span className="text-white font-medium">Sales Report</span>
                     </div>
                 </div>
             </div>
@@ -109,7 +109,7 @@ export default function WarehouseSalesReport() {
             <div className="flex-1 p-4 sm:p-6">
                 <div className="bg-white rounded-lg shadow-sm border border-neutral-200 flex flex-col">
                     {/* Section Header */}
-                    <div className="bg-teal-600 text-white px-4 sm:px-6 py-3 rounded-t-lg">
+                    <div className="bg-[#12b2a2] text-white px-4 sm:px-6 py-3 rounded-t-lg">
                         <h2 className="text-lg sm:text-xl font-semibold">View Sales Report</h2>
                     </div>
 
@@ -196,7 +196,7 @@ export default function WarehouseSalesReport() {
                                     link.click();
                                     document.body.removeChild(link);
                                 }}
-                                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 transition-colors"
+                                className="bg-[#12b2a2] hover:bg-[#0e7490] text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 transition-colors"
                             >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>

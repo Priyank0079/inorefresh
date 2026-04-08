@@ -237,7 +237,7 @@ export default function WarehouseDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#12b2a2]"></div>
       </div>
     );
   }
@@ -253,24 +253,29 @@ export default function WarehouseDashboard() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header with Shop Status Toggle */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-lg shadow-sm border border-neutral-200 gap-4 sm:gap-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#12b2a2] p-6 rounded-lg shadow-sm border border-teal-700 gap-4 sm:gap-0 transition-all text-white">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
-          <p className="text-sm text-gray-500">Overview of your store performance</p>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-sm text-teal-50">Overview of your store performance</p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
-          <span className={`text-sm font-medium ${isShopOpen ? 'text-green-600' : 'text-red-500'}`}>
-            {isShopOpen ? 'Shop is Live' : 'Shop is Closed'}
+        <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start bg-white/10 backdrop-blur-sm p-3 rounded-xl border border-white/20">
+          <span className={`text-sm font-bold tracking-tight ${isShopOpen ? 'text-white' : 'text-red-100'}`}>
+            {isShopOpen ? (
+              <span className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                Shop is Live
+              </span>
+            ) : 'Shop is Closed'}
           </span>
           <button
             onClick={handleToggleShop}
             disabled={statusLoading}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${isShopOpen ? 'bg-teal-600' : 'bg-gray-200'
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#12b2a2] ${isShopOpen ? 'bg-white' : 'bg-white/30'
               } ${statusLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <span
-              className={`${isShopOpen ? 'translate-x-6' : 'translate-x-1'
-                } inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out`}
+              className={`${isShopOpen ? 'translate-x-6 bg-[#12b2a2]' : 'translate-x-1 bg-white'
+                } inline-block h-4 w-4 transform rounded-full transition-transform duration-200 ease-in-out shadow-sm`}
             />
           </button>
         </div>
@@ -303,7 +308,7 @@ export default function WarehouseDashboard() {
       {/* View New Orders Table Section */}
       <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
         {/* Teal Header Bar */}
-        <div className="bg-teal-600 text-white px-4 sm:px-6 py-3">
+        <div className="bg-#12b2a2 text-white px-4 sm:px-6 py-3">
           <h2 className="text-base sm:text-lg font-semibold">View New Orders</h2>
         </div>
 
@@ -319,7 +324,7 @@ export default function WarehouseDashboard() {
                 setEntriesPerPage(Math.max(1, Math.min(100, value)));
                 setCurrentPage(1);
               }}
-              className="w-16 px-2 py-1 border border-neutral-300 rounded text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+              className="w-16 px-2 py-1 border border-neutral-300 rounded text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2"
               min="1"
               max="100"
             />
@@ -435,7 +440,7 @@ export default function WarehouseDashboard() {
                   <td className="px-4 sm:px-6 py-3">
                     <button
                       onClick={() => navigate(`/Warehouse/orders/${order.id}`)}
-                      className="bg-teal-600 hover:bg-teal-700 text-white p-2 rounded transition-colors"
+                      className="bg-#12b2a2 hover:bg-#0d9488 text-white p-2 rounded transition-colors"
                       aria-label="View order details"
                     >
                       <svg

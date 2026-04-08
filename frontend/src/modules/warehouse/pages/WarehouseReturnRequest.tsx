@@ -89,15 +89,15 @@ export default function WarehouseReturnRequest() {
     return (
         <div className="flex flex-col h-full min-h-screen bg-neutral-50">
             {/* Top Navigation/Header */}
-            <div className="bg-white border-b border-neutral-200 px-4 sm:px-6 py-4">
+            <div className="bg-[#12b2a2] text-white border-b border-teal-700 px-4 sm:px-6 py-4 shadow-sm">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h1 className="text-2xl font-semibold text-neutral-900">Return Request</h1>
+                    <h1 className="text-2xl font-bold">Return Request</h1>
                     <div className="flex items-center gap-2 text-sm">
-                        <Link to="/Warehouse" className="text-blue-600 hover:text-blue-700">
+                        <Link to="/Warehouse" className="text-teal-50 hover:text-white font-medium transition-colors">
                             Home
                         </Link>
-                        <span className="text-neutral-400">/</span>
-                        <span className="text-neutral-900">Return Request</span>
+                        <span className="text-teal-200">/</span>
+                        <span className="text-white font-medium">Return Request</span>
                     </div>
                 </div>
             </div>
@@ -106,7 +106,7 @@ export default function WarehouseReturnRequest() {
             <div className="flex-1 p-4 sm:p-6">
                 <div className="bg-white rounded-lg shadow-sm border border-neutral-200 flex flex-col">
                     {/* Section Header - Green Banner */}
-                    <div className="bg-green-600 text-white px-4 sm:px-6 py-3 rounded-t-lg">
+                    <div className="bg-[#12b2a2] text-white px-4 sm:px-6 py-3 rounded-t-lg">
                         <h2 className="text-lg sm:text-xl font-semibold">View Return Request</h2>
                     </div>
 
@@ -122,7 +122,7 @@ export default function WarehouseReturnRequest() {
                                         type="text"
                                         value={fromDate && toDate ? `${fromDate} - ${toDate}` : ''}
                                         placeholder="Select date range"
-                                        className="pl-10 pr-3 py-2 bg-white border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-green-500 focus:outline-none w-full sm:w-64"
+                                        className="pl-10 pr-3 py-2 bg-white border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-[#12b2a2] focus:outline-none w-full sm:w-64"
                                         readOnly
                                     />
                                     <svg
@@ -156,7 +156,7 @@ export default function WarehouseReturnRequest() {
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="px-3 py-2 bg-white border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-green-500 focus:outline-none cursor-pointer"
+                                    className="px-3 py-2 bg-white border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-[#12b2a2] focus:outline-none cursor-pointer"
                                 >
                                     <option value="All Status">All Status</option>
                                     <option value="Pending">Pending</option>
@@ -178,7 +178,7 @@ export default function WarehouseReturnRequest() {
                                         setRowsPerPage(Number(e.target.value));
                                         setCurrentPage(1);
                                     }}
-                                    className="bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-green-500 focus:outline-none cursor-pointer"
+                                    className="bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-[#12b2a2] focus:outline-none cursor-pointer"
                                 >
                                     <option value={10}>10</option>
                                     <option value={20}>20</option>
@@ -215,7 +215,7 @@ export default function WarehouseReturnRequest() {
                                     link.click();
                                     document.body.removeChild(link);
                                 }}
-                                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 transition-colors"
+                                className="bg-[#12b2a2] hover:bg-[#0e7490] text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 transition-colors"
                             >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -233,7 +233,7 @@ export default function WarehouseReturnRequest() {
                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 text-xs">Search:</span>
                                 <input
                                     type="text"
-                                    className="pl-14 pr-3 py-1.5 bg-neutral-100 border-none rounded text-sm focus:ring-1 focus:ring-green-500 w-full sm:w-48"
+                                    className="pl-14 pr-3 py-1.5 bg-neutral-100 border-none rounded text-sm focus:ring-1 focus:ring-[#12b2a2] w-full sm:w-48"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder=""
@@ -370,9 +370,9 @@ export default function WarehouseReturnRequest() {
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">
                                                     <button
                                                         onClick={() => {
-                                                            alert(`Return Request Details:\n\nOrder Item ID: ${request.orderItemId}\nProduct: ${request.product}\nVariant: ${request.variant}\nPrice: ?${request.price.toFixed(2)}\nDiscounted Price: ?${request.discPrice.toFixed(2)}\nQuantity: ${request.quantity}\nTotal: ?${request.total.toFixed(2)}\nStatus: ${request.status}\nDate: ${request.date}`);
+                                                            alert(`Return Request Details:\n\nOrder Item ID: ${request.orderItemId}\nProduct: ${request.product}\nVariant: ${request.variant}\nPrice: ₹${request.price.toFixed(2)}\nDiscounted Price: ₹${request.discPrice.toFixed(2)}\nQuantity: ${request.quantity}\nTotal: ₹${request.total.toFixed(2)}\nStatus: ${request.status}\nDate: ${request.date}`);
                                                         }}
-                                                        className="text-green-600 hover:text-green-700 text-xs font-medium transition-colors"
+                                                        className="text-[#12b2a2] hover:text-[#0e7490] text-xs font-medium transition-colors"
                                                     >
                                                         View
                                                     </button>

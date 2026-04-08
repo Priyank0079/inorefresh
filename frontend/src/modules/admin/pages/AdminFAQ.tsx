@@ -442,7 +442,7 @@ export default function AdminFAQ() {
                             <button
                               onClick={() => handleEdit(faq)}
                               disabled={submitting}
-                              className="p-1.5 bg-green-600 hover:bg-green-700 disabled:bg-neutral-400 disabled:cursor-not-allowed text-white rounded transition-colors"
+                              className="p-1.5 bg-#12b2a2 hover:bg-#0e7490 disabled:bg-neutral-400 disabled:cursor-not-allowed text-white rounded transition-colors"
                               title="Edit">
                               <svg
                                 width="14"

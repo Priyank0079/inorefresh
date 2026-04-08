@@ -338,7 +338,7 @@ export default function WarehouseCategory() {
                 </div>
 
                 {successMsg && (
-                    <div className="mb-4 flex items-center gap-2 p-3 bg-green-50 border border-green-300 text-green-700 rounded-lg text-sm animate-fadeIn">
+                    <div className="mb-4 flex items-center gap-2 p-3 bg-green-50 border border-green-300 text-#0e7490 rounded-lg text-sm animate-fadeIn">
                         <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
@@ -487,7 +487,7 @@ export default function WarehouseCategory() {
                                         </td>
                                         <td className="p-4 font-semibold text-neutral-800">₹{product.price?.toFixed(2)}</td>
                                         <td className="p-4">
-                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${product.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${product.stock > 0 ? 'bg-teal-50 text-#0e7490' : 'bg-red-100 text-red-700'}`}>
                                                 {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
                                             </span>
                                         </td>

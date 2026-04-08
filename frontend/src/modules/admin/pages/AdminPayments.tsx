@@ -54,7 +54,7 @@ export default function AdminPayments() {
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm">
                     <p className="text-sm text-gray-600 mb-1">Successful</p>
-                    <p className="text-2xl font-bold text-green-600">₹{summary.successful.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-#12b2a2">₹{summary.successful.toFixed(2)}</p>
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm">
                     <p className="text-sm text-gray-600 mb-1">Pending</p>
@@ -87,8 +87,8 @@ export default function AdminPayments() {
                                 </p>
                             </div>
                             <div className="text-right">
-                                <p className="font-bold text-green-600">₹{payment.commissionAmount.toFixed(2)}</p>
-                                <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full mt-1">
+                                <p className="font-bold text-#12b2a2">₹{payment.commissionAmount.toFixed(2)}</p>
+                                <span className="inline-block px-2 py-1 bg-teal-50 text-#0e7490 text-xs rounded-full mt-1">
                                     {payment.status || 'Paid'}
                                 </span>
                             </div>

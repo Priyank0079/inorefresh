@@ -264,7 +264,7 @@ export default function AdminCoupon() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <h1 className="text-2xl font-semibold text-neutral-800">Coupon</h1>
           <div className="text-sm">
-            <span className="text-blue-600 hover:underline cursor-pointer">
+            <span className="text-[#12b2a2] hover:underline cursor-pointer">
               Home
             </span>
             <span className="text-neutral-400 mx-1">/</span>
@@ -274,7 +274,7 @@ export default function AdminCoupon() {
 
         {/* Add Coupon Section */}
         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 mb-6">
-          <div className="bg-teal-600 text-white px-6 py-4 rounded-t-lg">
+          <div className="bg-gradient-to-r from-[#12b2a2] to-[#0d9488] text-white px-6 py-4 rounded-t-lg shadow-sm">
             <h2 className="text-lg font-semibold">Add Coupon</h2>
           </div>
 
@@ -295,7 +295,7 @@ export default function AdminCoupon() {
                   value={formData.userType}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-white"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none bg-white"
                   disabled={uploading}>
                   <option value="">Select User Type</option>
                   <option value="All Users">All Users</option>
@@ -312,7 +312,7 @@ export default function AdminCoupon() {
                   value={formData.numberOfTimes}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-white"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none bg-white"
                   disabled={uploading}>
                   <option value="Single Time Valid">Single Time Valid</option>
                   <option value="Multi Time Valid">Multi Time Valid</option>
@@ -387,7 +387,7 @@ export default function AdminCoupon() {
                     value={formData.couponExpiryDate}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none"
                   />
                 </div>
               </div>
@@ -403,13 +403,13 @@ export default function AdminCoupon() {
                     value={formData.couponCode}
                     onChange={handleInputChange}
                     required
-                    className="flex-1 px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                    className="flex-1 px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none"
                     placeholder="Enter coupon code"
                   />
                   <button
                     type="button"
                     onClick={generateCouponCode}
-                    className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-full transition-colors"
+                    className="p-2 bg-[#12b2a2] hover:bg-[#0e8f82] text-white rounded-full transition-colors"
                     title="Generate Code">
                     <svg
                       width="16"
@@ -438,7 +438,7 @@ export default function AdminCoupon() {
                   value={formData.couponTitle}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none"
                   placeholder="Enter coupon title"
                 />
               </div>
@@ -455,7 +455,7 @@ export default function AdminCoupon() {
                   value={formData.couponStatus}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-white">
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none bg-white">
                   <option value="">Select Coupon Status</option>
                   <option value="Published">Published</option>
                   <option value="Draft">Draft</option>
@@ -475,7 +475,7 @@ export default function AdminCoupon() {
                   required
                   min="0"
                   step="0.01"
-                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none"
                   placeholder="Enter min order amount"
                 />
               </div>
@@ -492,7 +492,7 @@ export default function AdminCoupon() {
                   required
                   min="0"
                   step="0.01"
-                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none"
                   placeholder="Enter coupon value"
                 />
               </div>
@@ -506,7 +506,7 @@ export default function AdminCoupon() {
                   value={formData.couponType}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-white">
+                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none bg-white">
                   <option value="Percentage">Percentage</option>
                   <option value="Fixed">Fixed</option>
                 </select>
@@ -524,7 +524,7 @@ export default function AdminCoupon() {
                 onChange={handleInputChange}
                 required
                 rows={4}
-                className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none"
+                className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none resize-none"
                 placeholder="Enter coupon description"
               />
             </div>
@@ -534,7 +534,7 @@ export default function AdminCoupon() {
               disabled={uploading}
               className={`w-full px-6 py-3 rounded font-medium transition-colors ${uploading
                 ? "bg-neutral-400 cursor-not-allowed text-white"
-                : "bg-green-600 hover:bg-green-700 text-white"
+                : "bg-[#12b2a2] hover:bg-[#0e8f82] text-white"
                 }`}>
               {uploading ? "Creating Coupon..." : "Add Coupon"}
             </button>
@@ -665,7 +665,7 @@ export default function AdminCoupon() {
                       <td className="p-4 align-middle">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${coupon.isActive
-                            ? "bg-teal-100 text-teal-800"
+                            ? "bg-teal-50 text-teal-700 border border-teal-200"
                             : "bg-gray-100 text-gray-800"
                             }`}>
                           {coupon.isActive ? "Active" : "Inactive"}
@@ -708,9 +708,9 @@ export default function AdminCoupon() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className={`p-2 border border-teal-600 rounded ${currentPage === 1
+                className={`p-2 border border-[#12b2a2] rounded ${currentPage === 1
                   ? "text-neutral-400 cursor-not-allowed bg-neutral-50"
-                  : "text-teal-600 hover:bg-teal-50"
+                  : "text-[#12b2a2] hover:bg-teal-50"
                   }`}
                 aria-label="Previous page">
                 <svg
@@ -728,7 +728,7 @@ export default function AdminCoupon() {
                   />
                 </svg>
               </button>
-              <button className="px-3 py-1.5 border border-teal-600 bg-teal-600 text-white rounded font-medium text-sm">
+              <button className="px-3 py-1.5 border border-[#12b2a2] bg-[#12b2a2] text-white rounded font-medium text-sm">
                 {currentPage}
               </button>
               <button
@@ -736,9 +736,9 @@ export default function AdminCoupon() {
                   setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                 }
                 disabled={currentPage === totalPages || totalPages === 0}
-                className={`p-2 border border-teal-600 rounded ${currentPage === totalPages || totalPages === 0
+                className={`p-2 border border-[#12b2a2] rounded ${currentPage === totalPages || totalPages === 0
                   ? "text-neutral-400 cursor-not-allowed bg-neutral-50"
-                  : "text-teal-600 hover:bg-teal-50"
+                  : "text-[#12b2a2] hover:bg-teal-50"
                   }`}
                 aria-label="Next page">
                 <svg

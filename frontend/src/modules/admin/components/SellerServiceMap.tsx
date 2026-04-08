@@ -1,4 +1,4 @@
-﻿import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -12,7 +12,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const storeIcon = new L.DivIcon({
-  html: `<div style="font-size: 20px; text-align: center;">🏬</div>`,
+  html: `<div style="font-size: 20px; text-align: center;">??</div>`,
   className: 'store-marker',
   iconSize: [30, 30],
   iconAnchor: [15, 15],

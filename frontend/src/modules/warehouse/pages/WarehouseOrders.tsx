@@ -127,7 +127,7 @@ export default function WarehouseOrders() {
       case 'On the way':
         return 'bg-purple-100 text-purple-800';
       case 'Delivered':
-        return 'bg-green-100 text-green-800';
+        return 'bg-teal-50 text-teal-700 border border-teal-200';
       case 'Cancelled':
         return 'bg-red-100 text-red-800';
       default:
@@ -136,21 +136,16 @@ export default function WarehouseOrders() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header Section */}
-      <div className="bg-white border-b border-neutral-200 px-3 sm:px-4 md:px-6 py-3 sm:py-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-          {/* Page Title */}
-          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Orders List</h1>
-
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-xs sm:text-sm">
-            <Link to="/Warehouse" className="text-blue-600 hover:text-blue-700">
-              Home
-            </Link>
-            <span className="text-neutral-500">/</span>
-            <span className="text-neutral-700">Orders List</span>
-          </div>
+      <div className="bg-[#12b2a2] text-white p-6 rounded-lg shadow-sm mb-6 flex justify-between items-center transition-all">
+        <h1 className="text-2xl font-bold">Orders List</h1>
+        <div className="flex items-center gap-2 text-sm">
+          <Link to="/Warehouse" className="text-teal-50 hover:text-white font-medium transition-colors">
+            Home
+          </Link>
+          <span className="text-teal-200">/</span>
+          <span className="text-white font-medium">Orders List</span>
         </div>
       </div>
 
@@ -159,7 +154,7 @@ export default function WarehouseOrders() {
         {/* White Card Container */}
         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
           {/* Green Banner */}
-          <div className="bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-t-lg">
+          <div className="bg-gradient-to-r from-[#12b2a2] to-[#0d9488] text-white px-4 sm:px-6 py-2 sm:py-3 shadow-sm rounded-t-lg">
             <h2 className="text-base sm:text-lg font-semibold">View Order List</h2>
           </div>
 
@@ -220,7 +215,7 @@ export default function WarehouseOrders() {
                     setStatus(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]"
                 >
                   <option>All Status</option>
                   <option>Pending</option>
@@ -239,7 +234,7 @@ export default function WarehouseOrders() {
                     setEntriesPerPage(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]"
                 >
                   <option>10</option>
                   <option>25</option>
@@ -260,7 +255,7 @@ export default function WarehouseOrders() {
                     setSearchQuery(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="flex-1 w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                  className="flex-1 w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]"
                   placeholder="Search by Order ID, Status, or Amount"
                 />
               </div>
@@ -269,7 +264,7 @@ export default function WarehouseOrders() {
               <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
                 <button
                   onClick={handleExport}
-                  className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded text-xs sm:text-sm font-medium transition-colors w-full sm:w-auto"
+                  className="flex items-center justify-center gap-2 bg-[#12b2a2] hover:bg-[#0e8f82] text-white px-3 sm:px-4 py-2 rounded text-xs sm:text-sm font-medium transition-colors w-full sm:w-auto"
                 >
                   <svg
                     width="16"
@@ -339,7 +334,7 @@ export default function WarehouseOrders() {
                           viewBox="0 0 24 24"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
-                          className={`cursor-pointer ${sortField === 'orderId' ? 'text-green-600' : 'text-neutral-400'
+                          className={`cursor-pointer ${sortField === 'orderId' ? 'text-[#12b2a2]' : 'text-neutral-400'
                             }`}
                         >
                           <path
@@ -368,7 +363,7 @@ export default function WarehouseOrders() {
                           viewBox="0 0 24 24"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
-                          className={`cursor-pointer ${sortField === 'deliveryDate' ? 'text-green-600' : 'text-neutral-400'
+                          className={`cursor-pointer ${sortField === 'deliveryDate' ? 'text-[#12b2a2]' : 'text-neutral-400'
                             }`}
                         >
                           <path
@@ -397,7 +392,7 @@ export default function WarehouseOrders() {
                           viewBox="0 0 24 24"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
-                          className={`cursor-pointer ${sortField === 'orderDate' ? 'text-green-600' : 'text-neutral-400'
+                          className={`cursor-pointer ${sortField === 'orderDate' ? 'text-[#12b2a2]' : 'text-neutral-400'
                             }`}
                         >
                           <path
@@ -426,7 +421,7 @@ export default function WarehouseOrders() {
                           viewBox="0 0 24 24"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
-                          className={`cursor-pointer ${sortField === 'status' ? 'text-green-600' : 'text-neutral-400'
+                          className={`cursor-pointer ${sortField === 'status' ? 'text-[#12b2a2]' : 'text-neutral-400'
                             }`}
                         >
                           <path
@@ -455,7 +450,7 @@ export default function WarehouseOrders() {
                           viewBox="0 0 24 24"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
-                          className={`cursor-pointer ${sortField === 'amount' ? 'text-green-600' : 'text-neutral-400'
+                          className={`cursor-pointer ${sortField === 'amount' ? 'text-[#12b2a2]' : 'text-neutral-400'
                             }`}
                         >
                           <path
@@ -507,7 +502,7 @@ export default function WarehouseOrders() {
                         <td className="px-3 sm:px-4 md:px-6 py-3">
                           <button
                             onClick={() => navigate(`/Warehouse/orders/${order.id}`)}
-                            className="text-green-600 hover:text-green-700 text-xs sm:text-sm font-medium transition-colors"
+                            className="text-[#12b2a2] hover:text-[#0e8f82] text-xs sm:text-sm font-medium transition-colors"
                           >
                             View
                           </button>
@@ -585,7 +580,7 @@ export default function WarehouseOrders() {
       <footer className="px-3 sm:px-4 md:px-6 text-center py-4 sm:py-6">
         <p className="text-xs sm:text-sm text-neutral-600">
           Copyright © 2025. Developed By{' '}
-          <Link to="/Warehouse" className="text-blue-600 hover:text-blue-700">
+          <Link to="/Warehouse" className="text-[#12b2a2] hover:text-[#0e8f82]">
             Inor fresh
           </Link>
         </p>

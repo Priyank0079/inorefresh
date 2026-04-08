@@ -275,24 +275,25 @@ export default function WarehouseAddProduct() {
   return (
     <div className="flex flex-col h-full">
       {/* Page Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-3">
+      <div className="bg-[#12b2a2] text-white p-6 rounded-lg shadow-sm mb-6 flex justify-between items-center transition-all">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(prefilledCategory ? '/warehouse/category' : '/warehouse/product/list')}
-            className="flex items-center gap-1 text-teal-600 hover:text-teal-800 transition-colors text-sm font-medium"
+            className="flex items-center gap-1 text-teal-50 hover:text-white transition-colors text-sm font-bold"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </button>
-          <h1 className="text-2xl font-semibold text-neutral-800">
+          <div className="h-8 w-px bg-teal-400 group-hover:bg-teal-300 transition-colors" />
+          <h1 className="text-2xl font-bold">
             {id ? "Edit Product" : "Add New Product"}
           </h1>
         </div>
-        <div className="text-sm text-neutral-500">
+        <div className="text-sm font-medium">
           {prefilledCategoryName && (
-            <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full font-medium">
+            <span className="bg-white/20 backdrop-blur-sm text-white px-4 py-1.5 rounded-full border border-white/30">
               📂 {prefilledCategoryName}
             </span>
           )}
@@ -301,7 +302,7 @@ export default function WarehouseAddProduct() {
 
       {/* Success / Error messages */}
       {successMessage && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-300 text-green-700 rounded-lg flex items-center gap-2">
+        <div className="mb-4 p-3 bg-green-50 border border-green-300 text-[#0e7490] rounded-lg flex items-center gap-2">
           <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
@@ -597,11 +598,11 @@ export default function WarehouseAddProduct() {
                           <tr key={i} className="border-b border-neutral-100">
                             <td className="px-4 py-2 font-medium text-neutral-800">{v.title}</td>
                             <td className="px-4 py-2">₹{v.price.toFixed(2)}</td>
-                            <td className="px-4 py-2 text-green-600">
+                            <td className="px-4 py-2 text-[#12b2a2]">
                               {v.discPrice > 0 ? `₹${v.discPrice.toFixed(2)}` : <span className="text-neutral-400">—</span>}
                             </td>
                             <td className="px-4 py-2">
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${v.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${v.stock > 0 ? 'bg-teal-50 text-[#0e7490]' : 'bg-red-100 text-red-700'}`}>
                                 {v.stock}
                               </span>
                             </td>
