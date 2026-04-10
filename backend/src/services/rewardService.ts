@@ -2,7 +2,7 @@ import Customer from "../models/Customer";
 import HorecaUser from "../models/HorecaUser";
 import RetailerUser from "../models/RetailerUser";
 import WalletTransaction from "../models/WalletTransaction";
-import mongoose from "mongoose";
+
 
 /**
  * Award signup bonus and process referral if code provided
