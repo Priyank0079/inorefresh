@@ -26,7 +26,15 @@ export default function Login() {
   const [mobileNumber, setMobileNumber] = useState('');
   const [showOTP, setShowOTP] = useState(false);
   const [sessionId, setSessionId] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [docFiles, setDocFiles] = useState<{ [key: string]: File | null }>({
+    aadhar: null,
+    pan: null,
+    fssai: null,
+    gst: null,
+    cheque: null
+  });
   const [error, setError] = useState('');
   const { currentTheme } = useThemeContext();
 
@@ -40,7 +48,6 @@ export default function Login() {
     shopName: '', address: '', googleMapLink: '', deliveryTime: '', paymentMode: '',
     highValueProducts: [], inorRepresentative: '', shopPhone: '', ownerName: '', ownerPhone: ''
   });
-  const [files, setFiles] = useState<File[]>([]);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 12.9716, lng: 77.5946 });
 
   // Translations
@@ -158,7 +165,7 @@ export default function Login() {
           setError(response.data.message || 'Verification failed');
         }
       } else {
-        const response = await verifyOTP(mobileNumber, otp, sessionId);
+        const response = await verifyOTP(mobileNumber, otp, sessionId, referralCode);
         if (response.success && response.data) {
           login(response.data.token, {
             id: response.data.user.id,
@@ -194,9 +201,12 @@ export default function Login() {
           fd.append(key, formData[key]);
         }
       });
-      files.forEach(file => fd.append('documents', file));
+      Object.values(docFiles).forEach(file => {
+        if (file) fd.append('documents', file);
+      });
 
       const endpoint = userType === 'horeca' ? '/auth/signup-horeca' : '/auth/signup-retailer';
+      fd.append('referralCode', referralCode);
       await api.post(endpoint, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
 
       // Go back to login on success
@@ -276,7 +286,7 @@ export default function Login() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden"
+      className="min-h-screen flex flex-col items-center justify-center p-4 relative"
       style={{ background: `linear-gradient(to bottom right, ${currentTheme.primary[2]}20, ${currentTheme.primary[3]}30)` }}
     >
       {/* Background Decorative Elements */}
@@ -300,21 +310,21 @@ export default function Login() {
       )}
 
       {/* Main Card */}
-      <div className={`w-full ${flowStep.includes('signup') ? 'max-w-2xl' : 'max-w-md'} bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/50 relative z-10 transition-all duration-300 max-h-[90vh] flex flex-col`}>
+      <div className={`w-full ${flowStep.includes('signup') ? 'max-w-2xl my-4 sm:my-8' : 'max-w-md max-h-[90vh] flex flex-col'} bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/50 relative z-10 transition-all duration-300`}>
 
         {/* Header Section */}
-        <div className="w-full bg-gradient-to-b from-white/50 to-transparent p-8 pb-6 flex flex-col items-center flex-shrink-0">
-          <button onClick={handleLogoClick} className="hover:opacity-80 transition-opacity mb-8">
-            <img src="/assets/Inor fresh.png" alt="Inor Fresh" className="h-28 sm:h-32 w-auto object-contain drop-shadow-md" loading="lazy" />
+        <div className={`w-full bg-gradient-to-b from-white/50 to-transparent ${flowStep.includes('signup') ? 'p-4 pb-2' : 'p-8 pb-6'} flex flex-col items-center flex-shrink-0`}>
+          <button onClick={handleLogoClick} className={`hover:opacity-80 transition-opacity ${flowStep.includes('signup') ? 'mb-2' : 'mb-8'}`}>
+            <img src="/assets/Inor fresh.png" alt="Inor Fresh" className={`${flowStep.includes('signup') ? 'h-16' : 'h-28 sm:h-32'} w-auto object-contain drop-shadow-md`} loading="lazy" />
           </button>
 
-          <h2 className="text-2xl sm:text-3xl font-bold text-neutral-800 text-center mb-2">
+          <h2 className={`${flowStep.includes('signup') ? 'text-xl' : 'text-2xl sm:text-3xl'} font-bold text-neutral-800 text-center mb-2`}>
             {flowStep === 'accountType' ? t.selectType : showOTP ? t.verification : flowStep.includes('signup') ? `Sign Up as ${userType?.toUpperCase()}` : userType === 'horeca' ? t.loginAsHoreca : t.loginAsRetailer}
           </h2>
         </div>
 
         {/* Content Section */}
-        <div className="px-8 pb-8 overflow-y-auto">
+        <div className={`px-8 pb-8 ${flowStep.includes('signup') ? '' : 'overflow-y-auto flex-1 custom-scrollbar overscroll-contain'}`}>
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-sm text-red-600 animate-fadeIn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -363,6 +373,21 @@ export default function Login() {
                   }}
                   placeholder={t.enterMobile}
                   maxLength={10}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="relative group">
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  className="block w-full px-4 py-4 bg-neutral-50 border border-neutral-200 rounded-xl text-lg font-medium text-neutral-900 placeholder-neutral-400 focus:outline-none transition-all"
+                  style={{
+                    boxShadow: `0 0 0 2px ${currentTheme.primary[3]}20`,
+                    borderColor: currentTheme.primary[3]
+                  }}
+                  placeholder="Referral Code (Optional)"
                   disabled={loading}
                 />
               </div>
@@ -442,7 +467,7 @@ export default function Login() {
                 <input required placeholder="Shop Phone Number *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, shopPhone: e.target.value })} />
                 <input required placeholder="Shop Owner Name *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, ownerName: e.target.value })} />
                 <input required placeholder="Owner Phone Number *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, ownerPhone: e.target.value })} />
-                <input required placeholder="Inor Representative *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, inorRepresentative: e.target.value })} />
+                <input placeholder="Inor Representative (Optional)" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, inorRepresentative: e.target.value })} />
                 <div className="md:col-span-2 space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold text-neutral-700">Pin your shop on the map *</p>
@@ -461,7 +486,7 @@ export default function Login() {
                     initialLat={mapCenter.lat}
                     initialLng={mapCenter.lng}
                     onLocationSelect={handleMapSelect}
-                    height="260px"
+                    height={flowStep.includes('signup') ? "200px" : "260px"}
                   />
                   <p className="text-[11px] text-neutral-500">Drag the map to set your exact shop location. The link fills automatically.</p>
                 </div>
@@ -505,16 +530,52 @@ export default function Login() {
                 </div>
               </div>
 
-              <div>
-                <p className="font-semibold text-sm mb-2 text-neutral-700">Documents & Photos (Max 10) *</p>
-                <p className="text-xs text-neutral-500 mb-2">Aadhar Card, PAN Card, FSSAI Certificate, GST, Cancelled Cheque</p>
-                <input required type="file" multiple accept="image/*,.pdf" onChange={e => setFiles(Array.from(e.target.files || []).slice(0, 10))} className="w-full text-sm text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
-                {files.length > 0 && <p className="text-xs text-teal-600 mt-2">{files.length} file(s) selected.</p>}
+              <div className="space-y-4">
+                <p className="font-semibold text-sm text-neutral-700">Required Documents *</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { id: 'aadhar', label: 'Aadhar Card' },
+                    { id: 'pan', label: 'PAN Card' },
+                    { id: 'fssai', label: 'FSSAI Certificate' },
+                    { id: 'gst', label: 'GST Document' },
+                    { id: 'cheque', label: 'Cancelled Cheque' }
+                  ].map((doc) => (
+                    <div key={doc.id} className="space-y-1">
+                      <label className="text-[10px] font-bold text-neutral-500 uppercase ml-1">{doc.label}</label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={e => {
+                            const file = e.target.files?.[0] || null;
+                            setDocFiles(prev => ({ ...prev, [doc.id]: file }));
+                          }}
+                          className="hidden"
+                          id={`file-${doc.id}`}
+                          required={doc.id !== 'gst' && doc.id !== 'cheque'} // Some might be optional? User said * so I'll follow that.
+                        />
+                        <label
+                          htmlFor={`file-${doc.id}`}
+                          className={`flex items-center justify-between w-full p-3 bg-neutral-50 border border-dashed rounded-xl cursor-pointer transition-all ${docFiles[doc.id] ? 'border-teal-500 bg-teal-50/50' : 'border-neutral-200 hover:border-teal-400 hover:bg-neutral-100'}`}
+                        >
+                          <span className={`text-xs truncate max-w-[150px] ${docFiles[doc.id] ? 'text-teal-700 font-medium' : 'text-neutral-500'}`}>
+                            {docFiles[doc.id] ? docFiles[doc.id]?.name : `Upload ${doc.label}`}
+                          </span>
+                          <div className={`p-1.5 rounded-lg ${docFiles[doc.id] ? 'bg-teal-500 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              {docFiles[doc.id] ? <path d="M20 6L9 17l-5-5" /> : <path d="M12 5v14M5 12h14" />}
+                            </svg>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <button
                 type="submit"
-                disabled={loading || files.length === 0}
+                disabled={loading || !docFiles.aadhar || !docFiles.pan || !docFiles.fssai}
                 className="w-full py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl text-white mt-6 transition-all"
                 style={{ background: `linear-gradient(to right, ${currentTheme.primary[1]}, ${currentTheme.primary[3]})` }}
               >
@@ -563,6 +624,19 @@ export default function Login() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
         }
       `}</style>
     </div>

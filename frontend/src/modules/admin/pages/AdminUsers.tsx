@@ -9,7 +9,7 @@ interface User {
     email: string;
     phone?: string;
     registrationDate: string;
-    status: 'Active' | 'Inactive' | 'Suspended';
+    status: 'Active' | 'Inactive' | 'Suspended' | 'Pending';
     refCode?: string;
     walletAmount: number;
     totalOrders: number;
@@ -149,7 +149,7 @@ export default function AdminUsers() {
     const displayedUsers = users;
     const startIndex = (currentPage - 1) * entriesPerPage;
 
-    const handleStatusChange = async (userId: string, newStatus: 'Active' | 'Suspended') => {
+    const handleStatusChange = async (userId: string, newStatus: 'Active' | 'Suspended' | 'Pending') => {
         try {
             const response = await updateUserStatus(userId, newStatus);
 
@@ -410,9 +410,11 @@ export default function AdminUsers() {
                                                         onClick={() => handleStatusChange(user._id, user.status === 'Active' ? 'Suspended' : 'Active')}
                                                         className={`p-1.5 text-white rounded transition-colors ${user.status === 'Active'
                                                             ? 'bg-red-600 hover:bg-red-700'
-                                                            : 'bg-#12b2a2 hover:bg-#0e7490'
+                                                            : user.status === 'Pending'
+                                                                ? 'bg-emerald-500 hover:bg-emerald-600'
+                                                                : 'bg-[#12b2a2] hover:bg-[#0e7490]'
                                                             }`}
-                                                        title={user.status === 'Active' ? 'Suspend User' : 'Activate User'}
+                                                        title={user.status === 'Active' ? 'Suspend User' : user.status === 'Pending' ? 'Approve User' : 'Activate User'}
                                                     >
                                                         {user.status === 'Active' ? (
                                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

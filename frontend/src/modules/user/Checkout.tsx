@@ -401,8 +401,18 @@ export default function Checkout() {
   );
 
   // Wallet Logic
+  const walletThreshold = 10000;
+  const isWalletEligible = discountedTotal >= walletThreshold;
   const walletBalance = user?.walletAmount || 0;
-  const walletAmountUsed = useWallet ? Math.min(grandTotal, walletBalance) : 0;
+  
+  // Auto-disable wallet if not eligible
+  useEffect(() => {
+    if (!isWalletEligible && useWallet) {
+      setUseWallet(false);
+    }
+  }, [isWalletEligible, useWallet]);
+
+  const walletAmountUsed = (useWallet && isWalletEligible) ? Math.min(grandTotal, walletBalance) : 0;
   const payableAmount = Math.max(0, grandTotal - walletAmountUsed);
 
   const handleApplyCoupon = async (coupon: ApiCoupon) => {
@@ -1744,15 +1754,34 @@ export default function Checkout() {
               <div className="relative flex items-center justify-center">
                 <input
                   type="checkbox"
-                  checked={useWallet}
-                  onChange={(e) => setUseWallet(e.target.checked)}
-                  className="w-5 h-5 rounded hover:cursor-pointer"
+                  checked={useWallet && isWalletEligible}
+                  onChange={(e) => {
+                    if (!isWalletEligible) {
+                      showGlobalToast(`Coins can only be used for orders above ₹${walletThreshold.toLocaleString("en-IN")}`, "error");
+                      return;
+                    }
+                    setUseWallet(e.target.checked);
+                  }}
+                  disabled={!isWalletEligible}
+                  className={`w-5 h-5 rounded hover:cursor-pointer ${!isWalletEligible ? 'opacity-50 cursor-not-allowed' : ''}`}
                   style={{ accentColor: currentTheme.primary[3] }}
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-neutral-900">Use Wallet Balance</span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-bold ${!isWalletEligible ? 'text-neutral-400' : 'text-neutral-900'}`}>Use Wallet Balance</span>
+                  {!isWalletEligible && (
+                    <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-full border border-amber-100 font-medium">
+                      Min. ₹10,000 required
+                    </span>
+                  )}
+                </div>
                 <span className="text-xs text-neutral-500">Available balance: ₹{walletBalance.toLocaleString("en-IN")}</span>
+                {!isWalletEligible && (
+                  <p className="text-[10px] text-amber-500 mt-0.5 font-medium">
+                    Shop for ₹{(walletThreshold - discountedTotal).toLocaleString("en-IN")} more to use coins
+                  </p>
+                )}
               </div>
             </div>
             {useWallet && (

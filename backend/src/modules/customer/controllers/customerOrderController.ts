@@ -459,6 +459,15 @@ export const createOrder = async (req: Request, res: Response) => {
         let payableAmount = finalTotal;
 
         if (useWallet) {
+            // Check threshold: Shopping above ₹10,000
+            if (calculatedSubtotal < 10000) {
+                if (session) await session.abortTransaction();
+                return res.status(400).json({
+                    success: false,
+                    message: "Wallet/Coins can only be used for shopping above ₹10,000.",
+                });
+            }
+
             if (buyer && buyer.walletAmount > 0) {
                 // Calculate amount to use
                 walletAmountUsed = Math.min(finalTotal, buyer.walletAmount);

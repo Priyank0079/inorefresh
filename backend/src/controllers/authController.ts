@@ -87,6 +87,10 @@ export const signupHoreca = async (req: Request, res: Response): Promise<any> =>
             link: '/admin/customers'
         });
 
+        // Process Signup Rewards (1000 bonus + referral check)
+        const { processSignupRewards } = require('../services/rewardService');
+        await processSignupRewards(newHoreca._id.toString(), 'horeca', userData.referralCode);
+
         res.status(201).json({ success: true, message: 'HORECA user signed up successfully', user: newHoreca });
     } catch (error: any) {
 
@@ -133,6 +137,10 @@ export const signupRetailer = async (req: Request, res: Response): Promise<any> 
             priority: 'High',
             link: '/admin/customers'
         });
+
+        // Process Signup Rewards (1000 bonus + referral check)
+        const { processSignupRewards } = require('../services/rewardService');
+        await processSignupRewards(newRetailer._id.toString(), 'retailer', userData.referralCode);
 
         res.status(201).json({ success: true, message: 'Retailer user signed up successfully', user: newRetailer });
     } catch (error: any) {

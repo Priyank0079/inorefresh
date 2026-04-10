@@ -36,8 +36,8 @@ export const sendOTP = async (mobile: string): Promise<SendOTPResponse> => {
  * Verify SMS OTP and login customer
  * Auto-creates customer if not exists
  */
-export const verifyOTP = async (mobile: string, otp: string, sessionId?: string): Promise<VerifyOTPResponse> => {
-  const response = await api.post<VerifyOTPResponse>('/auth/customer/verify-sms-otp', { mobile, otp, sessionId });
+export const verifyOTP = async (mobile: string, otp: string, sessionId?: string, referralCode?: string): Promise<VerifyOTPResponse> => {
+  const response = await api.post<VerifyOTPResponse>('/auth/customer/verify-sms-otp', { mobile, otp, sessionId, referralCode });
 
   if (response.data.success && response.data.data.token) {
     setAuthToken(response.data.data.token);

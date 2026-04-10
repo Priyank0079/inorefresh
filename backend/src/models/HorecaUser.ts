@@ -29,7 +29,7 @@ const HorecaUserSchema: Schema = new Schema(
         deliveryTime: { type: String, required: true },
         paymentMode: { type: String, required: true },
         highValueProducts: [{ type: String }],
-        inorRepresentative: { type: String, required: true },
+        inorRepresentative: { type: String },
         shopPhone: { type: String, required: true },
         ownerName: { type: String, required: true },
         ownerPhone: { type: String, required: true, unique: true },
@@ -37,17 +37,22 @@ const HorecaUserSchema: Schema = new Schema(
         status: { type: String, enum: ['Pending', 'Active', 'Inactive'], default: 'Pending' },
         walletAmount: { type: Number, default: 0 },
         refCode: { type: String },
-        deliveryOtp: { type: String, trim: true },
-        fcmTokens: { type: [String], default: [] },
         fcmTokenMobile: { type: [String], default: [] },
     },
     { timestamps: true }
 );
 
-// Generate deliveryOtp before saving if not provided
+// Generate deliveryOtp and refCode before saving if not provided
 HorecaUserSchema.pre('save', async function (next) {
     if (!(this as any).deliveryOtp) {
         (this as any).deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    }
+    if (!(this as any).refCode) {
+        const namePart = (this as any).shopName
+          ? (this as any).shopName.replace(/\s+/g, '').substring(0, 4).toUpperCase()
+          : 'HORE';
+        const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+        (this as any).refCode = `${namePart}${randomPart}`;
     }
     next();
 });

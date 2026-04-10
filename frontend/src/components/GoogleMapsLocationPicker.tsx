@@ -173,7 +173,7 @@ export default function GoogleMapsLocationPicker({
                     streetViewControl: false,
                     mapTypeControl: false,
                     fullscreenControl: false,
-                    gestureHandling: 'greedy',
+                    gestureHandling: 'cooperative',
                     styles: [
                         {
                             featureType: 'poi',

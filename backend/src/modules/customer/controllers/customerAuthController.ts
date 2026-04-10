@@ -40,7 +40,7 @@ export const sendSmsOtp = asyncHandler(async (req: Request, res: Response) => {
  */
 export const verifySmsOtp = asyncHandler(
   async (req: Request, res: Response) => {
-    const { mobile, otp, sessionId } = req.body;
+    const { mobile, otp, sessionId, referralCode } = req.body;
 
     if (!mobile || !/^[0-9]{10}$/.test(mobile)) {
       return res.status(400).json({
@@ -103,6 +103,10 @@ export const verifySmsOtp = asyncHandler(
         priority: "Medium",
         link: "/admin/customers",
       });
+
+      // Process Signup Rewards (1000 bonus + referral check)
+      const { processSignupRewards } = require("../../../services/rewardService");
+      await processSignupRewards(customer._id.toString(), "Customer", referralCode);
     }
 
     // Generate JWT token

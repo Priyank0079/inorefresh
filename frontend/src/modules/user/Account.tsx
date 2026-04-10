@@ -185,8 +185,8 @@ export default function Account() {
       </div>
 
       {/* Wallet Section */}
-      <div className="px-5 md:px-8 -mt-8 mb-8 relative z-20">
-        <div className="max-w-2xl mx-auto">
+      <div className="px-5 md:px-8 -mt-8 mb-6 relative z-20">
+        <div className="max-w-2xl mx-auto space-y-4">
           <div className="water-card water-shimmer-border rounded-[28px] p-6 md:p-8 relative overflow-hidden group">
             <div className="flex items-center justify-between relative z-10">
               <div className="flex items-center gap-4">
@@ -211,6 +211,47 @@ export default function Account() {
               >
                 Use Balance
               </motion.button>
+            </div>
+          </div>
+
+          {/* Refer & Earn Section */}
+          <div className="water-card rounded-[28px] p-6 border border-white/10 relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-teal-500/20 flex items-center justify-center border border-teal-500/20">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[10px] text-teal-400 font-black uppercase tracking-widest mb-0.5">Refer & Earn ₹250</p>
+                  <p className="text-sm font-bold text-white opacity-80">Share your code with friends</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 bg-black/20 p-2 pl-4 rounded-xl border border-white/5 border-dashed w-full sm:w-auto">
+                <span className="font-black text-white tracking-widest text-lg">
+                  {profile?.refCode || user?.refCode || 'WAITING...'}
+                </span>
+                <button
+                  onClick={() => {
+                    const code = profile?.refCode || user?.refCode || '';
+                    if (code) {
+                      navigator.clipboard.writeText(code);
+                      alert('Referral code copied to clipboard!');
+                    }
+                  }}
+                  className="p-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
