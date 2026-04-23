@@ -226,11 +226,11 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
           const validatedCards = fetchedCards.map(card => {
             const lowerTitle = (card.title || "").toLowerCase();
             let fallbackImage = "";
-            if (lowerTitle.includes('marin')) fallbackImage = '/images/top_list_marin_fish_trans.png';
-            else if (lowerTitle.includes('aqua')) fallbackImage = '/images/top_list_aqua_fish_trans.png';
-            else if (lowerTitle.includes('bengali') || lowerTitle.includes('bangali')) fallbackImage = '/images/top_list_bengali_fish_trans.png';
+            if (lowerTitle.includes('marin')) fallbackImage = '/images/marine_fish_banner.png';
+            else if (lowerTitle.includes('aqua')) fallbackImage = '/images/aqua_fish_banner.png';
+            else if (lowerTitle.includes('bengali') || lowerTitle.includes('bangali')) fallbackImage = '/images/bengali_fish_banner.png';
 
-            const hdImageUrl = card.imageUrl || fallbackImage || '/images/top_list_marin_fish_trans.png';
+            const hdImageUrl = card.imageUrl || fallbackImage || '/images/marine_fish_banner.png';
 
             return {
               ...card,
@@ -320,120 +320,108 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
         </div>
 
         {/* Desktop Layout - Step 8 */}
-        <div className="max-w-[1280px] mx-auto hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-[24px]">
+        <div className="max-w-[1280px] mx-auto hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-[32px]">
           {[
-            { id: "aqua-fish", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality and taste.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua-fish", bgColor: "transparent" },
-            { id: "marine-fish", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea catch. Captured using sustainable methods for premium freshness.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marine-fish", bgColor: "transparent" },
-            { id: "bengali-fish", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites. The heartbeat of every traditional kitchen.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali-fish", bgColor: "transparent" }
+            { id: "aqua-fish", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality and taste.", imageUrl: "/images/aqua_fish_banner.png", slug: "aqua-fish", bgColor: "transparent" },
+            { id: "marine-fish", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea catch. Captured using sustainable methods for premium freshness.", imageUrl: "/images/marine_fish_banner.png", slug: "marine-fish", bgColor: "transparent" },
+            { id: "bengali-fish", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites. The heartbeat of every traditional kitchen.", imageUrl: "/images/bengali_fish_banner.png", slug: "bengali-fish", bgColor: "transparent" }
           ].map((category: any, idx) => (
             <motion.div
               key={category.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.1 }}
-              whileHover={{ y: -12, boxShadow: '0 25px 50px rgba(0,45,74,0.2)' }}
+              transition={{ duration: 0.6, delay: idx * 0.15 }}
+              whileHover={{ y: -12, boxShadow: '0 30px 60px rgba(0,45,74,0.25)' }}
               onClick={() => navigate(category.slug ? `/?tab=${category.slug}` : `/category/${category.categoryId || category.id}`)}
-              className="bg-gradient-to-b from-white to-[#E0F2FE] rounded-[32px] p-8 flex flex-col relative transition-all duration-300 cursor-pointer min-h-[400px] justify-between border border-[#BEEFFF]"
-              style={{ boxShadow: '0 15px 35px rgba(0,45,74,0.12)' }}
+              className="bg-white rounded-[32px] flex flex-col relative transition-all duration-300 cursor-pointer overflow-hidden border border-[#BEEFFF]/30 group"
+              style={{ boxShadow: '0 20px 45px rgba(0,45,74,0.1)' }}
             >
-              <div className="flex flex-col">
-                {/* Step 6 - Discount Badge */}
-                <div className="absolute top-[20px] left-[20px] z-20 bg-[#002D4A] text-white text-[12px] px-[12px] py-[5px] rounded-[10px] font-bold tracking-wide">
+              {/* Category Image Area - Now Full Width at Top */}
+              <div className="w-full h-[240px] overflow-hidden relative">
+                <img
+                  src={category.imageUrl}
+                  alt={category.title}
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/images/top_list_marin_fish_trans.png';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent opacity-60 pointer-events-none" />
+                
+                {/* Discount Badge - Floating over image */}
+                <div className="absolute top-[20px] left-[20px] z-20 bg-white/95 backdrop-blur-md text-[#002D4A] text-[12px] px-[14px] py-[6px] rounded-[12px] font-[800] tracking-wider shadow-lg border border-white/20">
                   {category.badge}
                 </div>
-
-                {/* Step 3 - Category Image Area */}
-                <div className="w-full h-[200px] rounded-[24px] overflow-hidden mb-4 bg-white border border-[#BEEFFF]/40 flex items-center justify-center p-4">
-                  {category.imageUrl ? (
-                    <img
-                      src={category.imageUrl}
-                      alt={category.title}
-                      className="w-full h-full object-contain transition-transform duration-700 hover:scale-110"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        if (category.fallbackImageUrl && target.src !== window.location.origin + category.fallbackImageUrl) {
-                          target.src = category.fallbackImageUrl;
-                        } else if (target.src !== window.location.origin + '/images/top_list_marin_fish_trans.png') {
-                          target.src = '/images/top_list_marin_fish_trans.png';
-                        }
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-[#BEEFFF]">
-                      {category.title.charAt(0)}
-                    </div>
-                  )}
-                </div>
-
-                {/* Step 4 & 5 - Title and Description */}
-                <h3 className="text-[22px] font-[800] text-[#002D4A] mt-[4px] tracking-tight uppercase">
-                  {category.title}
-                </h3>
-                <p className="text-[15px] text-[#003B5C]/70 mt-[6px] leading-[1.5] line-clamp-2 font-medium">
-                  {category.description || `Explore our premium ${category.title} range for the best quality.`}
-                </p>
               </div>
 
-              {/* Step 7 - Explore Button */}
-              <button className="mt-[18px] bg-[#072F4A] hover:bg-[#0B3C5D] text-white text-[15px] font-bold py-[12px] px-[16px] rounded-[14px] flex items-center justify-center gap-[8px] transition-all w-full shadow-lg shadow-[#072F4A]/30">
-                Explore <span>→</span>
-              </button>
+              {/* Card Content with Padding */}
+              <div className="p-8 pt-6 flex flex-col flex-1 bg-white">
+                <h3 className="text-[24px] font-[900] text-[#002D4A] tracking-tight uppercase group-hover:text-[#1CA7C7] transition-colors duration-300">
+                  {category.title}
+                </h3>
+                <p className="text-[16px] text-[#003B5C]/70 mt-[8px] leading-relaxed font-medium line-clamp-2">
+                  {category.description || `Explore our premium ${category.title} range for the best quality.`}
+                </p>
+
+                <div className="mt-auto pt-6">
+                  <button className="bg-[#072F4A] hover:bg-[#003B5C] text-white text-[16px] font-[800] py-[14px] px-[20px] rounded-[18px] flex items-center justify-center gap-[10px] transition-all w-full shadow-xl shadow-[#072F4A]/25 group-hover:translate-y-[-2px] group-active:scale-95">
+                    Explore Now <span>→</span>
+                  </button>
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>
 
         {/* Mobile Layout (Sliding Cards) - Step 9 & 10 */}
-        <div className="flex md:hidden overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-0 pb-[24px] px-0 scroll-smooth">
+        <div className="flex md:hidden overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-0 pb-[30px] px-0 scroll-smooth">
           {[
-            { id: "aqua-fish", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred.", imageUrl: "/images/top_list_aqua_fish_trans.png", slug: "aqua-fish" },
-            { id: "marine-fish", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea catch. Sustainable methods.", imageUrl: "/images/top_list_marin_fish_trans.png", slug: "marine-fish" },
-            { id: "bengali-fish", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites.", imageUrl: "/images/top_list_bengali_fish_trans.png", slug: "bengali-fish" }
+            { id: "aqua-fish", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality.", imageUrl: "/images/aqua_fish_banner.png", slug: "aqua-fish" },
+            { id: "marine-fish", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea catch. Captured using sustainable methods.", imageUrl: "/images/marine_fish_banner.png", slug: "marine-fish" },
+            { id: "bengali-fish", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites. Heart of kitchen.", imageUrl: "/images/bengali_fish_banner.png", slug: "bengali-fish" }
           ].map((category: any) => (
             <div key={category.id} className="flex-shrink-0 w-full px-5 snap-center">
               <motion.div
                 onClick={() => navigate(category.slug ? `/?tab=${category.slug}` : `/category/${category.categoryId || category.id}`)}
-                className="bg-gradient-to-b from-white to-[#E0F2FE] rounded-[28px] p-6 flex flex-col relative transition-all duration-300 min-h-[380px] justify-between border border-[#BEEFFF]"
-                style={{ boxShadow: '0 8px 24px rgba(0,45,74,0.1)' }}
+                className="bg-white rounded-[32px] flex flex-col relative transition-all duration-300 overflow-hidden border border-[#BEEFFF]/30"
+                style={{ boxShadow: '0 12px 30px rgba(0,45,74,0.12)' }}
               >
-                <div className="flex flex-col">
-                  <div className="absolute top-[14px] left-[14px] z-20 bg-[#002D4A] text-white text-[9px] px-[8px] py-[3px] rounded-[6px] font-bold">
+                {/* Full Width Image at Top */}
+                <div className="w-full h-[200px] overflow-hidden relative">
+                  <img
+                    src={category.imageUrl}
+                    alt={category.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/images/top_list_marin_fish_trans.png';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent opacity-40 pointer-events-none" />
+                  
+                  {/* Badge */}
+                  <div className="absolute top-[16px] left-[16px] z-20 bg-white/95 backdrop-blur-md text-[#002D4A] text-[10px] px-[12px] py-[5px] rounded-[10px] font-bold tracking-wide shadow-md">
                     {category.badge}
                   </div>
-                  <div className="w-full h-[180px] rounded-[20px] overflow-hidden mb-4 bg-white border border-[#BEEFFF]/40 flex items-center justify-center p-4">
-                    {category.imageUrl ? (
-                      <img
-                        src={category.imageUrl}
-                        alt={category.title}
-                        className="w-full h-full object-contain"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          const lowerTitle = category.title.toLowerCase();
-                          let fallback = '/images/top_list_marin_fish_trans.png';
-                          if (lowerTitle.includes('aqua')) fallback = '/images/top_list_aqua_fish_trans.png';
-                          else if (lowerTitle.includes('bengali') || lowerTitle.includes('bangali')) fallback = '/images/top_list_bengali_fish_trans.png';
+                </div>
 
-                          if (target.src !== window.location.origin + fallback) {
-                            target.src = fallback;
-                          }
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-[#BEEFFF]">
-                        {category.title.charAt(0)}
-                      </div>
-                    )}
-                  </div>
-                  <h3 className="text-[22px] font-[800] text-[#002D4A] mt-[2px] uppercase tracking-tight">
+                {/* Content */}
+                <div className="p-6 flex flex-col flex-1">
+                  <h3 className="text-[22px] font-[800] text-[#002D4A] uppercase tracking-tight">
                     {category.title}
                   </h3>
-                  <p className="text-[14px] text-[#003B5C]/70 mt-[4px] leading-[1.5] line-clamp-2 font-medium">
+                  <p className="text-[14px] text-[#003B5C]/70 mt-[6px] leading-relaxed font-medium line-clamp-2">
                     {category.description || `Explore our premium ${category.title} range.`}
                   </p>
+                  
+                  <div className="mt-auto pt-5">
+                    <button className="bg-[#072F4A] active:bg-[#0B3C5D] text-white text-[15px] font-bold py-[14px] px-[16px] rounded-[16px] flex items-center justify-center gap-[8px] w-full shadow-lg shadow-[#072F4A]/20">
+                      Explore <span>→</span>
+                    </button>
+                  </div>
                 </div>
-                <button className="mt-[16px] bg-[#072F4A] active:bg-[#0B3C5D] text-white text-[14px] font-bold py-[12px] px-[14px] rounded-[12px] flex items-center justify-center gap-[6px] w-full shadow-md shadow-[#072F4A]/20">
-                  Explore <span>→</span>
-                </button>
               </motion.div>
             </div>
           ))}

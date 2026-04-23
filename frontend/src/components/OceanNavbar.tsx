@@ -4,7 +4,11 @@ import { motion } from 'framer-motion';
 import { useThemeContext } from '../context/ThemeContext';
 import { getHeaderCategoriesPublic } from '../services/api/headerCategoryService';
 
-export default function OceanNavbar() {
+interface OceanNavbarProps {
+    onMenuClick: () => void;
+}
+
+export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
     const internalNavigate = useNavigate();
     const [isVisible, setIsVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
@@ -176,60 +180,46 @@ export default function OceanNavbar() {
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-[100] h-[100px] flex items-center justify-center transition-all duration-500 transform ${isVisible ? 'translate-y-0' : '-translate-y-full'
+            className={`fixed top-0 left-0 right-0 z-[100] h-[70px] flex items-center px-6 transition-all duration-500 transform ${isVisible ? 'translate-y-0' : '-translate-y-full'
                 }`}
         >
-            {/* Route-aware nav surface for stronger contrast on category pages */}
-            <div className={`absolute inset-0 ${navSurfaceClass} backdrop-blur-[10px] pointer-events-none`} />
-            <div className="w-full flex items-center justify-center px-14 sm:px-16 md:px-20 gap-4 sm:gap-7 md:gap-[60px]">
-                {navLinks.map((link) => (
-                    <button
-                        key={link.id}
-                        onClick={() => handleNavClick(link.id)}
-                        className="flex flex-col items-center justify-center transition-all duration-300 relative group"
-                    >
-                        <motion.div
-                            whileHover={{ y: -6 }}
-                            className="flex flex-col items-center justify-center group/item transition-all duration-300"
-                        >
-                            <div className={`
-                                w-[48px] h-[48px] flex items-center justify-center 
-                                transition-all duration-300 relative z-10
-                                ${activeCategory === link.id ? 'scale-110' : 'opacity-80 group-hover:opacity-100'}
-                            `}>
-                                {activeCategory === link.id && (
-                                    <motion.div
-                                        layoutId="activeCircle"
-                                        className={`absolute inset-0 rounded-full blur-[6px] ${activeCircleClass}`}
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                    />
-                                )}
+            {/* Route-aware nav surface */}
+            <div className={`absolute inset-0 ${navSurfaceClass} backdrop-blur-[12px] shadow-lg`} />
+            
+            <div className="relative w-full flex items-center justify-between z-10">
+                {/* Left side - Spacer to balance centering */}
+                <div className="w-10 md:w-12" />
 
-                                <div className={`
-                                    transition-all duration-300
-                                    ${activeCategory === link.id ? activeIconClass : inactiveIconClass}
-                                `}
-                                    style={{
-                                        filter: activeCategory === link.id ? 'drop-shadow(0 0 10px rgba(111,211,255,1))' : 'none',
-                                    }}
-                                >
-                                    {link.icon}
-                                </div>
-                            </div>
+                {/* Center - Brand Name */}
+                <div 
+                    className="cursor-pointer group flex flex-col items-center"
+                    onClick={() => internalNavigate('/')}
+                >
+                    <span className={`
+                        text-2xl md:text-3xl font-black tracking-[-0.05em] transition-all duration-300
+                        ${isHome || isCategorySection ? 'text-white' : 'text-[#072F4A]'}
+                    `}>
+                        INOR<span className={isHome || isCategorySection ? 'text-[#8BE7FF]' : 'text-[#1CA7C7]'}>FRESH</span>
+                    </span>
+                    <div className={`h-1 w-0 group-hover:w-full transition-all duration-300 rounded-full ${isHome || isCategorySection ? 'bg-[#8BE7FF]' : 'bg-[#1CA7C7]'}`} />
+                </div>
 
-                            <span className={`
-                                text-[13px] md:text-[14px] font-bold mt-[4px] transition-all duration-300 tracking-[0.05em]
-                                ${activeCategory === link.id ? activeLabelClass : inactiveLabelClass}
-                            `}
-                                style={{
-                                    textShadow: activeCategory === link.id ? activeLabelShadow : 'none'
-                                }}
-                            >
-                                {link.name}
-                            </span>
-                        </motion.div>
-                    </button>
-                ))}
+                {/* Right side - Hamburger Menu */}
+                <button 
+                    className={`
+                        p-2 rounded-xl transition-all duration-300 active:scale-90
+                        ${isHome || isCategorySection 
+                            ? 'text-white hover:bg-white/10' 
+                            : 'text-[#072F4A] hover:bg-[#072F4A]/5'}
+                    `}
+                    onClick={onMenuClick}
+                >
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="4" y1="12" x2="20" y2="12" />
+                        <line x1="4" y1="6" x2="20" y2="6" />
+                        <line x1="4" y1="18" x2="20" y2="18" />
+                    </svg>
+                </button>
             </div>
         </nav>
     );

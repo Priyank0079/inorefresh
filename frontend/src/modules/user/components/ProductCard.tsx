@@ -222,121 +222,107 @@ export default function ProductCard({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -6, boxShadow: '0 18px 40px rgba(0,0,0,0.12)' }}
+      whileHover={{ y: -6, boxShadow: '0 20px 40px rgba(0,0,0,0.14)' }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
       onClick={handleCardClick}
-      className="relative bg-[#ffffff] rounded-[20px] md:rounded-[24px] p-3 md:p-[22px] flex flex-col group transition-all duration-300 cursor-pointer overflow-hidden border border-gray-100/30"
+      className="relative bg-white rounded-[24px] md:rounded-[28px] flex flex-col group transition-all duration-300 cursor-pointer overflow-hidden border border-gray-100/50"
       style={{
-        boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
+        boxShadow: '0 10px 25px rgba(0,0,0,0.06)',
         fontFamily: 'Inter, Poppins, sans-serif'
       }}
     >
-      {/* 3 Availability Badge */}
-      <div className="absolute top-[10px] left-[10px] md:top-[16px] md:left-[16px] z-10 flex flex-col gap-1">
-        <div className="px-[8px] py-[2px] md:px-[10px] md:py-[4px] rounded-[8px] md:rounded-[10px] bg-[#eef2ff] text-[#2563eb] text-[10px] md:text-[12px] font-[500] uppercase tracking-wide">
-          {badgeText || (product.isAvailable === false ? 'Out of Range' : `${product.stock || 0} AVAILABLE`)}
-        </div>
-        {isFish && (
-          <div className="px-[8px] py-[2px] md:px-[10px] md:py-[4px] rounded-[8px] md:rounded-[10px] bg-[#fff7ed] text-[#ea580c] text-[10px] md:text-[12px] font-[700] uppercase tracking-wide border border-[#fdba74]">
-            🐟 MIN 5KG
+      {/* 2 Product Image Area - Now Full Width at Top */}
+      <div className="relative w-full h-[140px] md:h-[180px] overflow-hidden bg-[#f8fafc]">
+        {/* Availability Badge - Now absolute over image */}
+        <div className="absolute top-[12px] left-[12px] z-20 flex flex-col gap-1.5">
+          <div className="px-[8px] py-[3px] md:px-[10px] md:py-[4px] rounded-[8px] md:rounded-[10px] bg-white/90 backdrop-blur-sm text-[#2563eb] text-[10px] md:text-[11px] font-[600] uppercase tracking-wider shadow-sm border border-blue-50/50">
+            {badgeText || (product.isAvailable === false ? 'Out of Range' : `${product.stock || 0} AVAILABLE`)}
           </div>
-        )}
-      </div>
+          {isFish && (
+            <div className="px-[8px] py-[3px] md:px-[10px] md:py-[4px] rounded-[8px] md:rounded-[10px] bg-[#fff7ed]/90 backdrop-blur-sm text-[#ea580c] text-[10px] md:text-[11px] font-[700] uppercase tracking-wider border border-[#fdba74]/50 shadow-sm">
+              🐟 MIN 5KG
+            </div>
+          )}
+        </div>
 
-      {/* 2 Product Image Area */}
-      <div className="relative mt-7 mb-3 md:mt-8 md:mb-4">
-        <div
-          className={`flex items-center justify-center mx-auto transition-transform duration-500 group-hover:scale-105 ${
-            isMarineCategoryImage
-              ? 'w-full h-[110px] md:h-[150px] bg-transparent rounded-[12px]'
-              : 'w-[100px] h-[100px] md:w-[140px] md:h-[140px] bg-[#f3f5f9] rounded-full'
-          }`}
-        >
+        <div className="w-full h-full transition-transform duration-700 group-hover:scale-110">
           <img
             ref={imageRef}
             src={productImageSrc}
             alt={product.name || product.productName || 'Product'}
-            className={
-              isMarineCategoryImage
-                ? 'w-full h-full object-contain drop-shadow-md'
-                : 'w-[75px] h-auto md:w-[105px] object-contain drop-shadow-md'
-            }
+            className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
             loading="lazy"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-
-              // Only try fallbacks once to prevent infinite loops
               if (target.dataset.triedFallback === 'true') {
                 target.style.display = 'none';
                 const parent = target.parentElement;
                 if (parent && !parent.querySelector('.fallback-icon')) {
                   const fallback = document.createElement('div');
-                  fallback.className = 'text-xl md:text-2xl font-bold text-gray-300 fallback-icon';
+                  fallback.className = 'w-full h-full flex items-center justify-center bg-gray-50 text-3xl font-bold text-gray-200';
                   fallback.textContent = (product.name || product.productName || '?').charAt(0).toUpperCase();
                   parent.appendChild(fallback);
                 }
                 return;
               }
-
-              // Set flag that we've tried a fallback
               target.dataset.triedFallback = 'true';
-
-              // Specific fallbacks for fish categories to ensure they load properly
               const fallbackFishCategoryKey = getFishCategoryKey(product);
               if (fallbackFishCategoryKey) {
                 target.src = FISH_CATEGORY_FALLBACK_IMAGES[fallbackFishCategoryKey];
                 return;
               }
-
-              // Default behavior for other products
-              target.style.display = 'none';
-              const parent = target.parentElement;
-              if (parent && !parent.querySelector('.fallback-icon')) {
-                const fallback = document.createElement('div');
-                fallback.className = 'text-xl md:text-2xl font-bold text-gray-300 fallback-icon';
-                fallback.textContent = (product.name || product.productName || '?').charAt(0).toUpperCase();
-                parent.appendChild(fallback);
-              }
             }}
           />
         </div>
+        
+        {/* Subtle overlay gradient for better text legibility on white badges */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-transparent opacity-40 pointer-events-none" />
       </div>
 
-      {/* 4 & 5 Product Text Content */}
-      <div className="flex-1 flex flex-col pt-0 md:pt-1">
-        <h3 className="text-[14px] md:text-[17px] font-[600] text-[#072F4A] line-clamp-1 leading-tight mb-0.5 md:mb-1">
-          {product.name || product.productName || ''}
-        </h3>
-        <p className="text-[11px] md:text-[13px] text-[#6b7280] leading-[1.3] md:leading-[1.4] line-clamp-2 min-h-[2.6em] md:min-h-[2.8em]">
-          {product.smallDescription || product.description || `Fresh ${product.name} directly from source.`}
-        </p>
-      </div>
-
-      {/* 7 & 8 Bottom Action Area */}
-      <div className="flex justify-between items-center mt-3 md:mt-[18px]">
-        <div className="flex flex-col">
-          <span className="text-[18px] md:text-[22px] font-[700] text-[#072F4A] tracking-tight">
-            {resolvedDisplayPrice !== null ? `Rs.${resolvedDisplayPrice.toLocaleString('en-IN')}` : 'Price N/A'}
-          </span>
+      {/* Product Content - Now with Padding */}
+      <div className="p-3.5 md:p-5 flex-1 flex flex-col bg-white">
+        <div className="flex-1 flex flex-col">
+          <h3 className="text-[15px] md:text-[18px] font-[700] text-[#072F4A] line-clamp-1 leading-tight mb-1.5 group-hover:text-[#2563eb] transition-colors duration-300">
+            {product.name || product.productName || ''}
+          </h3>
+          <p className="text-[12px] md:text-[14px] text-gray-500 leading-relaxed line-clamp-2 min-h-[2.8em] mb-3">
+            {product.smallDescription || product.description || `Premium fresh ${product.name} delivered to your doorstep.`}
+          </p>
         </div>
 
-        <div className="flex items-center gap-[6px] md:gap-[8px]">
-          <button
-            ref={addButtonRef}
-            disabled={product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")}
-            onClick={handleAdd}
-            className={`w-[30px] h-[30px] md:w-[36px] md:h-[36px] rounded-[8px] md:rounded-[10px] flex items-center justify-center font-bold transition-all active:scale-95 ${product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-[#072F4A] text-white hover:bg-[#001D33]'
+        {/* Bottom Action Area */}
+        <div className="flex justify-between items-center mt-auto pt-2 border-t border-gray-50">
+          <div className="flex flex-col">
+            <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Price</span>
+            <span className="text-[18px] md:text-[22px] font-[800] text-[#072F4A] tracking-tight">
+              {resolvedDisplayPrice !== null ? `₹${resolvedDisplayPrice.toLocaleString('en-IN')}` : 'Price N/A'}
+            </span>
+          </div>
+
+          <div className="flex items-center">
+            <button
+              ref={addButtonRef}
+              disabled={product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")}
+              onClick={handleAdd}
+              className={`min-w-[40px] h-[40px] md:min-w-[44px] md:h-[44px] px-3 rounded-[12px] md:rounded-[14px] flex items-center justify-center font-bold transition-all active:scale-90 shadow-sm ${
+                product.isAvailable === false || ((product.stock !== undefined && product.stock <= 0) || product.status === "Sold out")
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : inCartQty > 0 
+                    ? 'bg-[#2563eb] text-white' 
+                    : 'bg-[#072F4A] text-white hover:bg-[#001D33] hover:shadow-md hover:-translate-y-0.5'
               }`}
-          >
-            {inCartQty > 0 ? (
-              <span className="text-[13px] md:text-[15px]">{inCartQty}</span>
-            ) : (
-              <span className="text-[18px] md:text-[20px] mb-0.5">+</span>
-            )}
-          </button>
+            >
+              {inCartQty > 0 ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-[14px] md:text-[16px]">{inCartQty}</span>
+                  <span className="text-[12px] opacity-80 font-medium">In Cart</span>
+                </div>
+              ) : (
+                <span className="text-[20px] md:text-[22px]">+</span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>
