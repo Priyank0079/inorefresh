@@ -65,6 +65,7 @@ export default function WarehouseProductList() {
   );
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [selectedDate, setSelectedDate] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [paginationInfo, setPaginationInfo] = useState<{
     page: number;
@@ -131,10 +132,16 @@ export default function WarehouseProductList() {
       } else if (statusFilter === "Unpublished") {
         params.status = "unpublished";
       }
+      
       if (stockFilter === "In Stock") {
         params.stock = "inStock";
       } else if (stockFilter === "Out of Stock") {
         params.stock = "outOfStock";
+      }
+      
+      if (selectedDate) {
+        params.dateFrom = selectedDate;
+        params.dateTo = selectedDate;
       }
 
       const response = await getProducts(params);
@@ -172,6 +179,7 @@ export default function WarehouseProductList() {
     stockFilter,
     sortColumn,
     sortDirection,
+    selectedDate,
   ]);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -415,6 +423,33 @@ export default function WarehouseProductList() {
                 <option value="In Stock">In Stock</option>
                 <option value="Out of Stock">Out of Stock</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-xs text-neutral-600 mb-1">
+                Filter by Date
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer"
+                />
+                <button 
+                  onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                  className="px-3 py-1.5 bg-teal-600 text-white rounded text-xs font-bold hover:bg-teal-700 transition-colors"
+                >
+                  Today
+                </button>
+                {selectedDate && (
+                  <button 
+                    onClick={() => setSelectedDate("")}
+                    className="text-xs text-red-500 hover:underline"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">

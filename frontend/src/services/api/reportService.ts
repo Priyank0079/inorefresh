@@ -12,6 +12,7 @@ export interface SalesReportParams {
 
 export interface SalesReport {
     orderId: string;
+    shopName: string;
     orderItemId: string;
     product: string;
     variant: string;
@@ -35,6 +36,6 @@ export interface SalesReportResponse {
  * Get seller's sales report
  */
 export const getSalesReport = async (params: SalesReportParams): Promise<SalesReportResponse> => {
-    const response = await api.get<SalesReportResponse>('/seller/reports/sales', { params });
+    const response = await api.get<SalesReportResponse>('/warehouse/reports/sales', { params });
     return response.data;
 };

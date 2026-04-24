@@ -169,8 +169,12 @@ export default function WarehouseAddProduct() {
   };
 
   const addVariation = () => {
-    if (!variationForm.title || !variationForm.price) {
-      setUploadError("Please enter a variation title and price");
+    if (!variationForm.title.trim()) {
+      setUploadError("Please enter a variant label (e.g. 500g, 1kg)");
+      return;
+    }
+    if (!variationForm.price) {
+      setUploadError("Please enter a price for this variant");
       return;
     }
     const price = parseFloat(variationForm.price);
@@ -193,28 +197,20 @@ export default function WarehouseAddProduct() {
 
     if (!formData.productName.trim()) { setUploadError("Product name is required"); return; }
     if (!formData.category) { setUploadError("Please select a category"); return; }
-    if (!formData.basePrice || parseFloat(formData.basePrice) <= 0) {
-      setUploadError("Please enter a valid price");
+
+    if (!id && !mainImageFile) {
+      setUploadError("Product image is required. Please choose a high-quality image.");
       return;
     }
 
     // Build final variations list:
-    // Always start with the base price/stock as a default variant
-    const basePrice = parseFloat(formData.basePrice);
-    const baseSalePrice = parseFloat(formData.salePrice || "0");
-    const baseStock = parseInt(formData.baseStock || "0");
+    // User requested to make variants mandatory
+    if (variations.length === 0) {
+      setUploadError("Please add at least one product variant (e.g. 500g, 1kg) in the variants section below.");
+      return;
+    }
 
-    // Default variation ("Standard" or use first existing variation name if editing)
-    const defaultVariation: ProductVariation = {
-      title: "Standard",
-      price: basePrice,
-      discPrice: baseSalePrice > 0 && baseSalePrice < basePrice ? baseSalePrice : 0,
-      stock: baseStock,
-      status: baseStock > 0 ? "Available" : "Sold out",
-    };
-
-    // Merge: default + any extra named variants the user added
-    const finalVariations = [defaultVariation, ...variations];
+    const finalVariations = variations;
 
     setUploading(true);
     try {
@@ -237,9 +233,9 @@ export default function WarehouseAddProduct() {
         variations: finalVariations,
         tags: [],
         isReturnable: false,
-        price: basePrice,
-        discPrice: baseSalePrice > 0 ? baseSalePrice : undefined,
-        stock: baseStock,
+        price: finalVariations[0].price,
+        discPrice: finalVariations[0].discPrice > 0 ? finalVariations[0].discPrice : undefined,
+        stock: finalVariations[0].stock,
       };
 
       const response = id
@@ -448,7 +444,9 @@ export default function WarehouseAddProduct() {
               </div>
               {/* Upload controls */}
               <div className="flex-1">
-                <label className="block text-sm font-medium text-neutral-700 mb-2">Upload Image</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Upload Image <span className="text-red-500">*</span>
+                </label>
                 <label className="cursor-pointer inline-flex items-center gap-2 bg-teal-50 border border-teal-300 text-teal-700 hover:bg-teal-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A1.5 1.5 0 004.5 20.25h15a1.5 1.5 0 001.5-1.5V16.5m-12-9l3-3m0 0l3 3m-3-3v12.25" />
@@ -456,7 +454,10 @@ export default function WarehouseAddProduct() {
                   Choose Image
                   <input type="file" accept="image/*" className="hidden" onChange={handleMainImageChange} />
                 </label>
-                <p className="text-xs text-neutral-400 mt-2">JPG, PNG, or WebP. Max 5MB.</p>
+                <p className="text-xs text-neutral-400 mt-2">
+                  JPG, PNG, or WebP. Max 5MB. 
+                  <span className="block mt-1 text-[#12b2a2] font-semibold italic">Recommended: 800x800px or higher (1:1 square ratio)</span>
+                </p>
                 {mainImageFile && (
                   <p className="text-xs text-teal-600 mt-1">✓ {mainImageFile.name} selected</p>
                 )}
@@ -465,160 +466,126 @@ export default function WarehouseAddProduct() {
           </div>
         </div>
 
-        {/* ── Pricing & Stock ──────────────────────────────── */}
+        {/* ── Pricing & Variants ──────────────────────────────── */}
         <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden">
           <div className="bg-teal-600 text-white px-5 py-3">
-            <h2 className="text-base font-semibold">Pricing & Stock</h2>
+            <h2 className="text-base font-semibold">Pricing & Variants</h2>
           </div>
           <div className="p-5 space-y-4">
-            {/* Simple required price / stock row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Price (₹) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="basePrice"
-                  value={formData.basePrice}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                  className="w-full px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Sale Price (₹) <span className="text-neutral-400 text-xs">(optional)</span>
-                </label>
-                <input
-                  type="number"
-                  name="salePrice"
-                  value={formData.salePrice}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                  className="w-full px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-                {formData.salePrice && formData.basePrice &&
-                  parseFloat(formData.salePrice) > parseFloat(formData.basePrice) && (
-                    <p className="text-xs text-red-500 mt-1">⚠ Sale price should be less than main price</p>
-                  )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Stock (qty) <span className="text-neutral-400 text-xs">(optional)</span>
-                </label>
-                <input
-                  type="number"
-                  name="baseStock"
-                  value={formData.baseStock}
-                  onChange={handleChange}
-                  placeholder="0"
-                  min="0"
-                  className="w-full px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
-            </div>
-
-            {/* Optional extra size variants (e.g. 500g, 1kg) */}
-            <details className="group">
-              <summary className="cursor-pointer flex items-center gap-2 text-sm font-medium text-teal-700 hover:text-teal-900 select-none">
-                <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            {/* Mandatory product variants section */}
+            <div className="mt-6 border-t border-neutral-100 pt-6">
+              <div className="flex items-center gap-2 text-sm font-semibold text-teal-800 mb-4">
+                <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                Add extra size/weight variants (optional)
-                <span className="text-xs text-neutral-400 font-normal">e.g. 500g, 1kg — each with their own price</span>
-              </summary>
-              <div className="mt-3 space-y-3 border-t border-neutral-100 pt-3">
+                Product Variants <span className="text-red-500">*</span>
+                <span className="text-xs text-neutral-400 font-normal ml-2">Add at least one (e.g. 500g, 1kg, Standard)</span>
+              </div>
+              
+              <div className="space-y-4">
                 {/* Add variant form */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-neutral-50 border border-neutral-200 rounded-lg p-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-teal-50/50 border border-teal-100 rounded-xl p-4">
                   <div>
-                    <label className="block text-xs font-medium text-neutral-600 mb-1">Label</label>
-                    <input type="text" placeholder="e.g. 1kg"
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                      Variant Label <span className="text-red-500">*</span>
+                    </label>
+                    <input type="text" placeholder="e.g. 500g"
                       value={variationForm.title}
                       onChange={e => setVariationForm(p => ({ ...p, title: e.target.value }))}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-neutral-600 mb-1">Price (₹)</label>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Price (₹)</label>
                     <input type="number" placeholder="0.00"
                       value={variationForm.price}
                       onChange={e => setVariationForm(p => ({ ...p, price: e.target.value }))}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" min="0"
+                      className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white" min="0"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-neutral-600 mb-1">Sale Price (₹)</label>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Sale Price (₹)</label>
                     <input type="number" placeholder="0.00"
                       value={variationForm.discPrice}
                       onChange={e => setVariationForm(p => ({ ...p, discPrice: e.target.value }))}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" min="0"
+                      className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white" min="0"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-neutral-600 mb-1">Stock</label>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Stock</label>
                     <input type="number" placeholder="0"
                       value={variationForm.stock}
                       onChange={e => setVariationForm(p => ({ ...p, stock: e.target.value }))}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" min="0"
+                      className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white" min="0"
                     />
                   </div>
                   <div className="col-span-2 sm:col-span-4">
                     <button type="button" onClick={addVariation}
-                      className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-sm hover:shadow-md active:scale-95"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                       </svg>
-                      Add Variant
+                      Add Variant to List
                     </button>
                   </div>
                 </div>
 
                 {/* Extra variants table */}
-                {variations.length > 0 && (
-                  <div className="overflow-x-auto">
+                {variations.length > 0 ? (
+                  <div className="overflow-hidden border border-neutral-200 rounded-xl">
                     <table className="w-full text-sm border-collapse">
                       <thead>
-                        <tr className="bg-neutral-50 text-xs font-semibold text-neutral-600 uppercase">
-                          <th className="px-4 py-2 text-left border border-neutral-200">Label</th>
-                          <th className="px-4 py-2 text-left border border-neutral-200">Price</th>
-                          <th className="px-4 py-2 text-left border border-neutral-200">Sale Price</th>
-                          <th className="px-4 py-2 text-left border border-neutral-200">Stock</th>
-                          <th className="px-4 py-2 text-left border border-neutral-200">Action</th>
+                        <tr className="bg-neutral-50 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left border-b border-neutral-200">Label</th>
+                          <th className="px-4 py-3 text-left border-b border-neutral-200">Price</th>
+                          <th className="px-4 py-3 text-left border-b border-neutral-200">Sale Price</th>
+                          <th className="px-4 py-3 text-left border-b border-neutral-200">Stock</th>
+                          <th className="px-4 py-3 text-right border-b border-neutral-200">Action</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-neutral-100">
                         {variations.map((v, i) => (
-                          <tr key={i} className="border-b border-neutral-100">
-                            <td className="px-4 py-2 font-medium text-neutral-800">{v.title}</td>
-                            <td className="px-4 py-2">₹{v.price.toFixed(2)}</td>
-                            <td className="px-4 py-2 text-[#12b2a2]">
-                              {v.discPrice > 0 ? `₹${v.discPrice.toFixed(2)}` : <span className="text-neutral-400">—</span>}
+                          <tr key={i} className="hover:bg-neutral-50/50 transition-colors">
+                            <td className="px-4 py-3 font-bold text-neutral-800">{v.title}</td>
+                            <td className="px-4 py-3 text-neutral-600 font-medium">₹{v.price.toFixed(2)}</td>
+                            <td className="px-4 py-3">
+                              {v.discPrice > 0 ? (
+                                <span className="text-teal-600 font-bold">₹{v.discPrice.toFixed(2)}</span>
+                              ) : (
+                                <span className="text-neutral-300">—</span>
+                              )}
                             </td>
-                            <td className="px-4 py-2">
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${v.stock > 0 ? 'bg-teal-50 text-[#0e7490]' : 'bg-red-100 text-red-700'}`}>
-                                {v.stock}
+                            <td className="px-4 py-3">
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${v.stock > 0 ? 'bg-teal-100 text-teal-700' : 'bg-red-100 text-red-700'}`}>
+                                {v.stock} in stock
                               </span>
                             </td>
-                            <td className="px-4 py-2">
+                            <td className="px-4 py-3 text-right">
                               <button type="button" onClick={() => removeVariation(i)}
-                                className="text-red-500 hover:text-red-700 text-xs font-medium transition-colors"
-                              >Remove</button>
+                                className="text-red-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-lg transition-all"
+                                title="Remove variant"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-neutral-200 rounded-xl bg-neutral-50/50 text-neutral-400">
+                    <svg className="w-10 h-10 mb-2 opacity-20" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    <p className="text-sm">No variants added yet. Please add at least one.</p>
+                  </div>
                 )}
               </div>
-            </details>
+            </div>
           </div>
         </div>
 

@@ -9,6 +9,7 @@ export interface ApiResponse<T> {
 export interface Order {
   id: string;
   orderId: string;
+  shopName?: string;
   deliveryDate: string;
   orderDate: string;
   status: string;
@@ -49,6 +50,7 @@ export interface OrderDetail {
   timeSlot: string;
   status: 'Out For Delivery' | 'Received' | 'Payment Pending' | 'Cancelled' | 'Rejected';
   customerName: string;
+  shopName?: string;
   customerEmail: string;
   customerPhone: string;
   deliveryBoyName: string;

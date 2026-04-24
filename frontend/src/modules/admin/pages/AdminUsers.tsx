@@ -14,6 +14,7 @@ interface User {
     walletAmount: number;
     totalOrders: number;
     totalSpent: number;
+    shopName?: string;
 }
 
 export default function AdminUsers() {
@@ -98,14 +99,15 @@ export default function AdminUsers() {
         // Map frontend column names to backend field names
         const columnMap: Record<string, string> = {
             'id': '_id',
-            'name': 'name',
+            'name': activeTab === 'Customer' ? 'name' : 'ownerName',
             '_id': '_id',
-            'registrationDate': 'registrationDate',
+            'registrationDate': activeTab === 'Customer' ? 'registrationDate' : 'createdAt',
             'status': 'status',
             'refCode': 'refCode',
             'walletAmount': 'walletAmount',
             'totalOrders': 'totalOrders',
             'totalSpent': 'totalSpent',
+            'shopName': 'shopName',
         };
         const backendColumn = columnMap[column] || column;
 
@@ -176,14 +178,15 @@ export default function AdminUsers() {
         // Map frontend column names to backend field names for comparison
         const columnMap: Record<string, string> = {
             'id': '_id',
-            'name': 'name',
+            'name': activeTab === 'Customer' ? 'name' : 'ownerName',
             '_id': '_id',
-            'registrationDate': 'registrationDate',
+            'registrationDate': activeTab === 'Customer' ? 'registrationDate' : 'createdAt',
             'status': 'status',
             'refCode': 'refCode',
             'walletAmount': 'walletAmount',
             'totalOrders': 'totalOrders',
             'totalSpent': 'totalSpent',
+            'shopName': 'shopName',
         };
         const backendColumn = columnMap[column] || column;
 
@@ -287,6 +290,9 @@ export default function AdminUsers() {
                                         </div>
                                     </th>
                                     <th className="p-4">
+                                        Shop Name
+                                    </th>
+                                    <th className="p-4">
                                         Contact
                                     </th>
                                     <th
@@ -370,6 +376,7 @@ export default function AdminUsers() {
                                         <tr key={user._id} className="hover:bg-neutral-50 transition-colors text-sm text-neutral-700 border-b border-neutral-200">
                                             <td className="p-4 align-middle">{startIndex + index + 1}</td>
                                             <td className="p-4 align-middle">{user.name || (user as any).ownerName || (user as any).shopName}</td>
+                                            <td className="p-4 align-middle">{user.shopName || '-'}</td>
                                             <td className="p-4 align-middle">
                                                 <div className="text-xs space-y-1">
                                                     {user.email && <div>{user.email}</div>}

@@ -15,6 +15,8 @@ export interface IRetailerUser extends Document {
     status: 'Pending' | 'Active' | 'Inactive';
     createdAt: Date;
     walletAmount: number;
+    totalOrders: number;
+    totalSpent: number;
     refCode?: string;
     deliveryOtp?: string;
     fcmTokens?: string[];
@@ -36,6 +38,8 @@ const RetailerUserSchema: Schema = new Schema(
         documents: [{ type: String }],
         status: { type: String, enum: ['Pending', 'Active', 'Inactive'], default: 'Pending' },
         walletAmount: { type: Number, default: 0 },
+        totalOrders: { type: Number, default: 0 },
+        totalSpent: { type: Number, default: 0 },
         refCode: { type: String },
         fcmTokenMobile: { type: [String], default: [] },
     },

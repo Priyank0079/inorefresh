@@ -42,7 +42,7 @@ export interface OrderEarning {
  * Get warehouse wallet balance
  */
 export const getWarehouseWalletBalance = async (): Promise<any> => {
-    const response = await api.get('/auth/warehouse/wallet/balance');
+    const response = await api.get('/warehouse/wallet/balance');
     return response.data;
 };
 
@@ -50,7 +50,7 @@ export const getWarehouseWalletBalance = async (): Promise<any> => {
  * Get warehouse wallet transactions
  */
 export const getWarehouseWalletTransactions = async (params?: any): Promise<any> => {
-    const response = await api.get('/auth/warehouse/wallet/transactions', { params });
+    const response = await api.get('/warehouse/wallet/transactions', { params });
     return response.data;
 };
 
@@ -58,7 +58,7 @@ export const getWarehouseWalletTransactions = async (params?: any): Promise<any>
  * Request warehouse withdrawal
  */
 export const requestWarehouseWithdrawal = async (amount: number, paymentMethod: string): Promise<any> => {
-    const response = await api.post('/auth/warehouse/wallet/withdraw', { amount, paymentMethod });
+    const response = await api.post('/warehouse/wallet/withdraw', { amount, paymentMethod });
     return response.data;
 };
 
@@ -66,7 +66,7 @@ export const requestWarehouseWithdrawal = async (amount: number, paymentMethod: 
  * Get warehouse withdrawals
  */
 export const getWarehouseWithdrawals = async (params?: any): Promise<any> => {
-    const response = await api.get('/auth/warehouse/wallet/withdrawals', { params });
+    const response = await api.get('/warehouse/wallet/withdrawals', { params });
     return response.data;
 };
 
@@ -74,6 +74,6 @@ export const getWarehouseWithdrawals = async (params?: any): Promise<any> => {
  * Get warehouse commissions
  */
 export const getWarehouseCommissions = async (params?: any): Promise<any> => {
-    const response = await api.get('/auth/warehouse/wallet/commissions', { params });
+    const response = await api.get('/warehouse/wallet/commissions', { params });
     return response.data;
 };

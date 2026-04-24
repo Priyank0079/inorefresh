@@ -42,7 +42,7 @@ export interface OrderEarning {
  * Get seller wallet stats
  */
 export const getWalletStats = async (): Promise<any> => {
-    const response = await api.get('/seller/wallet/stats');
+    const response = await api.get('/warehouse/wallet/stats');
     return response.data;
 };
 
@@ -50,7 +50,7 @@ export const getWalletStats = async (): Promise<any> => {
  * Get wallet transactions
  */
 export const getWalletTransactions = async (params: any): Promise<any> => {
-    const response = await api.get('/seller/wallet/transactions', { params });
+    const response = await api.get('/warehouse/wallet/transactions', { params });
     return response.data;
 };
 
@@ -58,7 +58,7 @@ export const getWalletTransactions = async (params: any): Promise<any> => {
  * Get withdrawal requests
  */
 export const getWithdrawalRequests = async (params: any): Promise<any> => {
-    const response = await api.get('/seller/wallet/withdrawals', { params });
+    const response = await api.get('/warehouse/wallet/withdrawals', { params });
     return response.data;
 };
 
@@ -66,7 +66,7 @@ export const getWithdrawalRequests = async (params: any): Promise<any> => {
  * Create withdrawal request
  */
 export const createWithdrawalRequest = async (data: any): Promise<any> => {
-    const response = await api.post('/seller/wallet/withdrawals', data);
+    const response = await api.post('/warehouse/wallet/withdrawals', data);
     return response.data;
 };
 
@@ -74,6 +74,6 @@ export const createWithdrawalRequest = async (data: any): Promise<any> => {
  * Get order earnings
  */
 export const getOrderEarnings = async (params: any): Promise<any> => {
-    const response = await api.get('/seller/wallet/earnings', { params });
+    const response = await api.get('/warehouse/wallet/earnings', { params });
     return response.data;
 };

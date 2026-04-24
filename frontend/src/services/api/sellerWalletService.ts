@@ -5,7 +5,7 @@ import api from './config';
  */
 export const getSellerWalletBalance = async () => {
     try {
-        const response = await api.get('/seller/wallet-new/balance');
+        const response = await api.get('/warehouse/wallet-new/balance');
         return response.data;
     } catch (error: any) {
         console.error('Error getting wallet balance:', error);
@@ -18,7 +18,7 @@ export const getSellerWalletBalance = async () => {
  */
 export const getSellerWalletTransactions = async (page: number = 1, limit: number = 20) => {
     try {
-        const response = await api.get('/seller/wallet-new/transactions', {
+        const response = await api.get('/warehouse/wallet-new/transactions', {
             params: { page, limit },
         });
         return response.data;
@@ -33,7 +33,7 @@ export const getSellerWalletTransactions = async (page: number = 1, limit: numbe
  */
 export const requestSellerWithdrawal = async (amount: number, paymentMethod: 'Bank Transfer' | 'UPI') => {
     try {
-        const response = await api.post('/seller/wallet-new/withdraw', {
+        const response = await api.post('/warehouse/wallet-new/withdraw', {
             amount,
             paymentMethod,
         });
@@ -49,7 +49,7 @@ export const requestSellerWithdrawal = async (amount: number, paymentMethod: 'Ba
  */
 export const getSellerWithdrawals = async (status?: string) => {
     try {
-        const response = await api.get('/seller/wallet-new/withdrawals', {
+        const response = await api.get('/warehouse/wallet-new/withdrawals', {
             params: status ? { status } : {},
         });
         return response.data;
@@ -64,7 +64,7 @@ export const getSellerWithdrawals = async (status?: string) => {
  */
 export const getSellerCommissions = async () => {
     try {
-        const response = await api.get('/seller/wallet-new/commissions');
+        const response = await api.get('/warehouse/wallet-new/commissions');
         return response.data;
     } catch (error: any) {
         console.error('Error getting commissions:', error);

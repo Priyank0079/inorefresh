@@ -59,6 +59,7 @@ export default function WarehouseSalesReport() {
         // Map frontend table column names to backend model fields if necessary
         const columnMap: Record<string, string> = {
             'orderId': 'orderId',
+            'shopName': 'shopName',
             'orderItemId': '_id',
             'product': 'productName',
             'variant': 'variantTitle',
@@ -174,11 +175,12 @@ export default function WarehouseSalesReport() {
                             {/* Export Button */}
                             <button
                                 onClick={() => {
-                                    const headers = ['Order Id', 'Order Item Id', 'Product', 'Variant', 'Total', 'Date'];
+                                    const headers = ['Order Id', 'Shop Name', 'Order Item Id', 'Product', 'Variant', 'Total', 'Date'];
                                     const csvContent = [
                                         headers.join(','),
                                         ...reports.map(report => [
                                             report.orderId,
+                                            `"${report.shopName}"`,
                                             report.orderItemId,
                                             `"${report.product}"`,
                                             `"${report.variant}"`,
@@ -249,6 +251,15 @@ export default function WarehouseSalesReport() {
                                         </th>
                                         <th
                                             className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
+                                            onClick={() => handleSort('shopName')}
+                                        >
+                                            <div className="flex items-center gap-1">
+                                                Shop Name
+                                                <SortIcon column="shopName" />
+                                            </div>
+                                        </th>
+                                        <th
+                                            className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
                                             onClick={() => handleSort('orderItemId')}
                                         >
                                             <div className="flex items-center gap-1">
@@ -297,7 +308,7 @@ export default function WarehouseSalesReport() {
                                 <tbody>
                                     {reports.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="p-8 text-center text-neutral-500">
+                                            <td colSpan={7} className="p-8 text-center text-neutral-500">
                                                 No data available in table
                                             </td>
                                         </tr>
@@ -309,6 +320,7 @@ export default function WarehouseSalesReport() {
                                                         {report.orderId}
                                                     </span>
                                                 </td>
+                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{report.shopName}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{report.orderItemId}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{report.product}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{report.variant}</td>

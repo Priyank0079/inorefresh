@@ -28,6 +28,8 @@ export interface GetProductsParams {
     limit?: number;
     latitude?: number; // User location latitude
     longitude?: number; // User location longitude
+    dateFrom?: string;
+    dateTo?: string;
 }
 
 export interface ProductListResponse {

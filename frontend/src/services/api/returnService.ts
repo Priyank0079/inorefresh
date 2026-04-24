@@ -9,12 +9,15 @@ export interface ApiResponse<T> {
 export interface ReturnRequest {
   id: string;
   orderItemId: string;
-  product: string;
+  productName: string; // Changed from 'product' to match backend response mapping
+  product?: string;    // Keep for backward compatibility if needed
+  shopName: string;
   variant: string;
   price: number;
   discPrice: number;
   quantity: number;
   total: number;
+  amount?: number;     // Added to match backend 'amount' field
   status: string;
   date: string;
   customerName?: string;

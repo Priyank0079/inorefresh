@@ -87,6 +87,8 @@ const WarehouseStockManagement = lazy(() => import("./modules/warehouse/pages/Wa
 const WarehouseWallet = lazy(() => import("./modules/warehouse/pages/WarehouseWallet"));
 const WarehouseSalesReport = lazy(() => import("./modules/warehouse/pages/WarehouseSalesReport"));
 const WarehouseReturnRequest = lazy(() => import("./modules/warehouse/pages/WarehouseReturnRequest"));
+const WarehouseInwardStockList = lazy(() => import("./modules/warehouse/pages/WarehouseInwardStockList"));
+const WarehouseAddInwardStock = lazy(() => import("./modules/warehouse/pages/WarehouseAddInwardStock"));
 const WarehouseAccountSettings = lazy(() => import("./modules/warehouse/pages/WarehouseAccountSettings"));
 const WarehouseLogin = lazy(() => import("./modules/warehouse/pages/WarehouseLogin"));
 const WarehouseSignUp = lazy(() => import("./modules/warehouse/pages/WarehouseSignUp"));
@@ -300,6 +302,9 @@ function App() {
                                         <Route path="product/taxes" element={<WarehouseTaxes />} />
                                         <Route path="product/list" element={<WarehouseProductList />} />
                                         <Route path="product/stock" element={<WarehouseStockManagement />} />
+                                        <Route path="inward-stock/list" element={<WarehouseInwardStockList />} />
+                                        <Route path="inward-stock/add" element={<WarehouseAddInwardStock />} />
+                                        <Route path="inward-stock/edit/:id" element={<WarehouseAddInwardStock />} />
                                         <Route path="return" element={<WarehouseReturnRequest />} />
                                         <Route path="return-order" element={<WarehouseReturnRequest />} />
                                         <Route path="wallet" element={<WarehouseWallet />} />

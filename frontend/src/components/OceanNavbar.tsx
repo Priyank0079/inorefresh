@@ -13,7 +13,7 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
     const [isVisible, setIsVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
     const [categories, setCategories] = useState<any[]>([]);
-    const { activeCategory, setActiveCategory } = useThemeContext();
+    const { activeCategory, setActiveCategory, dateFilter, setDateFilter } = useThemeContext();
     const routerLocation = useLocation();
     const isHome = routerLocation.pathname === '/' || routerLocation.pathname === '/user/home';
     const isCategorySection = routerLocation.pathname === '/categories' || routerLocation.pathname.startsWith('/category/');
@@ -186,40 +186,60 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
             {/* Route-aware nav surface */}
             <div className={`absolute inset-0 ${navSurfaceClass} backdrop-blur-[12px] shadow-lg`} />
             
-            <div className="relative w-full flex items-center justify-between z-10">
-                {/* Left side - Spacer to balance centering */}
-                <div className="w-10 md:w-12" />
+            <div className="relative w-full flex items-center justify-between z-10 h-full">
+                {/* Left side - Date Filter Pills (Scrollable) */}
+                <div className="flex-1 flex items-center overflow-x-auto scrollbar-hide py-2 max-w-[45%] md:max-w-[40%] gap-2 mask-linear-right">
+                    {[...Array(11)].map((_, i) => (
+                        <button
+                            key={i}
+                            onClick={() => setDateFilter(dateFilter === i ? 0 : i)}
+                            className={`
+                                flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border whitespace-nowrap
+                                ${dateFilter === i
+                                    ? 'bg-[#8BE7FF] text-[#072F4A] border-[#8BE7FF] shadow-[0_0_15px_rgba(139,231,255,0.4)] scale-105'
+                                    : (isHome || isCategorySection 
+                                        ? 'bg-white/10 text-white/90 border-white/20 hover:bg-white/20' 
+                                        : 'bg-[#1CA7C7]/10 text-[#072F4A] border-[#1CA7C7]/20 hover:bg-[#1CA7C7]/20')}
+                                ${i === 0 && dateFilter !== 0 ? 'hidden' : ''}
+                            `}
+                        >
+                            {i === 0 ? 'All' : i === 1 ? 'Today' : `Last ${i} Days`}
+                        </button>
+                    ))}
+                </div>
 
                 {/* Center - Brand Name */}
                 <div 
-                    className="cursor-pointer group flex flex-col items-center"
+                    className="cursor-pointer group flex flex-col items-center flex-shrink-0 px-2"
                     onClick={() => internalNavigate('/')}
                 >
                     <span className={`
-                        text-2xl md:text-3xl font-black tracking-[-0.05em] transition-all duration-300
+                        text-xl md:text-2xl font-black tracking-[-0.05em] transition-all duration-300
                         ${isHome || isCategorySection ? 'text-white' : 'text-[#072F4A]'}
                     `}>
                         INOR<span className={isHome || isCategorySection ? 'text-[#8BE7FF]' : 'text-[#1CA7C7]'}>FRESH</span>
                     </span>
-                    <div className={`h-1 w-0 group-hover:w-full transition-all duration-300 rounded-full ${isHome || isCategorySection ? 'bg-[#8BE7FF]' : 'bg-[#1CA7C7]'}`} />
+                    <div className={`h-0.5 w-0 group-hover:w-full transition-all duration-300 rounded-full ${isHome || isCategorySection ? 'bg-[#8BE7FF]' : 'bg-[#1CA7C7]'}`} />
                 </div>
 
                 {/* Right side - Hamburger Menu */}
-                <button 
-                    className={`
-                        p-2 rounded-xl transition-all duration-300 active:scale-90 md:hidden
-                        ${isHome || isCategorySection 
-                            ? 'text-white hover:bg-white/10' 
-                            : 'text-[#072F4A] hover:bg-[#072F4A]/5'}
-                    `}
-                    onClick={onMenuClick}
-                >
-                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="4" y1="12" x2="20" y2="12" />
-                        <line x1="4" y1="6" x2="20" y2="6" />
-                        <line x1="4" y1="18" x2="20" y2="18" />
-                    </svg>
-                </button>
+                <div className="flex-1 flex justify-end">
+                    <button 
+                        className={`
+                            p-2 rounded-xl transition-all duration-300 active:scale-90
+                            ${isHome || isCategorySection 
+                                ? 'text-white hover:bg-white/10' 
+                                : 'text-[#072F4A] hover:bg-[#072F4A]/5'}
+                        `}
+                        onClick={onMenuClick}
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="4" y1="12" x2="20" y2="12" />
+                            <line x1="4" y1="6" x2="20" y2="6" />
+                            <line x1="4" y1="18" x2="20" y2="18" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </nav>
     );

@@ -57,7 +57,7 @@ export const getSalesReport = asyncHandler(
         const orderItems = await OrderItem.find(query)
             .populate({
                 path: "order",
-                select: "orderNumber createdAt"
+                select: "orderNumber customerName createdAt"
             })
             .sort(sort)
             .skip(skip)
@@ -69,6 +69,7 @@ export const getSalesReport = asyncHandler(
         // Format response for frontend
         const reports = orderItems.map(item => ({
             orderId: (item.order as any)?.orderNumber || '',
+            shopName: (item.order as any)?.customerName || 'N/A',
             orderItemId: item._id.toString().slice(-4), // SR No / Item ID shortcut
             product: item.productName,
             variant: item.variantTitle,

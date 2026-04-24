@@ -937,6 +937,8 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
     warehouse,
     status,
     publish,
+    dateFrom,
+    dateTo,
   } = req.query;
 
   const query: any = {};
@@ -959,6 +961,20 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   }
 
   if (publish !== undefined) query.publish = publish === "true";
+  
+  if (dateFrom || dateTo) {
+    query.createdAt = {};
+    if (dateFrom) {
+      const start = new Date(dateFrom as string);
+      start.setHours(0, 0, 0, 0);
+      query.createdAt.$gte = start;
+    }
+    if (dateTo) {
+      const end = new Date(dateTo as string);
+      end.setHours(23, 59, 59, 999);
+      query.createdAt.$lte = end;
+    }
+  }
 
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 

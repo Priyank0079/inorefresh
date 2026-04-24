@@ -20,6 +20,7 @@ import returnRoutes from "./returnRoutes";
 import reportRoutes from "./reportRoutes";
 import walletRoutes from "./walletRoutes";
 import taxRoutes from "./taxRoutes";
+import inwardStockRoutes from "./inwardStockRoutes";
 import customerProductRoutes from "./customerProductRoutes";
 import customerCategoryRoutes from "./customerCategoryRoutes";
 import customerCouponRoutes from "./customerCouponRoutes";
@@ -159,6 +160,9 @@ router.use("/warehouse/wallet", walletRoutes);
 
 // Tax routes (protected, warehouse/admin)
 router.use("/warehouse/taxes", taxRoutes);
+
+// Inward Stock routes (protected, warehouse only)
+router.use("/warehouse/inward-stock", inwardStockRoutes);
 
 // Payment routes (Razorpay integration)
 router.use("/payment", paymentRoutes);

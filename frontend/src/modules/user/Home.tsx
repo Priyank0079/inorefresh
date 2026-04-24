@@ -166,7 +166,7 @@ const belongsToVirtualFishTab = (tab: string, product: any) => {
 export default function Home() {
   const routerLocation = useRouterLocation();
   const { location } = useLocation();
-  const { activeCategory, setActiveCategory } = useThemeContext();
+  const { activeCategory, setActiveCategory, dateFilter } = useThemeContext();
   const activeTab = activeCategory; // mapping for existing code compatibility
   const setActiveTab = setActiveCategory;
   const contentRef = useRef<HTMLDivElement>(null);
@@ -209,7 +209,7 @@ export default function Home() {
       ? `${normalizedLatitude}:${normalizedLongitude}`
       : "no-location";
   const normalizedActiveTab = normalizeTabId(activeTab);
-  const activeTabCacheKey = `${normalizedActiveTab}:${activeLocationKey}`;
+  const activeTabCacheKey = `${normalizedActiveTab}:${activeLocationKey}:${dateFilter}`;
   const hasResolvedActiveTab =
     Boolean(tabFetchResolvedRef.current[activeTabCacheKey]) ||
     Boolean(tabProductsCacheRef.current[activeTabCacheKey]);
@@ -252,9 +252,18 @@ export default function Home() {
         params.longitude = normalizedLongitude;
       }
 
+      if (dateFilter > 0) {
+        const date = new Date();
+        date.setDate(date.getDate() - (dateFilter - 1));
+        const dateStr = date.toISOString().split('T')[0];
+        params.dateFrom = dateStr;
+        // dateTo is usually today by default in backend if not provided, but we can be explicit
+        params.dateTo = new Date().toISOString().split('T')[0];
+      }
+
       return params;
     },
-    [normalizedLatitude, normalizedLongitude]
+    [normalizedLatitude, normalizedLongitude, dateFilter]
   );
 
   const fetchProductsPageByPlan = useCallback(
@@ -286,7 +295,7 @@ export default function Home() {
         hasMore: serverHasMore,
       };
     },
-    [buildBaseProductParams, normalizedActiveTab]
+    [buildBaseProductParams, normalizedActiveTab, dateFilter]
   );
 
   const loadMoreProducts = useCallback(async () => {
@@ -454,6 +463,7 @@ export default function Home() {
     activeLocationKey,
     buildBaseProductParams,
     fetchProductsPageByPlan,
+    dateFilter,
   ]);
 
   // Infinite scroll trigger

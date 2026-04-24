@@ -134,6 +134,8 @@ export const getProducts = async (req: Request, res: Response) => {
       minDiscount,
       latitude, // User location latitude
       longitude, // User location longitude
+      dateFrom,
+      dateTo,
     } = req.query;
 
     const query: any = {
@@ -288,6 +290,20 @@ export const getProducts = async (req: Request, res: Response) => {
 
     if (minDiscount) {
       query.discount = { $gte: Number(minDiscount) };
+    }
+
+    if (dateFrom || dateTo) {
+      query.createdAt = {};
+      if (dateFrom) {
+        const start = new Date(dateFrom as string);
+        start.setHours(0, 0, 0, 0);
+        query.createdAt.$gte = start;
+      }
+      if (dateTo) {
+        const end = new Date(dateTo as string);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
     }
 
     if (search) {

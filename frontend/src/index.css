@@ -42,6 +42,11 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  .mask-linear-right {
+    mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  }
 }
 
 /* Remove default video styling */

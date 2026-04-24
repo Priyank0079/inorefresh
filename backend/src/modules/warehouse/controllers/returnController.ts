@@ -44,12 +44,17 @@ export const getReturnRequests = asyncHandler(
       const order = ret.order as any;
       return {
         id: ret._id,
+        orderItemId: item?._id?.toString().slice(-6) || 'N/A', // Short ID for UI
         productName: item?.productName || 'Unknown Product',
+        shopName: order?.customerName || 'N/A',
         customerName: order?.customerName || 'Unknown Customer',
         orderId: order?.orderNumber || 'Unknown Order',
+        price: item?.unitPrice || 0,
+        discPrice: 0, // Disc price logic if available
+        quantity: ret.quantity,
         amount: item?.total || 0,
         status: ret.status,
-        date: ret.createdAt,
+        date: ret.createdAt.toISOString().split('T')[0],
         returnReason: ret.reason,
         image: item?.productImage
       };

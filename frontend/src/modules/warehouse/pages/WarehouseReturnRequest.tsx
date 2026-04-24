@@ -190,17 +190,18 @@ export default function WarehouseReturnRequest() {
                             {/* Export Button */}
                             <button
                                 onClick={() => {
-                                    const headers = ['Order Item Id', 'Product', 'Variant', 'Price', 'Disc Price', 'Quantity', 'Total', 'Status', 'Date'];
+                                    const headers = ['Order Item Id', 'Shop Name', 'Product', 'Variant', 'Price', 'Disc Price', 'Quantity', 'Total', 'Status', 'Date'];
                                     const csvContent = [
                                         headers.join(','),
                                         ...returnRequests.map(request => [
                                             request.orderItemId,
-                                            `"${request.product}"`,
+                                            `"${request.shopName}"`,
+                                            `"${request.productName || request.product}"`,
                                             `"${request.variant}"`,
                                             request.price,
                                             request.discPrice,
                                             request.quantity,
-                                            request.total,
+                                            request.total || request.amount,
                                             `"${request.status}"`,
                                             request.date
                                         ].join(','))
@@ -267,6 +268,15 @@ export default function WarehouseReturnRequest() {
                                             <div className="flex items-center gap-1">
                                                 Order Item Id
                                                 <SortIcon column="orderItemId" />
+                                            </div>
+                                        </th>
+                                        <th
+                                            className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
+                                            onClick={() => handleSort('shopName')}
+                                        >
+                                            <div className="flex items-center gap-1">
+                                                Shop Name
+                                                <SortIcon column="shopName" />
                                             </div>
                                         </th>
                                         <th
@@ -351,7 +361,7 @@ export default function WarehouseReturnRequest() {
                                 <tbody>
                                     {displayedRequests.length === 0 ? (
                                         <tr>
-                                            <td colSpan={10} className="p-8 text-center text-neutral-500">
+                                            <td colSpan={11} className="p-8 text-center text-neutral-500">
                                                 No data available in table
                                             </td>
                                         </tr>
@@ -359,13 +369,22 @@ export default function WarehouseReturnRequest() {
                                         displayedRequests.map((request, index) => (
                                             <tr key={index} className="hover:bg-neutral-50">
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.orderItemId}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.product}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.variant}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">?{request.price.toFixed(2)}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">?{request.discPrice.toFixed(2)}</td>
+                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.shopName}</td>
+                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.productName || request.product}</td>
+                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.variant || 'N/A'}</td>
+                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">₹{(request.price || 0).toFixed(2)}</td>
+                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">₹{(request.discPrice || 0).toFixed(2)}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.quantity}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">?{request.total.toFixed(2)}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.status}</td>
+                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">₹{(request.total || request.amount || 0).toFixed(2)}</td>
+                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">
+                                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                                                        request.status === 'Approved' ? 'bg-green-100 text-green-700' :
+                                                        request.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                                        'bg-yellow-100 text-yellow-700'
+                                                    }`}>
+                                                        {request.status}
+                                                    </span>
+                                                </td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.date}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">
                                                     <button

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getOrders, Order, GetOrdersParams } from '../../../services/api/orderService';
 
 
-type SortField = 'orderId' | 'deliveryDate' | 'orderDate' | 'status' | 'amount';
+type SortField = 'orderId' | 'shopName' | 'deliveryDate' | 'orderDate' | 'status' | 'amount';
 type SortDirection = 'asc' | 'desc';
 
 export default function WarehouseOrders() {
@@ -83,11 +83,11 @@ export default function WarehouseOrders() {
 
   const handleExport = () => {
     // Create CSV content
-    const headers = ['Order ID', 'Delivery Date', 'Order Date', 'Status', 'Amount'];
+    const headers = ['Order ID', 'Shop Name', 'Delivery Date', 'Order Date', 'Status', 'Amount'];
     const csvContent = [
       headers.join(','),
       ...orders.map(order =>
-        [order.orderId, order.deliveryDate, order.orderDate, order.status, order.amount].join(',')
+        [order.orderId, `"${order.shopName || 'N/A'}"`, order.deliveryDate, order.orderDate, order.status, order.amount].join(',')
       )
     ].join('\n');
 
@@ -353,6 +353,35 @@ export default function WarehouseOrders() {
                     </th>
                     <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
                       <button
+                        onClick={() => handleSort('shopName')}
+                        className="flex items-center gap-2 hover:text-neutral-900 transition-colors"
+                      >
+                        Shop Name
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className={`cursor-pointer ${sortField === 'shopName' ? 'text-[#12b2a2]' : 'text-neutral-400'
+                            }`}
+                        >
+                          <path
+                            d={sortField === 'shopName' && sortDirection === 'asc'
+                              ? "M7 14L12 9L17 14"
+                              : sortField === 'shopName' && sortDirection === 'desc'
+                                ? "M7 10L12 15L17 10"
+                                : "M7 10L12 5L17 10M7 14L12 19L17 14"}
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    </th>
+                    <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                      <button
                         onClick={() => handleSort('deliveryDate')}
                         className="flex items-center gap-2 hover:text-neutral-900 transition-colors"
                       >
@@ -475,7 +504,7 @@ export default function WarehouseOrders() {
                 <tbody className="bg-white divide-y divide-neutral-200">
                   {paginatedOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-3 sm:px-4 md:px-6 py-8 sm:py-12 text-center text-xs sm:text-sm text-neutral-500">
+                      <td colSpan={7} className="px-3 sm:px-4 md:px-6 py-8 sm:py-12 text-center text-xs sm:text-sm text-neutral-500">
                         No data available in table
                       </td>
                     </tr>
@@ -484,6 +513,9 @@ export default function WarehouseOrders() {
                       <tr key={order.id} className="hover:bg-neutral-50 transition-colors">
                         <td className="px-3 sm:px-4 md:px-6 py-3 text-xs sm:text-sm text-neutral-900">
                           {order.orderId}
+                        </td>
+                        <td className="px-3 sm:px-4 md:px-6 py-3 text-xs sm:text-sm text-neutral-900">
+                          {order.shopName || 'N/A'}
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-3 text-xs sm:text-sm text-neutral-700">
                           {order.deliveryDate}
@@ -497,7 +529,7 @@ export default function WarehouseOrders() {
                           </span>
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-3 text-xs sm:text-sm text-neutral-900 font-medium">
-                          ?{order.amount.toFixed(2)}
+                          ₹{order.amount.toFixed(2)}
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-3">
                           <button

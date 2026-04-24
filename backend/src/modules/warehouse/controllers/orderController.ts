@@ -89,6 +89,7 @@ export const getOrders = asyncHandler(
     const formattedOrders = orders.map(order => ({
       id: order._id,
       orderId: order.orderNumber,
+      shopName: order.customerName || 'N/A',
       deliveryDate: order.estimatedDeliveryDate
         ? order.estimatedDeliveryDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
         : order.orderDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
@@ -214,6 +215,7 @@ export const getOrderById = asyncHandler(
       timeSlot: order.timeSlot || 'N/A',
       status: order.status === 'On the way' ? 'Out For Delivery' : order.status,
       customerName: (order.customer as any)?.name || order.customerName || '',
+      shopName: order.customerName || 'N/A',
       customerEmail: (order.customer as any)?.email || order.customerEmail || '',
       customerPhone: (order.customer as any)?.phone || order.customerPhone || '',
       deliveryBoyName: (order.deliveryBoy as any)?.name || '',
