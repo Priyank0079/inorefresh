@@ -207,7 +207,7 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
                 {/* Right side - Hamburger Menu */}
                 <button 
                     className={`
-                        p-2 rounded-xl transition-all duration-300 active:scale-90
+                        p-2 rounded-xl transition-all duration-300 active:scale-90 md:hidden
                         ${isHome || isCategorySection 
                             ? 'text-white hover:bg-white/10' 
                             : 'text-[#072F4A] hover:bg-[#072F4A]/5'}

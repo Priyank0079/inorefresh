@@ -23,24 +23,26 @@ export default function FishCategoryCards() {
     ];
 
     return (
-        <div className="px-4 md:px-8 max-w-[1280px] mx-auto py-8">
-            <div className="flex items-center gap-4 mb-8">
-                <h2 className="text-xl md:text-2xl font-black text-[#072F4A] whitespace-nowrap uppercase tracking-widest">
-                    Explore <span className="text-[#1CA7C7]">Fish</span> Categories
+        <div className="px-4 md:px-8 max-w-[1280px] mx-auto pt-2 pb-0">
+            <div className="flex items-center gap-3 mb-5">
+                <h2 className="text-lg md:text-xl font-black text-[#072F4A] whitespace-nowrap uppercase tracking-[0.15em]">
+                    Explore <span className="text-[#1CA7C7]">Fish</span>
                 </h2>
-                <div className="h-[2px] w-full bg-gradient-to-r from-[#072F4A]/10 to-transparent" />
+                <div className="h-[1.5px] w-full bg-gradient-to-r from-[#072F4A]/10 to-transparent" />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="flex overflow-x-auto gap-3 md:gap-5 pb-6 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide no-scrollbar snap-x snap-mandatory">
                 {categories.map((cat, idx) => (
-                    <ExploreCard
-                        key={cat.id}
-                        id={cat.id}
-                        name={cat.name}
-                        image={cat.image}
-                        link={cat.link}
-                        index={idx}
-                    />
+                    <div key={cat.id} className="flex-shrink-0 w-[140px] md:w-[180px] snap-start">
+                        <ExploreCard
+                            id={cat.id}
+                            name={cat.name}
+                            image={cat.image}
+                            link={cat.link}
+                            index={idx}
+                            compact={true}
+                        />
+                    </div>
                 ))}
             </div>
         </div>

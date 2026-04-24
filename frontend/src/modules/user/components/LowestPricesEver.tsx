@@ -180,7 +180,7 @@ export default function LowestPricesEver({ activeTab = 'all', products: adminPro
 
   return (
     <div
-      className="relative overflow-hidden py-12"
+      className="relative overflow-hidden pt-4 pb-8"
       style={{
         background: `linear-gradient(180deg, transparent 0%, rgba(11,60,93,0.3) 100%)`,
         marginTop: '0px'

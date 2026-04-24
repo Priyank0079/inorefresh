@@ -742,7 +742,7 @@ export default function Home() {
           <PromoStrip activeTab={activeTab} />
 
           {/* 🐟 NEW FISH CATEGORIES SECTION */}
-          <div className="py-8 bg-transparent">
+          <div className="py-2 bg-transparent">
             <FishCategoryCards />
           </div>
 

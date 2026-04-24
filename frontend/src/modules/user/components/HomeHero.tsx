@@ -1,4 +1,4 @@
-﻿import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 interface HomeHeroProps {
@@ -76,31 +76,8 @@ export default function HomeHero({ activeTab = 'all', onTabChange }: HomeHeroPro
             </motion.button>
           </motion.div>
 
-          {/* 🐟 Right Side: Fish Image (Floating) */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-            className="hidden md:flex justify-center relative h-[500px]"
-          >
-            <motion.img
-              src="/images/bluefin_tuna.png"
-              alt="Floating Fish"
-              className="w-full h-full object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.5)]"
-              animate={{
-                y: [0, -15, 0],
-                rotate: [0, 2, 0]
-              }}
-              transition={{
-                duration: 6,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-
-            {/* Subtle glow behind fish */}
-            <div className="absolute inset-0 bg-white/5 rounded-full blur-[100px] pointer-events-none -z-10" />
-          </motion.div>
+          {/* 🐟 Right Side: Empty for a cleaner minimalist look */}
+          <div className="hidden md:block" />
 
         </div>
       </div>

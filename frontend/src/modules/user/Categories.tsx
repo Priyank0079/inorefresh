@@ -116,7 +116,7 @@ export default function Categories() {
     );
   }
 
-  const mapCategoryToCard = (c: any, index: number) => {
+  const mapCategoryToCard = (c: any, index: number, compact = false) => {
     const nameLower = (c.name || c.title || "").toLowerCase();
     let displayName = c.name || c.title;
     let link = "";
@@ -148,6 +148,7 @@ export default function Categories() {
         iconName={c.iconName}
         link={link}
         index={index}
+        compact={compact}
       />
     );
   };
@@ -178,37 +179,41 @@ export default function Categories() {
         </motion.div>
       </div>
 
-      <div className="relative px-4 md:px-8 max-w-[1280px] mx-auto space-y-12">
-        {/* Render Home Sections Filters (Category-based) */}
+      <div className="relative px-4 md:px-8 max-w-[1280px] mx-auto space-y-10">
+        {/* Render Home Sections Filters (Category-based) - Scrollable Rows */}
         {homeData.homeSections && homeData.homeSections.length > 0 && (
-          <div className="space-y-12">
+          <div className="space-y-10">
             {homeData.homeSections.map((section: any) => (
-              <div key={section.id} className="space-y-6">
+              <div key={section.id} className="space-y-5">
                 <div className="flex items-center gap-4">
-                  <h2 className="text-xl md:text-2xl font-bold text-[#072F4A] whitespace-nowrap">
+                  <h2 className="text-lg md:text-xl font-bold text-[#072F4A] whitespace-nowrap">
                     {section.title}
                   </h2>
                   <div className="h-[1px] w-full bg-gradient-to-r from-[#072F4A]/10 to-transparent" />
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-                  {(section.data || []).map((c: any, idx: number) => mapCategoryToCard(c, idx))}
+                <div className="flex overflow-x-auto gap-3 md:gap-5 pb-6 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide no-scrollbar snap-x snap-mandatory">
+                  {(section.data || []).map((c: any, idx: number) => (
+                    <div key={c._id || c.id || c.slug} className="flex-shrink-0 w-[140px] md:w-[180px] snap-start">
+                      {mapCategoryToCard(c, idx, true)}
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* DEFAULT CATEGORIES DUMP */}
+        {/* DEFAULT CATEGORIES DUMP - Compact Grid */}
         {homeData.categories && homeData.categories.length > 0 && (
           <div className="space-y-6">
             <div className="flex items-center gap-4">
-              <h2 className="text-xl md:text-2xl font-bold text-[#072F4A] whitespace-nowrap">
+              <h2 className="text-lg md:text-xl font-bold text-[#072F4A] whitespace-nowrap">
                 All Categories
               </h2>
               <div className="h-[1px] w-full bg-gradient-to-r from-[#072F4A]/10 to-transparent" />
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-              {homeData.categories.map((c: any, idx: number) => mapCategoryToCard(c, idx))}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-5">
+              {homeData.categories.map((c: any, idx: number) => mapCategoryToCard(c, idx, true))}
             </div>
           </div>
         )}
