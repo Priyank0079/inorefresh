@@ -6,6 +6,15 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+export interface PaginatedResponse<T> extends ApiResponse<T> {
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
 export interface InwardStock {
   _id: string;
   supplierName: string;
@@ -33,8 +42,8 @@ export interface InwardStockParams {
   dateTo?: string;
 }
 
-export const getInwardStocks = async (params?: InwardStockParams): Promise<ApiResponse<InwardStock[]>> => {
-  const response = await api.get<ApiResponse<InwardStock[]>>('/warehouse/inward-stock', { params });
+export const getInwardStocks = async (params?: InwardStockParams): Promise<PaginatedResponse<InwardStock[]>> => {
+  const response = await api.get<PaginatedResponse<InwardStock[]>>('/warehouse/inward-stock', { params });
   return response.data;
 };
 

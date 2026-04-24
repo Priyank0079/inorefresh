@@ -45,7 +45,7 @@ export const getInwardStocks = asyncHandler(async (req: Request, res: Response) 
 
   const total = await InwardStock.countDocuments(query);
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     data: stocks,
     pagination: {
@@ -70,7 +70,7 @@ export const getInwardStockById = asyncHandler(async (req: Request, res: Respons
     });
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     data: stock,
   });
@@ -88,7 +88,7 @@ export const addInwardStock = asyncHandler(async (req: Request, res: Response) =
 
   const newStock = await InwardStock.create(stockData);
 
-  res.status(201).json({
+  return res.status(201).json({
     success: true,
     message: "Inward stock added successfully",
     data: newStock,
@@ -115,7 +115,7 @@ export const updateInwardStockStatus = asyncHandler(async (req: Request, res: Re
     });
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "Inward stock status updated successfully",
     data: updatedStock,
@@ -142,7 +142,7 @@ export const updateInwardStock = asyncHandler(async (req: Request, res: Response
     });
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "Inward stock record updated successfully",
     data: updatedStock,
@@ -164,7 +164,7 @@ export const deleteInwardStock = asyncHandler(async (req: Request, res: Response
     });
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "Inward stock record deleted successfully",
   });
