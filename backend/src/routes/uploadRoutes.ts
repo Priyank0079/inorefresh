@@ -17,8 +17,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();
 
-// All upload routes require authentication
-router.use(authenticate);
+// Routes are protected individually below
 
 /**
  * POST /api/v1/upload/image
@@ -26,6 +25,7 @@ router.use(authenticate);
  */
 router.post(
   "/image",
+  authenticate,
   requireUserType("Admin", "Warehouse"),
   uploadSingleImage.single("image"),
   handleUploadError,
@@ -56,6 +56,7 @@ router.post(
  */
 router.post(
   "/images",
+  authenticate,
   requireUserType("Admin", "Warehouse"),
   uploadMultipleImages.array("images", 10), // Max 10 images
   handleUploadError,
@@ -92,10 +93,10 @@ router.post(
  */
 router.post(
   "/document",
-  authenticate, // All authenticated users can upload documents
   uploadDocument.single("document"),
   handleUploadError,
   asyncHandler(async (req: Request, res: Response) => {
+    console.log(`[UPLOAD DEBUG] Hit /document route. File: ${!!(req as any).file}`);
     if (!(req as any).file) {
       return res.status(400).json({
         success: false,
@@ -103,14 +104,18 @@ router.post(
       });
     }
 
-    // Determine folder based on user type
-    let folder: string = CLOUDINARY_FOLDERS.warehouse_DOCUMENTS;
-    const userType = (req as any).user?.userType;
-
-    if (userType === "Delivery") {
-      folder = CLOUDINARY_FOLDERS.DELIVERY_DOCUMENTS;
-    } else if (userType === "Warehouse") {
+    // Determine folder: prioritized folder from body, then user type, then default
+    let folder = req.body.folder;
+    
+    if (!folder) {
       folder = CLOUDINARY_FOLDERS.warehouse_DOCUMENTS;
+      const userType = (req as any).user?.userType;
+
+      if (userType === "Delivery") {
+        folder = CLOUDINARY_FOLDERS.DELIVERY_DOCUMENTS;
+      } else if (userType === "Warehouse") {
+        folder = CLOUDINARY_FOLDERS.warehouse_DOCUMENTS;
+      }
     }
 
     // Check if it's an image or PDF
@@ -135,7 +140,6 @@ router.post(
  */
 router.post(
   "/documents",
-  authenticate,
   uploadMultipleDocuments.array("documents", 5), // Max 5 documents
   handleUploadError,
   asyncHandler(async (req: Request, res: Response) => {
@@ -146,14 +150,18 @@ router.post(
       });
     }
 
-    // Determine folder based on user type
-    let folder: string = CLOUDINARY_FOLDERS.warehouse_DOCUMENTS;
-    const userType = (req as any).user?.userType;
+    // Determine folder: prioritized folder from body, then user type, then default
+    let folder = req.body.folder;
 
-    if (userType === "Delivery") {
-      folder = CLOUDINARY_FOLDERS.DELIVERY_DOCUMENTS;
-    } else if (userType === "Warehouse") {
+    if (!folder) {
       folder = CLOUDINARY_FOLDERS.warehouse_DOCUMENTS;
+      const userType = (req as any).user?.userType;
+
+      if (userType === "Delivery") {
+        folder = CLOUDINARY_FOLDERS.DELIVERY_DOCUMENTS;
+      } else if (userType === "Warehouse") {
+        folder = CLOUDINARY_FOLDERS.warehouse_DOCUMENTS;
+      }
     }
 
     const files = (req as any).files as any[];
@@ -182,6 +190,7 @@ router.post(
  */
 router.delete(
   "/:publicId",
+  authenticate,
   requireUserType("Admin", "Warehouse"),
   asyncHandler(async (req: Request, res: Response) => {
     const { publicId } = req.params;

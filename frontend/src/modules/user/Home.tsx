@@ -306,7 +306,7 @@ export default function Home() {
     const sourcePlan = activeSourcePlanRef.current;
     if (!sourcePlan) return;
 
-    const cacheKey = `${normalizedActiveTab}:${activeLocationKey}`;
+    const cacheKey = `${normalizedActiveTab}:${activeLocationKey}:${dateFilter}`;
 
     setIsLoadingMoreProducts(true);
     try {
@@ -346,6 +346,7 @@ export default function Home() {
     fetchProductsPageByPlan,
     nextProductsPage,
     getProductKey,
+    dateFilter,
   ]);
 
   // Fetch first page of products for active tab
@@ -353,7 +354,7 @@ export default function Home() {
     let cancelled = false;
 
     const fetchFirstPage = async () => {
-      const cacheKey = `${normalizedActiveTab}:${activeLocationKey}`;
+      const cacheKey = `${normalizedActiveTab}:${activeLocationKey}:${dateFilter}`;
       const cachedEntry = tabProductsCacheRef.current[cacheKey];
 
       if (cachedEntry) {
@@ -395,34 +396,13 @@ export default function Home() {
           const pageData = await getServerPage();
           firstItems = pageData.items;
           hasMore = pageData.hasMore;
-        } else if (!isVirtualFishTab(normalizedActiveTab)) {
+        } else {
+          // Backend now handles virtual tabs like 'aqua-fish' automatically.
+          // No need to loop through aliases or do client-side filtering.
           sourcePlan = { type: "category", category: normalizedActiveTab };
           const pageData = await getServerPage(normalizedActiveTab);
           firstItems = pageData.items;
           hasMore = pageData.hasMore;
-        } else {
-          const candidates = [normalizedActiveTab, ...(VIRTUAL_FISH_TAB_ALIASES[normalizedActiveTab] || [])];
-
-          for (const candidate of candidates) {
-            const pageData = await getServerPage(candidate);
-            if (pageData.items.length === 0) continue;
-
-            const filtered = pageData.items.filter((item: any) =>
-              belongsToVirtualFishTab(normalizedActiveTab, item)
-            );
-
-            sourcePlan = { type: "category", category: candidate };
-            firstItems = filtered.length > 0 ? filtered : pageData.items;
-            hasMore = pageData.hasMore;
-            break;
-          }
-
-          if (!sourcePlan) {
-            sourcePlan = { type: "all-filtered" };
-            const pageData = await fetchProductsPageByPlan(sourcePlan, 1);
-            firstItems = pageData.items;
-            hasMore = pageData.hasMore;
-          }
         }
 
         if (cancelled) return;
@@ -490,15 +470,7 @@ export default function Home() {
   }, [hasMoreProducts, isTabLoading, loadMoreProducts]);
 
   // Client-side filtering for the 3 professional tabs
-  const filteredProducts = useMemo(() => {
-    if (normalizedActiveTab === "all") return tabProducts;
-
-    if (!isVirtualFishTab(normalizedActiveTab)) return tabProducts;
-
-    return tabProducts.filter((product: any) =>
-      belongsToVirtualFishTab(normalizedActiveTab, product)
-    );
-  }, [tabProducts, normalizedActiveTab]);
+  const filteredProducts = tabProducts;
 
   useEffect(() => {
     const fetchData = async () => {

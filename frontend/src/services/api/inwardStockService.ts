@@ -25,7 +25,9 @@ export interface InwardStock {
   unitPrice: number;
   totalPrice: number;
   date: string;
-  invoiceNumber: string;
+  orderDate?: string;
+  deliveryDate?: string;
+  invoiceNumber?: string;
   batchNumber?: string;
   vehicleNumber?: string;
   status: 'Pending' | 'Received' | 'Cancelled';

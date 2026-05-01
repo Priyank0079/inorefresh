@@ -20,6 +20,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log(`[AUTH DEBUG] 401 Unauthorized: No token provided for ${req.method} ${req.originalUrl}`);
       res.status(401).json({
         success: false,
         message: 'No token provided. Authorization header must be in format: Bearer <token>',
@@ -34,6 +35,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
       req.user = decoded;
       next();
     } catch (error: any) {
+      console.log(`[AUTH DEBUG] 401 Unauthorized: Invalid token for ${req.method} ${req.originalUrl} - ${error.message}`);
       res.status(401).json({
         success: false,
         message: error.message || 'Invalid or expired token',

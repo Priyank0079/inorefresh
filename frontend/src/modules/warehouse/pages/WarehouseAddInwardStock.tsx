@@ -20,6 +20,8 @@ export default function WarehouseAddInwardStock() {
         unitPrice: editingStock?.unitPrice || 0,
         totalPrice: editingStock?.totalPrice || 0,
         date: editingStock?.date ? new Date(editingStock.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        orderDate: editingStock?.orderDate ? new Date(editingStock.orderDate).toISOString().split('T')[0] : '',
+        deliveryDate: editingStock?.deliveryDate ? new Date(editingStock.deliveryDate).toISOString().split('T')[0] : '',
         invoiceNumber: editingStock?.invoiceNumber || '',
         batchNumber: editingStock?.batchNumber || '',
         vehicleNumber: editingStock?.vehicleNumber || '',
@@ -55,6 +57,8 @@ export default function WarehouseAddInwardStock() {
                             unitPrice: stock.unitPrice,
                             totalPrice: stock.totalPrice,
                             date: new Date(stock.date).toISOString().split('T')[0],
+                            orderDate: stock.orderDate ? new Date(stock.orderDate).toISOString().split('T')[0] : '',
+                            deliveryDate: stock.deliveryDate ? new Date(stock.deliveryDate).toISOString().split('T')[0] : '',
                             invoiceNumber: stock.invoiceNumber,
                             batchNumber: stock.batchNumber || '',
                             vehicleNumber: stock.vehicleNumber || '',
@@ -86,9 +90,14 @@ export default function WarehouseAddInwardStock() {
         e.preventDefault();
         setLoading(true);
         try {
+            const dataToSubmit = {
+                ...formData,
+                orderDate: formData.orderDate || undefined,
+                deliveryDate: formData.deliveryDate || undefined
+            };
             const res = id 
-                ? await updateInwardStock(id, formData)
-                : await addInwardStock(formData);
+                ? await updateInwardStock(id, dataToSubmit)
+                : await addInwardStock(dataToSubmit);
             if (res.success) {
                 alert(id ? "Record updated successfully" : "Inward stock added successfully");
                 navigate('/warehouse/inward-stock/list');
@@ -159,10 +168,9 @@ export default function WarehouseAddInwardStock() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Invoice Number *</label>
+                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Invoice Number</label>
                                 <input 
                                     type="text"
-                                    required
                                     value={formData.invoiceNumber}
                                     onChange={(e) => setFormData({...formData, invoiceNumber: e.target.value})}
                                     className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
@@ -179,8 +187,28 @@ export default function WarehouseAddInwardStock() {
                                     placeholder="e.g. BATCH-2024-001"
                                 />
                             </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-neutral-700 mb-1">Order Date</label>
+                                    <input 
+                                        type="date"
+                                        value={formData.orderDate}
+                                        onChange={(e) => setFormData({...formData, orderDate: e.target.value})}
+                                        className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-neutral-700 mb-1">Delivery Date</label>
+                                    <input 
+                                        type="date"
+                                        value={formData.deliveryDate}
+                                        onChange={(e) => setFormData({...formData, deliveryDate: e.target.value})}
+                                        className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
                             <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Date *</label>
+                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Entry Date *</label>
                                 <input 
                                     type="date"
                                     required

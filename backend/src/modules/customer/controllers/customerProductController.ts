@@ -107,7 +107,7 @@ const buildFishCategoryMatcher = (group: FishGroupKey) => {
   };
 };
 
-const resolveFishCategoryIds = async (group: FishGroupKey): Promise<string[]> => {
+const resolveFishCategoryIds = async (group: FishGroupKey): Promise<mongoose.Types.ObjectId[]> => {
   const fishCategories = await Category.find({
     status: "Active",
     ...buildFishCategoryMatcher(group),
@@ -115,7 +115,7 @@ const resolveFishCategoryIds = async (group: FishGroupKey): Promise<string[]> =>
     .select("_id")
     .lean();
 
-  return fishCategories.map((cat: any) => String(cat._id));
+  return fishCategories.map((cat: any) => cat._id as mongoose.Types.ObjectId);
 };
 
 // Get products with filtering options (public)
@@ -150,13 +150,9 @@ export const getProducts = async (req: Request, res: Response) => {
 
     // Location inputs are accepted, but product listing is not hard-filtered by
     // proximity so users can still browse all active/published products.
+    // Removed redundant findSellersWithinRange call to optimize performance
     const userLat = latitude ? parseFloat(latitude as string) : null;
     const userLng = longitude ? parseFloat(longitude as string) : null;
-
-    if (userLat && userLng && !isNaN(userLat) && !isNaN(userLng)) {
-      // keep for future availability metadata logic
-      await findSellersWithinRange(userLat, userLng);
-    }
 
     // Helper to resolve category/subcategory ID from slug or ID
     const resolveId = async (
@@ -312,53 +308,89 @@ export const getProducts = async (req: Request, res: Response) => {
     }
 
     // Calculate skip for pagination
-    const skip = (Number(page) - 1) * Number(limit);
+    const pageNum = Math.max(1, Number(page));
+    const limitNum = Math.max(1, Number(limit));
+    const skip = (pageNum - 1) * limitNum;
 
-    // Build sort object
-    let sortOptions: any = { createdAt: -1 }; // Default new to old
-    if (sort === "price_asc") sortOptions = { price: 1 };
-    if (sort === "price_desc") sortOptions = { price: -1 };
-    if (sort === "discount") sortOptions = { discount: -1 };
-    if (sort === "popular") sortOptions = { popular: -1, dealOfDay: -1 };
+    // Build sort object for aggregation
+    let sortStage: any = { createdAt: -1 };
+    if (sort === "price_asc") sortStage = { price: 1 };
+    if (sort === "price_desc") sortStage = { price: -1 };
+    if (sort === "discount") sortStage = { discount: -1 };
+    if (sort === "popular") sortStage = { popular: -1, dealOfDay: -1 };
 
-    const rawProducts = await Product.find(query)
-      .lean()
-      .populate("category", "name icon image slug")
-      .populate("subcategory", "name")
-      .populate("brand", "name")
-      .populate("warehouse", "warehouseName")
-      .sort(sortOptions) as any[];
+    // --- Aggregation Pipeline for Grouping & Pagination at DB Level ---
+    const pipeline: any[] = [
+      { $match: query },
+      { $sort: sortStage },
+      // Group by product name to consolidate warehouses
+      {
+        $group: {
+          _id: "$productName",
+          firstDoc: { $first: "$$ROOT" },
+          totalStock: { $sum: "$stock" },
+          allWarehouses: {
+            $push: { warehouse: "$warehouse", stock: "$stock", id: "$_id" },
+          },
+        },
+      },
+      // Re-sort the groups based on the first document's sort criteria
+      { $sort: { "firstDoc.createdAt": -1 } },
+    ];
 
-    const groupedProductsMap = new Map();
-    for (const p of rawProducts) {
-      if (!groupedProductsMap.has(p.productName)) {
-        groupedProductsMap.set(p.productName, {
-          ...p,
-          totalStock: p.stock,
-          allWarehouses: [{ warehouse: p.warehouse, stock: p.stock, id: p._id }]
-        });
-      } else {
-        const existing = groupedProductsMap.get(p.productName);
-        existing.totalStock += p.stock;
-        existing.stock += p.stock;
-        existing.allWarehouses.push({ warehouse: p.warehouse, stock: p.stock, id: p._id });
-        if (existing.variations && existing.variations.length > 0 && p.variations && p.variations.length > 0) {
-          existing.variations[0].stock += p.variations[0].stock;
-        }
-      }
+    // Add specific group sorting if needed
+    if (sort === "price_asc") pipeline[3].$sort = { "firstDoc.price": 1 };
+    if (sort === "price_desc") pipeline[3].$sort = { "firstDoc.price": -1 };
+    if (sort === "discount") pipeline[3].$sort = { "firstDoc.discount": -1 };
+
+    // Facet for total count and paginated data
+    pipeline.push({
+      $facet: {
+        metadata: [{ $count: "total" }],
+        data: [
+          { $skip: skip },
+          { $limit: limitNum },
+          {
+            $replaceRoot: {
+              newRoot: {
+                $mergeObjects: [
+                  "$firstDoc",
+                  {
+                    totalStock: "$totalStock",
+                    stock: "$totalStock", // for compatibility
+                    allWarehouses: "$allWarehouses",
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    const [results] = await Product.aggregate(pipeline);
+    
+    const total = results.metadata[0]?.total || 0;
+    let paginatedProducts = results.data || [];
+
+    // Populate the final small slice of results (much faster than populating all)
+    if (paginatedProducts.length > 0) {
+      paginatedProducts = await Product.populate(paginatedProducts, [
+        { path: "category", select: "name icon image slug" },
+        { path: "subcategory", select: "name" },
+        { path: "brand", select: "name" },
+        { path: "warehouse", select: "warehouseName" },
+      ]);
     }
-    const aggregatedProducts = Array.from(groupedProductsMap.values());
-    const total = aggregatedProducts.length;
-    const paginatedProducts = aggregatedProducts.slice(skip, skip + Number(limit));
 
     return res.status(200).json({
       success: true,
       data: paginatedProducts,
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / Number(limit)),
+        pages: Math.ceil(total / limitNum),
       },
     });
   } catch (error: any) {

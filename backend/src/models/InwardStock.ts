@@ -10,7 +10,9 @@ export interface IInwardStock extends Document {
   unitPrice: number;
   totalPrice: number;
   date: Date;
-  invoiceNumber: string;
+  orderDate?: Date;
+  deliveryDate?: Date;
+  invoiceNumber?: string;
   batchNumber?: string;
   vehicleNumber?: string;
   status: "Pending" | "Received" | "Cancelled";
@@ -64,9 +66,14 @@ const InwardStockSchema = new Schema<IInwardStock>(
       type: Date,
       default: Date.now,
     },
+    orderDate: {
+      type: Date,
+    },
+    deliveryDate: {
+      type: Date,
+    },
     invoiceNumber: {
       type: String,
-      required: true,
       trim: true,
     },
     batchNumber: {

@@ -59,7 +59,8 @@ router.get("/health", (_req, res) => {
 
 // Debug logging
 router.use((req, _res, next) => {
-  console.log(`[API V1 PATH] ${req.method} ${req.path}`);
+  const hasToken = !!req.headers.authorization;
+  console.log(`[API DEBUG] ${req.method} ${req.path} - Has Token: ${hasToken}`);
   next();
 });
 

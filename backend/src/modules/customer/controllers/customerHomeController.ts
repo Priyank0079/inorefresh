@@ -255,60 +255,69 @@ export const getHomeContent = async (req: Request, res: Response) => {
       nearbySellerIds = [];
     }
 
-    // 1. Featured / Bestsellers - Get bestseller cards from admin configuration
-    const bestsellerCards = await BestsellerCard.find({
-      isActive: true,
-    })
-      .populate("category", "name slug image")
-      .sort({ order: 1 })
-      .limit(6)
-      .lean();
+    // --- Parallelize independent top-level queries ---
+    const [bestsellerCards, lowestPricesProducts, categories, shopDocuments, trendingCategories] = await Promise.all([
+      // 1. Bestsellers config
+      BestsellerCard.find({ isActive: true })
+        .populate("category", "name slug image")
+        .sort({ order: 1 })
+        .limit(6)
+        .lean(),
+      
+      // 2. Lowest Prices Products
+      LowestPricesProduct.find({ isActive: true })
+        .populate({
+          path: "product",
+          select: "productName mainImage price mrp discount status publish category subcategory seller warehouse variations",
+          match: { status: "Active", publish: true },
+        })
+        .sort({ order: 1 })
+        .lean(),
+      
+      // 3. Categories for Tiles
+      Category.find({
+        status: "Active",
+        headerCategoryId: { $exists: true, $ne: null },
+      })
+        .select("name image icon color slug headerCategoryId")
+        .sort({ order: 1 }),
+      
+      // 4. Shop By Store
+      Shop.find({ isActive: true })
+        .populate("category", "name slug")
+        .sort({ order: 1, createdAt: -1 })
+        .lean(),
+      
+      // 5. Trending Items
+      Category.find({
+        status: "Active",
+        headerCategoryId: { $exists: true, $ne: null },
+      })
+        .limit(5)
+        .select("name image slug"),
+    ]);
 
-    // For each bestseller card, get 4 products from the associated category
+    // Transform bestsellers (still needs sub-queries, but the initial cards are fetched)
     const bestsellers = await Promise.all(
       bestsellerCards.map(async (card: any) => {
         const categoryId = card.category?._id || card.category;
-
-        // Build product query for images (ignore location to show category preview)
-        const productQuery: any = {
-          category: categoryId,
-          status: "Active",
-          publish: true,
-        };
-
-        // Fetch 4 active products from the category for preview images
-        // We fetch these irrespective of location radius to show category preview
+        const productQuery = { category: categoryId, status: "Active", publish: true };
         const categoryProducts = await Product.find(productQuery)
           .select("productName mainImage galleryImages")
           .sort({ createdAt: -1 })
           .limit(4)
           .lean();
 
-        // Extract exactly 4 product images (prefer mainImage, fallback to galleryImages[0])
         const productImages: string[] = [];
-        categoryProducts.forEach((product: any) => {
-          if (productImages.length < 4 && product.mainImage) {
-            productImages.push(product.mainImage);
-          }
+        categoryProducts.forEach((p: any) => {
+          if (productImages.length < 4 && p.mainImage) productImages.push(p.mainImage);
         });
-
-        // If we have less than 4 products, try to use gallery images
         if (productImages.length < 4) {
-          categoryProducts.forEach((product: any) => {
-            if (
-              productImages.length < 4 &&
-              product.galleryImages &&
-              product.galleryImages.length > 0
-            ) {
-              productImages.push(product.galleryImages[0]);
-            }
+          categoryProducts.forEach((p: any) => {
+            if (productImages.length < 4 && p.galleryImages?.length > 0) productImages.push(p.galleryImages[0]);
           });
         }
-
-        // Ensure we have exactly 4 images (pad with first image if needed)
-        while (productImages.length < 4 && productImages[0]) {
-          productImages.push(productImages[0]);
-        }
+        while (productImages.length < 4 && productImages[0]) productImages.push(productImages[0]);
 
         return {
           id: card._id.toString(),
@@ -320,29 +329,7 @@ export const getHomeContent = async (req: Request, res: Response) => {
       })
     );
 
-    // 2. Lowest Prices Products - Get admin-selected products
-    // We fetch these irrespective of location radius to show preview on home page
-    const lowestPricesProductsQuery: any = {
-      isActive: true,
-    };
-
-    const lowestPricesProducts = await LowestPricesProduct.find(
-      lowestPricesProductsQuery
-    )
-      .populate({
-        path: "product",
-        select:
-          "productName mainImage price mrp discount status publish category subcategory seller warehouse variations",
-        match: {
-          status: "Active",
-          publish: true,
-          // Removed location filter to show preview images irrespective of radius
-        },
-      })
-      .sort({ order: 1 })
-      .lean();
-
-    // Filter out any products that were null (due to match condition)
+    // Transform lowest prices
     const validLowestPricesProducts = lowestPricesProducts
       .filter((item: any) => item.product !== null)
       .map((item: any) => {
@@ -361,70 +348,34 @@ export const getHomeContent = async (req: Request, res: Response) => {
           imageUrl: product.mainImage,
           price: product.price,
           mrp: product.mrp || product.price,
-          discount: product.discount || (product.mrp && product.price ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0),
-          categoryId: product.category?.toString() || "",
-          subcategory: product.subcategory?.toString() || "",
-          status: product.status,
-          publish: product.publish,
+          discount: product.discount || 0,
           isAvailable,
-          seller: product.seller,
-          warehouse: product.warehouse,
         };
       });
 
-    // 3. Categories for Tiles (Grocery, Snacks, etc)
-    // ONLY show categories that have a headerCategoryId assigned
-    const categories = await Category.find({
-      status: "Active",
-      headerCategoryId: { $exists: true, $ne: null },
-    })
-      .select("name image icon color slug headerCategoryId")
-      .sort({ order: 1 });
-
-    // 4. Shop By Store - Fetch from database
-    const shopDocuments = await Shop.find({ isActive: true })
-      .populate("category", "name slug")
-      .sort({ order: 1, createdAt: -1 })
-      .lean();
-
-    // Transform shop data to match frontend expected format and include preview images
+    // Transform shops
     const shops = await Promise.all(
       shopDocuments.map(async (shop: any) => {
         let productImages: string[] = [];
-
         if (shop.products && shop.products.length > 0) {
           const shopProducts = await Product.find({
             _id: { $in: shop.products.slice(0, 4) },
             status: "Active",
             publish: true,
-          })
-            .select("mainImage")
-            .lean();
-
+          }).select("mainImage").lean();
           productImages = shopProducts.map((p: any) => p.mainImage).filter(Boolean);
         }
-
         return {
           id: shop.storeId || shop._id.toString(),
           name: shop.name,
           image: shop.image,
-          productImages, // Include preview images irrespective of location
-          slug: shop.storeId || shop._id.toString(),
+          productImages,
           category: shop.category,
-          productIds: shop.products?.map((p: any) => p.toString()) || [],
-          bgColor: shop.bgColor || "bg-neutral-50",
         };
       })
     );
 
-    // 5. Trending Items (Fetch some popular categories or products)
-    const trendingCategories = await Category.find({
-      status: "Active",
-      headerCategoryId: { $exists: true, $ne: null },
-    })
-      .limit(5)
-      .select("name image slug");
-
+    // Transform trending
     const trending = trendingCategories.map((c) => ({
       id: c._id,
       name: c.name,

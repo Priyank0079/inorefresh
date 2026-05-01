@@ -89,6 +89,7 @@ const WarehouseSalesReport = lazy(() => import("./modules/warehouse/pages/Wareho
 const WarehouseReturnRequest = lazy(() => import("./modules/warehouse/pages/WarehouseReturnRequest"));
 const WarehouseInwardStockList = lazy(() => import("./modules/warehouse/pages/WarehouseInwardStockList"));
 const WarehouseAddInwardStock = lazy(() => import("./modules/warehouse/pages/WarehouseAddInwardStock"));
+const WarehouseInwardReport = lazy(() => import("./modules/warehouse/pages/WarehouseInwardReport"));
 const WarehouseAccountSettings = lazy(() => import("./modules/warehouse/pages/WarehouseAccountSettings"));
 const WarehouseLogin = lazy(() => import("./modules/warehouse/pages/WarehouseLogin"));
 const WarehouseSignUp = lazy(() => import("./modules/warehouse/pages/WarehouseSignUp"));
@@ -144,6 +145,9 @@ const AdminWithdrawals = lazy(() => import("./modules/admin/pages/AdminWithdrawa
 const AdminPayments = lazy(() => import("./modules/admin/pages/AdminPayments"));
 const AdminWallet = lazy(() => import("./modules/admin/pages/AdminWallet"));
 const AdminBillingSettings = lazy(() => import("./modules/admin/pages/AdminBillingSettings"));
+
+// Lazy load port routes
+const PortRoutes = lazy(() => import("./modules/port/routes/portRoutes"));
 
 function App() {
   // Initialize push notifications on app load
@@ -309,6 +313,7 @@ function App() {
                                         <Route path="return-order" element={<WarehouseReturnRequest />} />
                                         <Route path="wallet" element={<WarehouseWallet />} />
                                         <Route path="reports/sales" element={<WarehouseSalesReport />} />
+                                        <Route path="reports/inward" element={<WarehouseInwardReport />} />
                                         <Route path="account-settings" element={<WarehouseAccountSettings />} />
                                         <Route path="all" element={<AdminManageSellerList />} />
                                       </Routes>
@@ -379,6 +384,14 @@ function App() {
                                     </AdminLayout>
                                   </Suspense>
                                 </ProtectedRoute>
+                              }
+                            />
+                            <Route
+                              path="/port/*"
+                              element={
+                                <Suspense fallback={<IconLoader forceShow />}>
+                                  <PortRoutes />
+                                </Suspense>
                               }
                             />
 

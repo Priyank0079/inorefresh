@@ -176,8 +176,10 @@ export default function WarehouseInwardStockList() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-neutral-50 text-xs font-bold text-neutral-700 uppercase tracking-wider border-b border-neutral-200">
-                                <th className="p-4">Date</th>
+                                <th className="p-4">Entry Date</th>
                                 <th className="p-4">Invoice #</th>
+                                <th className="p-4">Order Date</th>
+                                <th className="p-4">Delivery Date</th>
                                 <th className="p-4">Supplier</th>
                                 <th className="p-4">Product / Variant</th>
                                 <th className="p-4 text-center">Qty</th>
@@ -189,14 +191,16 @@ export default function WarehouseInwardStockList() {
                         </thead>
                         <tbody className="divide-y divide-neutral-100">
                             {loading ? (
-                                <tr><td colSpan={9} className="p-12 text-center text-neutral-400">Loading records...</td></tr>
+                                <tr><td colSpan={11} className="p-12 text-center text-neutral-400">Loading records...</td></tr>
                             ) : stocks.length === 0 ? (
-                                <tr><td colSpan={9} className="p-12 text-center text-neutral-400">No inward stock records found.</td></tr>
+                                <tr><td colSpan={11} className="p-12 text-center text-neutral-400">No inward stock records found.</td></tr>
                             ) : (
                                 stocks.map((stock) => (
                                     <tr key={stock._id} className="hover:bg-neutral-50 transition-colors text-sm">
-                                        <td className="p-4 whitespace-nowrap">{new Date(stock.date).toLocaleDateString()}</td>
-                                        <td className="p-4 font-medium text-[#12b2a2]">{stock.invoiceNumber}</td>
+                                        <td className="p-4 whitespace-nowrap text-neutral-500">{new Date(stock.date).toLocaleDateString()}</td>
+                                        <td className="p-4 font-medium text-[#12b2a2]">{stock.invoiceNumber || 'N/A'}</td>
+                                        <td className="p-4 whitespace-nowrap">{stock.orderDate ? new Date(stock.orderDate).toLocaleDateString() : '-'}</td>
+                                        <td className="p-4 whitespace-nowrap font-medium text-teal-700">{stock.deliveryDate ? new Date(stock.deliveryDate).toLocaleDateString() : '-'}</td>
                                         <td className="p-4">
                                             <div className="font-medium">{stock.supplierName}</div>
                                             {stock.sourcePort && <div className="text-[10px] text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded inline-block mt-1">From: {stock.sourcePort}</div>}
