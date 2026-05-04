@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import InwardStock from "../../../models/InwardStock";
+import PortRequirement from "../../../models/PortRequirement";
 import { asyncHandler } from "../../../utils/asyncHandler";
 
 /**
@@ -81,19 +82,72 @@ export const getInwardStockById = asyncHandler(async (req: Request, res: Respons
  */
 export const addInwardStock = asyncHandler(async (req: Request, res: Response) => {
   const warehouseId = (req as any).user.userId;
+  
+  // Auto-generate Requirement ID
+  const requirementId = `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
+
   const stockData = {
     ...req.body,
     warehouse: warehouseId,
+    invoiceNumber: requirementId // Use auto-generated ID as invoice number if not provided
   };
 
-  const newStock = await InwardStock.create(stockData);
+  console.log("DEBUG: stockData to create:", JSON.stringify(stockData, null, 2));
+  console.log("DEBUG: InwardStock schema paths:", Object.keys(InwardStock.schema.paths));
+
+
+  let newStock;
+  try {
+    newStock = await InwardStock.create(stockData);
+    console.log("DEBUG: InwardStock created successfully");
+
+  } catch (err: any) {
+    console.error("Error creating InwardStock:", err);
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Failed to create inward stock record",
+      errors: err.errors // Send Mongoose validation errors
+    });
+  }
+
+  // Also create a PortRequirement
+  try {
+    const requirement = await PortRequirement.create({
+      requirementId: requirementId,
+      fishName: req.body.productName,
+      category: req.body.category || 'Fresh',
+      grade: req.body.variant,
+      quantityRequired: req.body.quantity,
+      unit: req.body.unit || 'kg',
+      // targetPrice removed as per user request
+      deadline: req.body.deliveryDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      status: 'Open',
+      warehouseId: warehouseId,
+      priority: 'medium',
+      notes: req.body.remarks
+    });
+
+    // Emit socket notification to Port
+    const io = req.app.get("io");
+    if (io) {
+      io.to('port-notifications').emit('new-requirement', {
+        message: `New requirement for ${req.body.productName} from Warehouse`,
+        requirement: requirement
+      });
+    }
+  } catch (err) {
+    console.error("Error creating PortRequirement:", err);
+  }
 
   return res.status(201).json({
     success: true,
     message: "Inward stock added successfully",
     data: newStock,
   });
+
 });
+
+
 
 /**
  * Update inward stock status

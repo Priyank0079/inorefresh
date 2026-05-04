@@ -280,6 +280,8 @@ router.get("/warehouses", warehouseController.getAllWarehouses);
 router.get("/warehouse", warehouseController.getAllWarehouses); // alias
 router.post("/create-warehouse", warehouseController.createWarehouse);
 router.post("/warehouse", warehouseController.createWarehouse); // alias
+router.get("/warehouse/:warehouseId/inward-stock", warehouseController.getWarehouseInwardStockSummary);
+router.get("/warehouses/inward-stock/all", warehouseController.getAllWarehousesInwardStock);
 
 // ==================== Shop Management ====================
 router.post("/shop/create", createShop);

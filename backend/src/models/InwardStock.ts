@@ -1,14 +1,16 @@
+// Updated: 2026-05-02 16:52
 import mongoose, { Document, Schema } from "mongoose";
 
+
 export interface IInwardStock extends Document {
+
   warehouse: mongoose.Types.ObjectId;
   supplierName: string;
   sourcePort?: string;
   productName: string;
+  category?: string;
   variant: string;
   quantity: number;
-  unitPrice: number;
-  totalPrice: number;
   date: Date;
   orderDate?: Date;
   deliveryDate?: Date;
@@ -42,22 +44,16 @@ const InwardStockSchema = new Schema<IInwardStock>(
       required: true,
       trim: true,
     },
+    category: {
+      type: String,
+      trim: true,
+    },
     variant: {
       type: String,
       required: true,
       trim: true,
     },
     quantity: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    unitPrice: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    totalPrice: {
       type: Number,
       required: true,
       min: 0,
@@ -102,6 +98,11 @@ const InwardStockSchema = new Schema<IInwardStock>(
 InwardStockSchema.index({ warehouse: 1 });
 InwardStockSchema.index({ date: -1 });
 
-const InwardStock = (mongoose.models.InwardStock as mongoose.Model<IInwardStock>) || mongoose.model<IInwardStock>("InwardStock", InwardStockSchema);
+// Force clear model from cache to apply schema changes in development
+if (mongoose.models.InwardStock) {
+  delete mongoose.models.InwardStock;
+}
+
+const InwardStock = mongoose.model<IInwardStock>("InwardStock", InwardStockSchema);
 
 export default InwardStock;

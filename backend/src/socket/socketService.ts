@@ -210,6 +210,31 @@ export const initializeSocket = (httpServer: HttpServer) => {
             });
         });
 
+        // Port joins their notification room
+        socket.on('join-port-room', (portId: string) => {
+            const normalizedPortId = String(portId).trim();
+            console.log(`⚓ Port ${normalizedPortId} joined notifications room`);
+            socket.join(`port-notifications`);
+            socket.join(`port-${normalizedPortId}`);
+
+            socket.emit('joined-port-room', {
+                success: true,
+                message: 'Successfully joined port notifications room',
+                portId: normalizedPortId
+            });
+        });
+
+        // Admin joins notification room
+        socket.on('join-admin-room', () => {
+            console.log(`👑 Admin joined notifications room`);
+            socket.join('admin-notifications');
+            
+            socket.emit('joined-admin-room', {
+                success: true,
+                message: 'Successfully joined admin notifications room'
+            });
+        });
+
         // Delivery boy joins notification room
         socket.on('join-delivery-notifications', (deliveryBoyId: string) => {
             // Normalize deliveryBoyId to string to ensure consistent room naming

@@ -11,6 +11,7 @@ import TrackOrder from '../pages/orders/TrackOrder';
 import Notifications from '../pages/notifications/Notifications';
 import ProfileSettings from '../pages/settings/ProfileSettings';
 import NegotiationPage from '../pages/offers/NegotiationPage';
+import RequirementHistory from '../pages/requirements/RequirementHistory';
 
 const PortRoutes = () => {
   return (
@@ -20,7 +21,7 @@ const PortRoutes = () => {
         <Route path="dashboard" element={<Dashboard />} />
         
         <Route path="requirements" element={<IncomingRequirements />} />
-        <Route path="requirements/history" element={<div className="p-8 bg-white rounded-xl shadow-sm border border-slate-100">Requirement History Page (Coming Soon)</div>} />
+        <Route path="requirements/history" element={<RequirementHistory />} />
         
         <Route path="offers" element={<MyOffers />} />
         <Route path="offers/negotiations" element={<NegotiationPage />} />
@@ -29,12 +30,11 @@ const PortRoutes = () => {
         <Route path="products/add" element={<AddProduct />} />
         
         <Route path="orders" element={<MyOrders />} />
-        <Route path="orders/track" element={<TrackOrder />} />
+        <Route path="orders/track/:id" element={<TrackOrder />} />
         
         <Route path="notifications" element={<Notifications />} />
         
         <Route path="settings/profile" element={<ProfileSettings />} />
-        <Route path="settings/account" element={<div className="p-8 bg-white rounded-xl shadow-sm border border-slate-100">Account Settings Page (Coming Soon)</div>} />
       </Route>
     </Routes>
   );

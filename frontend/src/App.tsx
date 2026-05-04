@@ -107,10 +107,12 @@ const AdminSellerTransaction = lazy(() => import("./modules/admin/pages/AdminSel
 const AdminStockManagement = lazy(() => import("./modules/admin/pages/AdminStockManagement"));
 const AdminSubcategoryOrder = lazy(() => import("./modules/admin/pages/AdminSubcategoryOrder"));
 const AdminManageSellerList = lazy(() => import("./modules/admin/pages/AdminManageSellerList"));
+const AdminWarehouseInwardStock = lazy(() => import("./modules/admin/pages/AdminWarehouseInwardStock"));
 const AdminCreateSeller = lazy(() => import("./modules/admin/pages/AdminCreateSeller"));
 const AdminCoupon = lazy(() => import("./modules/admin/pages/AdminCoupon"));
 const AdminNotification = lazy(() => import("./modules/admin/pages/AdminNotification"));
 const AdminSellerLocation = lazy(() => import("./modules/admin/pages/AdminSellerLocation"));
+const AdminPortNegotiations = lazy(() => import("./modules/admin/pages/AdminPortNegotiations"));
 
 const AdminManageDeliveryBoy = lazy(() => import("./modules/admin/pages/AdminManageDeliveryBoy"));
 const AdminFundTransfer = lazy(() => import("./modules/admin/pages/AdminFundTransfer"));
@@ -148,6 +150,8 @@ const AdminBillingSettings = lazy(() => import("./modules/admin/pages/AdminBilli
 
 // Lazy load port routes
 const PortRoutes = lazy(() => import("./modules/port/routes/portRoutes"));
+const PortLogin = lazy(() => import("./modules/port/pages/auth/PortLogin"));
+const PortSignup = lazy(() => import("./modules/port/pages/auth/PortSignup"));
 
 function App() {
   // Initialize push notifications on app load
@@ -239,6 +243,26 @@ function App() {
                                 <PublicRoute userType="Admin">
                                   <Suspense fallback={<IconLoader forceShow />}>
                                     <AdminLogin />
+                                  </Suspense>
+                                </PublicRoute>
+                              }
+                            />
+                            <Route
+                              path="/port/login"
+                              element={
+                                <PublicRoute userType="Port">
+                                  <Suspense fallback={<IconLoader forceShow />}>
+                                    <PortLogin />
+                                  </Suspense>
+                                </PublicRoute>
+                              }
+                            />
+                            <Route
+                              path="/port/signup"
+                              element={
+                                <PublicRoute userType="Port">
+                                  <Suspense fallback={<IconLoader forceShow />}>
+                                    <PortSignup />
                                   </Suspense>
                                 </PublicRoute>
                               }
@@ -342,6 +366,8 @@ function App() {
                                         <Route path="product/list" element={<AdminStockManagement />} />
                                         <Route path="manage-warehouse/list" element={<AdminManageSellerList />} />
                                         <Route path="manage-warehouse/create" element={<AdminCreateSeller />} />
+                                        <Route path="manage-warehouse/inward-stock" element={<AdminWarehouseInwardStock />} />
+                                        <Route path="manage-warehouse/port-negotiations" element={<AdminPortNegotiations />} />
                                         <Route path="manage-warehouse/transaction" element={<AdminSellerTransaction />} />
                                         <Route path="delivery-boy/manage" element={<AdminManageDeliveryBoy />} />
                                         <Route path="delivery-boy/fund-transfer" element={<AdminFundTransfer />} />
@@ -389,9 +415,11 @@ function App() {
                             <Route
                               path="/port/*"
                               element={
-                                <Suspense fallback={<IconLoader forceShow />}>
-                                  <PortRoutes />
-                                </Suspense>
+                                <ProtectedRoute requiredUserType="Port" redirectTo="/port/login">
+                                  <Suspense fallback={<IconLoader forceShow />}>
+                                    <PortRoutes />
+                                  </Suspense>
+                                </ProtectedRoute>
                               }
                             />
 

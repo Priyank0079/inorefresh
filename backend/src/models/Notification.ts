@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface INotification extends Document {
   // Recipient Info
-  recipientType: "Admin" | "Warehouse" | "Customer" | "Delivery" | "All";
+  recipientType: "Admin" | "Warehouse" | "Customer" | "Delivery" | "Port" | "All";
   recipientId?: mongoose.Types.ObjectId; // Specific user ID if not 'All'
 
   // Notification Content
@@ -46,7 +46,7 @@ const NotificationSchema = new Schema<INotification>(
     // Recipient Info
     recipientType: {
       type: String,
-      enum: ["Admin", "Warehouse", "Customer", "Delivery", "All"],
+      enum: ["Admin", "Warehouse", "Customer", "Delivery", "Port", "All"],
       required: [true, "Recipient type is required"],
     },
     recipientId: {

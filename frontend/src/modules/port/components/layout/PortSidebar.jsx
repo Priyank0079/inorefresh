@@ -32,8 +32,7 @@ const menuSections = [
   {
     title: "ORDER SECTION",
     items: [
-      { label: "My Orders", path: "/port/orders", icon: "shopping_cart" },
-      { label: "Order Tracking", path: "/port/orders/track", icon: "local_shipping" }
+      { label: "My Orders", path: "/port/orders", icon: "shopping_cart" }
     ]
   },
   {
@@ -45,8 +44,7 @@ const menuSections = [
   {
     title: "SETTINGS",
     items: [
-      { label: "Profile Settings", path: "/port/settings/profile", icon: "person" },
-      { label: "Account Settings", path: "/port/settings/account", icon: "settings" }
+      { label: "Profile Settings", path: "/port/settings/profile", icon: "person" }
     ]
   }
 ];

@@ -22,9 +22,8 @@ export interface InwardStock {
   productName: string;
   variant: string;
   quantity: number;
-  unitPrice: number;
-  totalPrice: number;
   date: string;
+
   orderDate?: string;
   deliveryDate?: string;
   invoiceNumber?: string;

@@ -1,8 +1,14 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 const PortNavbar = ({ onMenuClick, title }) => {
   const navigate = useNavigate();
+  const { logout, user } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/port/login', { replace: true });
+  };
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
@@ -34,20 +40,20 @@ const PortNavbar = ({ onMenuClick, title }) => {
           {/* Profile */}
           <div className="flex items-center gap-3 pl-2 sm:pl-4 border-l border-slate-200 ml-2">
             <div className="hidden sm:block text-right">
-              <p className="text-sm font-semibold text-slate-800">Veraval Port</p>
-              <p className="text-xs text-slate-500">Administrator</p>
+              <p className="text-sm font-semibold text-slate-800">{user?.name || 'Veraval Port'}</p>
+              <p className="text-xs text-slate-500">{user?.userType || 'Administrator'}</p>
             </div>
             <button 
               onClick={() => navigate('/port/settings/profile')}
               className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-sm hover:ring-4 hover:ring-teal-50 transition-all"
             >
-              VP
+              {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'VP'}
             </button>
           </div>
 
           {/* Logout */}
           <button 
-            onClick={() => navigate('/login')}
+            onClick={handleLogout}
             className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
             title="Logout"
           >

@@ -1,49 +1,95 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PageTitle from '../../components/common/PageTitle';
 import StatusBadge from '../../components/common/StatusBadge';
 import SendOfferModal from '../../components/modals/SendOfferModal';
-import { dummyRequirements } from '../../data/dummyRequirements';
+import { getPortRequirements, updateRequirementStatus } from '@/services/api/portRequirementService';
+import { usePortSocket } from '../../hooks/usePortSocket';
+
+
+
 
 const IncomingRequirements = () => {
-  const [requirements, setRequirements] = useState(dummyRequirements);
+  const [requirements, setRequirements] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReq, setSelectedReq] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
 
+  const fetchRequirements = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getPortRequirements({
+        search: searchTerm,
+        status: statusFilter === 'All' ? undefined : statusFilter
+      });
+      if (res.success) {
+        setRequirements(res.data);
+      }
+    } catch (err) {
+      console.error("Error fetching requirements:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm, statusFilter]);
+
+  useEffect(() => {
+    fetchRequirements();
+  }, [fetchRequirements]);
+
+  // Socket notification handler
+  usePortSocket((newReq) => {
+    // Add new requirement to the top of the list if it matches filters
+    setRequirements(prev => {
+        // Avoid duplicates if socket and initial fetch overlap
+        if (prev.some(r => r._id === newReq._id)) return prev;
+        return [newReq, ...prev];
+    });
+    
+    // Play a notification sound or show a toast if needed
+    if (Notification.permission === "granted") {
+      new Notification("New Requirement", {
+        body: `New requirement for ${newReq.fishName} from ${newReq.warehouseId?.name || 'Warehouse'}`
+      });
+    }
+  });
+
   const handleSendOffer = (req) => {
     setSelectedReq(req);
     setIsModalOpen(true);
   };
 
-  const onOfferSent = (reqId) => {
+  const onOfferSent = async (reqId) => {
+    // Update local state after offer is sent
     setRequirements(prev => prev.map(req => 
-      req.id === reqId ? { ...req, status: 'Negotiating' } : req
+      req._id === reqId ? { ...req, status: 'Negotiating' } : req
     ));
-    // In a real app, we would also add to dummyOffers
+    
+    // Also update backend status
+    try {
+      await updateRequirementStatus(reqId, 'Negotiating');
+    } catch (err) {
+      console.error("Error updating status:", err);
+    }
   };
 
-  const handleReject = (reqId) => {
+  const handleReject = async (reqId) => {
     if (window.confirm('Are you sure you want to reject this requirement?')) {
-      setRequirements(prev => prev.filter(req => req.id !== reqId));
+      try {
+        const res = await updateRequirementStatus(reqId, 'Cancelled');
+        if (res.success) {
+          setRequirements(prev => prev.filter(req => req._id !== reqId));
+        }
+      } catch (err) {
+        console.error("Error rejecting requirement:", err);
+      }
     }
   };
 
   const handleView = (req) => {
-    alert(`Viewing Details for ${req.id}:\nFish: ${req.fishName}\nWarehouse: ${req.warehouseName}\nQty: ${req.quantityRequired}\nTarget Price: ₹${req.targetPrice}`);
+    alert(`Viewing Details for ${req.requirementId}:\nFish: ${req.fishName}\nWarehouse: ${req.warehouseId?.name}\nQty: ${req.quantityRequired} ${req.unit}\nTarget Price: ₹${req.targetPrice}`);
   };
-
-  // Filter Logic
-  const filteredRequirements = requirements.filter(req => {
-    const matchesSearch = req.fishName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         req.warehouseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         req.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'All' || req.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
 
   return (
     <div className="space-y-6">
@@ -102,31 +148,40 @@ const IncomingRequirements = () => {
                 <th className="px-6 py-4 font-bold">Warehouse</th>
                 <th className="px-6 py-4 font-bold">Fish Details</th>
                 <th className="px-6 py-4 font-bold">Quantity</th>
-                <th className="px-6 py-4 font-bold">Target Price</th>
                 <th className="px-6 py-4 font-bold">Deadline</th>
                 <th className="px-6 py-4 font-bold">Status</th>
                 <th className="px-6 py-4 font-bold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredRequirements.length > 0 ? filteredRequirements.map((req) => (
-                <tr key={req.id} className="hover:bg-slate-50 transition-colors group">
-                  <td className="px-6 py-4 text-sm font-medium text-teal-600">{req.id}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500 font-medium">{req.createdAt}</td>
+              {loading ? (
+                <tr>
+                  <td colSpan="8" className="px-6 py-12 text-center text-slate-400">
+                    <div className="flex flex-col items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mb-4"></div>
+                      <p className="text-sm font-medium">Loading requirements...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : requirements.length > 0 ? requirements.map((req) => (
+                <tr key={req._id} className="hover:bg-slate-50 transition-colors group">
+                  <td className="px-6 py-4 text-sm font-medium text-teal-600">{req.requirementId}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500 font-medium">{new Date(req.createdAt).toISOString().split('T')[0]}</td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-semibold text-slate-800">{req.warehouseName}</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">GUJARAT, INDIA</p>
+                    <p className="text-sm font-semibold text-slate-800">{req.warehouseId?.warehouseName || 'Warehouse'}</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">
+                      {req.warehouseId?.address || 'N/A'}
+                    </p>
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-bold text-slate-800">{req.fishName}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">{req.category}</span>
-                      <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">{req.quality}</span>
+                      <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">{req.grade}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600 font-semibold">{req.quantityRequired}</td>
-                  <td className="px-6 py-4 text-sm text-slate-600 font-bold">₹{req.targetPrice}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{req.deadline}</td>
+                  <td className="px-6 py-4 text-sm text-slate-600 font-semibold">{req.quantityRequired} {req.unit}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500">{new Date(req.deadline).toISOString().split('T')[0]}</td>
                   <td className="px-6 py-4">
                     <StatusBadge status={req.status} />
                   </td>
@@ -154,7 +209,7 @@ const IncomingRequirements = () => {
                         <span className="material-icons-outlined text-lg">visibility</span>
                       </button>
                       <button 
-                        onClick={() => handleReject(req.id)}
+                        onClick={() => handleReject(req._id)}
                         className="p-2 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition-all"
                       >
                         <span className="material-icons-outlined text-lg">block</span>
@@ -171,12 +226,13 @@ const IncomingRequirements = () => {
                 </tr>
               )}
             </tbody>
+
           </table>
         </div>
         
         {/* Pagination */}
         <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50">
-          <p className="text-sm text-slate-500">Showing {filteredRequirements.length} of {requirements.length} entries</p>
+          <p className="text-sm text-slate-500">Showing {requirements.length} entries</p>
           <div className="flex items-center gap-1">
             <button className="p-2 text-slate-400 hover:text-slate-600 disabled:opacity-50" disabled>
               <span className="material-icons-outlined">chevron_left</span>

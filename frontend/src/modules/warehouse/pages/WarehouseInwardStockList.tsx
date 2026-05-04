@@ -183,9 +183,8 @@ export default function WarehouseInwardStockList() {
                                 <th className="p-4">Supplier</th>
                                 <th className="p-4">Product / Variant</th>
                                 <th className="p-4 text-center">Qty</th>
-                                <th className="p-4 text-right">Unit Price</th>
-                                <th className="p-4 text-right">Total</th>
                                 <th className="p-4 text-center">Status</th>
+
                                 <th className="p-4 text-center">Action</th>
                             </tr>
                         </thead>
@@ -210,9 +209,8 @@ export default function WarehouseInwardStockList() {
                                             <div className="text-xs text-neutral-500">{stock.variant}</div>
                                         </td>
                                         <td className="p-4 text-center font-bold">{stock.quantity}</td>
-                                        <td className="p-4 text-right text-neutral-600">₹{stock.unitPrice.toFixed(2)}</td>
-                                        <td className="p-4 text-right font-bold text-neutral-900">₹{stock.totalPrice.toFixed(2)}</td>
                                         <td className="p-4 text-center">
+
                                             <select 
                                                 value={stock.status}
                                                 onChange={(e) => handleStatusUpdate(stock._id, e.target.value)}

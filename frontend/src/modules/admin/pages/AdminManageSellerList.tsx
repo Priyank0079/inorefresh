@@ -6,6 +6,11 @@ import {
     updateWarehouseByAdmin,
     Warehouse as WarehouseType,
 } from '../../../services/api/warehouseService';
+import {
+    getWarehouseInwardStockSummary,
+    WarehouseInwardStockSummary,
+    InwardStockData,
+} from '../../../services/api/adminWarehouseService';
 
 interface Warehouse {
     _id: string;
@@ -22,6 +27,7 @@ interface Warehouse {
         type: 'Point';
         coordinates: [number, number];
     };
+    inwardStockSummary?: WarehouseInwardStockSummary;
 }
 
 interface EditWarehouseState {
@@ -81,6 +87,13 @@ export default function AdminManageWarehouseList() {
     const [geocoding, setGeocoding] = useState(false);
     const [editWarehouse, setEditWarehouse] = useState<EditWarehouseState | null>(null);
     const hasFetchedRef = useRef(false);
+
+    // Inward stock modal state
+    const [inwardStockModalOpen, setInwardStockModalOpen] = useState(false);
+    const [selectedWarehouseForStock, setSelectedWarehouseForStock] = useState<Warehouse | null>(null);
+    const [inwardStockData, setInwardStockData] = useState<InwardStockData[]>([]);
+    const [inwardStockSummary, setInwardStockSummary] = useState<WarehouseInwardStockSummary | null>(null);
+    const [inwardStockLoading, setInwardStockLoading] = useState(false);
 
     useEffect(() => {
         if (hasFetchedRef.current) return;
@@ -143,6 +156,31 @@ export default function AdminManageWarehouseList() {
             longitude: lng !== undefined ? String(lng) : '',
             serviceRadiusKm: String(warehouse.serviceRadiusKm || 10),
         });
+    };
+
+    const openInwardStockModal = async (warehouse: Warehouse) => {
+        setSelectedWarehouseForStock(warehouse);
+        setInwardStockModalOpen(true);
+        setInwardStockLoading(true);
+        try {
+            const response = await getWarehouseInwardStockSummary(warehouse._id);
+            if (response.success) {
+                setInwardStockData(response.data.stocks);
+                setInwardStockSummary(response.data.summary);
+                // Update warehouse with summary
+                setWarehouses(prev => prev.map(w => 
+                    w._id === warehouse._id 
+                        ? { ...w, inwardStockSummary: response.data.summary }
+                        : w
+                ));
+            } else {
+                setError('Failed to load inward stock data');
+            }
+        } catch (err: any) {
+            setError(err?.response?.data?.message || 'Error loading inward stock data');
+        } finally {
+            setInwardStockLoading(false);
+        }
     };
 
     const handleGeocodeLocation = async () => {
@@ -264,6 +302,7 @@ export default function AdminManageWarehouseList() {
                                     <th className="p-4">Manager</th>
                                     <th className="p-4">Contact</th>
                                     <th className="p-4">Balance</th>
+                                    <th className="p-4">Inward Stock</th>
                                     <th className="p-4">Status</th>
                                     <th className="p-4">Action</th>
                                 </tr>
@@ -271,11 +310,11 @@ export default function AdminManageWarehouseList() {
                             <tbody className="divide-y">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={6} className="p-8 text-center text-neutral-500">Loading...</td>
+                                        <td colSpan={7} className="p-8 text-center text-neutral-500">Loading...</td>
                                     </tr>
                                 ) : filteredWarehouses.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="p-8 text-center text-neutral-500">No warehouses found.</td>
+                                        <td colSpan={7} className="p-8 text-center text-neutral-500">No warehouses found.</td>
                                     </tr>
                                 ) : (
                                     filteredWarehouses.map((w) => (
@@ -290,6 +329,18 @@ export default function AdminManageWarehouseList() {
                                                 <div className="text-neutral-500">{w.email}</div>
                                             </td>
                                             <td className="p-4 font-semibold text-teal-700">INR {w.balance.toFixed(2)}</td>
+                                            <td className="p-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openInwardStockModal(w)}
+                                                    className="inline-flex items-center gap-2 rounded bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
+                                                >
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                                    </svg>
+                                                    {w.inwardStockSummary?.totalQuantity || 0} units
+                                                </button>
+                                            </td>
                                             <td className="p-4">
                                                 <span
                                                     className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -425,6 +476,120 @@ export default function AdminManageWarehouseList() {
                                 )}
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {inwardStockModalOpen && selectedWarehouseForStock && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                    <div className="w-full max-w-4xl rounded-lg bg-white shadow-xl max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between border-b sticky top-0 bg-white px-5 py-4">
+                            <div>
+                                <h3 className="text-lg font-semibold text-neutral-900">
+                                    Inward Stock: {selectedWarehouseForStock.warehouseName}
+                                </h3>
+                                <p className="text-xs text-neutral-500 mt-1">{selectedWarehouseForStock.address}</p>
+                            </div>
+                            <button
+                                type="button"
+                                className="rounded px-2 py-1 text-sm text-neutral-600 hover:bg-neutral-100"
+                                onClick={() => {
+                                    setInwardStockModalOpen(false);
+                                    setSelectedWarehouseForStock(null);
+                                }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {inwardStockLoading ? (
+                            <div className="p-8 text-center text-neutral-500">Loading inward stock data...</div>
+                        ) : (
+                            <>
+                                {/* Summary Cards */}
+                                {inwardStockSummary && (
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-neutral-50 border-b">
+                                        <div className="bg-white rounded-lg p-4 border border-neutral-100">
+                                            <div className="text-xs font-semibold text-neutral-500 uppercase mb-2">Total Quantity</div>
+                                            <div className="text-2xl font-bold text-emerald-600">
+                                                {inwardStockSummary.totalQuantity.toLocaleString()} <span className="text-sm">units</span>
+                                            </div>
+                                        </div>
+                                        <div className="bg-white rounded-lg p-4 border border-neutral-100">
+                                            <div className="text-xs font-semibold text-neutral-500 uppercase mb-2">Total Records</div>
+                                            <div className="text-2xl font-bold text-blue-600">
+                                                {inwardStockSummary.totalRecords}
+                                            </div>
+                                        </div>
+                                        <div className="bg-white rounded-lg p-4 border border-neutral-100">
+                                            <div className="text-xs font-semibold text-neutral-500 uppercase mb-2">Received</div>
+                                            <div className="text-2xl font-bold text-green-600">
+                                                {inwardStockSummary.byStatus.received}
+                                            </div>
+                                        </div>
+                                        <div className="bg-white rounded-lg p-4 border border-neutral-100">
+                                            <div className="text-xs font-semibold text-neutral-500 uppercase mb-2">Pending</div>
+                                            <div className="text-2xl font-bold text-yellow-600">
+                                                {inwardStockSummary.byStatus.pending}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Stock Details Table */}
+                                <div className="p-6">
+                                    {inwardStockData.length === 0 ? (
+                                        <div className="text-center py-8 text-neutral-500">
+                                            No inward stock records found
+                                        </div>
+                                    ) : (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="bg-neutral-50 border-b">
+                                                        <th className="p-3 text-left font-semibold text-neutral-700">Invoice #</th>
+                                                        <th className="p-3 text-left font-semibold text-neutral-700">Supplier</th>
+                                                        <th className="p-3 text-left font-semibold text-neutral-700">Product / Variant</th>
+                                                        <th className="p-3 text-center font-semibold text-neutral-700">Quantity</th>
+                                                        <th className="p-3 text-left font-semibold text-neutral-700">Date</th>
+                                                        <th className="p-3 text-left font-semibold text-neutral-700">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y">
+                                                    {inwardStockData.map((stock) => (
+                                                        <tr key={stock._id} className="hover:bg-neutral-50">
+                                                            <td className="p-3 font-mono text-xs text-neutral-600">
+                                                                {stock.invoiceNumber || 'N/A'}
+                                                            </td>
+                                                            <td className="p-3">{stock.supplierName}</td>
+                                                            <td className="p-3">
+                                                                <div className="font-medium text-neutral-900">{stock.productName}</div>
+                                                                <div className="text-xs text-neutral-500">{stock.variant}</div>
+                                                            </td>
+                                                            <td className="p-3 text-center font-semibold text-emerald-600">
+                                                                {stock.quantity}
+                                                            </td>
+                                                            <td className="p-3 text-xs text-neutral-600">
+                                                                {new Date(stock.date).toLocaleDateString()}
+                                                            </td>
+                                                            <td className="p-3">
+                                                                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                                    stock.status === 'Received' ? 'bg-green-100 text-green-700' :
+                                                                    stock.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
+                                                                    'bg-red-100 text-red-700'
+                                                                }`}>
+                                                                    {stock.status}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}

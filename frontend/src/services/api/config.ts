@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://api.dhakadsnazzy.com/api/v1";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:7000/api/v1";
+console.log("[CONFIG DEBUG] API_BASE_URL:", API_BASE_URL);
 
 // Socket.io base URL - extract from API_BASE_URL by removing /api/v1
 // Socket connections need the base server URL without the API path

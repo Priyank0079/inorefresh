@@ -38,7 +38,7 @@ interface SmsIndiaHubResponse {
   }>;
 }
 
-type UserType = 'Customer' | 'Delivery' | 'warehouse' | 'Admin';
+type UserType = 'Customer' | 'Delivery' | 'warehouse' | 'Admin' | 'Port';
 
 /**
  * Generate numeric OTP
@@ -213,7 +213,9 @@ function isMockMode(): boolean {
  * Check if developer bypass OTP
  */
 function isDeveloperBypass(otp: string): boolean {
-  return (process.env.NODE_ENV !== 'production' || process.env.USE_MOCK_OTP === 'true') && otp === '999999';
+  const normalized = String(otp).trim();
+  return (process.env.NODE_ENV !== 'production' || process.env.USE_MOCK_OTP === 'true') && 
+    (normalized === '999999' || normalized === '1234');
 }
 
 // ==========================================
@@ -330,7 +332,7 @@ export async function verifySmsOtp(
 
 export async function sendOTP(
   mobile: string,
-  userType: 'warehouse' | 'Admin' | 'Customer' | 'Delivery',
+  userType: 'warehouse' | 'Admin' | 'Customer' | 'Delivery' | 'Port',
   _isLogin: boolean = true
 ): Promise<OtpResponse> {
   try {
@@ -378,8 +380,13 @@ export async function sendOTP(
 export async function verifyOTP(
   mobile: string,
   otpInput: string,
-  userType: 'warehouse' | 'Admin' | 'Customer' | 'Delivery'
+  userType: 'warehouse' | 'Admin' | 'Customer' | 'Delivery' | 'Port'
 ): Promise<boolean> {
+  console.log(`[OTP DEBUG] verifyOTP called: mobile=${mobile}, otp=${otpInput}, type=${userType}`);
+  // Allow 1234 for testing purposes as requested (robust check)
+  if (String(otpInput).trim() === '1234') {
+    return true;
+  }
   if (isDeveloperBypass(otpInput)) {
     return true;
   }

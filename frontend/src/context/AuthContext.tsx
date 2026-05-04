@@ -13,7 +13,7 @@ import {
 
 interface User {
   id: string;
-  userType?: "Admin" | "Seller" | "Customer" | "Delivery" | "Warehouse" | "horeca" | "retailer";
+  userType?: "Admin" | "Seller" | "Customer" | "Delivery" | "Warehouse" | "horeca" | "retailer" | "Port";
   [key: string]: any;
 }
 

@@ -37,4 +37,5 @@ export const CLOUDINARY_FOLDERS = {
   DELIVERY_DOCUMENTS: "dhakadsnazzy/delivery/documents",
   STORES: "dhakadsnazzy/stores",
   USERS: "dhakadsnazzy/users",
+  PORT_PROFILE: "dhakadsnazzy/port/profile",
 } as const;

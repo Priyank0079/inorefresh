@@ -26,7 +26,7 @@ const router = Router();
 router.post(
   "/image",
   authenticate,
-  requireUserType("Admin", "Warehouse"),
+  requireUserType("Admin", "Warehouse", "Port"),
   uploadSingleImage.single("image"),
   handleUploadError,
   asyncHandler(async (req: Request, res: Response) => {
@@ -57,7 +57,7 @@ router.post(
 router.post(
   "/images",
   authenticate,
-  requireUserType("Admin", "Warehouse"),
+  requireUserType("Admin", "Warehouse", "Port"),
   uploadMultipleImages.array("images", 10), // Max 10 images
   handleUploadError,
   asyncHandler(async (req: Request, res: Response) => {
@@ -191,7 +191,7 @@ router.post(
 router.delete(
   "/:publicId",
   authenticate,
-  requireUserType("Admin", "Warehouse"),
+  requireUserType("Admin", "Warehouse", "Port"),
   asyncHandler(async (req: Request, res: Response) => {
     const { publicId } = req.params;
 

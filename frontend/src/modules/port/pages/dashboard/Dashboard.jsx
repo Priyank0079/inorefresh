@@ -1,36 +1,116 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell 
+} from 'recharts';
 import DashboardCard from '../../components/cards/DashboardCard';
 import StatusBadge from '../../components/common/StatusBadge';
-import { dummyRequirements } from '../../data/dummyRequirements';
-import { dummyOffers } from '../../data/dummyOffers';
+import PageTitle from '../../components/common/PageTitle';
+import { getDashboardStats, getRecentActivities, getRecentRequirements } from '../../../../services/api/portDashboardService';
+import { useAuth } from '@/context/AuthContext';
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+};
 
 const Dashboard = () => {
-  const stats = [
-    { title: "Total Requirements", value: "156", icon: "assignment", color: "bg-blue-500", trend: 12 },
-    { title: "Active Offers", value: "42", icon: "local_offer", color: "bg-teal-500", trend: 5 },
-    { title: "Approved Offers", value: "28", icon: "verified", color: "bg-emerald-500", trend: 8 },
-    { title: "Pending Orders", value: "14", icon: "shopping_cart", color: "bg-amber-500", trend: -2 },
-    { title: "Completed Orders", value: "312", icon: "task_alt", color: "bg-indigo-500", trend: 15 },
-    { title: "Total Revenue", value: "₹4.2M", icon: "payments", color: "bg-violet-500", trend: 20 },
-    { title: "Active Products", value: "85", icon: "inventory_2", color: "bg-sky-500", trend: 4 },
-    { title: "Low Stock", value: "12", icon: "warning", color: "bg-rose-500", trend: -1 }
+  const navigate = useNavigate();
+  const { token } = useAuth();
+  const [stats, setStats] = useState({
+    totalRequirements: 0,
+    activeOffers: 0,
+    approvedOffers: 0,
+    totalRevenue: 0,
+    chartData: []
+  });
+  const [activities, setActivities] = useState([]);
+  const [requirements, setRequirements] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [statsRes, activityRes, reqRes] = await Promise.all([
+          getDashboardStats(token),
+          getRecentActivities(token),
+          getRecentRequirements(token)
+        ]);
+
+        if (statsRes.success) setStats(statsRes.data);
+        if (activityRes.success) setActivities(activityRes.data);
+        if (reqRes.success) setRequirements(reqRes.data);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) fetchData();
+  }, [token]);
+
+  const statCards = [
+    { 
+      title: 'Active Requirements', 
+      value: stats.totalRequirements.toString(), 
+      icon: 'list_alt', 
+      color: 'bg-blue-500', 
+      trend: '+5%', 
+      isPositive: true 
+    },
+    { 
+      title: 'Offers Sent', 
+      value: (stats.activeOffers + stats.approvedOffers).toString(), 
+      icon: 'send', 
+      color: 'bg-emerald-500', 
+      trend: '+12%', 
+      isPositive: true 
+    },
+    { 
+      title: 'Active Negotiations', 
+      value: stats.activeOffers.toString(), 
+      icon: 'sync', 
+      color: 'bg-amber-500', 
+      trend: '-2%', 
+      isPositive: false 
+    },
+    { 
+      title: 'Total Revenue', 
+      value: `₹${stats.totalRevenue.toLocaleString()}`, 
+      icon: 'payments', 
+      color: 'bg-teal-600', 
+      trend: '+18%', 
+      isPositive: true 
+    }
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, idx) => (
+        {statCards.map((stat, idx) => (
           <DashboardCard key={idx} {...stat} />
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent Requirements */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-bold text-slate-800">Recent Requirements</h3>
-            <button className="text-teal-600 text-sm font-semibold hover:underline">View All</button>
+            <h3 className="font-bold text-slate-800">Available Requirements</h3>
+            <button onClick={() => navigate('/port/requirements')} className="text-teal-600 text-sm font-semibold hover:underline">View All</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -43,88 +123,91 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {dummyRequirements.slice(0, 5).map((req) => (
-                  <tr key={req.id} className="hover:bg-slate-50 transition-colors">
+                {requirements.map((req) => (
+                  <tr key={req._id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <p className="text-sm font-semibold text-slate-800">{req.fishName}</p>
-                      <p className="text-xs text-slate-500">{req.id}</p>
+                      <p className="text-xs text-slate-500">{req.requirementId}</p>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{req.quantityRequired}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{req.deadline}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{req.quantityRequired} {req.unit}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{formatDate(req.deadline)}</td>
                     <td className="px-6 py-4">
                       <StatusBadge status={req.status} />
                     </td>
                   </tr>
                 ))}
+                {requirements.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-10 text-center text-slate-400 text-sm italic">No requirements found</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Recent Offers */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-bold text-slate-800">Recent Offers</h3>
-            <button className="text-teal-600 text-sm font-semibold hover:underline">View All</button>
+        {/* Revenue Analysis Chart */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 min-h-[350px]">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-bold text-slate-800">Revenue Analysis</h3>
+            <select className="text-xs border-none bg-slate-50 rounded-md px-2 py-1 outline-none text-slate-500 font-medium">
+              <option>Last 6 Months</option>
+              <option>Last Year</option>
+            </select>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wider">
-                  <th className="px-6 py-4 font-bold">Offer ID</th>
-                  <th className="px-6 py-4 font-bold">Fish Name</th>
-                  <th className="px-6 py-4 font-bold">Price</th>
-                  <th className="px-6 py-4 font-bold">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {dummyOffers.slice(0, 5).map((offer) => (
-                  <tr key={offer.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-teal-600">{offer.id}</td>
-                    <td className="px-6 py-4 text-sm text-slate-800 font-semibold">{offer.fishName}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">₹{offer.offeredPrice}</td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={offer.status} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                  tickFormatter={(value) => `₹${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
+                />
+                <Tooltip 
+                  cursor={{ fill: '#f8fafc' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                />
+                <Bar dataKey="revenue" radius={[4, 4, 0, 0]} barSize={30}>
+                  {stats.chartData.map((_entry, index) => (
+                    <Cell key={`cell-${index}`} fill={index === stats.chartData.length - 1 ? '#0d9488' : '#94a3b8'} fillOpacity={0.8} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Chart Placeholder */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-          <h3 className="font-bold text-slate-800 mb-6">Revenue Analysis</h3>
-          <div className="h-64 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200 flex items-center justify-center">
-            <p className="text-slate-400 text-sm">Chart Placeholder (ApexCharts/Recharts)</p>
-          </div>
-        </div>
-
-        {/* Activity Timeline */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-          <h3 className="font-bold text-slate-800 mb-6">Recent Activity</h3>
-          <div className="space-y-6">
-            {[
-              { title: "New Requirement", desc: "Warehouse Porbandar requested 500kg Pomfret", time: "2 mins ago", icon: "assignment", color: "bg-blue-100 text-blue-600" },
-              { title: "Offer Approved", desc: "Your offer OFF-001 has been approved", time: "1 hour ago", icon: "check_circle", color: "bg-emerald-100 text-emerald-600" },
-              { title: "Payment Received", desc: "Order ORD-002 payment processed", time: "3 hours ago", icon: "payments", color: "bg-violet-100 text-violet-600" },
-              { title: "Low Stock Alert", desc: "Kingfish stock is below 50kg", time: "5 hours ago", icon: "warning", color: "bg-rose-100 text-rose-600" }
-            ].map((activity, idx) => (
-              <div key={idx} className="flex gap-4">
-                <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center ${activity.color}`}>
-                  <span className="material-icons-outlined text-xl">{activity.icon}</span>
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800">{activity.title}</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">{activity.desc}</p>
-                  <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider">{activity.time}</p>
-                </div>
+      {/* Recent Activity */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+        <h3 className="font-bold text-slate-800 mb-6">Recent Activity</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {activities.map((activity, idx) => (
+            <div key={idx} className="flex gap-4 p-4 rounded-lg bg-slate-50 border border-slate-100 transition-hover hover:shadow-md">
+              <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center ${activity.color}`}>
+                <span className="material-icons-outlined text-xl">{activity.icon}</span>
               </div>
-            ))}
-          </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-800">{activity.title}</h4>
+                <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{activity.desc}</p>
+                <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider">
+                  {new Date(activity.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+            </div>
+          ))}
+          {activities.length === 0 && (
+            <div className="col-span-full py-10 text-center text-slate-400 text-sm italic">No recent activity</div>
+          )}
         </div>
       </div>
     </div>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
-import { addInwardStock, updateInwardStock, getInwardStockById, InwardStock } from '../../../services/api/inwardStockService';
-import { getProducts, Product } from '../../../services/api/productService';
+import { addInwardStock, updateInwardStock, getInwardStockById, InwardStock } from '@/services/api/inwardStockService';
+import { getProducts, Product } from '@/services/api/productService';
+
 
 export default function WarehouseAddInwardStock() {
     const navigate = useNavigate();
@@ -11,22 +12,17 @@ export default function WarehouseAddInwardStock() {
 
     const [loading, setLoading] = useState(false);
     const [products, setProducts] = useState<Product[]>([]);
+    
     const [formData, setFormData] = useState({
-        supplierName: editingStock?.supplierName || '',
-        sourcePort: editingStock?.sourcePort || '',
-        productName: editingStock?.productName || '',
-        variant: editingStock?.variant || '',
-        quantity: editingStock?.quantity || 0,
-        unitPrice: editingStock?.unitPrice || 0,
-        totalPrice: editingStock?.totalPrice || 0,
-        date: editingStock?.date ? new Date(editingStock.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        orderDate: editingStock?.orderDate ? new Date(editingStock.orderDate).toISOString().split('T')[0] : '',
-        deliveryDate: editingStock?.deliveryDate ? new Date(editingStock.deliveryDate).toISOString().split('T')[0] : '',
-        invoiceNumber: editingStock?.invoiceNumber || '',
-        batchNumber: editingStock?.batchNumber || '',
-        vehicleNumber: editingStock?.vehicleNumber || '',
-        status: editingStock?.status || 'Pending',
-        remarks: editingStock?.remarks || ''
+        requirementId: 'AUTO-GEN', // Placeholder for auto-generated ID
+        requirementDate: new Date().toISOString().split('T')[0],
+        warehouseName: 'Veraval Central Warehouse', // Default as per image
+        fishName: '',
+        category: 'Fresh',
+        variantGrade: '',
+        quantity: 0,
+        deadline: '',
+        status: 'Open'
     });
 
     useEffect(() => {
@@ -49,21 +45,15 @@ export default function WarehouseAddInwardStock() {
                     if (res.success) {
                         const stock = res.data;
                         setFormData({
-                            supplierName: stock.supplierName,
-                            sourcePort: stock.sourcePort || '',
-                            productName: stock.productName,
-                            variant: stock.variant,
+                            requirementId: stock.invoiceNumber || 'AUTO-GEN',
+                            requirementDate: new Date(stock.date).toISOString().split('T')[0],
+                            warehouseName: 'Veraval Central Warehouse',
+                            fishName: stock.productName,
+                            category: (stock as any).category || 'Fresh',
+                            variantGrade: stock.variant,
                             quantity: stock.quantity,
-                            unitPrice: stock.unitPrice,
-                            totalPrice: stock.totalPrice,
-                            date: new Date(stock.date).toISOString().split('T')[0],
-                            orderDate: stock.orderDate ? new Date(stock.orderDate).toISOString().split('T')[0] : '',
-                            deliveryDate: stock.deliveryDate ? new Date(stock.deliveryDate).toISOString().split('T')[0] : '',
-                            invoiceNumber: stock.invoiceNumber,
-                            batchNumber: stock.batchNumber || '',
-                            vehicleNumber: stock.vehicleNumber || '',
-                            status: stock.status,
-                            remarks: stock.remarks || ''
+                            deadline: stock.deliveryDate ? new Date(stock.deliveryDate).toISOString().split('T')[0] : '',
+                            status: stock.status === 'Received' ? 'Closed' : 'Open'
                         });
                     }
                 } catch (err) {
@@ -78,35 +68,39 @@ export default function WarehouseAddInwardStock() {
         fetchStockDetail();
     }, [id, editingStock]);
 
-    // Update total price when quantity or unit price changes
-    useEffect(() => {
-        setFormData(prev => ({
-            ...prev,
-            totalPrice: prev.quantity * prev.unitPrice
-        }));
-    }, [formData.quantity, formData.unitPrice]);
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
             const dataToSubmit = {
-                ...formData,
-                orderDate: formData.orderDate || undefined,
-                deliveryDate: formData.deliveryDate || undefined
+                supplierName: "Port Partner",
+                productName: formData.fishName,
+                category: formData.category,
+                variant: formData.variantGrade,
+                quantity: formData.quantity,
+                date: new Date(formData.requirementDate),
+                deliveryDate: formData.deadline ? new Date(formData.deadline) : undefined,
+                status: formData.status === 'Open' ? 'Pending' : 'Received',
+                remarks: formData.requirementId
             };
+
             const res = id 
-                ? await updateInwardStock(id, dataToSubmit)
-                : await addInwardStock(dataToSubmit);
+                ? await updateInwardStock(id, dataToSubmit as any)
+                : await addInwardStock(dataToSubmit as any);
+                
             if (res.success) {
                 alert(id ? "Record updated successfully" : "Inward stock added successfully");
                 navigate('/warehouse/inward-stock/list');
             } else {
-                alert(res.message || "Something went wrong");
+                // If there are validation errors, show them
+                const errorMsg = res.message || "Something went wrong";
+                alert(`Error: ${errorMsg}`);
             }
         } catch (err: any) {
-            alert(err.message || "Failed to save record");
+            const apiError = err.response?.data?.message || err.message || "Failed to save record";
+            alert(`Submission Error: ${apiError}`);
         } finally {
+
             setLoading(false);
         }
     };
@@ -116,238 +110,179 @@ export default function WarehouseAddInwardStock() {
             {/* Page Header */}
             <div className="bg-[#12b2a2] text-white p-6 rounded-lg shadow-sm mb-6 flex justify-between items-center transition-all mx-4 mt-4">
                 <div>
-                    <h1 className="text-2xl font-bold">{id ? 'Edit' : 'Add New'} Inward Stock</h1>
-                    <p className="text-teal-50 text-sm mt-1">Record stock coming into the warehouse</p>
+                    <h1 className="text-2xl font-bold">{id ? 'Edit' : 'Add New'} Requirement</h1>
+                    <p className="text-teal-50 text-sm mt-1">Create a new fish requirement for ports</p>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                     <Link to="/warehouse" className="text-teal-50 hover:text-white font-medium transition-colors">Home</Link>
                     <span className="text-teal-200">/</span>
-                    <Link to="/warehouse/inward-stock/list" className="text-teal-50 hover:text-white font-medium transition-colors">Inward Stock</Link>
+                    <Link to="/warehouse/inward-stock/list" className="text-teal-50 hover:text-white font-medium transition-colors">Requirements</Link>
                     <span className="text-teal-200">/</span>
                     <span className="text-white font-medium">{id ? 'Edit' : 'Add'}</span>
                 </div>
             </div>
 
-            {/* Form Card */}
-            <div className="mx-4 mb-8 bg-white rounded-lg shadow-lg border border-neutral-200 overflow-hidden">
-                <div className="bg-[#12b2a2] text-white px-6 py-4">
-                    <h2 className="text-xl font-bold flex items-center gap-2">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                        </svg>
-                        Inward Stock Details
-                    </h2>
+            <div className="max-w-6xl mx-auto w-full px-4 mb-8">
+                <div className="bg-white rounded-xl shadow-xl border border-neutral-200 overflow-hidden">
+                    <form onSubmit={handleSubmit} className="p-0">
+                        {/* Table-like Header */}
+                        <div className="bg-slate-50 border-b border-neutral-200 px-8 py-4 grid grid-cols-7 gap-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                            <div>Requirement ID</div>
+                            <div>Req. Date</div>
+                            <div className="col-span-2">Warehouse</div>
+                            <div>Fish Details</div>
+                            <div>Quantity</div>
+                            <div>Deadline</div>
+                        </div>
+
+                        {/* Form Inputs styled as a row */}
+                        <div className="p-8 space-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 items-start">
+                                {/* Requirement ID */}
+                                <div className="space-y-1">
+                                    <label className="md:hidden text-[10px] font-bold text-slate-400 uppercase">Req ID</label>
+                                    <div className="w-full px-3 py-2 text-sm border border-neutral-100 rounded-md bg-neutral-50 text-neutral-400 font-bold italic">
+                                        {id ? formData.requirementId : "AUTO-GEN"}
+                                    </div>
+                                </div>
+
+                                {/* Req Date */}
+                                <div className="space-y-1">
+                                    <label className="md:hidden text-[10px] font-bold text-slate-400 uppercase">Req Date</label>
+                                    <input 
+                                        type="date"
+                                        required
+                                        value={formData.requirementDate}
+                                        onChange={(e) => setFormData({...formData, requirementDate: e.target.value})}
+                                        className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all text-slate-600"
+                                    />
+                                </div>
+
+                                {/* Warehouse */}
+                                <div className="col-span-2 space-y-1">
+                                    <label className="md:hidden text-[10px] font-bold text-slate-400 uppercase">Warehouse</label>
+                                    <div className="relative">
+                                        <input 
+                                            type="text"
+                                            value={formData.warehouseName}
+                                            onChange={(e) => setFormData({...formData, warehouseName: e.target.value})}
+                                            className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all font-bold text-slate-800"
+                                            placeholder="Warehouse Name"
+                                        />
+                                        <p className="text-[10px] text-slate-400 mt-0.5 ml-1">GUJARAT, INDIA</p>
+                                    </div>
+                                </div>
+
+                                {/* Fish Details */}
+                                <div className="space-y-1">
+                                    <label className="md:hidden text-[10px] font-bold text-slate-400 uppercase">Fish Details</label>
+                                    <input 
+                                        type="text"
+                                        list="product-list"
+                                        required
+                                        value={formData.fishName}
+                                        onChange={(e) => setFormData({...formData, fishName: e.target.value})}
+                                        className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all font-bold text-slate-800"
+                                        placeholder="Fish Name"
+                                    />
+                                    <div className="flex gap-1 mt-1">
+                                        <select 
+                                            value={formData.category}
+                                            onChange={(e) => setFormData({...formData, category: e.target.value})}
+                                            className="px-2 py-1 text-[10px] border border-neutral-100 rounded bg-slate-50 text-slate-500 outline-none flex-1"
+                                        >
+                                            <option value="Fresh">Fresh</option>
+                                            <option value="Premium">Premium</option>
+                                            <option value="Standard">Standard</option>
+                                            <option value="Crustaceans">Crustaceans</option>
+                                        </select>
+                                        <input 
+                                            type="text"
+                                            required
+                                            value={formData.variantGrade}
+                                            onChange={(e) => setFormData({...formData, variantGrade: e.target.value})}
+                                            className="px-2 py-1 text-[10px] border border-neutral-100 rounded bg-slate-50 text-slate-500 outline-none flex-1"
+                                            placeholder="Grade A"
+                                        />
+                                    </div>
+                                    <datalist id="product-list">
+                                        {products.map(p => <option key={p._id} value={p.productName} />)}
+                                    </datalist>
+                                </div>
+
+                                {/* Quantity */}
+                                <div className="space-y-1">
+                                    <label className="md:hidden text-[10px] font-bold text-slate-400 uppercase">Quantity</label>
+                                    <div className="flex items-center gap-1">
+                                        <input 
+                                            type="number"
+                                            required
+                                            min="1"
+                                            value={formData.quantity}
+                                            onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value) || 0})}
+                                            className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all font-bold text-slate-800 text-right"
+                                        />
+                                        <span className="text-[10px] font-bold text-slate-400">KG</span>
+                                    </div>
+                                </div>
+
+                                {/* Deadline */}
+                                <div className="space-y-1">
+                                    <label className="md:hidden text-[10px] font-bold text-slate-400 uppercase">Deadline</label>
+                                    <input 
+                                        type="date"
+                                        required
+                                        value={formData.deadline}
+                                        onChange={(e) => setFormData({...formData, deadline: e.target.value})}
+                                        className="w-full px-2 py-2 text-[11px] border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all text-slate-500"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Status and Action */}
+                            <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                                <div className="flex items-center gap-4">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status:</span>
+                                    <div className="flex gap-2">
+                                        {['Open', 'Closed'].map(s => (
+                                            <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => setFormData({...formData, status: s})}
+                                                className={`px-6 py-2 rounded-full text-xs font-bold transition-all ${
+                                                    formData.status === s 
+                                                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
+                                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                                }`}
+                                            >
+                                                {s}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    <button 
+                                        type="button"
+                                        onClick={() => navigate('/warehouse/inward-stock/list')}
+                                        className="px-8 py-3 rounded-xl font-bold text-sm text-slate-400 hover:text-slate-600 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        type="submit"
+                                        disabled={loading}
+                                        className="bg-[#12b2a2] hover:bg-[#0f9689] text-white px-12 py-3.5 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-teal-500/20 disabled:opacity-50"
+                                    >
+                                        {loading ? "Processing..." : id ? "Update Requirement" : "Save Requirement"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-
-                <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* Supplier Info */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-teal-700 uppercase tracking-wider border-b border-teal-100 pb-1">Supplier Info</h3>
-                            <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Supplier Name *</label>
-                                <input 
-                                    type="text"
-                                    required
-                                    value={formData.supplierName}
-                                    onChange={(e) => setFormData({...formData, supplierName: e.target.value})}
-                                    className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                    placeholder="Enter supplier name"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Source Port / Location</label>
-                                <input 
-                                    type="text"
-                                    value={formData.sourcePort}
-                                    onChange={(e) => setFormData({...formData, sourcePort: e.target.value})}
-                                    className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                    placeholder="e.g. Port A, Main Hub"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Invoice Number</label>
-                                <input 
-                                    type="text"
-                                    value={formData.invoiceNumber}
-                                    onChange={(e) => setFormData({...formData, invoiceNumber: e.target.value})}
-                                    className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                    placeholder="INV-00123"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Batch Number</label>
-                                <input 
-                                    type="text"
-                                    value={formData.batchNumber}
-                                    onChange={(e) => setFormData({...formData, batchNumber: e.target.value})}
-                                    className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                    placeholder="e.g. BATCH-2024-001"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-neutral-700 mb-1">Order Date</label>
-                                    <input 
-                                        type="date"
-                                        value={formData.orderDate}
-                                        onChange={(e) => setFormData({...formData, orderDate: e.target.value})}
-                                        className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-neutral-700 mb-1">Delivery Date</label>
-                                    <input 
-                                        type="date"
-                                        value={formData.deliveryDate}
-                                        onChange={(e) => setFormData({...formData, deliveryDate: e.target.value})}
-                                        className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Entry Date *</label>
-                                <input 
-                                    type="date"
-                                    required
-                                    value={formData.date}
-                                    onChange={(e) => setFormData({...formData, date: e.target.value})}
-                                    className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Product Info */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-teal-700 uppercase tracking-wider border-b border-teal-100 pb-1">Product Info</h3>
-                            <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Product *</label>
-                                <input 
-                                    type="text"
-                                    list="product-list"
-                                    required
-                                    value={formData.productName}
-                                    onChange={(e) => setFormData({...formData, productName: e.target.value})}
-                                    className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                    placeholder="Select or type product"
-                                />
-                                <datalist id="product-list">
-                                    {products.map(p => <option key={p._id} value={p.productName} />)}
-                                </datalist>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Variant *</label>
-                                <input 
-                                    type="text"
-                                    required
-                                    value={formData.variant}
-                                    onChange={(e) => setFormData({...formData, variant: e.target.value})}
-                                    className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                    placeholder="e.g. 500g, 1kg, Red"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Vehicle Number</label>
-                                <input 
-                                    type="text"
-                                    value={formData.vehicleNumber}
-                                    onChange={(e) => setFormData({...formData, vehicleNumber: e.target.value})}
-                                    className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                    placeholder="GJ-01-AB-1234"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Inventory Info */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-teal-700 uppercase tracking-wider border-b border-teal-100 pb-1">Inventory & Cost</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-neutral-700 mb-1">Quantity *</label>
-                                    <input 
-                                        type="number"
-                                        required
-                                        min="1"
-                                        value={formData.quantity}
-                                        onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value) || 0})}
-                                        className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-neutral-700 mb-1">Unit Price *</label>
-                                    <input 
-                                        type="number"
-                                        required
-                                        min="0"
-                                        step="0.01"
-                                        value={formData.unitPrice}
-                                        onChange={(e) => setFormData({...formData, unitPrice: parseFloat(e.target.value) || 0})}
-                                        className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Total Price</label>
-                                <div className="w-full px-4 py-2 bg-teal-50 border border-teal-200 rounded-lg text-[#12b2a2] font-bold text-lg">
-                                    ₹{formData.totalPrice.toFixed(2)}
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Status</label>
-                                <select 
-                                    value={formData.status}
-                                    onChange={(e) => setFormData({...formData, status: e.target.value as any})}
-                                    className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all"
-                                >
-                                    <option value="Pending">Pending</option>
-                                    <option value="Received">Received</option>
-                                    <option value="Cancelled">Cancelled</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="pt-4">
-                        <label className="block text-sm font-semibold text-neutral-700 mb-1">Remarks / Note</label>
-                        <textarea 
-                            rows={3}
-                            value={formData.remarks}
-                            onChange={(e) => setFormData({...formData, remarks: e.target.value})}
-                            className="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none transition-all resize-none"
-                            placeholder="Add any additional information about this inward shipment..."
-                        />
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex justify-end gap-4 border-t border-neutral-100 pt-8">
-                        <button 
-                            type="button"
-                            onClick={() => navigate('/warehouse/inward-stock/list')}
-                            className="px-6 py-2.5 border border-neutral-300 text-neutral-700 font-bold rounded-lg hover:bg-neutral-50 transition-all"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            type="submit"
-                            disabled={loading}
-                            className="px-10 py-2.5 bg-[#12b2a2] text-white font-bold rounded-lg hover:bg-[#0e8f82] transition-all flex items-center gap-2 shadow-md disabled:opacity-50"
-                        >
-                            {loading ? (
-                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                                    <polyline points="7 3 7 8 15 8"></polyline>
-                                </svg>
-                            )}
-                            {id ? 'Update' : 'Save'} Record
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
     );
 }
+

@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 
 interface PublicRouteProps {
     children?: React.ReactNode;
-    userType?: 'Admin' | 'Seller' | 'Customer' | 'Delivery' | 'Warehouse';
+    userType?: 'Admin' | 'Seller' | 'Customer' | 'Delivery' | 'Warehouse' | 'Port';
 }
 
 export default function PublicRoute({ children, userType: allowedUserType }: PublicRouteProps) {
@@ -34,6 +34,10 @@ export default function PublicRoute({ children, userType: allowedUserType }: Pub
 
         if (currentUserType === 'Warehouse') {
             return <Navigate to="/warehouse" replace />;
+        }
+
+        if (currentUserType === 'Port') {
+            return <Navigate to="/port/dashboard" replace />;
         }
 
         // Default for Customer

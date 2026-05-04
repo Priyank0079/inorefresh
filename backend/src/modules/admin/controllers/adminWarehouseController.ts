@@ -135,3 +135,108 @@ export const getAllWarehouses = asyncHandler(async (_req: Request, res: Response
         data: warehouses,
     });
 });
+
+/**
+ * Get inward stock summary for a warehouse (Admin only)
+ */
+export const getWarehouseInwardStockSummary = asyncHandler(async (req: Request, res: Response) => {
+    const { warehouseId } = req.params;
+    const { dateFrom, dateTo } = req.query;
+    
+    const InwardStock = require("../../../models/InwardStock").default || require("../../../models/InwardStock");
+    
+    const query: any = { warehouse: warehouseId };
+    
+    if (dateFrom || dateTo) {
+        query.date = {};
+        if (dateFrom) {
+            const start = new Date(dateFrom as string);
+            start.setHours(0, 0, 0, 0);
+            query.date.$gte = start;
+        }
+        if (dateTo) {
+            const end = new Date(dateTo as string);
+            end.setHours(23, 59, 59, 999);
+            query.date.$lte = end;
+        }
+    }
+    
+    const stocks = await InwardStock.find(query).sort({ date: -1 });
+    
+    // Calculate summary
+    const summary = {
+        totalQuantity: stocks.reduce((sum: number, stock: any) => sum + (stock.quantity || 0), 0),
+        totalRecords: stocks.length,
+        byStatus: {
+            received: stocks.filter((s: any) => s.status === 'Received').length,
+            pending: stocks.filter((s: any) => s.status === 'Pending').length,
+            cancelled: stocks.filter((s: any) => s.status === 'Cancelled').length,
+        }
+    };
+    
+    return res.status(200).json({
+        success: true,
+        message: "Warehouse inward stock summary fetched successfully",
+        data: {
+            stocks,
+            summary
+        }
+    });
+});
+
+/**
+ * Get inward stock for all warehouses with pagination (Admin only)
+ */
+export const getAllWarehousesInwardStock = asyncHandler(async (req: Request, res: Response) => {
+    const { page = 1, limit = 10, search, status, dateFrom, dateTo } = req.query;
+    const InwardStock = require("../../../models/InwardStock").default || require("../../../models/InwardStock");
+    
+    const query: any = {};
+    
+    if (status && status !== 'All Status') {
+        query.status = status;
+    }
+    
+    if (search) {
+        query.$or = [
+            { supplierName: { $regex: search, $options: 'i' } },
+            { productName: { $regex: search, $options: 'i' } },
+            { invoiceNumber: { $regex: search, $options: 'i' } },
+        ];
+    }
+    
+    if (dateFrom || dateTo) {
+        query.date = {};
+        if (dateFrom) {
+            const start = new Date(dateFrom as string);
+            start.setHours(0, 0, 0, 0);
+            query.date.$gte = start;
+        }
+        if (dateTo) {
+            const end = new Date(dateTo as string);
+            end.setHours(23, 59, 59, 999);
+            query.date.$lte = end;
+        }
+    }
+    
+    const skip = (Number(page) - 1) * Number(limit);
+    const stocks = await InwardStock.find(query)
+        .populate('warehouse', 'warehouseName')
+        .sort({ date: -1 })
+        .skip(skip)
+        .limit(Number(limit));
+    
+    const total = await InwardStock.countDocuments(query);
+    
+    return res.status(200).json({
+        success: true,
+        message: "Inward stock records fetched successfully",
+        data: stocks,
+        pagination: {
+            total,
+            page: Number(page),
+            limit: Number(limit),
+            pages: Math.ceil(total / Number(limit)),
+        }
+    });
+});

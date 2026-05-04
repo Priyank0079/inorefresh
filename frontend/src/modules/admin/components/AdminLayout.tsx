@@ -2,6 +2,7 @@ import { useState, ReactNode } from 'react';
 import AdminSidebar from './AdminSidebar';
 import AdminHeader from './AdminHeader';
 import GlobalBackButton from '../../../components/GlobalBackButton';
+import { useAdminSocket } from '../hooks/useAdminSocket';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -9,6 +10,9 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default to open on desktop
+  
+  // Initialize admin socket for real-time notifications
+  useAdminSocket();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);

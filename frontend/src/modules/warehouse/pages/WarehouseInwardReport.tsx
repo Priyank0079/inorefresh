@@ -20,9 +20,9 @@ export default function WarehouseInwardReport() {
 
     const [summary, setSummary] = useState({
         totalQuantity: 0,
-        totalValue: 0,
         totalShipments: 0
     });
+
 
     const fetchReports = useCallback(async () => {
         try {
@@ -48,10 +48,8 @@ export default function WarehouseInwardReport() {
                 
                 // Calculate summary for the current view (or ideally from a summary endpoint)
                 const totalQty = response.data.reduce((acc, curr) => acc + (curr.quantity || 0), 0);
-                const totalVal = response.data.reduce((acc, curr) => acc + (curr.totalPrice || 0), 0);
                 setSummary({
                     totalQuantity: totalQty,
-                    totalValue: totalVal,
                     totalShipments: response.pagination?.total || response.data.length
                 });
             } else {
@@ -77,7 +75,7 @@ export default function WarehouseInwardReport() {
     };
 
     const handleExport = () => {
-        const headers = ['Entry Date', 'Invoice #', 'Order Date', 'Delivery Date', 'Warehouse', 'Supplier', 'Product', 'Variant', 'Qty', 'Unit Price', 'Total', 'Status'];
+        const headers = ['Entry Date', 'Invoice #', 'Order Date', 'Delivery Date', 'Warehouse', 'Supplier', 'Product', 'Variant', 'Qty', 'Status'];
         const csvContent = [
             headers.join(','),
             ...stocks.map(stock => [
@@ -90,8 +88,6 @@ export default function WarehouseInwardReport() {
                 `"${stock.productName}"`,
                 `"${stock.variant}"`,
                 stock.quantity,
-                stock.unitPrice,
-                stock.totalPrice,
                 stock.status
             ].join(','))
         ].join('\n');
@@ -135,15 +131,7 @@ export default function WarehouseInwardReport() {
                             <p className="text-2xl font-bold text-neutral-800">{summary.totalShipments}</p>
                         </div>
                     </div>
-                    <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Total Inward Value</p>
-                            <p className="text-2xl font-bold text-neutral-800">₹{summary.totalValue.toLocaleString()}</p>
-                        </div>
-                    </div>
+
                     <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm flex items-center gap-4">
                         <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5L6 9H2V15H6L11 19V5Z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
@@ -249,9 +237,10 @@ export default function WarehouseInwardReport() {
                                         <th className="p-4 border border-neutral-200">
                                             <div className="flex items-center gap-1">Variant</div>
                                         </th>
-                                        <th className="p-4 border border-neutral-200 text-right">
-                                            <div className="flex items-center justify-end gap-1">Total</div>
+                                        <th className="p-4 border border-neutral-200 text-center">
+                                            <div className="flex items-center justify-center gap-1">Quantity</div>
                                         </th>
+
                                         <th className="p-4 border border-neutral-200">
                                             <div className="flex items-center gap-1">Entry Date</div>
                                         </th>
@@ -276,7 +265,8 @@ export default function WarehouseInwardReport() {
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{stock.supplierName}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{stock.productName}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{stock.variant}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900 text-right font-bold">₹{stock.totalPrice.toFixed(2)}</td>
+                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900 text-center font-bold">{stock.quantity}</td>
+
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{new Date(stock.date).toLocaleDateString()}</td>
                                             </tr>
                                         ))
