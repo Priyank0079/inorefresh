@@ -5,6 +5,7 @@ export interface CustomerProfile {
   name: string;
   phone: string;
   email: string;
+  profileImage?: string;
   dateOfBirth?: string;
   registrationDate: string;
   status: string;
@@ -23,6 +24,7 @@ export interface GetProfileResponse {
 export interface UpdateProfileData {
   name?: string;
   email?: string;
+  profileImage?: string;
   dateOfBirth?: string;
 }
 

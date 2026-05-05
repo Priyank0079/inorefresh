@@ -1,45 +1,81 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import { getProfile, CustomerProfile } from '../../services/api/customerService';
+import { getProfile, updateProfile, CustomerProfile } from '../../services/api/customerService';
+import { uploadImage } from '../../services/api/uploadService';
 
 export default function Account() {
   const navigate = useNavigate();
-  const { user, logout: authLogout } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, logout: authLogout, updateUser } = useAuth();
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const [showGstModal, setShowGstModal] = useState(false);
   const [gstNumber, setGstNumber] = useState('');
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const response = await getProfile();
-        if (response.success) {
-          setProfile(response.data);
-        } else {
-          setError('Failed to load profile');
-        }
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to load profile');
-        if (err.response?.status === 401) {
-          authLogout();
-        }
-      } finally {
-        setLoading(false);
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await getProfile();
+      if (response.success) {
+        setProfile(response.data);
+      } else {
+        setError('Failed to load profile');
       }
-    };
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to load profile');
+      if (err.response?.status === 401) {
+        authLogout();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (user) {
       fetchProfile();
     } else {
       setLoading(false);
     }
-  }, [user, navigate, authLogout]);
+  }, [user]);
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      setError('');
+      
+      // 1. Upload to Cloudinary
+      const uploadResult = await uploadImage(file, 'dhakadsnazzy/users');
+      
+      // 2. Update profile with new image URL
+      const updateResponse = await updateProfile({ profileImage: uploadResult.secureUrl });
+      
+      if (updateResponse.success) {
+        setProfile(updateResponse.data);
+        // Also update AuthContext user if necessary
+        if (user) {
+          updateUser({ ...user, profileImage: uploadResult.secureUrl });
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to update profile picture:', err);
+      setError('Failed to update profile picture');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Not set';
@@ -102,6 +138,15 @@ export default function Account() {
 
   return (
     <div className="pb-24 md:pb-8 min-h-screen bg-gray-50">
+      {/* Hidden File Input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleImageChange}
+        className="hidden"
+        accept="image/*"
+      />
+
       {/* Header Section */}
       <div className="bg-gradient-to-b from-teal-600 to-teal-700 pb-20 pt-10 rounded-b-[40px] shadow-lg relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none" />
@@ -115,16 +160,48 @@ export default function Account() {
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-white p-1 shadow-2xl"
+                className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-white p-1 shadow-2xl relative"
               >
-                <div className="w-full h-full rounded-full bg-teal-50 flex items-center justify-center overflow-hidden border-2 border-teal-100">
-                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
+                <div 
+                  onClick={handleImageClick}
+                  className="w-full h-full rounded-full bg-teal-50 flex items-center justify-center overflow-hidden border-2 border-teal-100 cursor-pointer group"
+                >
+                  {isUploading ? (
+                    <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                  ) : (profile?.profileImage || user?.profileImage) ? (
+                    <img 
+                      src={profile?.profileImage || user?.profileImage} 
+                      alt={displayName} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  )}
+                  
+                  {/* Overlay on hover */}
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                  </div>
                 </div>
+
+                {/* Edit Button */}
+                <button 
+                  onClick={handleImageClick}
+                  className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center text-teal-600 hover:text-teal-700 transition-colors border border-gray-100"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                </button>
               </motion.div>
-              <div className="absolute bottom-1 right-1 w-7 h-7 rounded-full bg-green-500 border-4 border-teal-700 flex items-center justify-center">
+              <div className="absolute top-0 right-3 w-7 h-7 rounded-full bg-green-500 border-4 border-teal-700 flex items-center justify-center">
                 <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               </div>
             </div>

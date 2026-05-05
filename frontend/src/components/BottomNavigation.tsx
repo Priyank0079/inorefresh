@@ -1,11 +1,13 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useThemeContext } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function BottomNavigation() {
     const location = useLocation();
     const navigate = useNavigate();
     const { setActiveCategory } = useThemeContext();
+    const { user } = useAuth();
     
     const isActive = (path: string) => {
         if (path === '/') {
@@ -56,7 +58,13 @@ export default function BottomNavigation() {
         {
             name: 'Account',
             path: '/account',
-            icon: (
+            icon: user?.profileImage ? (
+                <img 
+                    src={user.profileImage} 
+                    alt="Profile" 
+                    className="w-6 h-6 rounded-full object-cover border border-white/40"
+                />
+            ) : (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     <circle cx="12" cy="7" r="4" />

@@ -11,6 +11,7 @@ export interface IHorecaUser extends Document {
     shopPhone: string;
     ownerName: string;
     ownerPhone: string;
+    profileImage?: string;
     documents: string[]; // URLs of uploaded files
     status: 'Pending' | 'Active' | 'Inactive';
     createdAt: Date;
@@ -35,6 +36,7 @@ const HorecaUserSchema: Schema = new Schema(
         shopPhone: { type: String, required: true },
         ownerName: { type: String, required: true },
         ownerPhone: { type: String, required: true, unique: true },
+        profileImage: { type: String },
         documents: [{ type: String }],
         status: { type: String, enum: ['Pending', 'Active', 'Inactive'], default: 'Pending' },
         walletAmount: { type: Number, default: 0 },

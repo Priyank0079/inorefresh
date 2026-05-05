@@ -11,6 +11,7 @@ export interface IRetailerUser extends Document {
     paymentMode: string;
     highValueProducts: string[];
     inorRepresentative: string;
+    profileImage?: string;
     documents: string[]; // URLs of uploaded files
     status: 'Pending' | 'Active' | 'Inactive';
     createdAt: Date;
@@ -35,6 +36,7 @@ const RetailerUserSchema: Schema = new Schema(
         paymentMode: { type: String, required: true },
         highValueProducts: [{ type: String }],
         inorRepresentative: { type: String },
+        profileImage: { type: String },
         documents: [{ type: String }],
         status: { type: String, enum: ['Pending', 'Active', 'Inactive'], default: 'Pending' },
         walletAmount: { type: Number, default: 0 },

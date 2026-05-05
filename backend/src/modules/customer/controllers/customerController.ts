@@ -41,6 +41,7 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
     name: customer.name || customer.ownerName || customer.shopName,
     phone: customer.phone || customer.ownerPhone || customer.shopPhone,
     email: customer.email || "",
+    profileImage: customer.profileImage || "",
     dateOfBirth: customer.dateOfBirth,
     registrationDate: customer.registrationDate || customer.createdAt,
     status: customer.status,
@@ -70,7 +71,7 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
 export const updateProfile = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?.userId;
-    const { name, email, dateOfBirth, notificationPreferences, accountPrivacy } = req.body;
+    const { name, email, dateOfBirth, notificationPreferences, accountPrivacy, profileImage } = req.body;
 
 
     if (!userId || !["Customer", "horeca", "retailer"].includes((req as any).user?.userType)) {
@@ -133,6 +134,10 @@ export const updateProfile = asyncHandler(
       }
     }
 
+    if (profileImage !== undefined) {
+      customer.profileImage = profileImage;
+    }
+
     if (dateOfBirth && customer.dateOfBirth !== undefined) customer.dateOfBirth = new Date(dateOfBirth);
     if (notificationPreferences && customer.notificationPreferences) {
       customer.notificationPreferences = { ...customer.notificationPreferences, ...notificationPreferences };
@@ -152,6 +157,7 @@ export const updateProfile = asyncHandler(
         name: customer.name || customer.ownerName || customer.shopName,
         phone: customer.phone || customer.ownerPhone || customer.shopPhone,
         email: customer.email || "",
+        profileImage: customer.profileImage || "",
         dateOfBirth: customer.dateOfBirth,
         registrationDate: customer.registrationDate || customer.createdAt,
         status: customer.status,
