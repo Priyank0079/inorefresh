@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import { Product } from '../../../types/domain';
 import { useCart } from '../../../context/CartContext';
 import { calculateProductPrice } from '../../../utils/priceUtils';
+import WishlistButton from '../../../components/WishlistButton';
 
 interface ProductCardProps {
   product: Product;
@@ -244,6 +245,13 @@ export default function ProductCard({
             </div>
           )}
         </div>
+
+        {/* Wishlist Button - Top Right */}
+        <WishlistButton 
+          productId={String((product as any).id || product._id)} 
+          className="top-[12px] right-[12px] z-30"
+          size="sm"
+        />
 
         <div className="w-full h-full transition-transform duration-700 group-hover:scale-110">
           <img

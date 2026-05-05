@@ -211,7 +211,10 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
                 {/* Center - Brand Name */}
                 <div 
                     className="cursor-pointer group flex flex-col items-center flex-shrink-0 px-2"
-                    onClick={() => internalNavigate('/')}
+                    onClick={() => {
+                        setActiveCategory('all');
+                        internalNavigate('/');
+                    }}
                 >
                     <span className={`
                         text-xl md:text-2xl font-black tracking-[-0.05em] transition-all duration-300

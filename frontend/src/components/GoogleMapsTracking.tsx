@@ -621,8 +621,9 @@ export default function GoogleMapsTracking({
                         title="Delivery Partner"
                     />
                 )}
-                {(!showRoute || routeError) && (
+                {(!showRoute || routeError) && path.length >= 2 && (
                     <Polyline
+                        key={`path-${path.length}`}
                         path={path}
                         options={{
                             strokeColor: routeError ? '#ef4444' : '#16a34a',

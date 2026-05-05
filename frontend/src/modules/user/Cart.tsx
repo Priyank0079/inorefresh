@@ -4,6 +4,7 @@ import Button from '../../components/ui/button';
 import { appConfig } from '../../services/configService';
 import { calculateProductPrice } from '../../utils/priceUtils';
 import { useThemeContext } from '../../context/ThemeContext';
+import WishlistButton from '../../components/WishlistButton';
 
 export default function Cart() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -134,14 +135,22 @@ export default function Cart() {
                   </div>
                 </div>
 
-                {/* Remove Button */}
-                <button
-                  onClick={() => removeFromCart(item.product.id)}
-                  className="text-neutral-400 hover:text-red-600 transition-colors self-start"
-                  aria-label="Remove item"
-                >
-                  ✕
-                </button>
+                {/* Actions */}
+                <div className="flex flex-col gap-3 self-start">
+                  <button
+                    onClick={() => removeFromCart(item.product.id)}
+                    className="text-neutral-400 hover:text-red-600 transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-red-50"
+                    aria-label="Remove item"
+                  >
+                    ✕
+                  </button>
+                  <WishlistButton 
+                    productId={item.product.id} 
+                    position="relative" 
+                    size="sm" 
+                    className="bg-transparent shadow-none"
+                  />
+                </div>
               </div>
             </div>
           );

@@ -1,6 +1,8 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import Button from "../../components/ui/button";
 import { useOrders } from "../../hooks/useOrders";
 
@@ -59,6 +61,7 @@ export default function Invoice() {
   const { getOrderById, fetchOrderById } = useOrders();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     const loadOrder = async () => {
@@ -84,6 +87,39 @@ export default function Invoice() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownload = async () => {
+    const element = document.getElementById("invoice-content");
+    if (!element) return;
+
+    try {
+      setIsGenerating(true);
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Invoice-${order.id?.split("-").slice(-1)[0] || id}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -138,24 +174,35 @@ export default function Invoice() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with actions - hidden when printing */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10 print:hidden">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 print:hidden">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
-            <ArrowLeftIcon className="w-5 h-5" />
+            className="flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors font-medium text-sm">
+            <ArrowLeftIcon className="w-4 h-4" />
             <span>Back</span>
           </button>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
+          <div className="flex gap-6 items-center">
+            <button
+              onClick={handleDownload}
+              disabled={isGenerating}
+              className={`flex items-center gap-2 transition-colors font-medium text-sm ${
+                isGenerating ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-gray-900'
+              }`}>
+              <DownloadIcon className="w-4 h-4" />
+              <span>{isGenerating ? 'Generating...' : 'Download'}</span>
+            </button>
+            <button
               onClick={handlePrint}
-              className="flex items-center gap-2">
+              className="flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors font-medium text-sm">
               <PrinterIcon className="w-4 h-4" />
-              Print
-            </Button>
-            <Link to={`/orders/${id}`}>
-              <Button className="flex items-center gap-2">View Order</Button>
+              <span>Print</span>
+            </button>
+            <Link 
+              to={`/orders/${id}`}
+              className="text-teal-600 hover:text-teal-700 font-bold text-sm tracking-tight"
+            >
+              Order Details
             </Link>
           </div>
         </div>
@@ -164,142 +211,90 @@ export default function Invoice() {
       {/* Invoice Content */}
       <div className="max-w-4xl mx-auto px-4 py-8 print:py-4">
         <motion.div
+          id="invoice-content"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-lg shadow-sm print:shadow-none p-8 print:p-6">
           {/* Invoice Header */}
-          <div className="border-b border-gray-200 pb-6 mb-6">
-            <div className="flex justify-between items-start">
+          <div className="border-b-2 border-gray-100 pb-8 mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-6">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-4xl font-bold text-gray-900 tracking-tight mb-1">
                   Inor Fresh
                 </h1>
-                <p className="text-gray-600">
-                  Fast Delivery E-Commerce Platform
-                </p>
-                <p className="text-gray-600 mt-1">Invoice</p>
+                <p className="text-gray-500 font-medium">Invoice</p>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600 mb-1">Invoice Number</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {order.id?.split("-").slice(-1)[0] || order.id || "N/A"}
-                </p>
-                <p className="text-sm text-gray-600 mt-3 mb-1">Date</p>
-                <p className="text-sm font-medium text-gray-900">
-                  {order.createdAt ? formatDate(order.createdAt) : "N/A"}
-                </p>
+              
+              <div className="space-y-2 text-left md:text-right">
+                <div className="flex md:justify-end items-center gap-2">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">No:</span>
+                  <span className="text-sm font-bold text-gray-900 break-all max-w-[200px] md:max-w-none">
+                    #{order.id?.split("-").slice(-1)[0] || order.id || "N/A"}
+                  </span>
+                </div>
+                <div className="flex md:justify-end items-center gap-2">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Date:</span>
+                  <span className="text-sm font-semibold text-gray-700">
+                    {order.createdAt ? formatDate(order.createdAt) : "N/A"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Customer & Order Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div>
-              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">
-                Bill To
-              </h2>
-              <div className="text-gray-700">
-                <p className="font-medium">
-                  {order.address?.name || "Customer"}
-                </p>
-                <p className="mt-1">{order.address?.phone || ""}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+            <div className="space-y-4">
+              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Billing Address</h2>
+              <div className="text-sm text-gray-600 leading-relaxed">
+                <p className="font-bold text-gray-900 text-base mb-1">{order.address?.name || "Customer"}</p>
+                <p>{order.address?.phone || ""}</p>
                 <p className="mt-2">
                   {order.address?.flat && `${order.address.flat}, `}
                   {order.address?.street || order.address?.address || ""}
                 </p>
-                {order.address?.landmark && <p>{order.address.landmark}</p>}
                 <p>
-                  {order.address?.city || ""}
-                  {order.address?.state && `, ${order.address.state}`}
-                  {order.address?.pincode && ` - ${order.address.pincode}`}
+                  {order.address?.city || ""}{order.address?.pincode && ` - ${order.address.pincode}`}
                 </p>
               </div>
             </div>
-            <div>
-              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">
-                Order Information
-              </h2>
-              <div className="text-gray-700 space-y-1">
-                <p>
-                  <span className="font-medium">Order ID:</span>{" "}
-                  {order.id || "N/A"}
-                </p>
-                <p>
-                  <span className="font-medium">Status:</span>{" "}
-                  <span className="inline-block px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-medium">
-                    {order.status || "Placed"}
-                  </span>
-                </p>
-                {order.paymentMethod && (
-                  <p>
-                    <span className="font-medium">Payment:</span>{" "}
-                    {order.paymentMethod}
-                  </p>
-                )}
+            
+            <div className="space-y-4 md:text-right">
+              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Order Details</h2>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p><span className="font-medium text-gray-400">Payment:</span> <span className="text-gray-900 font-semibold">{order.paymentMethod || 'N/A'}</span></p>
+                <p><span className="font-medium text-gray-400">Status:</span> <span className="text-green-600 font-bold">{order.status || "Confirmed"}</span></p>
               </div>
             </div>
           </div>
 
-          {/* Order Items Table */}
-          <div className="mb-8">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b-2 border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900">
-                    Item
-                  </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-900">
-                    Quantity
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-900">
-                    Unit Price
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-900">
-                    Total
-                  </th>
+          {/* Items Table */}
+          <div className="mb-12">
+            <table className="w-full text-left">
+              <thead className="border-b-2 border-gray-50">
+                <tr>
+                  <th className="py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Item Description</th>
+                  <th className="py-4 text-center text-[11px] font-bold text-gray-400 uppercase tracking-widest">Qty</th>
+                  <th className="py-4 text-right text-[11px] font-bold text-gray-400 uppercase tracking-widest">Price</th>
+                  <th className="py-4 text-right text-[11px] font-bold text-gray-400 uppercase tracking-widest">Amount</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-50">
                 {order.items?.map((item: any, index: number) => {
-                  const productName =
-                    item.product?.name || item.productName || "Product";
-                  const unitPrice =
-                    item.product?.price || item.unitPrice || item.price || 0;
+                  const productName = item.product?.name || item.productName || "Product";
+                  const unitPrice = item.product?.price || item.unitPrice || item.price || 0;
                   const quantity = item.quantity || 1;
                   const itemTotal = item.total || unitPrice * quantity;
 
                   return (
-                    <tr key={index} className="border-b border-gray-100">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          {item.product?.image || item.product?.mainImage ? (
-                            <img
-                              src={item.product.image || item.product.mainImage}
-                              alt={productName}
-                              className="w-12 h-12 object-cover rounded"
-                            />
-                          ) : null}
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {productName}
-                            </p>
-                            {item.variant && (
-                              <p className="text-sm text-gray-500">
-                                {item.variant}
-                              </p>
-                            )}
-                          </div>
-                        </div>
+                    <tr key={index}>
+                      <td className="py-5">
+                        <p className="font-bold text-gray-900">{productName}</p>
+                        {item.variant && <p className="text-xs text-gray-400 mt-0.5">{item.variant}</p>}
                       </td>
-                      <td className="text-center py-4 px-4 text-gray-700">
-                        {quantity}
-                      </td>
-                      <td className="text-right py-4 px-4 text-gray-700">
-                        {formatCurrency(unitPrice)}
-                      </td>
-                      <td className="text-right py-4 px-4 font-medium text-gray-900">
-                        {formatCurrency(itemTotal)}
-                      </td>
+                      <td className="py-5 text-center text-gray-600 font-medium">{quantity}</td>
+                      <td className="py-5 text-right text-gray-600 font-medium">{formatCurrency(unitPrice)}</td>
+                      <td className="py-5 text-right font-bold text-gray-900">{formatCurrency(itemTotal)}</td>
                     </tr>
                   );
                 })}
@@ -307,40 +302,30 @@ export default function Invoice() {
             </table>
           </div>
 
-          {/* Summary */}
-          <div className="flex justify-end mb-8">
-            <div className="w-full md:w-80 space-y-3">
-              <div className="flex justify-between text-gray-700">
-                <span>Subtotal</span>
-                <span className="font-medium">{formatCurrency(subtotal)}</span>
+          {/* Totals Section */}
+          <div className="flex justify-end pt-8 border-t-2 border-gray-50">
+            <div className="w-full md:w-64 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-gray-400 uppercase tracking-wider">Subtotal</span>
+                <span className="font-bold text-gray-700">{formatCurrency(subtotal)}</span>
               </div>
               {deliveryFee > 0 && (
-                <div className="flex justify-between text-gray-700">
-                  <span>Delivery Fee</span>
-                  <span className="font-medium">
-                    {formatCurrency(deliveryFee)}
-                  </span>
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-gray-400 uppercase tracking-wider">Delivery</span>
+                  <span className="font-bold text-gray-700">{formatCurrency(deliveryFee)}</span>
                 </div>
               )}
-              {platformFee > 0 && (
-                <div className="flex justify-between text-gray-700">
-                  <span>Platform Fee</span>
-                  <span className="font-medium">
-                    {formatCurrency(platformFee)}
-                  </span>
-                </div>
-              )}
-              <div className="border-t-2 border-gray-200 pt-3 flex justify-between text-lg font-bold text-gray-900">
-                <span>Total</span>
-                <span>{formatCurrency(totalAmount)}</span>
+              <div className="flex justify-between items-center pt-4 mt-2 border-t border-gray-100">
+                <span className="text-base font-bold text-gray-900 uppercase tracking-widest">Total</span>
+                <span className="text-2xl font-bold text-teal-600">{formatCurrency(totalAmount)}</span>
               </div>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="border-t border-gray-200 pt-6 text-center text-sm text-gray-600">
-            <p className="mb-2">Thank you for your business!</p>
-            <p>For any queries, please contact our customer support.</p>
+          {/* Simple Footer */}
+          <div className="mt-20 text-center">
+            <p className="text-xs font-bold text-gray-300 uppercase tracking-[0.2em] mb-2">Thank you for shopping with Inor Fresh</p>
+            <div className="h-1 w-12 bg-gray-100 mx-auto rounded-full"></div>
           </div>
         </motion.div>
       </div>

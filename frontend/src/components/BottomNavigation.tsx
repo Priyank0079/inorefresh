@@ -1,8 +1,11 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useThemeContext } from '../context/ThemeContext';
 
 export default function BottomNavigation() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { setActiveCategory } = useThemeContext();
     
     const isActive = (path: string) => {
         if (path === '/') {
@@ -11,10 +14,26 @@ export default function BottomNavigation() {
         return location.pathname.startsWith(path);
     };
 
+    const handleHomeClick = (e: React.MouseEvent) => {
+        // Reset category filter to 'all' when clicking home
+        setActiveCategory('all');
+        
+        if (location.pathname === '/' || location.pathname === '/user/home') {
+            e.preventDefault();
+            // Scroll to top if already on home
+            const mainElement = document.querySelector('main');
+            if (mainElement) {
+                mainElement.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
     const navItems = [
         {
             name: 'Home',
             path: '/',
+            onClick: handleHomeClick,
             icon: (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -54,6 +73,7 @@ export default function BottomNavigation() {
                     <Link
                         key={item.name}
                         to={item.path}
+                        onClick={item.onClick}
                         className="flex flex-col items-center justify-center h-full relative px-4"
                     >
                         <div className={`

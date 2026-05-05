@@ -176,7 +176,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const showBackButton = !showLocationRequest && !showLocationChangeModal && !isAccountPage && !isHomePage && !isCheckoutPage;
   const showHeader = isSearchPage && !isCheckoutPage && !isCartPage;
   const showSearchBar = isSearchPage && !isCheckoutPage && !isCartPage;
-  const showFooter = !isCheckoutPage && !isProductDetailPage;
+  const showFooter = !isCheckoutPage;
 
   return (
     <>

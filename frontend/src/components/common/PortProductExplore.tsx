@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { exploreProducts, PortProduct } from '../../services/api/portProductService';
 import StatusBadge from './StatusBadge';
 import LoadingSpinner from '../LoadingSpinner';
-import { useThemeContext } from '../../context/ThemeContext';
 
 interface PortProductWithPort extends PortProduct {
   portId: {
@@ -19,12 +18,12 @@ const PortProductExplore: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const { currentTheme } = useThemeContext();
-
   const [selectedProduct, setSelectedProduct] = useState<PortProductWithPort | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [showContactForm, setShowContactForm] = useState(false);
-  const [contactMessage, setContactMessage] = useState('');
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -42,24 +41,9 @@ const PortProductExplore: React.FC = () => {
     }
   };
 
-  const handleViewDetails = (product: PortProductWithPort) => {
+  const handleOpenModal = (product: PortProductWithPort) => {
     setSelectedProduct(product);
     setShowModal(true);
-    setShowContactForm(false);
-  };
-
-  const handleContact = (product: PortProductWithPort) => {
-    setSelectedProduct(product);
-    setShowModal(true);
-    setShowContactForm(true);
-  };
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert(`Message sent to ${selectedProduct?.portId.managerName}: ${contactMessage}`);
-    setContactMessage('');
-    setShowContactForm(false);
-    setShowModal(false);
   };
 
   const filteredProducts = products.filter(product => 
@@ -78,265 +62,183 @@ const PortProductExplore: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div className="space-y-8 animate-fadeIn pb-12">
+      {/* Refined Search Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Explore Port Products</h2>
-          <p className="text-gray-500 text-sm mt-1">Discover fresh arrivals directly from ports across the region</p>
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Explore Port Products</h2>
+          <p className="text-gray-500 text-sm mt-1">High-quality products directly from verified ports.</p>
         </div>
-        <div className="relative w-full md:w-80">
+        <div className="relative w-full md:w-96">
           <input
             type="text"
-            placeholder="Search products, ports or categories..."
+            placeholder="Search products or port names..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all outline-none"
+            className="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none text-sm"
           />
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
       </div>
 
+      {/* Simplified Product Grid */}
       {filteredProducts.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
-          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-700">No products found</h3>
-          <p className="text-gray-500 mt-1">Try adjusting your search or check back later for new arrivals.</p>
+        <div className="bg-white p-16 rounded-2xl shadow-sm border border-gray-100 text-center">
+          <p className="text-gray-400 font-medium">No results found for "{searchTerm}"</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {filteredProducts.map((product) => (
             <div 
               key={product._id} 
-              className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full"
+              className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-teal-200 transition-all duration-300 flex flex-col h-full hover:shadow-lg"
             >
-              <div className="relative h-48 overflow-hidden bg-gray-100">
+              {/* Simple Image Section */}
+              <div className="relative h-48 bg-gray-50">
                 {product.image ? (
-                  <img 
-                    src={product.image} 
-                    alt={product.productName} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
+                  <img src={product.image} alt={product.productName} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-300">
-                    <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2zm4 8h-2V7h2v10z" />
+                    <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
                 )}
-                <div className="absolute top-3 left-3">
-                  <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm text-teal-700 text-xs font-bold rounded-full shadow-sm">
-                    {product.category}
-                  </span>
-                </div>
-                <div className="absolute top-3 right-3">
+                <div className="absolute top-4 right-4">
                   <StatusBadge status={product.qualityGrade} />
                 </div>
               </div>
 
-              <div className="p-5 flex-1 flex flex-col">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-800 line-clamp-1">{product.productName}</h3>
-                    <p className="text-[10px] text-gray-400 font-mono uppercase tracking-wider">ID: {product._id.slice(-8)}</p>
-                  </div>
-                  <p className="text-teal-600 font-bold text-lg">₹{product.pricePerKg}<span className="text-xs text-gray-400 font-normal">/kg</span></p>
+              {/* Clean Details Section */}
+              <div className="p-6 flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="text-lg font-bold text-gray-900 line-clamp-1 leading-snug">{product.productName}</h3>
+                  <p className="text-teal-600 font-bold text-lg">₹{product.pricePerKg}</p>
+                </div>
+                <div className="flex justify-between items-center mb-5">
+                  <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">ID: {product._id.slice(-6).toUpperCase()}</p>
+                  <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Per kg</p>
                 </div>
                 
-                <div className="space-y-3 mb-4 flex-1">
+                <div className="space-y-3 mb-8">
                   <div className="flex items-center text-sm text-gray-600">
-                    <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span className="font-medium text-gray-700">{product.portId.portName}</span>
+                    <span className="font-medium">{product.portId.portName}</span>
                   </div>
                   
-                  <div className="flex items-center text-sm text-gray-500">
-                    <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z" />
+                  <div className="flex items-center text-sm text-gray-600">
+                    <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
-                    <span>Stock: <span className="font-semibold text-gray-800">{product.availableQuantity} kg</span></span>
+                    <span className="font-medium">Available: <span className="text-gray-900 font-semibold">{product.availableQuantity}kg</span></span>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-50 mt-auto">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 text-[10px] font-bold border border-teal-200">
-                          {product.portId.managerName.charAt(0)}
-                        </div>
-                        <span className="text-xs text-gray-500 font-medium">{product.portId.managerName}</span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button 
-                        className="px-3 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-100 transition-colors duration-200"
-                        onClick={() => handleViewDetails(product)}
-                      >
-                        View Details
-                      </button>
-                      <button 
-                        className="px-3 py-2 bg-teal-600 text-white rounded-xl text-xs font-semibold hover:bg-teal-700 transition-colors duration-200 shadow-sm shadow-teal-200"
-                        onClick={() => handleContact(product)}
-                      >
-                        Contact
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <button 
+                  onClick={() => handleOpenModal(product)}
+                  className="w-full py-3 border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-900 hover:text-white hover:border-gray-900 transition-all duration-300 mt-auto"
+                >
+                  View Details
+                </button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Modal */}
+      {/* Simple Professional Modal */}
       {showModal && selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-scaleIn max-h-[90vh] flex flex-col">
-            <div className="relative h-48 md:h-64 flex-shrink-0">
-              {selectedProduct.image ? (
-                <img src={selectedProduct.image} alt={selectedProduct.productName} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300">
-                  <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2zm4 8h-2V7h2v10z" />
-                  </svg>
-                </div>
-              )}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-scaleIn flex flex-col">
+            <div className="p-6 border-b flex items-center justify-between">
+              <h3 className="font-bold text-gray-900">Product Specification</h3>
               <button 
                 onClick={() => setShowModal(false)}
-                className="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/40 transition-all"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l18 18" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <div className="p-8 overflow-y-auto flex-1">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h2 className="text-3xl font-black text-gray-900">{selectedProduct.productName}</h2>
+            <div className="overflow-y-auto p-8">
+              <div className="flex gap-6 mb-10">
+                <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                  {selectedProduct.image ? (
+                    <img src={selectedProduct.image} alt={selectedProduct.productName} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300">
+                      <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{selectedProduct.productName}</h2>
                     <StatusBadge status={selectedProduct.qualityGrade} />
                   </div>
-                  <p className="text-gray-400 font-mono text-sm">UNIQUE PRODUCT ID: {selectedProduct._id}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-3xl font-black text-teal-600">₹{selectedProduct.pricePerKg}<span className="text-sm text-gray-400 font-normal">/kg</span></p>
-                  <p className="text-sm text-gray-500 font-medium">{selectedProduct.availableQuantity}kg available</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                <div className="space-y-4">
-                  <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Port Information</h4>
-                  <div className="bg-gray-50 p-4 rounded-2xl space-y-3">
-                    <div className="flex items-center text-gray-700">
-                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center mr-3 shadow-sm">
-                        <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400">Port Name</p>
-                        <p className="font-bold">{selectedProduct.portId.portName}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center text-gray-700">
-                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center mr-3 shadow-sm">
-                        <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400">Manager</p>
-                        <p className="font-bold">{selectedProduct.portId.managerName}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Details</h4>
-                  <div className="bg-gray-50 p-4 rounded-2xl space-y-3">
-                    <div className="flex items-center text-gray-700">
-                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center mr-3 shadow-sm">
-                        <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 12h.01M7 17h.01M17 7h.01M17 12h.01M17 17h.01" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400">Category</p>
-                        <p className="font-bold">{selectedProduct.category}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center text-gray-700">
-                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center mr-3 shadow-sm">
-                        <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400">Availability Date</p>
-                        <p className="font-bold">{new Date(selectedProduct.availabilityDate).toLocaleDateString()}</p>
-                      </div>
-                    </div>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-3xl font-bold text-teal-600">₹{selectedProduct.pricePerKg}</p>
+                    <p className="text-sm text-gray-400 font-medium">per kg</p>
                   </div>
                 </div>
               </div>
 
-              {showContactForm ? (
-                <div className="border-t pt-8 mt-8 animate-slideUp">
-                  <h4 className="text-xl font-black text-gray-900 mb-4 flex items-center">
-                    <svg className="w-6 h-6 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                    </svg>
-                    Contact Port Manager
-                  </h4>
-                  <form onSubmit={handleSendMessage} className="space-y-4">
-                    <textarea
-                      required
-                      value={contactMessage}
-                      onChange={(e) => setContactMessage(e.target.value)}
-                      placeholder={`Inquire about ${selectedProduct.productName}...`}
-                      className="w-full p-4 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-teal-100 focus:border-teal-500 outline-none transition-all h-32 resize-none"
-                    />
-                    <div className="flex gap-4">
-                      <button
-                        type="button"
-                        onClick={() => setShowContactForm(false)}
-                        className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition-all"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="flex-2 py-3 bg-teal-600 text-white rounded-2xl font-bold hover:bg-teal-700 transition-all shadow-lg shadow-teal-200 px-8"
-                      >
-                        Send Message
-                      </button>
-                    </div>
-                  </form>
+              <div className="space-y-8">
+                <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+                  <div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Origin Port</p>
+                    <p className="text-base font-semibold text-gray-900">{selectedProduct.portId.portName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Current Stock</p>
+                    <p className="text-base font-semibold text-gray-900">{selectedProduct.availableQuantity}kg</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Category</p>
+                    <p className="text-base font-semibold text-gray-900">{selectedProduct.category}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Available Date</p>
+                    <p className="text-base font-semibold text-gray-900">{new Date(selectedProduct.availabilityDate).toLocaleDateString()}</p>
+                  </div>
                 </div>
-              ) : (
-                <div className="border-t pt-8 mt-8 flex justify-center">
-                  <button 
-                    onClick={() => setShowContactForm(true)}
-                    className="w-full md:w-auto px-12 py-4 bg-teal-600 text-white rounded-2xl font-black text-lg hover:bg-teal-700 transition-all shadow-xl shadow-teal-200 transform hover:-translate-y-1"
-                  >
-                    Contact Manager Now
-                  </button>
+
+                <div className="pt-8 border-t">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Direct Contact Details</p>
+                  <div className="grid grid-cols-1 gap-4">
+                    <a href={`tel:${selectedProduct.portId.mobile}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-teal-50 transition-colors group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 group-hover:text-teal-600 transition-colors">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                        </div>
+                        <span className="font-bold text-gray-800">{selectedProduct.portId.mobile}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-teal-600 opacity-0 group-hover:opacity-100 uppercase tracking-widest transition-opacity">Call Now</span>
+                    </a>
+                    <a href={`mailto:${selectedProduct.portId.email}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-blue-50 transition-colors group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-gray-400 group-hover:text-blue-600 transition-colors">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <span className="font-bold text-gray-800 text-sm break-all">{selectedProduct.portId.email}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-blue-600 opacity-0 group-hover:opacity-100 uppercase tracking-widest transition-opacity">Email Now</span>
+                    </a>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
