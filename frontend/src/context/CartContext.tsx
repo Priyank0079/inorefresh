@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useMemo, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, ReactNode, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 import { useLocation } from '../hooks/useLocation';
@@ -91,7 +91,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   // Helper to sync cart from API
-  const fetchCart = async (lat?: number, lng?: number) => {
+  const fetchCart = useCallback(async (lat?: number, lng?: number) => {
     if (!isAuthenticated || !['Customer', 'horeca', 'retailer'].includes(user?.userType || '')) {
       // If we cleared it above but had things in localStorage, we keep them for guests?
       // For now, if logged out, we clear if it was an authenticated session.
@@ -128,7 +128,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAuthenticated, user?.userType, location?.latitude, location?.longitude]);
 
   // Load cart on auth change
   useEffect(() => {
@@ -193,7 +193,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
   }, [items, estimatedFee, platformFee, freeDeliveryThreshold]);
 
-  const addToCart = async (product: Product, sourceElement?: HTMLElement | null) => {
+  const addToCart = useCallback(async (product: Product, sourceElement?: HTMLElement | null) => {
     // Get consistent product ID - MongoDB returns _id, frontend expects id
     const productId = product._id || product.id;
 
@@ -337,9 +337,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // Remove from pending operations immediately
       pendingOperationsRef.current.delete(productId);
     }
-  };
+  }, [isAuthenticated, user?.userType, location?.latitude, location?.longitude, items, showToast]);
 
-  const removeFromCart = async (productId: string, variantId?: string, variantTitle?: string) => {
+  const removeFromCart = useCallback(async (productId: string, variantId?: string, variantTitle?: string) => {
     // Create a unique key for this specific product + variant combination
     const operationKey = variantId ? `${productId}-${variantId}` : `${productId}`;
 
@@ -414,11 +414,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // For unregistered users, remove from pending operations immediately
       pendingOperationsRef.current.delete(operationKey);
     }
-  };
+  }, [isAuthenticated, user?.userType, location?.latitude, location?.longitude, items]);
 
-  const updateQuantity = async (productId: string, quantity: number, variantId?: string, variantTitle?: string) => {
+  const updateQuantity = useCallback(async (productId: string, quantity: number, variantId?: string, variantTitle?: string) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(productId, variantId, variantTitle);
       return;
     }
 
@@ -530,10 +530,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // For unregistered users, remove from pending operations immediately
       pendingOperationsRef.current.delete(operationKey);
     }
-  };
+  }, [isAuthenticated, user?.userType, location?.latitude, location?.longitude, items, removeFromCart]);
 
 
-  const clearCart = async () => {
+  const clearCart = useCallback(async () => {
     setItems([]);
     try {
       await apiClearCart();
@@ -541,16 +541,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
       console.error("Clear cart failed", error);
       await fetchCart();
     }
-  };
+  }, [fetchCart]);
 
-  const refreshCart = async (latitude?: number, longitude?: number) => {
+  const refreshCart = useCallback(async (latitude?: number, longitude?: number) => {
     await fetchCart(latitude, longitude);
-  };
+  }, [fetchCart]);
+
+  const contextValue = useMemo(() => ({
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    refreshCart,
+    lastAddEvent,
+    loading
+  }), [
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    refreshCart,
+    lastAddEvent,
+    loading
+  ]);
 
   return (
-    <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, refreshCart, lastAddEvent, loading }}
-    >
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );

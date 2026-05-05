@@ -49,7 +49,19 @@ export const useDeliveryTracking = (orderId: string | undefined) => {
     const reconnectAttemptsRef = useRef(0)
 
     const connectSocket = useCallback(() => {
-        if (!orderId) return
+        if (!orderId) return null
+
+        // Don't create a new connection if one already exists and is active
+        if (socketRef.current?.connected) {
+            console.log('🔌 Socket already connected, skipping creation')
+            return socketRef.current
+        }
+
+        // If we have a socket that is currently connecting, don't create another
+        if (socketRef.current) {
+            console.log('🔌 Socket already exists (connecting or idle), reusing')
+            return socketRef.current
+        }
 
         // Clear any existing reconnect timeout
         if (reconnectTimeoutRef.current) {
@@ -202,7 +214,7 @@ export const useDeliveryTracking = (orderId: string | undefined) => {
         })
 
         return socket
-    }, [orderId])
+    }, [orderId, attemptReconnect])
 
     const attemptReconnect = useCallback(() => {
         reconnectAttemptsRef.current += 1
@@ -238,11 +250,30 @@ export const useDeliveryTracking = (orderId: string | undefined) => {
         }
 
         if (socketRef.current) {
+            console.log('🔌 Disconnecting socket...')
+            
+            // Remove all listeners first to prevent events during disconnect
+            socketRef.current.removeAllListeners()
+            
             if (orderId) {
-                socketRef.current.emit('stop-tracking', orderId)
+                try {
+                    socketRef.current.emit('stop-tracking', orderId)
+                } catch (e) {
+                    // Ignore errors during emit
+                }
             }
-            socketRef.current.disconnect()
+            
+            // Only disconnect if it's not already disconnected
+            if (socketRef.current.connected || (socketRef.current as any).active !== false) {
+                try {
+                    socketRef.current.disconnect()
+                } catch (e) {
+                    // Ignore errors during disconnect
+                }
+            }
+            
             socketRef.current = null
+            setTrackingData(prev => ({ ...prev, isConnected: false }))
         }
     }, [orderId])
 
