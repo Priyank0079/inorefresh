@@ -83,8 +83,8 @@ export default function AdminPortNegotiations() {
   return (
     <div className="flex flex-col h-full min-h-screen bg-slate-50">
       <div className="p-6">
-        <PageTitle 
-          title="Port Negotiations" 
+        <PageTitle
+          title="Port Negotiations"
           subtitle="Manage and negotiate fish supply offers from ports for warehouse requirements"
         />
       </div>
@@ -114,8 +114,8 @@ export default function AdminPortNegotiations() {
                     <tr><td colSpan={8} className="p-12 text-center text-slate-400">No active negotiations found.</td></tr>
                   ) : (
                     offers.map((offer) => (
-                      <tr 
-                        key={offer._id} 
+                      <tr
+                        key={offer._id}
                         className={`hover:bg-teal-50/30 transition-colors cursor-pointer ${selectedOffer?._id === offer._id ? 'bg-teal-50' : ''}`}
                         onClick={() => setSelectedOffer(offer)}
                       >
@@ -124,12 +124,27 @@ export default function AdminPortNegotiations() {
                           <div className="text-[10px] text-slate-400 font-mono">{offer.requirementId?.requirementId}</div>
                         </td>
                         <td className="p-4">
-                          <div className="text-slate-700 font-medium">{offer.portId?.portName || 'N/A'}</div>
-                          <div className="text-xs text-slate-400">{offer.portId?.mobile || ''}</div>
+                          {typeof offer.portId === 'object' && offer.portId !== null ? (
+                            <>
+                              <div className="text-slate-700 font-bold uppercase tracking-tight">
+                                {offer.portId.portName || offer.portId.name || offer.portId.fullName || 'Unnamed Port'}
+                              </div>
+                              <div className="text-xs text-slate-500 font-medium">
+                                Mgr: {offer.portId.managerName || 'N/A'}
+                              </div>
+                              <div className="text-[10px] text-slate-400">{offer.portId.mobile || ''}</div>
+                            </>
+                          ) : (
+                            <div className="text-slate-400 italic">ID: {offer.portId || 'Unknown'}</div>
+                          )}
                         </td>
                         <td className="p-4">
-                          <div className="text-slate-700">{offer.warehouseId?.warehouseName}</div>
-                          <div className="text-[10px] text-slate-400">{offer.warehouseId?.address}</div>
+                          <div className="text-slate-700 font-medium">
+                            {offer.warehouseId?.warehouseName || offer.warehouseId?.name || offer.warehouseId?.storeName || (typeof offer.warehouseId === 'string' ? 'ID: ' + offer.warehouseId : 'Unknown Warehouse')}
+                          </div>
+                          <div className="text-[10px] text-slate-400">
+                            {offer.warehouseId?.address || offer.warehouseId?.location?.address || offer.warehouseId?.city || ''}
+                          </div>
                         </td>
                         <td className="p-4 text-right font-bold text-teal-600">₹{offer.offeredPrice}</td>
                         <td className="p-4 text-center text-slate-600">{offer.quantityOffered} kg</td>
@@ -143,7 +158,7 @@ export default function AdminPortNegotiations() {
                           <StatusBadge status={getStatusLabel(offer.status)} />
                         </td>
                         <td className="p-4 text-center">
-                          <button 
+                          <button
                             className="p-2 text-teal-600 hover:bg-teal-100 rounded-lg transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -172,7 +187,7 @@ export default function AdminPortNegotiations() {
                   <span className="material-icons-outlined">close</span>
                 </button>
               </div>
-              
+
               <div className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
                 {/* Info summary */}
                 <div className="bg-slate-50 rounded-lg p-4 grid grid-cols-2 gap-4">
@@ -210,8 +225,8 @@ export default function AdminPortNegotiations() {
                   <div className="pt-6 border-t border-slate-100 space-y-4">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-700 uppercase">Your Counter Price (₹)</label>
-                      <input 
-                        type="number" 
+                      <input
+                        type="number"
                         value={counterPrice}
                         onChange={(e) => setCounterPrice(e.target.value)}
                         placeholder="Enter price per kg"
@@ -220,23 +235,23 @@ export default function AdminPortNegotiations() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-700 uppercase">Negotiation Notes</label>
-                      <textarea 
+                      <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         placeholder="Add terms or instructions..."
                         className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none h-20 resize-none"
                       />
                     </div>
-                    
+
                     <div className="flex gap-3 pt-2">
-                      <button 
+                      <button
                         onClick={handleCounter}
                         disabled={submitting}
                         className="flex-1 bg-white border border-teal-600 text-teal-600 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-50 transition-all disabled:opacity-50"
                       >
                         Send Counter
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleConfirm(selectedOffer._id)}
                         disabled={submitting}
                         className="flex-1 bg-teal-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-teal-700 shadow-md shadow-teal-600/20 transition-all disabled:opacity-50"
@@ -246,7 +261,7 @@ export default function AdminPortNegotiations() {
                     </div>
                   </div>
                 )}
-                
+
                 {selectedOffer.status === 'approved' && (
                   <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
                     <span className="material-icons-outlined text-emerald-600 text-3xl mb-2">check_circle</span>

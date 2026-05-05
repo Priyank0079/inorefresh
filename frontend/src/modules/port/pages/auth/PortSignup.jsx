@@ -7,6 +7,7 @@ export default function PortSignup() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
+    name: '',
     portName: '',
     managerName: '',
     email: '',
@@ -57,6 +58,15 @@ export default function PortSignup() {
 
         <div className="p-8 space-y-6">
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-neutral-700">Name</label>
+              <input
+                className="w-full border border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all text-sm"
+                placeholder="Enter your name or business name"
+                required
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-1">
                 <label className="text-sm font-semibold text-neutral-700">Port Name</label>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { addInwardStock, updateInwardStock, getInwardStockById, InwardStock } from '@/services/api/inwardStockService';
 import { getProducts, Product } from '@/services/api/productService';
+import { useAuth } from '@/context/AuthContext';
 
 
 export default function WarehouseAddInwardStock() {
@@ -9,6 +10,7 @@ export default function WarehouseAddInwardStock() {
     const { id } = useParams();
     const location = useLocation();
     const editingStock = location.state?.stock as InwardStock;
+    const { user } = useAuth();
 
     const [loading, setLoading] = useState(false);
     const [products, setProducts] = useState<Product[]>([]);
@@ -16,7 +18,7 @@ export default function WarehouseAddInwardStock() {
     const [formData, setFormData] = useState({
         requirementId: 'AUTO-GEN', // Placeholder for auto-generated ID
         requirementDate: new Date().toISOString().split('T')[0],
-        warehouseName: 'Veraval Central Warehouse', // Default as per image
+        warehouseName: user?.warehouseName || user?.name || 'Loading Warehouse...',
         fishName: '',
         category: 'Fresh',
         variantGrade: '',
@@ -47,7 +49,7 @@ export default function WarehouseAddInwardStock() {
                         setFormData({
                             requirementId: stock.invoiceNumber || 'AUTO-GEN',
                             requirementDate: new Date(stock.date).toISOString().split('T')[0],
-                            warehouseName: 'Veraval Central Warehouse',
+                            warehouseName: stock.warehouseName || user?.warehouseName || user?.name || 'Warehouse',
                             fishName: stock.productName,
                             category: (stock as any).category || 'Fresh',
                             variantGrade: stock.variant,
@@ -66,7 +68,17 @@ export default function WarehouseAddInwardStock() {
 
         fetchProducts();
         fetchStockDetail();
-    }, [id, editingStock]);
+    }, [id, editingStock, user]);
+
+    // Sync warehouse name when user is loaded
+    useEffect(() => {
+        if (user && !id) {
+            setFormData(prev => ({
+                ...prev,
+                warehouseName: user.warehouseName || user.name || prev.warehouseName
+            }));
+        }
+    }, [user, id]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -169,7 +181,9 @@ export default function WarehouseAddInwardStock() {
                                             className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all font-bold text-slate-800"
                                             placeholder="Warehouse Name"
                                         />
-                                        <p className="text-[10px] text-slate-400 mt-0.5 ml-1">GUJARAT, INDIA</p>
+                                        <p className="text-[10px] text-slate-400 mt-0.5 ml-1">
+                                            {user?.address || user?.location?.address || (user?.city && user?.state ? `${user.city}, ${user.state}` : 'GUJARAT, INDIA')}
+                                        </p>
                                     </div>
                                 </div>
 

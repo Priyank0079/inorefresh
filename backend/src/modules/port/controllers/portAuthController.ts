@@ -103,7 +103,7 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
       token,
       user: {
         id: portUser._id,
-        name: portUser.portName,
+        portName: portUser.portName,
         managerName: portUser.managerName,
         mobile: portUser.mobile,
         email: portUser.email,
@@ -211,28 +211,34 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
 
   const { portName, managerName, email, location, licenseNumber, profileImage } = req.body;
 
-  const updatedUser = await PortUser.findByIdAndUpdate(
-    req.user.userId,
-    {
-      $set: {
-        portName,
-        managerName,
-        email,
-        location,
-        licenseNumber,
-        profileImage
-      }
-    },
-    { new: true, runValidators: true }
-  );
+  try {
+    const portUser = await PortUser.findById(req.user.userId);
+    
+    if (!portUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
-  if (!updatedUser) {
-    return res.status(404).json({ success: false, message: "User not found" });
+    // Update fields
+    if (portName !== undefined) portUser.portName = portName;
+    if (managerName !== undefined) portUser.managerName = managerName;
+    if (email !== undefined) portUser.email = email;
+    if (location !== undefined) portUser.location = location;
+    if (licenseNumber !== undefined) portUser.licenseNumber = licenseNumber;
+    if (profileImage !== undefined) portUser.profileImage = profileImage;
+
+    const updatedUser = await portUser.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: updatedUser
+    });
+  } catch (error: any) {
+    console.error("[PORT PROFILE ERROR] updateProfile failed:", error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Failed to update profile",
+      errors: error.errors
+    });
   }
-
-  return res.status(200).json({
-    success: true,
-    message: "Profile updated successfully",
-    data: updatedUser
-  });
 });

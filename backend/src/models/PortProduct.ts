@@ -86,6 +86,6 @@ const PortProductSchema = new Schema<IPortProduct>(
 PortProductSchema.index({ portId: 1 });
 PortProductSchema.index({ productName: 'text' });
 
-const PortProduct = (mongoose.models.PortProduct as mongoose.Model<IPortProduct>) || mongoose.model<IPortProduct>('PortProduct', PortProductSchema);
+const PortProduct = mongoose.models.PortProduct || mongoose.model<IPortProduct>('PortProduct', PortProductSchema);
 
 export default PortProduct;

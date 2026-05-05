@@ -81,6 +81,7 @@ async function startServer() {
   await ensureDefaultAdmin();
   await seedHeaderCategories();
   initializeFirebaseAdmin();
+  initializeSocket(httpServer);
 
   httpServer.on('error', (error: NodeJS.ErrnoException) => {
     if (error.code === 'EADDRINUSE') {

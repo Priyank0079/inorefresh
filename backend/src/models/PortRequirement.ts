@@ -42,10 +42,6 @@ const PortRequirementSchema: Schema = new Schema(
 );
 
 // Force clear model from cache to apply schema changes in development
-if (mongoose.models.PortRequirement) {
-  delete mongoose.models.PortRequirement;
-}
-
-const PortRequirement = mongoose.model<IPortRequirement>('PortRequirement', PortRequirementSchema);
+const PortRequirement = mongoose.models.PortRequirement || mongoose.model<IPortRequirement>('PortRequirement', PortRequirementSchema);
 
 export default PortRequirement;

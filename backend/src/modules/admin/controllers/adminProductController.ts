@@ -870,6 +870,11 @@ export const createProduct = asyncHandler(
       productData.requiresApproval = false;
 
       const product = await Product.create(productData);
+      
+      // Populate for response
+      const populatedProduct = await Product.findById(product._id)
+        .populate("category", "name")
+        .populate("warehouse", "warehouseName managerName");
 
       // Create inventory record
       try {
@@ -890,7 +895,7 @@ export const createProduct = asyncHandler(
       return res.status(201).json({
         success: true,
         message: "Product created successfully",
-        data: product,
+        data: populatedProduct,
       });
     } catch (error: any) {
       // Handle Mongoose validation errors

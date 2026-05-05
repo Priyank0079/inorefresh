@@ -6,7 +6,7 @@ import { uploadImage } from '@/services/api/uploadService';
 import { useRef } from 'react';
 
 const ProfileSettings = () => {
-  const { token, user } = useAuth();
+  const { token, user, updateUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -27,9 +27,11 @@ const ProfileSettings = () => {
     const fetchProfile = async () => {
       try {
         const response = await getPortProfile(token);
+        console.log("Fetched profile data:", response.data);
         if (response.success) {
+          const profileData = response.data;
           setFormData({
-            portName: response.data.portName || '',
+            portName: profileData.portName || '',
             managerName: response.data.managerName || '',
             email: response.data.email || '',
             mobile: response.data.mobile || '',
@@ -66,13 +68,17 @@ const ProfileSettings = () => {
     }
 
     try {
+      console.log("Submitting profile update:", formData);
       const response = await updatePortProfile(token, formData);
       if (response.success) {
-        setSuccess("Profile updated successfully!");
-        // Optional: Update local user state if needed
+        setSuccess(response.message || "Profile updated successfully!");
+        updateUser(response.data);
+      } else {
+        setError(response.message || "Failed to update profile.");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update profile.");
+      console.error("Profile update error:", err);
+      setError(err.response?.data?.message || err.message || "An unexpected error occurred.");
     } finally {
       setSaving(false);
     }

@@ -291,12 +291,20 @@ export const createProduct = asyncHandler(
     newProductData.product_tag = productTag;
 
     const product = await Product.create(newProductData);
+    
+    // Populate for response
+    const populatedProduct = await Product.findById(product._id)
+      .populate("category", "name")
+      .populate("subcategory", "name")
+      .populate("brand", "name")
+      .populate("warehouse", "warehouseName managerName")
+      .populate("tax", "name rate");
 
 
     return res.status(201).json({
       success: true,
       message: "Product created successfully",
-      data: product,
+      data: populatedProduct,
     });
   }
 );
@@ -377,6 +385,7 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
     .populate("category", "name")
     .populate("subcategory", "name")
     .populate("brand", "name")
+    .populate("warehouse", "warehouseName managerName")
     .populate("tax", "name rate")
     .sort(sort)
     .skip(skip)
@@ -419,6 +428,7 @@ export const getProductById = asyncHandler(
       .populate("subcategory", "subcategoryName")
       .populate("headerCategoryId", "name slug")
       .populate("brand", "name")
+      .populate("warehouse", "warehouseName managerName")
       .populate("tax", "name rate");
 
     if (!product) {

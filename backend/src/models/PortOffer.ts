@@ -47,9 +47,6 @@ const PortOfferSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-// Force clear model from cache to apply schema changes in development
-if (mongoose.models.PortOffer) {
-  delete mongoose.models.PortOffer;
-}
+const PortOffer = mongoose.models.PortOffer || mongoose.model<IPortOffer>('PortOffer', PortOfferSchema);
 
-export default mongoose.model<IPortOffer>('PortOffer', PortOfferSchema);
+export default PortOffer;

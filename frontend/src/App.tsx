@@ -93,6 +93,7 @@ const WarehouseInwardReport = lazy(() => import("./modules/warehouse/pages/Wareh
 const WarehouseAccountSettings = lazy(() => import("./modules/warehouse/pages/WarehouseAccountSettings"));
 const WarehouseLogin = lazy(() => import("./modules/warehouse/pages/WarehouseLogin"));
 const WarehouseSignUp = lazy(() => import("./modules/warehouse/pages/WarehouseSignUp"));
+const WarehouseExploreProducts = lazy(() => import("./modules/warehouse/pages/WarehouseExploreProducts"));
 
 // Lazy load admin routes
 const AdminLayout = lazy(() => import("./modules/admin/components/AdminLayout"));
@@ -142,6 +143,7 @@ const AdminOrders = lazy(() => import("./modules/admin/pages/AdminOrders"));
 const AdminOrderDetail = lazy(() => import("./modules/admin/pages/AdminOrderDetail"));
 const AdminManageCustomer = lazy(() => import("./modules/admin/pages/AdminManageCustomer"));
 const AdminProfile = lazy(() => import("./modules/admin/pages/AdminProfile"));
+const AdminExploreProducts = lazy(() => import("./modules/admin/pages/AdminExploreProducts"));
 
 const AdminWithdrawals = lazy(() => import("./modules/admin/pages/AdminWithdrawals"));
 const AdminPayments = lazy(() => import("./modules/admin/pages/AdminPayments"));
@@ -339,6 +341,7 @@ function App() {
                                         <Route path="reports/sales" element={<WarehouseSalesReport />} />
                                         <Route path="reports/inward" element={<WarehouseInwardReport />} />
                                         <Route path="account-settings" element={<WarehouseAccountSettings />} />
+                                        <Route path="explore" element={<WarehouseExploreProducts />} />
                                         <Route path="all" element={<AdminManageSellerList />} />
                                       </Routes>
                                     </WarehouseLayout>
@@ -406,6 +409,7 @@ function App() {
                                         <Route path="payments" element={<AdminPayments />} />
                                         <Route path="wallet" element={<AdminWallet />} />
                                         <Route path="billing-settings" element={<AdminBillingSettings />} />
+                                         <Route path="explore" element={<AdminExploreProducts />} />
                                       </Routes>
                                     </AdminLayout>
                                   </Suspense>

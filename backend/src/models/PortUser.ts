@@ -79,6 +79,6 @@ const PortUserSchema = new Schema<IPortUser>(
   }
 );
 
-const PortUser = (mongoose.models.PortUser as mongoose.Model<IPortUser>) || mongoose.model<IPortUser>('PortUser', PortUserSchema);
+const PortUser = mongoose.models.PortUser || mongoose.model<IPortUser>('PortUser', PortUserSchema);
 
 export default PortUser;

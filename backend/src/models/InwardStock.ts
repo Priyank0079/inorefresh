@@ -98,11 +98,6 @@ const InwardStockSchema = new Schema<IInwardStock>(
 InwardStockSchema.index({ warehouse: 1 });
 InwardStockSchema.index({ date: -1 });
 
-// Force clear model from cache to apply schema changes in development
-if (mongoose.models.InwardStock) {
-  delete mongoose.models.InwardStock;
-}
-
-const InwardStock = mongoose.model<IInwardStock>("InwardStock", InwardStockSchema);
+const InwardStock = mongoose.models.InwardStock || mongoose.model<IInwardStock>("InwardStock", InwardStockSchema);
 
 export default InwardStock;

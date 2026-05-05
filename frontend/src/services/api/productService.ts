@@ -27,7 +27,8 @@ export interface ProductVariation {
 export interface Product {
   _id: string;
   productName: string;
-  seller: string | any; // Updated to allow populated object
+  warehouse?: string | any; // Populated object or ID
+  seller?: string | any; // Legacy field/alias
   headerCategoryId?: string | any; // Updated to allow populated object
   category?: string | any; // Updated to allow populated object
   subcategory?: string | any;
@@ -58,6 +59,7 @@ export interface Product {
   updatedAt?: string;
   // Fallback for old fields if any legacy code uses them
   sellerId?: string;
+  warehouseId?: string;
   categoryId?: string;
   subcategoryId?: string;
   brandId?: string;

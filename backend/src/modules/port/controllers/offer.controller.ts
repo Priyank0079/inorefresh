@@ -133,7 +133,7 @@ export const createOffer = asyncHandler(async (req: Request, res: Response) => {
       fishName: requirement.fishName,
       offeredPrice: offer.offeredPrice,
       quantityOffered: offer.quantityOffered,
-      portName: portUser?.portName || 'A Port User',
+      portName: portUser?.name || portUser?.portName || 'A Port User',
       timestamp: new Date()
     });
   }
@@ -225,8 +225,8 @@ export const adminGetAllOffers = asyncHandler(async (req: Request, res: Response
 
   const offers = await PortOffer.find(filter)
     .populate('requirementId')
-    .populate('portId', 'name mobile')
-    .populate('warehouseId', 'name city')
+    .populate('portId')
+    .populate('warehouseId')
     .sort({ updatedAt: -1 });
 
   return res.status(200).json({
