@@ -132,8 +132,6 @@ export const getProducts = async (req: Request, res: Response) => {
       maxPrice,
       brand,
       minDiscount,
-      latitude, // User location latitude
-      longitude, // User location longitude
       dateFrom,
       dateTo,
     } = req.query;
@@ -151,9 +149,6 @@ export const getProducts = async (req: Request, res: Response) => {
     // Location inputs are accepted, but product listing is not hard-filtered by
     // proximity so users can still browse all active/published products.
     // Removed redundant findSellersWithinRange call to optimize performance
-    const userLat = latitude ? parseFloat(latitude as string) : null;
-    const userLng = longitude ? parseFloat(longitude as string) : null;
-
     // Helper to resolve category/subcategory ID from slug or ID
     const resolveId = async (
       model: any,

@@ -130,7 +130,7 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
 /**
  * Get all port products (for Explore option in Admin and Warehouse)
  */
-export const exploreProducts = asyncHandler(async (req: Request, res: Response) => {
+export const exploreProducts = asyncHandler(async (_req: Request, res: Response) => {
   const products = await PortProduct.find({ status: 'Active' })
     .populate('portId', 'portName location managerName mobile email')
     .sort({ createdAt: -1 });

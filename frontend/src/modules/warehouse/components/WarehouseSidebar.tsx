@@ -310,7 +310,7 @@ export default function WarehouseSidebar({ onClose }: WarehouseSidebarProps) {
   };
 
   return (
-    <aside className="w-64 bg-teal-700 h-screen flex flex-col">
+    <aside className="w-64 bg-teal-700 h-screen flex flex-col overflow-hidden">
       {/* Close button - only show on mobile */}
       <div className="flex justify-end p-4 border-b border-teal-600 lg:hidden">
         <button
@@ -333,7 +333,7 @@ export default function WarehouseSidebar({ onClose }: WarehouseSidebarProps) {
           </svg>
         </button>
       </div>
-      <nav className="flex-1 py-4 sm:py-6 overflow-y-auto">
+      <nav className="flex-1 py-4 sm:py-6 overflow-y-auto scrollbar-hide overscroll-contain">
         <ul className="space-y-1 px-2 sm:px-4">
           {items.map((item) => {
             const expanded = isExpanded(item.path);

@@ -49,7 +49,7 @@ export default function WarehouseAddInwardStock() {
                         setFormData({
                             requirementId: stock.invoiceNumber || 'AUTO-GEN',
                             requirementDate: new Date(stock.date).toISOString().split('T')[0],
-                            warehouseName: stock.warehouseName || user?.warehouseName || user?.name || 'Warehouse',
+                            warehouseName: (stock as any).warehouseName || user?.warehouseName || user?.name || 'Warehouse',
                             fishName: stock.productName,
                             category: (stock as any).category || 'Fresh',
                             variantGrade: stock.variant,

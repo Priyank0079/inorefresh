@@ -92,7 +92,7 @@ const PortProductExplore: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {filteredProducts.map((product) => (
             <div 
-              key={product._id} 
+              key={product._id ?? `${product.productName}-${product.portId.portName}`} 
               className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-teal-200 transition-all duration-300 flex flex-col h-full hover:shadow-lg"
             >
               {/* Simple Image Section */}
@@ -118,7 +118,7 @@ const PortProductExplore: React.FC = () => {
                   <p className="text-teal-600 font-bold text-lg">₹{product.pricePerKg}</p>
                 </div>
                 <div className="flex justify-between items-center mb-5">
-                  <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">ID: {product._id.slice(-6).toUpperCase()}</p>
+                  <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">ID: {(product._id ?? `${product.productName}-${product.portId.portName}`).slice(-6).toUpperCase()}</p>
                   <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Per kg</p>
                 </div>
                 

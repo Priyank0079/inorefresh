@@ -28,7 +28,7 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
   };
 
   return (
-    <div className="flex min-h-screen bg-neutral-50">
+    <div className="flex h-screen overflow-hidden bg-neutral-50">
       {/* Real-time Notification Alert */}
       <WarehouseNotificationAlert
         notification={activeNotification}
@@ -45,24 +45,22 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
 
       {/* Sidebar - Fixed */}
       <div
-        className={`fixed left-0 top-0 h-screen z-50 transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <WarehouseSidebar onClose={() => setIsSidebarOpen(false)} />
       </div>
 
       {/* Main Content */}
-      <div
-        className={`flex-1 flex flex-col transition-all duration-300 w-full ${
-          isSidebarOpen ? 'ml-64' : 'ml-0'
-        }`}
-      >
+      <div className="flex-1 min-w-0 flex flex-col h-screen transition-all duration-300 w-full lg:ml-64">
         {/* Header */}
         <WarehouseHeader onMenuClick={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 bg-neutral-50">{children}</main>
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 bg-neutral-50">
+          {children}
+        </main>
       </div>
     </div>
   );

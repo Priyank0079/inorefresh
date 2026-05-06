@@ -46,7 +46,7 @@ export const getAllWarehouses = asyncHandler(
     ]);
 
     const stockMap = new Map();
-    stockAggregations.forEach(agg => {
+    stockAggregations.forEach((agg: any) => {
       stockMap.set(agg._id.toString(), agg.totalQuantity);
     });
 

@@ -19,7 +19,7 @@ router.use('/products', productRoutes);
 router.use('/notifications', notificationRoutes);
 
 // Debug route to verify mounting
-router.get('/test', (req, res) => {
+router.get('/test', (_req, res) => {
   res.json({ success: true, message: "Port sub-router is working" });
 });
 

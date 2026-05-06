@@ -25,3 +25,8 @@ declare module '*.webp' {
   export default value;
 }
 
+declare module '*.jsx' {
+  const value: any;
+  export default value;
+}
+
