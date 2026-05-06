@@ -19,7 +19,7 @@ const PortLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <div className="h-screen overflow-hidden bg-slate-50 font-sans">
       <PortSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       
       {/* Main Content Overlay for mobile sidebar */}
@@ -30,13 +30,13 @@ const PortLayout = () => {
         />
       )}
 
-      <div className="lg:ml-64 flex flex-col min-h-screen">
+      <div className="lg:ml-72 flex flex-col h-screen overflow-hidden">
         <PortNavbar 
           onMenuClick={() => setIsSidebarOpen(true)} 
           title={getTitle(location.pathname)} 
         />
         
-        <main className="flex-1 p-4 sm:p-6 md:p-8">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto overflow-x-hidden scrollbar-hide">
           <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>
