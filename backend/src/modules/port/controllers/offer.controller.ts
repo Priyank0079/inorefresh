@@ -5,6 +5,8 @@ import InwardStock from "../../../models/InwardStock";
 import PortUser from "../../../models/PortUser";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import mongoose from "mongoose";
+import { sendPortOfferNotification } from "../../../services/notificationService";
+import { getIO } from "../../../socket/socketService";
 
 /**
  * Get all negotiations for the logged-in port user
@@ -37,7 +39,7 @@ export const getMyOrders = asyncHandler(async (req: Request, res: Response) => {
     status: 'approved'
   })
     .populate('requirementId')
-    .populate('warehouseId', 'name location city state')
+    .populate('warehouseId', 'warehouseName managerName mobile address location')
     .sort({ updatedAt: -1 });
 
   return res.status(200).json({
@@ -55,7 +57,7 @@ export const getOfferById = asyncHandler(async (req: Request, res: Response) => 
 
   const offer = await PortOffer.findOne({ _id: offerId, portId })
     .populate('requirementId')
-    .populate('warehouseId', 'name location city state managerName mobile address');
+    .populate('warehouseId', 'warehouseName managerName mobile address location');
 
   if (!offer) {
     return res.status(404).json({ success: false, message: "Offer not found" });
@@ -125,8 +127,8 @@ export const createOffer = asyncHandler(async (req: Request, res: Response) => {
   const portUser = await PortUser.findById(portId);
 
   // Notify Admin via Socket
-  const io = req.app.get('io');
-  if (io) {
+  try {
+    const io = getIO();
     io.to('admin-notifications').emit('new-port-offer', {
       offerId: offer._id,
       requirementId: requirement.requirementId,
@@ -136,6 +138,21 @@ export const createOffer = asyncHandler(async (req: Request, res: Response) => {
       portName: portUser?.name || portUser?.portName || 'A Port User',
       timestamp: new Date()
     });
+  } catch (socketErr) {
+    console.error("Socket emission failed:", socketErr);
+  }
+
+  // Create persistent Notification (always create, even if socket fails)
+  try {
+    await sendPortOfferNotification(
+      'Admin',
+      '',
+      'New Port Offer',
+      `${portUser?.name || 'A Port'} has sent an offer for ${requirement.fishName}`,
+      { link: `/admin/manage-warehouse/port-negotiations`, type: 'Info' }
+    );
+  } catch (notifErr) {
+    console.error("Failed to create persistent notification:", notifErr);
   }
 
   return res.status(201).json({
@@ -172,9 +189,46 @@ export const acceptCounter = asyncHandler(async (req: Request, res: Response) =>
 
   await offer.save();
 
-  // Also update requirement if all quantity is met? 
-  // For now just mark as approved
-  
+  // Update Requirement status
+  const requirement = await PortRequirement.findByIdAndUpdate(offer.requirementId, { status: 'Closed' });
+
+  // Update corresponding InwardStock status in Warehouse
+  if (requirement) {
+    await InwardStock.findOneAndUpdate(
+      { invoiceNumber: requirement.requirementId },
+      { status: 'Received' }
+    );
+  }
+
+  // Notify Admin & Warehouse
+  try {
+    const io = getIO();
+    io.to('admin-notifications').emit('offer-approved', {
+      offerId: offer._id,
+      message: 'Port has accepted your counter offer'
+    });
+    
+    const reqId = requirement?.requirementId || 'N/A';
+    
+    await sendPortOfferNotification(
+      'Admin',
+      '',
+      'Counter Offer Accepted',
+      `Port has accepted the counter offer for REQ-${reqId}. Deal is confirmed.`,
+      { link: `/admin/manage-warehouse/port-negotiations`, status: 'approved' }
+    );
+    
+    await sendPortOfferNotification(
+      'Warehouse',
+      offer.warehouseId.toString(),
+      'Offer Confirmed',
+      `An offer for your requirement REQ-${reqId} has been successfully negotiated and confirmed.`,
+      { link: `/warehouse/port-shipments`, status: 'approved' }
+    );
+  } catch (err) {
+    console.error("Failed to send acceptCounter notifications:", err);
+  }
+
   return res.status(200).json({
     success: true,
     message: "Counter offer accepted successfully",
@@ -205,6 +259,30 @@ export const counterOffer = asyncHandler(async (req: Request, res: Response) => 
   });
 
   await offer.save();
+
+  // Notify Admin
+  try {
+    const io = getIO();
+    io.to('admin-notifications').emit('new-port-offer', {
+      offerId: offer._id,
+      requirementId: offer.requirementId,
+      price,
+      message: 'Port has sent a counter offer'
+    });
+    
+    // Also populate port user to get the name
+    const portUser = await PortUser.findById(portId);
+    
+    await sendPortOfferNotification(
+      'Admin',
+      '',
+      'Counter Offer from Port',
+      `${portUser?.name || 'A Port'} has sent a counter offer of ₹${price}.`,
+      { link: `/admin/manage-warehouse/port-negotiations`, type: 'Info' }
+    );
+  } catch (err) {
+    console.error("Failed to send counterOffer notifications:", err);
+  }
 
   return res.status(200).json({
     success: true,
@@ -259,14 +337,29 @@ export const adminCounterOffer = asyncHandler(async (req: Request, res: Response
   await offer.save();
 
   // Notify Port via Socket
-  const io = req.app.get('io');
-  if (io) {
+  try {
+    const io = getIO();
     io.to(`port-${offer.portId}`).emit('new-counter-offer', {
       offerId: offer._id,
       requirementId: offer.requirementId,
       price,
       message: 'Admin has sent a counter offer'
     });
+  } catch (err) {
+    console.error("Socket emission failed:", err);
+  }
+
+  // Create persistent notification for Port
+  try {
+    await sendPortOfferNotification(
+      'Port',
+      offer.portId.toString(),
+      'Counter Offer Received',
+      `Admin has sent a counter offer of ₹${price} for your offer.`,
+      { link: `/port/offers`, type: 'Info' }
+    );
+  } catch (err) {
+    console.error("Failed to create persistent notification:", err);
   }
 
   return res.status(200).json({
@@ -281,6 +374,7 @@ export const adminCounterOffer = asyncHandler(async (req: Request, res: Response
  */
 export const adminConfirmOffer = asyncHandler(async (req: Request, res: Response) => {
   const { offerId } = req.params;
+  const { notes } = req.body;
 
   const offer = await PortOffer.findById(offerId);
   if (!offer) {
@@ -292,7 +386,7 @@ export const adminConfirmOffer = asyncHandler(async (req: Request, res: Response
     price: offer.offeredPrice,
     offeredBy: 'admin',
     timestamp: new Date(),
-    notes: 'Order confirmed by Admin'
+    notes: notes || 'Order confirmed by Admin'
   });
 
   await offer.save();
@@ -309,17 +403,191 @@ export const adminConfirmOffer = asyncHandler(async (req: Request, res: Response
   }
 
   // Notify Port
-  const io = req.app.get('io');
-  if (io) {
+  try {
+    const io = getIO();
     io.to(`port-${offer.portId}`).emit('offer-approved', {
       offerId: offer._id,
-      message: 'Your offer has been confirmed by Admin'
+      message: 'Your offer has been approved by Admin'
     });
+  } catch (err) {
+    console.error("Socket emission failed:", err);
+  }
+
+  // Create Notification records
+  try {
+    const reqId = (offer.requirementId as any).requirementId || 'N/A';
+    
+    // Notify Port
+    await sendPortOfferNotification(
+      'Port',
+      offer.portId.toString(),
+      'Offer Approved',
+      `Your offer for REQ-${reqId} has been approved.`,
+      { link: `/port/orders/track/${offer._id}`, status: 'approved' }
+    );
+    
+    // Notify Warehouse
+    await sendPortOfferNotification(
+      'Warehouse',
+      offer.warehouseId.toString(),
+      'Offer Confirmed',
+      `An offer for your requirement REQ-${reqId} has been successfully negotiated and confirmed by Admin.`,
+      { link: `/warehouse/port-shipments`, status: 'approved' }
+    );
+  } catch (err) {
+    console.error("Failed to send notification:", err);
   }
 
   return res.status(200).json({
     success: true,
     message: "Offer confirmed successfully",
     data: offer,
+  });
+});
+
+/**
+ * Update delivery details for an approved offer
+ */
+export const updateDeliveryDetails = asyncHandler(async (req: Request, res: Response) => {
+  const { offerId } = req.params;
+  const { vehicleType, estimatedArrival, additionalInfo, trackingNumber, status } = req.body;
+  const user = (req as any).user;
+  const userId = user.userId || user.id || user._id;
+
+  const offer = await PortOffer.findById(offerId);
+  if (!offer) {
+    return res.status(404).json({ success: false, message: "Offer not found" });
+  }
+
+  // Authorization Check
+  if (user.userType === 'Port') {
+    if (offer.portId.toString() !== userId) {
+      return res.status(403).json({ success: false, message: "Unauthorized: You can only update your own offers" });
+    }
+  } else if (user.userType === 'Warehouse') {
+    if (offer.warehouseId.toString() !== userId) {
+      return res.status(403).json({ success: false, message: "Unauthorized: You can only update offers for your warehouse" });
+    }
+  } else if (user.userType !== 'Admin') {
+    return res.status(403).json({ success: false, message: "Unauthorized user type" });
+  }
+
+  if (offer.status !== 'approved' && offer.status !== 'In Transit' && offer.status !== 'Delivered') {
+    return res.status(400).json({ success: false, message: "Only approved or active shipments can have delivery updates" });
+  }
+
+  // Preserve existing delivery details if not provided
+  const updatedDeliveryDetails = {
+    vehicleType: vehicleType || offer.deliveryDetails?.vehicleType,
+    estimatedArrival: estimatedArrival ? new Date(estimatedArrival) : offer.deliveryDetails?.estimatedArrival,
+    additionalInfo: additionalInfo || offer.deliveryDetails?.additionalInfo,
+    trackingNumber: trackingNumber || offer.deliveryDetails?.trackingNumber,
+    status: status || offer.deliveryDetails?.status || 'In Transit',
+    updatedAt: new Date()
+  };
+
+  offer.deliveryDetails = updatedDeliveryDetails;
+
+  // If status is provided, update the main offer status too
+  if (status) {
+    offer.status = status;
+  } else if (offer.status === 'approved') {
+    offer.status = 'In Transit';
+  }
+
+  await offer.save();
+
+  // Notify Admin/Warehouse/Port via Socket
+  try {
+    const io = getIO();
+    // Notify all relevant rooms
+    io.to('admin-notifications').emit('delivery-update', {
+      offerId: offer._id,
+      requirementId: offer.requirementId,
+      status: offer.status,
+      updatedBy: user.userType
+    });
+    
+    io.to(`warehouse-${offer.warehouseId}`).emit('delivery-update', {
+      offerId: offer._id,
+      status: offer.status
+    });
+
+    io.to(`port-${offer.portId}`).emit('delivery-update', {
+      offerId: offer._id,
+      status: offer.status
+    });
+  } catch (err) {
+    console.error("Socket emission failed:", err);
+  }
+
+  // Create Notification records for everyone
+  try {
+    const reqId = (offer.requirementId as any).requirementId || 'N/A';
+    const statusMsg = `Shipment for REQ-${reqId} is now ${offer.status}`;
+
+    // 1. Notify Admin
+    await sendPortOfferNotification('Admin', '', 'Delivery Update', statusMsg, { link: '/admin/port-shipments' });
+    
+    // 2. Notify Warehouse
+    await sendPortOfferNotification('Warehouse', offer.warehouseId.toString(), 'Inward Shipment Update', statusMsg, { link: '/warehouse/port-shipments' });
+
+    // 3. Notify Port
+    await sendPortOfferNotification('Port', offer.portId.toString(), 'Shipment Status Updated', statusMsg, { link: `/port/orders/track/${offer._id}` });
+  } catch (err) {
+    console.error("Failed to send notification:", err);
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Delivery details updated successfully",
+    data: offer,
+  });
+});
+
+/**
+ * Get port orders for a specific warehouse
+ */
+export const getWarehousePortOrders = asyncHandler(async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const userId = user.userId || user.id || user._id;
+  
+  console.log(`[DEBUG] getWarehousePortOrders called. UserType: ${user.userType}, UserId: ${userId}`);
+
+  let query: any = { 
+    status: { $in: ['pending', 'approved', 'In Transit', 'Delivered', 'Cancelled'] } 
+  };
+
+  // If it's a warehouse user, filter by their specific warehouseId
+  if (user.userType === 'Warehouse') {
+    query.warehouseId = new mongoose.Types.ObjectId(userId);
+  } 
+  // If it's an admin, they can see all or filter by warehouseId if provided in query
+  else if (user.userType === 'Admin') {
+    const { warehouseId } = req.query;
+    if (warehouseId) {
+      query.warehouseId = new mongoose.Types.ObjectId(warehouseId as string);
+    }
+    // else: no warehouseId filter for admin, show all port orders
+  } else {
+    return res.status(403).json({ success: false, message: "Unauthorized: Invalid user type for this endpoint" });
+  }
+
+  console.log(`[DEBUG] Querying PortOffers with:`, JSON.stringify(query));
+
+  const orders = await PortOffer.find(query)
+    .populate({
+      path: 'requirementId',
+      select: 'requirementId fishName grade category unit'
+    })
+    .populate('portId', 'portName managerName mobile location profileImage')
+    .populate('warehouseId', 'warehouseName managerName mobile address location')
+    .sort({ updatedAt: -1 });
+
+  console.log(`[DEBUG] Found ${orders.length} orders`);
+
+  return res.status(200).json({
+    success: true,
+    data: orders
   });
 });

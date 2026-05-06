@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { LocationProvider } from "./context/LocationContext";
 import { ToastProvider } from "./context/ToastContext";
+import { NotificationProvider } from "./context/NotificationContext";
 
 import { LoadingProvider } from "./context/LoadingContext";
 import { AxiosLoadingInterceptor } from "./context/AxiosLoadingInterceptor";
@@ -94,6 +95,7 @@ const WarehouseAccountSettings = lazy(() => import("./modules/warehouse/pages/Wa
 const WarehouseLogin = lazy(() => import("./modules/warehouse/pages/WarehouseLogin"));
 const WarehouseSignUp = lazy(() => import("./modules/warehouse/pages/WarehouseSignUp"));
 const WarehouseExploreProducts = lazy(() => import("./modules/warehouse/pages/WarehouseExploreProducts"));
+const WarehousePortShipments = lazy(() => import("./modules/warehouse/pages/WarehousePortShipments"));
 
 // Lazy load admin routes
 const AdminLayout = lazy(() => import("./modules/admin/components/AdminLayout"));
@@ -114,6 +116,7 @@ const AdminCoupon = lazy(() => import("./modules/admin/pages/AdminCoupon"));
 const AdminNotification = lazy(() => import("./modules/admin/pages/AdminNotification"));
 const AdminSellerLocation = lazy(() => import("./modules/admin/pages/AdminSellerLocation"));
 const AdminPortNegotiations = lazy(() => import("./modules/admin/pages/AdminPortNegotiations"));
+const AdminPortShipments = lazy(() => import("./modules/admin/pages/AdminPortShipments"));
 
 const AdminManageDeliveryBoy = lazy(() => import("./modules/admin/pages/AdminManageDeliveryBoy"));
 const AdminFundTransfer = lazy(() => import("./modules/admin/pages/AdminFundTransfer"));
@@ -176,8 +179,8 @@ function App() {
             <ThemeProvider>
               <LocationProvider>
                 <ToastProvider>
-
-                  <CartProvider>
+                  <NotificationProvider>
+                    <CartProvider>
                     <OrdersProvider>
                       <BrowserRouter
                         future={{
@@ -342,6 +345,7 @@ function App() {
                                         <Route path="reports/inward" element={<WarehouseInwardReport />} />
                                         <Route path="account-settings" element={<WarehouseAccountSettings />} />
                                         <Route path="explore" element={<WarehouseExploreProducts />} />
+                                        <Route path="port-shipments" element={<WarehousePortShipments />} />
                                         <Route path="all" element={<AdminManageSellerList />} />
                                       </Routes>
                                     </WarehouseLayout>
@@ -371,6 +375,7 @@ function App() {
                                         <Route path="manage-warehouse/create" element={<AdminCreateSeller />} />
                                         <Route path="manage-warehouse/inward-stock" element={<AdminWarehouseInwardStock />} />
                                         <Route path="manage-warehouse/port-negotiations" element={<AdminPortNegotiations />} />
+                                        <Route path="manage-warehouse/port-shipments" element={<AdminPortShipments />} />
                                         <Route path="manage-warehouse/transaction" element={<AdminSellerTransaction />} />
                                         <Route path="delivery-boy/manage" element={<AdminManageDeliveryBoy />} />
                                         <Route path="delivery-boy/fund-transfer" element={<AdminFundTransfer />} />
@@ -490,6 +495,7 @@ function App() {
                       </BrowserRouter>
                     </OrdersProvider>
                   </CartProvider>
+                  </NotificationProvider>
                 </ToastProvider>
               </LocationProvider>
 

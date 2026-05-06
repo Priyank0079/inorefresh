@@ -18,9 +18,17 @@ export interface PortOffer {
   offeredPrice: number;
   counterPrice?: number;
   quantityOffered: number;
-  status: 'pending' | 'countered' | 'negotiating' | 'approved' | 'rejected' | 'withdrawn';
+  status: 'pending' | 'countered' | 'negotiating' | 'approved' | 'rejected' | 'withdrawn' | 'In Transit' | 'Delivered' | 'Cancelled';
   deliveryDate: string;
   notes?: string;
+  deliveryDetails?: {
+    vehicleType: 'Plane' | 'Truck' | 'Ship' | 'Train' | 'Other';
+    estimatedArrival: string;
+    additionalInfo?: string;
+    trackingNumber?: string;
+    status: string;
+    updatedAt: string;
+  };
   updatedAt: string;
 }
 
@@ -72,6 +80,15 @@ export const acceptCounter = async (offerId: string) => {
 export const counterOffer = async (offerId: string, counterData: { price: number, notes?: string }) => {
   try {
     const response = await API.post(`/port/offers/${offerId}/counter`, counterData);
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { success: false, message: error.message };
+  }
+};
+
+export const updateDeliveryDetails = async (offerId: string, deliveryData: any) => {
+  try {
+    const response = await API.patch(`/port/offers/${offerId}/delivery`, deliveryData);
     return response.data;
   } catch (error: any) {
     return error.response?.data || { success: false, message: error.message };

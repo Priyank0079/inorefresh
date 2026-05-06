@@ -7,12 +7,12 @@ export interface IPortOffer extends Document {
   offeredPrice: number;
   counterPrice?: number;
   quantityOffered: number;
-  status: 'pending' | 'countered' | 'negotiating' | 'approved' | 'rejected' | 'withdrawn';
+  status: 'pending' | 'countered' | 'negotiating' | 'approved' | 'rejected' | 'withdrawn' | 'In Transit' | 'Out for Delivery' | 'Delivered' | 'Delayed' | 'Cancelled';
   deliveryDate: Date;
   notes?: string;
   negotiationHistory: Array<{
     price: number;
-    offeredBy: 'port' | 'warehouse';
+    offeredBy: 'port' | 'warehouse' | 'admin';
     timestamp: Date;
     notes?: string;
   }>;
@@ -30,7 +30,7 @@ const PortOfferSchema: Schema = new Schema(
     quantityOffered: { type: Number, required: true },
     status: {
       type: String,
-      enum: ['pending', 'countered', 'negotiating', 'approved', 'rejected', 'withdrawn'],
+      enum: ['pending', 'countered', 'negotiating', 'approved', 'rejected', 'withdrawn', 'In Transit', 'Out for Delivery', 'Delivered', 'Delayed', 'Cancelled'],
       default: 'pending',
     },
     deliveryDate: { type: Date, required: true },
@@ -43,6 +43,14 @@ const PortOfferSchema: Schema = new Schema(
         notes: { type: String },
       },
     ],
+    deliveryDetails: {
+      vehicleType: { type: String, enum: ['Plane', 'Truck', 'Ship', 'Train', 'Bus', 'Other'] },
+      estimatedArrival: { type: Date },
+      additionalInfo: { type: String },
+      trackingNumber: { type: String },
+      status: { type: String, default: 'Preparing' },
+      updatedAt: { type: Date, default: Date.now }
+    },
   },
   { timestamps: true }
 );

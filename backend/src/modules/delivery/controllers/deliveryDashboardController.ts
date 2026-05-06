@@ -14,8 +14,11 @@ export const getDashboardStats = asyncHandler(
     const deliveryId = req.user?.userId;
 
     if (!deliveryId) {
+      console.warn("[Dashboard Stats] No deliveryId found in req.user");
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
+
+    console.log(`[Dashboard Stats] Fetching stats for deliveryId: ${deliveryId}`);
 
     // 1. Fetch Delivery Partner Details (for Cash Balance)
     const deliveryPartner = await Delivery.findById(deliveryId);
@@ -234,7 +237,7 @@ export const getDashboardStats = asyncHandler(
     // Fetch list of Available Orders (Accepted by warehouse but not yet assigned)
     // In a real production app, we would filter by radius here
     const availableOrdersList = await Order.find({
-      status: "Accepted",
+      status: { $in: ["Accepted", "Ready for pickup"] },
       $or: [{ deliveryBoy: { $exists: false } }, { deliveryBoy: null }]
     })
       .select("orderNumber customerName deliveryAddress status total estimatedDeliveryDate createdAt")
@@ -262,6 +265,8 @@ export const getDashboardStats = asyncHandler(
       console.error("Error fetching wallet balance for dashboard:", error);
     }
 
+    console.log(`[Dashboard Stats] Pending: ${result.pendingOrders}, Available: ${formattedAvailableList.length}, Wallet: ${walletBalance}`);
+
     return res.status(200).json({
       success: true,
       data: {
@@ -278,6 +283,7 @@ export const getDashboardStats = asyncHandler(
         totalDeliveredCount: result.totalDeliveredCount,
         pendingOrdersList: formattedPendingList,
         availableOrders: formattedAvailableList,
+        accountStatus: deliveryPartner.status,
       },
     });
   },

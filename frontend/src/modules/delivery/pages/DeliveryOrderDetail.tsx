@@ -156,6 +156,16 @@ export default function DeliveryOrderDetail() {
     }, []);
 
 
+    const openInGoogleMaps = (lat?: number, lng?: number, address?: string) => {
+        if (lat && lng && lat !== 0 && lng !== 0) {
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+        } else if (address) {
+            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
+        } else {
+            alert('Location details not available');
+        }
+    };
+
     const handleSendOtp = async () => {
         if (!id) return;
         try {
@@ -665,11 +675,15 @@ export default function DeliveryOrderDetail() {
                                 return (
                                     <div key={idx} className="p-4 bg-neutral-50 rounded-xl border border-neutral-200">
                                         <div className="flex items-start justify-between mb-3">
-                                            <div className="flex-1">
+                                            <div 
+                                                className="flex-1 cursor-pointer hover:bg-white/50 p-2 -m-2 rounded-lg transition-colors"
+                                                onClick={() => openInGoogleMaps(seller.latitude, seller.longitude, `${seller.address}, ${seller.city}`)}
+                                            >
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <p className="font-semibold text-neutral-900">{seller.storeName}</p>
+                                                    <Icons.Navigation size={14} className="text-blue-500" />
                                                     {isPickedUp && (
-                                                        <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                                        <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium ml-auto">
                                                             <Icons.CheckCircle size={12} />
                                                             Picked Up
                                                         </span>
@@ -776,7 +790,10 @@ export default function DeliveryOrderDetail() {
                                 <Icons.Phone size={20} />
                             </button>
                         </div>
-                        <div className="flex items-start gap-3 pt-3 border-t border-neutral-50">
+                        <div 
+                            className="flex items-start gap-3 pt-3 border-t border-neutral-50 cursor-pointer hover:bg-neutral-50 p-2 -m-2 rounded-xl transition-colors"
+                            onClick={() => openInGoogleMaps(customerLat, customerLng, order.address)}
+                        >
                             <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0 text-orange-600">
                                 <Icons.MapPin size={20} />
                             </div>
@@ -920,9 +937,29 @@ export default function DeliveryOrderDetail() {
                         </div>
                     </div>
                 </div>
+            {/* Floating Action Button for Status Updates */}
+            {((!order.deliveryBoy) || (order.status === 'Picked up')) && (
+                <div className="fixed bottom-6 left-6 right-6 z-40">
+                    <button
+                        onClick={() => handleStatusChange(order.deliveryBoy ? 'Out for Delivery' : 'Processed')}
+                        className={`w-full py-4 rounded-2xl font-bold text-lg shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
+                            !order.deliveryBoy ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
+                    >
+                        {!order.deliveryBoy ? (
+                            <>
+                                <Icons.CheckCircle size={20} />
+                                ACCEPT THIS ORDER
+                            </>
+                        ) : (
+                            <>
+                                <Icons.Navigation size={20} />
+                                START DELIVERY
+                            </>
+                        )}
+                    </button>
+                </div>
             )}
-
-
         </div>
     );
 }

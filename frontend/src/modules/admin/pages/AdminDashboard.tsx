@@ -392,7 +392,7 @@ export default function AdminDashboard() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-#12b2a2 mb-4"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#12b2a2] mb-4"></div>
           <p className="text-neutral-600">Loading dashboard data...</p>
         </div>
       </div>
@@ -425,7 +425,7 @@ export default function AdminDashboard() {
           <p className="text-neutral-600 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-#12b2a2 hover:bg-#0d9488 text-white px-4 py-2 rounded-lg transition-colors">
+            className="bg-[#12b2a2] hover:bg-[#0d9488] text-white px-4 py-2 rounded-lg transition-colors">
             Retry
           </button>
         </div>
@@ -522,7 +522,7 @@ export default function AdminDashboard() {
               ?{salesToday.toFixed(2)}
             </p>
             {salesDifference >= 0 ? (
-              <p className="text-sm text-#12b2a2 mt-1">
+              <p className="text-sm text-[#12b2a2] mt-1">
                 ▲ ?{Math.abs(salesDifference).toFixed(2)} (+{salesPercentChange}%)
                 vs same day last week
               </p>
@@ -607,7 +607,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* View New Orders Table */}
         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
-          <div className="bg-#12b2a2 text-white px-4 sm:px-6 py-3">
+          <div className="bg-[#12b2a2] text-white px-4 sm:px-6 py-3">
             <h2 className="text-base sm:text-lg font-semibold">
               View New Orders
             </h2>
@@ -624,7 +624,7 @@ export default function AdminDashboard() {
                   setEntriesPerPage(Math.max(1, Math.min(100, value)));
                   setCurrentPage(1);
                 }}
-                className="w-16 px-2 py-1 border border-neutral-300 rounded text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2"
+                className="w-16 px-2 py-1 border border-neutral-300 rounded text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2]"
                 min="1"
                 max="100"
               />
@@ -751,7 +751,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 sm:px-6 py-3">
                         <button
-                          className="bg-#12b2a2 hover:bg-#0d9488 text-white p-2 rounded transition-colors"
+                          className="bg-[#12b2a2] hover:bg-[#0d9488] text-white p-2 rounded transition-colors"
                           aria-label="View order">
                           <svg
                             width="16"
@@ -848,7 +848,7 @@ export default function AdminDashboard() {
 
         {/* View Top Seller Table */}
         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
-          <div className="bg-#12b2a2 text-white px-4 sm:px-6 py-3">
+          <div className="bg-[#12b2a2] text-white px-4 sm:px-6 py-3">
             <h2 className="text-base sm:text-lg font-semibold">
               View Top Seller
             </h2>
@@ -865,7 +865,7 @@ export default function AdminDashboard() {
                   setEntriesPerPage(Math.max(1, Math.min(100, value)));
                   setCurrentPage(1);
                 }}
-                className="w-16 px-2 py-1 border border-neutral-300 rounded text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2"
+                className="w-16 px-2 py-1 border border-neutral-300 rounded text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2]"
                 min="1"
                 max="100"
               />
@@ -952,7 +952,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 sm:px-6 py-3">
                         <button
-                          className="bg-#12b2a2 hover:bg-#0d9488 text-white p-2 rounded transition-colors"
+                          className="bg-[#12b2a2] hover:bg-[#0d9488] text-white p-2 rounded transition-colors"
                           aria-label="View seller">
                           <svg
                             width="16"
@@ -1054,8 +1054,8 @@ export default function AdminDashboard() {
       {/* Footer */}
       <div className="text-center text-sm text-neutral-500 py-4">
         Copyright © 2025. Developed By{" "}
-        <a href="#" className="text-#12b2a2 hover:text-#0d9488">
-          Inor fresh - 10 Minute App
+        <a href="#" className="text-[#12b2a2] hover:text-[#0d9488]">
+          Inor fresh
         </a>
       </div>
     </div>

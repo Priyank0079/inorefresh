@@ -308,7 +308,7 @@ export default function WarehouseDashboard() {
       {/* View New Orders Table Section */}
       <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
         {/* Teal Header Bar */}
-        <div className="bg-#12b2a2 text-white px-4 sm:px-6 py-3">
+        <div className="bg-[#12b2a2] text-white px-4 sm:px-6 py-3">
           <h2 className="text-base sm:text-lg font-semibold">View New Orders</h2>
         </div>
 
@@ -324,7 +324,7 @@ export default function WarehouseDashboard() {
                 setEntriesPerPage(Math.max(1, Math.min(100, value)));
                 setCurrentPage(1);
               }}
-              className="w-16 px-2 py-1 border border-neutral-300 rounded text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2"
+              className="w-16 px-2 py-1 border border-neutral-300 rounded text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2]"
               min="1"
               max="100"
             />
@@ -440,7 +440,7 @@ export default function WarehouseDashboard() {
                   <td className="px-4 sm:px-6 py-3">
                     <button
                       onClick={() => navigate(`/Warehouse/orders/${order.id}`)}
-                      className="bg-#12b2a2 hover:bg-#0d9488 text-white p-2 rounded transition-colors"
+                      className="bg-[#12b2a2] hover:bg-[#0d9488] text-white p-2 rounded transition-colors"
                       aria-label="View order details"
                     >
                       <svg

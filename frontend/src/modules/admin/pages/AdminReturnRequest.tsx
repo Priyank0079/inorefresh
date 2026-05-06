@@ -198,7 +198,7 @@ export default function AdminReturnRequest() {
       {/* Main Content Card */}
       <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
         {/* Green Header Bar */}
-        <div className="bg-#12b2a2 px-4 sm:px-6 py-3">
+        <div className="bg-[#12b2a2] px-4 sm:px-6 py-3">
           <h2 className="text-white text-lg font-semibold">
             View Return Request
           </h2>
@@ -242,7 +242,7 @@ export default function AdminReturnRequest() {
                       value={fromDate}
                       onChange={(e) => setFromDate(e.target.value)}
                       placeholder="MM/DD/YYYY"
-                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2 min-w-[140px]"
+                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2] min-w-[140px]"
                     />
                   </div>
                   <span className="text-neutral-500">-</span>
@@ -273,7 +273,7 @@ export default function AdminReturnRequest() {
                       value={toDate}
                       onChange={(e) => setToDate(e.target.value)}
                       placeholder="MM/DD/YYYY"
-                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2 min-w-[140px]"
+                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2] min-w-[140px]"
                     />
                   </div>
                   <button
@@ -295,7 +295,7 @@ export default function AdminReturnRequest() {
                     setSelectedSeller(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-2 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2 min-w-[130px]">
+                  className="px-3 py-2 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2] min-w-[130px]">
                   {sellers.map((seller) => (
                     <option
                       key={seller}
@@ -317,7 +317,7 @@ export default function AdminReturnRequest() {
                     setSelectedStatus(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-2 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2 min-w-[130px]">
+                  className="px-3 py-2 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2] min-w-[130px]">
                   {statuses.map((status) => (
                     <option
                       key={status}
@@ -340,7 +340,7 @@ export default function AdminReturnRequest() {
                     setEntriesPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-2 py-1 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2">
+                  className="px-2 py-1 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2]">
                   <option value={10}>10</option>
                   <option value={25}>25</option>
                   <option value={50}>50</option>
@@ -351,7 +351,7 @@ export default function AdminReturnRequest() {
               {/* Export Button */}
               <button
                 onClick={handleExport}
-                className="bg-#12b2a2 hover:bg-#12b2a2 text-white px-4 py-2 rounded text-sm font-medium flex items-center gap-2 transition-colors">
+                className="bg-[#12b2a2] hover:bg-[#12b2a2] text-white px-4 py-2 rounded text-sm font-medium flex items-center gap-2 transition-colors">
                 <svg
                   width="16"
                   height="16"
@@ -390,7 +390,7 @@ export default function AdminReturnRequest() {
                     setCurrentPage(1);
                   }}
                   placeholder="Search:"
-                  className="px-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-#12b2a2 min-w-[150px]"
+                  className="px-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2] min-w-[150px]"
                 />
               </div>
             </div>
@@ -693,7 +693,7 @@ export default function AdminReturnRequest() {
                             <button
                               onClick={() => handleApproveReturn(request._id)}
                               disabled={updating === request._id}
-                              className="p-1.5 bg-teal-50 hover:bg-green-200 disabled:bg-neutral-100 disabled:text-neutral-400 text-#0e7490 rounded transition-colors"
+                              className="p-1.5 bg-teal-50 hover:bg-green-200 disabled:bg-neutral-100 disabled:text-neutral-400 text-[#0e7490] rounded transition-colors"
                               title="Approve">
                               <svg
                                 width="16"
@@ -806,7 +806,7 @@ export default function AdminReturnRequest() {
       <div className="text-center text-sm text-neutral-500 py-4">
         Copyright © 2025. Developed By{" "}
         <a href="#" className="text-teal-600 hover:text-teal-700">
-          Inor fresh - 10 Minute App
+          Inor fresh
         </a>
       </div>
     </div>

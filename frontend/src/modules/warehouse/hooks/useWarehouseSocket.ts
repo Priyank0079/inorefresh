@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../../../context/AuthContext';
 import { getSocketBaseURL } from '../../../services/api/config';
+import { useToast } from '../../../context/ToastContext';
 
 export interface WarehouseNotification {
     type: 'NEW_ORDER' | 'STATUS_UPDATE';
@@ -36,6 +37,7 @@ export const useWarehouseSocket = (onNotificationReceived?: (notification: Wareh
     const { user, token, isAuthenticated } = useAuth();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
+    const { showToast } = useToast();
 
     useEffect(() => {
         if (!isAuthenticated || !token || !user || user.userType !== 'Warehouse') {
@@ -69,6 +71,11 @@ export const useWarehouseSocket = (onNotificationReceived?: (notification: Wareh
             if (onNotificationReceived) {
                 onNotificationReceived(notification);
             }
+        });
+
+        newSocket.on('delivery-update', (data: any) => {
+            console.log('🚚 Delivery update received:', data);
+            showToast(`Port Shipment update: ${data.status}`, 'info');
         });
 
         newSocket.on('disconnect', () => {

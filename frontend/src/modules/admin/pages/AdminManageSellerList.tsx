@@ -53,6 +53,7 @@ const mapWarehouseToFrontend = (warehouse: WarehouseType): Warehouse => {
         balance: warehouse.balance || 0,
         serviceRadiusKm: warehouse.serviceRadiusKm || 10,
         location: warehouse.location,
+        inwardStockSummary: warehouse.inwardStockSummary,
     };
 };
 

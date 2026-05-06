@@ -136,7 +136,7 @@ export default function AdminSmsGateway() {
                 <div className="pt-2">
                   <button
                     onClick={() => handleUpdate(gateway.id)}
-                    className="w-full bg-#12b2a2 hover:bg-#0e7490 text-white px-4 py-2.5 rounded font-medium transition-colors"
+                    className="w-full bg-[#12b2a2] hover:bg-[#0e7490] text-white px-4 py-2.5 rounded font-medium transition-colors"
                   >
                     Update SMS Gateway
                   </button>

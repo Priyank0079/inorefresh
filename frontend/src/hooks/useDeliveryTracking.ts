@@ -47,6 +47,70 @@ export const useDeliveryTracking = (orderId: string | undefined) => {
     const socketRef = useRef<Socket | null>(null)
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const reconnectAttemptsRef = useRef(0)
+    const connectSocketRef = useRef<(() => Socket | null) | null>(null)
+
+    const disconnectSocket = useCallback(() => {
+        if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current)
+            reconnectTimeoutRef.current = null
+        }
+
+        if (socketRef.current) {
+            console.log('🔌 Disconnecting socket...')
+            
+            // Remove all listeners first to prevent events during disconnect
+            socketRef.current.removeAllListeners()
+            
+            if (orderId) {
+                try {
+                    socketRef.current.emit('stop-tracking', orderId)
+                } catch (e) {
+                    // Ignore errors during emit
+                }
+            }
+            
+            // Only disconnect if it's not already disconnected
+            if (socketRef.current.connected || (socketRef.current as any).active !== false) {
+                try {
+                    socketRef.current.disconnect()
+                } catch (e) {
+                    // Ignore errors during disconnect
+                }
+            }
+            
+            socketRef.current = null
+            setTrackingData(prev => ({ ...prev, isConnected: false }))
+        }
+    }, [orderId])
+
+    const attemptReconnect = useCallback(() => {
+        reconnectAttemptsRef.current += 1
+
+        if (reconnectAttemptsRef.current > MAX_RECONNECT_ATTEMPTS) {
+            console.log('❌ Max reconnection attempts reached')
+            setTrackingData(prev => ({
+                ...prev,
+                error: 'Unable to connect. Please refresh the page.',
+                reconnectAttempts: reconnectAttemptsRef.current
+            }))
+            return
+        }
+
+        const delay = INITIAL_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current - 1)
+        console.log(`🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current})`)
+
+        setTrackingData(prev => ({
+            ...prev,
+            reconnectAttempts: reconnectAttemptsRef.current
+        }))
+
+        reconnectTimeoutRef.current = setTimeout(() => {
+            disconnectSocket()
+            if (connectSocketRef.current) {
+                connectSocketRef.current()
+            }
+        }, delay)
+    }, [disconnectSocket])
 
     const connectSocket = useCallback(() => {
         if (!orderId) return null
@@ -216,66 +280,8 @@ export const useDeliveryTracking = (orderId: string | undefined) => {
         return socket
     }, [orderId, attemptReconnect])
 
-    const attemptReconnect = useCallback(() => {
-        reconnectAttemptsRef.current += 1
-
-        if (reconnectAttemptsRef.current > MAX_RECONNECT_ATTEMPTS) {
-            console.log('❌ Max reconnection attempts reached')
-            setTrackingData(prev => ({
-                ...prev,
-                error: 'Unable to connect. Please refresh the page.',
-                reconnectAttempts: reconnectAttemptsRef.current
-            }))
-            return
-        }
-
-        const delay = INITIAL_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current - 1)
-        console.log(`🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current})`)
-
-        setTrackingData(prev => ({
-            ...prev,
-            reconnectAttempts: reconnectAttemptsRef.current
-        }))
-
-        reconnectTimeoutRef.current = setTimeout(() => {
-            disconnectSocket()
-            connectSocket()
-        }, delay)
-    }, [connectSocket])
-
-    const disconnectSocket = useCallback(() => {
-        if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current)
-            reconnectTimeoutRef.current = null
-        }
-
-        if (socketRef.current) {
-            console.log('🔌 Disconnecting socket...')
-            
-            // Remove all listeners first to prevent events during disconnect
-            socketRef.current.removeAllListeners()
-            
-            if (orderId) {
-                try {
-                    socketRef.current.emit('stop-tracking', orderId)
-                } catch (e) {
-                    // Ignore errors during emit
-                }
-            }
-            
-            // Only disconnect if it's not already disconnected
-            if (socketRef.current.connected || (socketRef.current as any).active !== false) {
-                try {
-                    socketRef.current.disconnect()
-                } catch (e) {
-                    // Ignore errors during disconnect
-                }
-            }
-            
-            socketRef.current = null
-            setTrackingData(prev => ({ ...prev, isConnected: false }))
-        }
-    }, [orderId])
+    // Update the ref to the latest connectSocket
+    connectSocketRef.current = connectSocket
 
     const manualReconnect = useCallback(() => {
         reconnectAttemptsRef.current = 0

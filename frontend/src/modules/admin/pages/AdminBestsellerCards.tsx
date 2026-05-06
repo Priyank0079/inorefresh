@@ -207,7 +207,7 @@ export default function AdminBestsellerCards() {
             {(success || error) && (
                 <div className="px-6">
                     {success && (
-                        <div className="bg-green-50 border border-green-200 text-#0e7490 px-4 py-3 rounded mb-4">
+                        <div className="bg-green-50 border border-green-200 text-[#0e7490] px-4 py-3 rounded mb-4">
                             {success}
                         </div>
                     )}

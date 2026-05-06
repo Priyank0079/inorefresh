@@ -641,7 +641,7 @@ export default function AdminCashCollection() {
       <div className="bg-neutral-800 text-white text-center text-sm py-4">
         Copyright © 2025. Developed By{" "}
         <a href="#" className="text-[#12b2a2] hover:text-[#0e8f82]">
-          Inor fresh - 10 Minute App
+          Inor fresh
         </a>
       </div>
     </div>

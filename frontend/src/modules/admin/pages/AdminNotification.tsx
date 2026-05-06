@@ -9,7 +9,7 @@ import {
 
 export default function AdminNotification() {
   const [formData, setFormData] = useState({
-    recipientType: 'All' as 'All' | 'Admin' | 'Seller' | 'Customer' | 'Delivery',
+    recipientType: 'All' as 'All' | 'Admin' | 'Warehouse' | 'Customer' | 'Delivery' | 'Port',
     title: '',
     message: '',
   });
@@ -296,9 +296,10 @@ export default function AdminNotification() {
                   >
                     <option value="All">All Users</option>
                     <option value="Admin">Admin</option>
-                    <option value="Seller">Seller</option>
+                    <option value="Warehouse">Warehouse</option>
                     <option value="Customer">Customer</option>
                     <option value="Delivery">Delivery</option>
+                    <option value="Port">Port</option>
                   </select>
                 </div>
 
@@ -368,9 +369,10 @@ export default function AdminNotification() {
                 >
                   <option value="All">All</option>
                   <option value="Admin">Admin</option>
-                  <option value="Seller">Seller</option>
+                  <option value="Warehouse">Warehouse</option>
                   <option value="Customer">Customer</option>
                   <option value="Delivery">Delivery</option>
+                  <option value="Port">Port</option>
                 </select>
                 <select
                   value={rowsPerPage}
@@ -604,7 +606,7 @@ export default function AdminNotification() {
       <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
         Copyright © 2025. Developed By{' '}
         <a href="#" className="text-blue-600 hover:underline">
-          Inor fresh - 10 Minute App
+          Inor fresh
         </a>
       </footer>
     </div>

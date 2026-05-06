@@ -924,7 +924,7 @@ export default function AdminPendingOrders() {
       <div className="text-center py-4 text-xs sm:text-sm text-neutral-600">
         Copyright © 2025. Developed By{" "}
         <Link to="/" className="text-[#12b2a2] hover:text-[#0e8f82]">
-          Inor fresh - 10 Minute App
+          Inor fresh
         </Link>
       </div>
 

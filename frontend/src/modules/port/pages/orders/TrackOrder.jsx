@@ -28,7 +28,20 @@ const TrackOrder = () => {
       }
     };
 
-    if (id) fetchOrderDetails();
+    if (id) {
+      fetchOrderDetails();
+      
+      // Real-time updates
+      const socket = window.socket;
+      if (socket) {
+        socket.on('delivery-update', (data) => {
+          if (data.offerId === id) {
+            fetchOrderDetails();
+          }
+        });
+        return () => socket.off('delivery-update');
+      }
+    }
   }, [id]);
 
   if (loading) {
@@ -49,12 +62,38 @@ const TrackOrder = () => {
     );
   }
 
-  const steps = [
-    { title: 'Order Confirmed', time: new Date(order.updatedAt).toLocaleString(), status: 'completed' },
-    { title: 'Stock Picked Up', time: 'Pending', status: 'pending' },
-    { title: 'In Transit', time: 'Estimated: ' + new Date(order.deliveryDate).toLocaleDateString(), status: 'pending' },
-    { title: 'Delivered', time: 'Estimated: ' + new Date(order.deliveryDate).toLocaleDateString(), status: 'pending' }
-  ];
+  const getStatusInfo = () => {
+    const s = order.status;
+    const updatedAt = new Date(order.updatedAt).toLocaleString();
+    const eta = order.deliveryDetails?.estimatedArrival ? new Date(order.deliveryDetails.estimatedArrival).toLocaleDateString() : new Date(order.deliveryDate).toLocaleDateString();
+
+    const steps = [
+      { 
+        title: 'Order Confirmed', 
+        time: updatedAt, 
+        status: ['approved', 'In Transit', 'Out for Delivery', 'Delivered'].includes(s) ? 'completed' : 'pending' 
+      },
+      { 
+        title: 'Stock Picked Up', 
+        time: ['In Transit', 'Out for Delivery', 'Delivered'].includes(s) ? updatedAt : 'Pending', 
+        status: ['In Transit', 'Out for Delivery', 'Delivered'].includes(s) ? 'completed' : (s === 'approved' ? 'pending' : 'pending') 
+      },
+      { 
+        title: 'In Transit', 
+        time: ['Out for Delivery', 'Delivered'].includes(s) ? updatedAt : `Estimated: ${eta}`, 
+        status: ['Out for Delivery', 'Delivered'].includes(s) ? 'completed' : (s === 'In Transit' ? 'active' : 'pending') 
+      },
+      { 
+        title: 'Delivered', 
+        time: s === 'Delivered' ? updatedAt : `Estimated: ${eta}`, 
+        status: s === 'Delivered' ? 'completed' : 'pending' 
+      }
+    ];
+
+    return steps;
+  };
+
+  const steps = getStatusInfo();
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -64,14 +103,16 @@ const TrackOrder = () => {
       />
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8">
-        <div className="flex items-center justify-between mb-12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-12">
           <div>
             <h3 className="text-xl font-bold text-slate-800">Order #{order.requirementId?.requirementId || 'N/A'}</h3>
-            <p className="text-sm text-slate-500">{order.requirementId?.fishName} ({order.quantityOffered} KG) • {order.warehouseId?.name}</p>
+            <p className="text-sm text-slate-500">{order.requirementId?.fishName} ({order.quantityOffered} KG) • {order.warehouseId?.warehouseName || order.warehouseId?.name}</p>
           </div>
-          <div className="text-right">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Expected Delivery</p>
-            <p className="text-lg font-bold text-teal-600">{new Date(order.deliveryDate).toLocaleDateString()}</p>
+          <div className="bg-teal-50 px-4 py-2 rounded-xl border border-teal-100">
+            <p className="text-[10px] font-bold text-teal-600 uppercase tracking-widest mb-1">Expected Delivery</p>
+            <p className="text-lg font-bold text-teal-700">
+              {order.deliveryDetails?.estimatedArrival ? new Date(order.deliveryDetails.estimatedArrival).toLocaleDateString() : new Date(order.deliveryDate).toLocaleDateString()}
+            </p>
           </div>
         </div>
 
@@ -81,9 +122,9 @@ const TrackOrder = () => {
           <div className="space-y-12">
             {steps.map((step, idx) => (
               <div key={idx} className="relative flex items-start gap-8 pl-10">
-                <div className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center z-10 shadow-sm border-4 border-white ${
+                <div className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center z-10 shadow-sm border-4 border-white transition-all duration-500 ${
                   step.status === 'completed' ? 'bg-emerald-500 text-white' :
-                  step.status === 'active' ? 'bg-teal-600 text-white animate-pulse' :
+                  step.status === 'active' ? 'bg-teal-600 text-white' :
                   'bg-slate-200 text-slate-400'
                 }`}>
                   <span className="material-icons-outlined text-sm">
@@ -92,7 +133,7 @@ const TrackOrder = () => {
                   </span>
                 </div>
 
-                <div>
+                <div className="animate-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
                   <h4 className={`text-sm font-bold ${step.status === 'pending' ? 'text-slate-400' : 'text-slate-800'}`}>
                     {step.title}
                   </h4>

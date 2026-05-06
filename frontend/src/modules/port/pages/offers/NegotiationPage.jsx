@@ -3,11 +3,18 @@ import PageTitle from '../../components/common/PageTitle';
 import StatusBadge from '../../components/common/StatusBadge';
 import { getMyNegotiations, acceptCounter, counterOffer } from '../../../../services/api/portOfferService';
 import { useToast } from '../../../../context/ToastContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const NegotiationPage = () => {
   const [negotiations, setNegotiations] = useState([]);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
+  
+  // State for active negotiation form
+  const [activeOfferId, setActiveOfferId] = useState(null);
+  const [counterPrice, setCounterPrice] = useState('');
+  const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchNegotiations = async () => {
     setLoading(true);
@@ -25,34 +32,45 @@ const NegotiationPage = () => {
   }, []);
 
   const handleAcceptCounter = async (offerId) => {
+    if (!window.confirm('Are you sure you want to accept this price? This will finalize the deal.')) return;
+    
+    setSubmitting(true);
     const response = await acceptCounter(offerId);
     if (response.success) {
-      showToast('Counter offer accepted!', 'success');
+      showToast('Deal Done! Order confirmed.', 'success');
       fetchNegotiations();
     } else {
       showToast(response.message || 'Failed to accept counter', 'error');
     }
+    setSubmitting(false);
   };
 
   const handleNewCounter = async (offerId) => {
-    const price = prompt('Enter your counter price:');
-    if (price && !isNaN(price)) {
-      const response = await counterOffer(offerId, { price: Number(price) });
-      if (response.success) {
-        showToast('Counter offer sent!', 'success');
-        fetchNegotiations();
-      } else {
-        showToast(response.message || 'Failed to send counter', 'error');
-      }
+    if (!counterPrice || isNaN(Number(counterPrice))) {
+      showToast('Please enter a valid counter price', 'error');
+      return;
     }
+
+    setSubmitting(true);
+    const response = await counterOffer(offerId, { price: Number(counterPrice), notes });
+    if (response.success) {
+      showToast('Counter offer sent!', 'success');
+      setActiveOfferId(null);
+      setCounterPrice('');
+      setNotes('');
+      fetchNegotiations();
+    } else {
+      showToast(response.message || 'Failed to send counter', 'error');
+    }
+    setSubmitting(false);
   };
 
   const getStatusLabel = (status) => {
     switch (status) {
       case 'pending': return 'Pending';
-      case 'countered': return 'Counter Received';
+      case 'countered': return 'Admin Countered';
       case 'negotiating': return 'Negotiating';
-      case 'approved': return 'Approved';
+      case 'approved': return 'Confirmed';
       case 'rejected': return 'Rejected';
       default: return status;
     }
@@ -73,7 +91,7 @@ const NegotiationPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-5xl mx-auto">
       <PageTitle 
         title="Negotiations" 
         subtitle="Active price negotiations with Admin for warehouse requirements"
@@ -94,55 +112,133 @@ const NegotiationPage = () => {
       ) : (
         <div className="grid grid-cols-1 gap-6">
           {negotiations.map((neg) => (
-            <div key={neg._id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div key={neg._id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center">
-                    <span className="material-icons-outlined">handshake</span>
+                  <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center shadow-inner">
+                    <span className="material-icons-outlined">storefront</span>
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-800">{neg.requirementId?.fishName} - {neg.requirementId?.requirementId}</h4>
-                    <p className="text-xs text-slate-500">Warehouse: {neg.warehouseId?.warehouseName} • {neg.warehouseId?.address}</p>
+                    <h4 className="text-base font-black text-slate-800 tracking-tight uppercase">
+                      {neg.requirementId?.fishName}
+                    </h4>
+                    <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                      REQ: {neg.requirementId?.requirementId} • {neg.warehouseId?.warehouseName || neg.warehouseId?.name}
+                    </p>
                   </div>
                 </div>
                 <StatusBadge status={getStatusLabel(neg.status)} />
               </div>
               
-              <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Your Last Offer</p>
-                  <p className="text-xl font-bold text-slate-800">₹{neg.offeredPrice}<span className="text-sm font-normal text-slate-400 ml-1">/kg</span></p>
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Price Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Your Last Offer</p>
+                    <p className="text-2xl font-black text-slate-800">
+                      ₹{neg.offeredPrice}<span className="text-xs font-bold text-slate-400 ml-1">/kg</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500 mt-1 font-semibold">Qty: {neg.quantityOffered}kg</p>
+                  </div>
+                  <div className={`border rounded-2xl p-4 ${neg.counterPrice ? 'bg-amber-50/50 border-amber-100' : 'bg-slate-50 border-slate-100'}`}>
+                    <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${neg.counterPrice ? 'text-amber-600' : 'text-slate-400'}`}>
+                      Admin Counter
+                    </p>
+                    <p className={`text-2xl font-black ${neg.counterPrice ? 'text-amber-700' : 'text-slate-300'}`}>
+                      {neg.counterPrice ? `₹${neg.counterPrice}` : 'Waiting...'}<span className="text-xs font-bold text-slate-400 ml-1">/kg</span>
+                    </p>
+                    {neg.counterPrice && <p className="text-[10px] text-amber-600 mt-1 font-semibold">Action Required</p>}
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Counter Received</p>
-                  <p className={`text-xl font-bold ${neg.counterPrice ? 'text-amber-600' : 'text-slate-300'}`}>
-                    {neg.counterPrice ? `₹${neg.counterPrice}` : 'Waiting...'}<span className="text-sm font-normal text-slate-400 ml-1">/kg</span>
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button 
-                    onClick={() => handleAcceptCounter(neg._id)}
-                    disabled={neg.status !== 'countered'}
-                    className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                      neg.status === 'countered' 
-                        ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/10 hover:bg-teal-700' 
-                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                    }`}
-                  >
-                    Accept Counter
-                  </button>
-                  <button 
-                    onClick={() => handleNewCounter(neg._id)}
-                    className="flex-1 py-2.5 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all"
-                  >
-                    New Counter
-                  </button>
+
+                {/* Actions */}
+                <div className="flex flex-col justify-center">
+                  <AnimatePresence mode="wait">
+                    {activeOfferId === neg._id ? (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-3"
+                      >
+                        <div className="relative group">
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black">₹</div>
+                          <input
+                            type="number"
+                            value={counterPrice}
+                            onChange={(e) => setCounterPrice(e.target.value)}
+                            placeholder="Enter new price"
+                            className="w-full pl-8 pr-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-lg font-black text-slate-800 focus:border-teal-500 focus:ring-0 outline-none transition-all"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          placeholder="Add a note (optional)..."
+                          className="w-full px-4 py-2 bg-white border-2 border-slate-200 rounded-xl text-xs font-medium text-slate-600 focus:border-teal-500 focus:ring-0 outline-none transition-all"
+                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleNewCounter(neg._id)}
+                            disabled={submitting || !counterPrice}
+                            className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-colors disabled:opacity-50"
+                          >
+                            Send Offer
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActiveOfferId(null);
+                              setCounterPrice('');
+                              setNotes('');
+                            }}
+                            className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex flex-col gap-3"
+                      >
+                        <button 
+                          onClick={() => handleAcceptCounter(neg._id)}
+                          disabled={neg.status !== 'countered' || submitting}
+                          className={`w-full py-3.5 rounded-xl text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                            neg.status === 'countered' 
+                              ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/20 hover:bg-teal-700 hover:-translate-y-0.5' 
+                              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          }`}
+                        >
+                          <span className="material-icons-outlined text-lg">verified</span>
+                          Deal Done
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setActiveOfferId(neg._id);
+                            setCounterPrice(neg.counterPrice?.toString() || neg.offeredPrice.toString());
+                          }}
+                          disabled={submitting}
+                          className="w-full py-3 border-2 border-slate-900 text-slate-900 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all"
+                        >
+                          Negotiate
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
               
-              <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                <p className="text-xs text-slate-400 italic">Last update: {formatTimeAgo(neg.updatedAt)} ago</p>
-                <button className="text-xs font-bold text-teal-600 hover:underline">View History</button>
+              <div className="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Last update: {formatTimeAgo(neg.updatedAt)} ago
+                </p>
+                <div className="text-[10px] font-black text-teal-600 uppercase tracking-widest hover:underline cursor-pointer">
+                  View History
+                </div>
               </div>
             </div>
           ))}

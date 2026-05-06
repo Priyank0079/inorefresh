@@ -4,9 +4,11 @@ import { useThemeContext } from '../../../context/ThemeContext';
 
 interface DeliveryHeaderProps {
   userName?: string;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
-export default function DeliveryHeader({ userName }: DeliveryHeaderProps) {
+export default function DeliveryHeader({ userName, onRefresh, isRefreshing }: DeliveryHeaderProps) {
   const { isOnline, setIsOnline } = useDeliveryStatus();
   const { userName: contextUserName } = useDeliveryUser();
   const { currentTheme } = useThemeContext();
@@ -50,17 +52,32 @@ export default function DeliveryHeader({ userName }: DeliveryHeaderProps) {
             </div>
           </div>
 
-          {/* Toggle Switch */}
-          <button
-            onClick={() => setIsOnline(!isOnline)}
-            className="relative w-12 h-6 rounded-full transition-colors"
-            style={{ backgroundColor: isOnline ? currentTheme.primary[3] : '#d4d4d4' }}
-          >
-            <div
-              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${isOnline ? 'translate-x-6' : 'translate-x-0'
-                }`}
-            />
-          </button>
+          {/* Actions: Refresh & Toggle */}
+          <div className="flex items-center gap-3">
+            {onRefresh && (
+              <button
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className={`p-2 rounded-full bg-neutral-100 text-neutral-600 active:bg-neutral-200 transition-all ${isRefreshing ? 'animate-spin' : ''}`}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
+              </button>
+            )}
+
+            {/* Toggle Switch */}
+            <button
+              onClick={() => setIsOnline(!isOnline)}
+              className="relative w-12 h-6 rounded-full transition-colors"
+              style={{ backgroundColor: isOnline ? currentTheme.primary[3] : '#d4d4d4' }}
+            >
+              <div
+                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${isOnline ? 'translate-x-6' : 'translate-x-0'
+                  }`}
+              />
+            </button>
+          </div>
         </div>
       </div>
     </div>

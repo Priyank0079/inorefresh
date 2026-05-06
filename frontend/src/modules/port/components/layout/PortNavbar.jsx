@@ -1,13 +1,34 @@
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useNotifications } from '@/context/NotificationContext';
 
 const PortNavbar = ({ onMenuClick, title }) => {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef(null);
 
   const handleLogout = () => {
     logout();
     navigate('/port/login', { replace: true });
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleNotificationClick = (n) => {
+    markAsRead(n._id);
+    if (n.link) navigate(n.link);
+    setShowNotifications(false);
   };
 
   return (
@@ -30,11 +51,65 @@ const PortNavbar = ({ onMenuClick, title }) => {
           </button>
 
           {/* Notifications */}
-          <div className="relative">
-            <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors relative">
+          <div className="relative" ref={notificationRef}>
+            <button 
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors relative"
+            >
               <span className="material-icons-outlined">notifications</span>
-              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-500 text-white text-[8px] flex items-center justify-center rounded-full font-bold border-2 border-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
+
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 flex flex-col">
+                <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                  <h3 className="text-sm font-bold text-slate-800">Notifications</h3>
+                  {unreadCount > 0 && (
+                    <button 
+                      onClick={markAllAsRead}
+                      className="text-[10px] font-bold text-teal-600 hover:underline"
+                    >
+                      Mark all as read
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-[320px] overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="py-12 px-4 text-center">
+                      <p className="text-xs text-slate-400">No new notifications</p>
+                    </div>
+                  ) : (
+                    notifications.map((n) => (
+                      <button
+                        key={n._id}
+                        onClick={() => handleNotificationClick(n)}
+                        className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 flex gap-3 ${!n.isRead ? 'bg-teal-50/30' : ''}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          n.type === 'Success' ? 'bg-emerald-100 text-emerald-600' :
+                          n.type === 'Error' ? 'bg-rose-100 text-rose-600' :
+                          'bg-teal-100 text-teal-600'
+                        }`}>
+                          <span className="material-icons-outlined text-sm">
+                            {n.type === 'Order' ? 'shopping_bag' : 'notifications'}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-bold text-slate-800 truncate ${!n.isRead ? 'font-black' : ''}`}>{n.title}</p>
+                          <p className="text-[10px] text-slate-500 line-clamp-2 mt-0.5">{n.message}</p>
+                          <p className="text-[9px] text-slate-400 mt-1">{new Date(n.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        {!n.isRead && <div className="w-2 h-2 bg-teal-500 rounded-full mt-2"></div>}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Profile */}

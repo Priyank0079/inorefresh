@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTitle from '../../components/common/PageTitle';
 import StatusBadge from '../../components/common/StatusBadge';
-import { getPortOrders } from '../../../../services/api/portOfferService';
+import { getPortOrders, updateDeliveryDetails } from '../../../../services/api/portOfferService';
 import { useToast } from '../../../../context/ToastContext';
 
 const MyOrders = () => {
@@ -13,27 +13,87 @@ const MyOrders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [deliveryData, setDeliveryData] = useState({
+    vehicleType: 'Truck',
+    estimatedArrival: '',
+    trackingNumber: '',
+    additionalInfo: '',
+    status: 'In Transit'
+  });
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const response = await getPortOrders();
+      if (response.success) {
+        setOrders(response.data);
+      } else {
+        showToast(response.message || 'Failed to fetch orders', 'error');
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      showToast('An error occurred while fetching orders', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      setLoading(true);
-      try {
-        const response = await getPortOrders();
-        if (response.success) {
-          setOrders(response.data);
-        } else {
-          showToast(response.message || 'Failed to fetch orders', 'error');
-        }
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-        showToast('An error occurred while fetching orders', 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOrders();
+
+    // Socket listening for real-time updates
+    const portId = localStorage.getItem('userId');
+    const socket = window.socket; // Assuming socket is available globally or through a hook
+    
+    if (socket && portId) {
+      socket.on('delivery-update', (data) => {
+        console.log('Received delivery update:', data);
+        fetchOrders(); // Refresh the list
+      });
+
+      return () => {
+        socket.off('delivery-update');
+      };
+    }
   }, []);
+
+  const handleUpdateDelivery = (order) => {
+    setSelectedOrder(order);
+    setDeliveryData({
+      vehicleType: order.deliveryDetails?.vehicleType || 'Truck',
+      estimatedArrival: order.deliveryDetails?.estimatedArrival ? new Date(order.deliveryDetails.estimatedArrival).toISOString().split('T')[0] : '',
+      trackingNumber: order.deliveryDetails?.trackingNumber || '',
+      additionalInfo: order.deliveryDetails?.additionalInfo || '',
+      status: order.status || 'In Transit'
+    });
+    setShowDeliveryModal(true);
+  };
+
+  const submitDeliveryUpdate = async () => {
+    if (!deliveryData.estimatedArrival) {
+      showToast('Please provide an estimated arrival date', 'error');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await updateDeliveryDetails(selectedOrder._id, deliveryData);
+      if (response.success) {
+        showToast('Delivery updated successfully', 'success');
+        setShowDeliveryModal(false);
+        fetchOrders();
+      } else {
+        showToast(response.message || 'Failed to update delivery', 'error');
+      }
+    } catch (error) {
+      showToast('An error occurred during update', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const filteredOrders = orders.filter(order => {
     const requirementId = order.requirementId?.requirementId || '';
@@ -114,7 +174,8 @@ const MyOrders = () => {
                 <th className="px-6 py-4 font-bold">Warehouse</th>
                 <th className="px-6 py-4 font-bold">Item & Qty</th>
                 <th className="px-6 py-4 font-bold">Final Price</th>
-                <th className="px-6 py-4 font-bold">Delivery Date</th>
+                <th className="px-6 py-4 font-bold">Delivery Date / ETA</th>
+                <th className="px-6 py-4 font-bold">Tracking Info</th>
                 <th className="px-6 py-4 font-bold">Status</th>
                 <th className="px-6 py-4 font-bold text-right">Actions</th>
               </tr>
@@ -149,18 +210,48 @@ const MyOrders = () => {
                     <p className="text-xs text-slate-500">{order.quantityOffered} KG</p>
                   </td>
                   <td className="px-6 py-4 text-sm font-bold text-slate-800">₹{order.offeredPrice.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{formatDate(order.deliveryDate)}</td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold text-slate-800">{formatDate(order.deliveryDate)}</p>
+                      {order.deliveryDetails?.estimatedArrival && (
+                        <p className="text-[10px] text-teal-600 font-bold flex items-center gap-1">
+                          <span className="material-icons-outlined text-[12px]">event_available</span>
+                          ETA: {formatDate(order.deliveryDetails.estimatedArrival)}
+                        </p>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {order.deliveryDetails?.trackingNumber ? (
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Tracking</p>
+                        <p className="text-xs font-bold text-slate-700">{order.deliveryDetails.trackingNumber}</p>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">No Tracking</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4">
                     <StatusBadge status={order.status === 'approved' ? 'Confirmed' : order.status} />
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => navigate(`/port/orders/track/${order._id}`)}
-                      className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all ml-auto"
-                    >
-                      <span className="material-icons-outlined text-sm">local_shipping</span>
-                      Track
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => handleUpdateDelivery(order)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-teal-600 text-white rounded-lg text-xs font-bold hover:bg-teal-700 hover:shadow-md transition-all"
+                        disabled={order.status === 'Delivered' || order.status === 'Cancelled'}
+                      >
+                        <span className="material-icons-outlined text-sm">local_shipping</span>
+                        Update Delivery
+                      </button>
+                      <button 
+                        onClick={() => navigate(`/port/orders/track/${order._id}`)}
+                        className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-white hover:shadow-sm transition-all"
+                      >
+                        <span className="material-icons-outlined text-sm">visibility</span>
+                        Track
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )) : (
@@ -188,6 +279,126 @@ const MyOrders = () => {
           </div>
         </div>
       </div>
+
+      {/* Delivery Update Modal */}
+      {showDeliveryModal && selectedOrder && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="bg-teal-600 p-4 text-white flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-lg">Delivery Update</h3>
+                <p className="text-teal-100 text-[10px] font-bold uppercase tracking-wider">{selectedOrder.requirementId?.requirementId}</p>
+              </div>
+              <button onClick={() => setShowDeliveryModal(false)} className="hover:bg-teal-700 p-2 rounded-full transition-colors">
+                <span className="material-icons-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+              {/* Order Info Summary */}
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Warehouse</p>
+                  <p className="text-sm font-bold text-slate-800">{selectedOrder.warehouseId?.warehouseName || selectedOrder.warehouseId?.name}</p>
+                  <p className="text-[10px] text-slate-500">{selectedOrder.warehouseId?.address || (selectedOrder.warehouseId?.city + ', ' + selectedOrder.warehouseId?.state)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Fish Details</p>
+                  <p className="text-sm font-bold text-slate-800">{selectedOrder.requirementId?.fishName}</p>
+                  <p className="text-[10px] text-slate-500">{selectedOrder.quantityOffered} KG</p>
+                </div>
+              </div>
+
+              {/* Form Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 uppercase">Vehicle Type</label>
+                  <select 
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                    value={deliveryData.vehicleType}
+                    onChange={(e) => setDeliveryData({...deliveryData, vehicleType: e.target.value})}
+                  >
+                    <option value="Truck">Truck</option>
+                    <option value="Ship">Ship</option>
+                    <option value="Plane">Plane</option>
+                    <option value="Bus">Bus</option>
+                    <option value="Train">Train</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 uppercase">Estimated Arrival</label>
+                  <input 
+                    type="date"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                    value={deliveryData.estimatedArrival}
+                    onChange={(e) => setDeliveryData({...deliveryData, estimatedArrival: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 uppercase">Tracking / LR Number</label>
+                <input 
+                  type="text"
+                  placeholder="Enter tracking or vehicle number"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                  value={deliveryData.trackingNumber}
+                  onChange={(e) => setDeliveryData({...deliveryData, trackingNumber: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 uppercase">Delivery Status</label>
+                <div className="flex flex-wrap gap-2">
+                  {['In Transit', 'Out for Delivery', 'Delivered', 'Delayed'].map(status => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setDeliveryData({...deliveryData, status})}
+                      className={`text-[10px] px-3 py-1.5 rounded-full font-bold border transition-all ${
+                        deliveryData.status === status 
+                          ? 'bg-teal-600 border-teal-600 text-white shadow-md' 
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 uppercase">Additional Delivery Details</label>
+                <textarea 
+                  placeholder="Mention driver contact, intermediate stops or other details..."
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none h-24 resize-none transition-all"
+                  value={deliveryData.additionalInfo}
+                  onChange={(e) => setDeliveryData({...deliveryData, additionalInfo: e.target.value})}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowDeliveryModal(false)}
+                  className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitDeliveryUpdate}
+                  disabled={submitting}
+                  className="flex-1 px-4 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-bold hover:bg-teal-700 shadow-lg shadow-teal-600/20 transition-all disabled:opacity-50"
+                >
+                  {submitting ? 'Updating...' : 'Save Update'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

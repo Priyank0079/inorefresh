@@ -3,12 +3,14 @@ import Admin from "../models/Admin";
 import Warehouse from "../models/Warehouse";
 import Customer from "../models/Customer";
 import Delivery from "../models/Delivery";
+import PortUser from "../models/PortUser";
+import { getIO } from "../socket/socketService";
 
 /**
  * Send notification to specific user
  */
 export const sendNotification = async (
-  recipientType: "Admin" | "warehouse" | "Customer" | "Delivery",
+  recipientType: "Admin" | "Warehouse" | "Customer" | "Delivery" | "Port",
   recipientId: string,
   title: string,
   message: string,
@@ -27,9 +29,8 @@ export const sendNotification = async (
     expiresAt?: Date;
   },
 ) => {
-  const notification = await Notification.create({
+  const notificationData: any = {
     recipientType,
-    recipientId,
     title,
     message,
     type: options?.type || "Info",
@@ -38,10 +39,22 @@ export const sendNotification = async (
     priority: options?.priority || "Medium",
     expiresAt: options?.expiresAt,
     isRead: false,
-  });
+  };
 
-  // Here you would integrate with push notification service (FCM, APNS, etc.)
-  // For now, we'll just create the notification record
+  if (recipientId) {
+    notificationData.recipientId = recipientId;
+  }
+
+  const notification = await Notification.create(notificationData);
+
+  // Emit real-time notification via socket
+  try {
+    const io = getIO();
+    const room = recipientType === "Admin" ? "admin-notifications" : `${recipientType.toLowerCase()}-${recipientId}`;
+    io.to(room).emit("new-notification", notification);
+  } catch (error) {
+    console.error("Socket emission failed for notification:", error);
+  }
 
   return notification;
 };
@@ -50,7 +63,7 @@ export const sendNotification = async (
  * Send notification to all users of a type
  */
 export const sendBroadcastNotification = async (
-  recipientType: "Admin" | "warehouse" | "Customer" | "Delivery",
+  recipientType: "Admin" | "Warehouse" | "Customer" | "Delivery" | "Port",
   title: string,
   message: string,
   options?: {
@@ -76,7 +89,7 @@ export const sendBroadcastNotification = async (
       const admins = await Admin.find().select("_id");
       userIds = admins.map((a) => a._id.toString());
       break;
-    case "warehouse":
+    case "Warehouse":
       const warehouses = await Warehouse.find().select("_id");
       userIds = warehouses.map((w) => w._id.toString());
       break;
@@ -88,12 +101,16 @@ export const sendBroadcastNotification = async (
       const deliveries = await Delivery.find().select("_id");
       userIds = deliveries.map((d) => d._id.toString());
       break;
+    case "Port":
+      const ports = await PortUser.find().select("_id");
+      userIds = ports.map((p) => p._id.toString());
+      break;
   }
 
   // Create notifications for all users
   const notifications = await Promise.all(
-    userIds.map((userId) =>
-      Notification.create({
+    userIds.map(async (userId) => {
+      const notification = await Notification.create({
         recipientType,
         recipientId: userId,
         title,
@@ -104,8 +121,19 @@ export const sendBroadcastNotification = async (
         priority: options?.priority || "Medium",
         expiresAt: options?.expiresAt,
         isRead: false,
-      }),
-    ),
+      });
+
+      // Emit real-time notification via socket
+      try {
+        const io = getIO();
+        const room = recipientType === "Admin" ? "admin-notifications" : `${recipientType.toLowerCase()}-${userId}`;
+        io.to(room).emit("new-notification", notification);
+      } catch (error) {
+        console.error("Socket emission failed for broadcast notification:", error);
+      }
+
+      return notification;
+    })
   );
 
   return notifications;
@@ -177,9 +205,25 @@ export const sendProductApprovalNotification = async (
       : `Your product has been rejected. Reason: ${rejectionReason || "Not specified"
       }`;
 
-  return sendNotification("warehouse", warehouseId, title, message, {
+  return sendNotification("Warehouse", warehouseId, title, message, {
     type: status === "Approved" ? "Success" : "Error",
     link: `/products/${productId}`,
     priority: "Medium",
+  });
+};
+
+/**
+ * Send port offer related notifications
+ */
+export const sendPortOfferNotification = async (
+  recipientType: "Admin" | "Warehouse" | "Port",
+  recipientId: string,
+  title: string,
+  message: string,
+  options?: any
+) => {
+  return sendNotification(recipientType as any, recipientId, title, message, {
+    type: "Order",
+    ...options
   });
 };

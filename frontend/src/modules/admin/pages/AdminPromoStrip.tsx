@@ -305,7 +305,7 @@ export default function AdminPromoStrip() {
       {(success || error) && (
         <div className="px-6">
           {success && (
-            <div className="bg-green-50 border border-green-200 text-#0e7490 px-4 py-3 rounded mb-4">
+            <div className="bg-green-50 border border-green-200 text-[#0e7490] px-4 py-3 rounded mb-4">
               {success}
             </div>
           )}
@@ -553,7 +553,7 @@ export default function AdminPromoStrip() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-medium ${
-                    featuredProducts.length >= 4 ? 'text-#12b2a2' : 'text-orange-600'
+                    featuredProducts.length >= 4 ? 'text-[#12b2a2]' : 'text-orange-600'
                   }`}>
                     {featuredProducts.length} / 4 products selected
                   </span>
@@ -662,7 +662,7 @@ export default function AdminPromoStrip() {
                             <span
                               className={`px-2 py-1 rounded text-xs ${
                                 promoStrip.isActive
-                                  ? "bg-teal-50 text-#0e7490"
+                                  ? "bg-teal-50 text-[#0e7490]"
                                   : "bg-gray-100 text-gray-700"
                               }`}
                             >

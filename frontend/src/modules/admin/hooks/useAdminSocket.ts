@@ -48,6 +48,11 @@ export const useAdminSocket = (onNewOffer?: (offer: any) => void) => {
             }
         });
 
+        newSocket.on('delivery-update', (data: any) => {
+            console.log('🚚 Delivery update received by Admin:', data);
+            showToast(`Port Shipment update: ${data.status}`, 'info');
+        });
+
         newSocket.on('disconnect', () => {
             console.log('❌ Admin disconnected from socket server');
             setIsConnected(false);

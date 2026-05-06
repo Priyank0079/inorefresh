@@ -336,11 +336,11 @@ export default function AdminSystemUser() {
             
             {/* Success Message */}
             {successMessage && (
-              <div className="p-4 bg-green-50 border-l-4 border-#12b2a2 text-#0e7490 flex items-center justify-between">
+              <div className="p-4 bg-green-50 border-l-4 border-[#12b2a2] text-[#0e7490] flex items-center justify-between">
                 <p className="text-sm">{successMessage}</p>
                 <button
                   onClick={() => setSuccessMessage('')}
-                  className="text-#0e7490 hover:text-green-900 ml-4 text-lg font-bold"
+                  className="text-[#0e7490] hover:text-green-900 ml-4 text-lg font-bold"
                   type="button"
                 >
                   ×
@@ -620,7 +620,7 @@ export default function AdminSystemUser() {
                                 <button
                                   onClick={() => handleEdit(user.id)}
                                   disabled={loading}
-                                  className="p-1.5 bg-#12b2a2 hover:bg-#12b2a2 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
+                                  className="p-1.5 bg-[#12b2a2] hover:bg-[#12b2a2] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
                                   title="Edit"
                                 >
                                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -700,7 +700,7 @@ export default function AdminSystemUser() {
       <div className="text-center text-sm text-neutral-500 py-4 px-6">
         Copyright © 2025. Developed By{' '}
         <a href="#" className="text-teal-600 hover:text-teal-700">
-          Inor fresh - 10 Minute App
+          Inor fresh
         </a>
       </div>
     </div>

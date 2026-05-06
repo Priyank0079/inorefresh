@@ -345,7 +345,7 @@ export default function AdminHomeSection() {
             {(success || error) && (
                 <div className="px-6">
                     {success && (
-                        <div className="bg-green-50 border border-green-200 text-#0e7490 px-4 py-3 rounded mb-4">
+                        <div className="bg-green-50 border border-green-200 text-[#0e7490] px-4 py-3 rounded mb-4">
                             {success}
                         </div>
                     )}
@@ -880,7 +880,7 @@ export default function AdminHomeSection() {
             <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
                 Copyright © 2025. Developed By{" "}
                 <a href="#" className="text-blue-600 hover:underline">
-                    Inor fresh - 10 Minute App
+                    Inor fresh
                 </a>
             </footer>
         </div >

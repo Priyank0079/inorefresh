@@ -36,8 +36,10 @@ const calculateETA = (distanceInMeters: number): number => {
     return Math.ceil(distanceInMeters / averageSpeedMs);
 };
 
+let io: SocketIOServer;
+
 export const initializeSocket = (httpServer: HttpServer) => {
-    const io = new SocketIOServer(httpServer, {
+    io = new SocketIOServer(httpServer, {
         cors: {
             origin: (origin, callback) => {
                 // Allow requests with no origin (like mobile apps or server-to-server)
@@ -391,6 +393,13 @@ export const initializeSocket = (httpServer: HttpServer) => {
     });
 
     console.log('🔌 Socket.io initialized');
+    return io;
+};
+
+export const getIO = () => {
+    if (!io) {
+        throw new Error('Socket.io not initialized!');
+    }
     return io;
 };
 

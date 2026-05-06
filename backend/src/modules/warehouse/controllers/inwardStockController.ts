@@ -127,13 +127,19 @@ export const addInwardStock = asyncHandler(async (req: Request, res: Response) =
       notes: req.body.remarks
     });
 
+    // Populate warehouse information for socket notification
+    const populatedRequirement = await PortRequirement.findById(requirement._id).populate('warehouseId', 'warehouseName address managerName');
+
     // Emit socket notification to Port
-    const io = req.app.get("io");
-    if (io) {
+    try {
+      const { getIO } = require('../../../socket/socketService');
+      const io = getIO();
       io.to('port-notifications').emit('new-requirement', {
         message: `New requirement for ${req.body.productName} from Warehouse`,
-        requirement: requirement
+        requirement: populatedRequirement
       });
+    } catch (socketErr) {
+      console.error("Socket emission failed:", socketErr);
     }
   } catch (err) {
     console.error("Error creating PortRequirement:", err);

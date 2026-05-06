@@ -27,7 +27,7 @@ export const getRequirements = asyncHandler(async (req: Request, res: Response) 
 
   const skip = (Number(page) - 1) * Number(limit);
   const requirements = await PortRequirement.find(query)
-    .populate('warehouseId', 'name location city state')
+    .populate('warehouseId', 'warehouseName address managerName')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(Number(limit));

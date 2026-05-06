@@ -18,9 +18,9 @@ export const adminCounterPortOffer = async (offerId: string, counterData: { pric
   }
 };
 
-export const adminConfirmPortOffer = async (offerId: string) => {
+export const adminConfirmPortOffer = async (offerId: string, notes?: string) => {
   try {
-    const response = await API.post(`/port/offers/admin/${offerId}/confirm`);
+    const response = await API.post(`/port/offers/admin/${offerId}/confirm`, { notes });
     return response.data;
   } catch (error: any) {
     return error.response?.data || { success: false, message: error.message };

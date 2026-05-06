@@ -179,7 +179,7 @@ export default function WarehouseWallet() {
                           </span>
                         )}
                         {item.status === 'Completed' && (
-                          <span className="bg-teal-50 text-#0e7490 text-xs px-2 py-0.5 rounded-full font-medium">
+                          <span className="bg-teal-50 text-[#0e7490] text-xs px-2 py-0.5 rounded-full font-medium">
                             Success
                           </span>
                         )}
@@ -194,7 +194,7 @@ export default function WarehouseWallet() {
                         })}
                       </p>
                     </div>
-                    <p className={`font-bold text-lg ${item.type === 'Credit' ? 'text-#12b2a2' : 'text-red-600'} ${item.status === 'Pending' ? 'opacity-60' : ''}`}>
+                    <p className={`font-bold text-lg ${item.type === 'Credit' ? 'text-[#12b2a2]' : 'text-red-600'} ${item.status === 'Pending' ? 'opacity-60' : ''}`}>
                       {item.type === 'Credit' ? '+' : '-'}₹{item.amount.toFixed(2)}
                     </p>
                   </div>
@@ -258,7 +258,7 @@ export default function WarehouseWallet() {
                         <p className="font-medium text-gray-900">Order Commission</p>
                         <p className="text-xs text-gray-600">Rate: {comm.rate}%</p>
                       </div>
-                      <p className="font-bold text-#12b2a2">₹{comm.amount.toFixed(2)}</p>
+                      <p className="font-bold text-[#12b2a2]">₹{comm.amount.toFixed(2)}</p>
                     </div>
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>Order Amount: ₹{comm.orderAmount.toFixed(2)}</span>

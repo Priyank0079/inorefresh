@@ -25,6 +25,7 @@ export interface Warehouse {
     isShopOpen?: boolean;
     createdAt?: string;
     updatedAt?: string;
+    inwardStockSummary?: any;
 }
 
 export interface AdminCreateWarehouseData {
@@ -93,5 +94,13 @@ export const updateWarehouseByAdmin = async (
     }
 ): Promise<ApiResponse<Warehouse>> => {
     const response = await api.put<ApiResponse<Warehouse>>(`/warehouses/${id}`, data);
+    return response.data;
+};
+
+/**
+ * Get port orders for the logged-in warehouse
+ */
+export const getWarehousePortOrders = async (): Promise<ApiResponse<any[]>> => {
+    const response = await api.get<ApiResponse<any[]>>("/port/warehouse-orders");
     return response.data;
 };

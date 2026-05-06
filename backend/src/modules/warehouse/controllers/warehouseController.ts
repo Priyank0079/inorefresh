@@ -32,14 +32,35 @@ export const getAllWarehouses = asyncHandler(
       ];
     }
 
-    const Warehouses = await Warehouse.find(query)
+    const warehouses = await Warehouse.find(query)
       .select("-password") // Exclude password
-      .sort({ createdAt: -1 }); // Sort by newest first
+      .sort({ createdAt: -1 })
+      .lean(); // Sort by newest first
+
+    const InwardStock = require("../../../models/InwardStock").default || require("../../../models/InwardStock");
+    
+    const warehouseIds = warehouses.map(w => w._id);
+    const stockAggregations = await InwardStock.aggregate([
+      { $match: { warehouse: { $in: warehouseIds } } },
+      { $group: { _id: "$warehouse", totalQuantity: { $sum: "$quantity" } } }
+    ]);
+
+    const stockMap = new Map();
+    stockAggregations.forEach(agg => {
+      stockMap.set(agg._id.toString(), agg.totalQuantity);
+    });
+
+    const warehousesWithStock = warehouses.map(w => ({
+      ...w,
+      inwardStockSummary: {
+        totalQuantity: stockMap.get(w._id.toString()) || 0
+      }
+    }));
 
     return res.status(200).json({
       success: true,
       message: "Warehouses fetched successfully",
-      data: Warehouses,
+      data: warehousesWithStock,
     });
   }
 );

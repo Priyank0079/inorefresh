@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useThemeContext } from '../../../context/ThemeContext';
+import { useNotifications } from '../../../context/NotificationContext';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -13,6 +14,7 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
   const location = useLocation();
   const { logout } = useAuth();
   const { currentTheme } = useThemeContext();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,6 +42,14 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
 
   const handleLogoClick = () => {
     navigate('/admin');
+  };
+
+  const handleNotificationClick = (notification: any) => {
+    markAsRead(notification._id);
+    if (notification.link) {
+      navigate(notification.link);
+    }
+    setShowNotificationsDropdown(false);
   };
 
   return (
@@ -209,26 +219,70 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
                 <path d="M18 8A6 6 0 0 0 6 8C6 11.3137 4 14 4 17H20C20 14 18 11.3137 18 8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[8px] flex items-center justify-center rounded-full font-bold">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
             {showNotificationsDropdown && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-neutral-200 py-2 z-50 max-h-96 overflow-y-auto">
-                <div className="px-4 py-2 border-b border-neutral-200">
-                  <h3 className="text-sm font-semibold text-neutral-900">Notifications</h3>
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-neutral-200 py-2 z-50 flex flex-col">
+                <div className="px-4 py-3 border-b border-neutral-100 flex justify-between items-center">
+                  <h3 className="text-sm font-black text-neutral-900 uppercase tracking-wider">Notifications</h3>
+                  {unreadCount > 0 && (
+                    <button 
+                      onClick={markAllAsRead}
+                      className="text-[10px] font-bold text-teal-600 hover:underline"
+                    >
+                      Mark all as read
+                    </button>
+                  )}
                 </div>
-                <div className="py-4 px-4 text-center text-sm text-neutral-500">
-                  <p>No new notifications</p>
+                <div className="max-h-[320px] overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="py-12 px-4 text-center">
+                      <div className="w-12 h-12 bg-neutral-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                         <span className="material-icons-outlined text-neutral-300">notifications_off</span>
+                      </div>
+                      <p className="text-xs text-neutral-400 font-medium tracking-tight">No active notifications</p>
+                    </div>
+                  ) : (
+                    notifications.map((n) => (
+                      <button
+                        key={n._id}
+                        onClick={() => handleNotificationClick(n)}
+                        className={`w-full text-left px-4 py-3 hover:bg-neutral-50 transition-colors border-b border-neutral-50 last:border-0 flex gap-3 ${!n.isRead ? 'bg-teal-50/30' : ''}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          n.type === 'Success' ? 'bg-emerald-100 text-emerald-600' :
+                          n.type === 'Error' ? 'bg-red-100 text-red-600' :
+                          n.type === 'Warning' ? 'bg-amber-100 text-amber-600' :
+                          'bg-teal-100 text-teal-600'
+                        }`}>
+                          <span className="material-icons-outlined text-sm">
+                            {n.type === 'Order' ? 'shopping_bag' : 'notifications'}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-bold text-neutral-900 truncate ${!n.isRead ? 'font-black' : ''}`}>{n.title}</p>
+                          <p className="text-[10px] text-neutral-500 line-clamp-2 mt-0.5">{n.message}</p>
+                          <p className="text-[9px] text-neutral-400 mt-1">{new Date(n.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        {!n.isRead && <div className="w-2 h-2 bg-teal-500 rounded-full mt-2"></div>}
+                      </button>
+                    ))
+                  )}
                 </div>
-                <div className="px-4 py-2 border-t border-neutral-200">
+                <div className="px-4 py-2 border-t border-neutral-100">
                   <button
                     onClick={() => {
                       navigate('/admin/notification');
                       setShowNotificationsDropdown(false);
                     }}
-                    className="w-full text-center text-sm font-medium"
+                    className="w-full py-1 text-center text-[10px] font-black uppercase tracking-widest hover:text-teal-700 transition-colors"
                     style={{ color: currentTheme.primary[3] }}
                   >
-                    View All Notifications
+                    Manage All Notifications
                   </button>
                 </div>
               </div>

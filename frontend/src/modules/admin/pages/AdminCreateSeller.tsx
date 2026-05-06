@@ -113,7 +113,7 @@ export default function AdminCreateWarehouse() {
             </div>
           )}
           {successMessage && (
-            <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-#0e7490">
+            <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-[#0e7490]">
               {successMessage}
             </div>
           )}

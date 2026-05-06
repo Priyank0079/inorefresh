@@ -633,7 +633,7 @@ export default function AdminSubCategory() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleEdit(subCategory._id)}
-                              className="p-1.5 bg-teal-50 hover:bg-green-200 text-#0e7490 rounded transition-colors"
+                              className="p-1.5 bg-teal-50 hover:bg-green-200 text-[#0e7490] rounded transition-colors"
                               title="Edit">
                               <svg
                                 width="16"
@@ -753,7 +753,7 @@ export default function AdminSubCategory() {
       <div className="text-center text-sm text-neutral-500 py-4">
         Copyright © 2025. Developed By{" "}
         <a href="#" className="text-teal-600 hover:text-teal-700">
-          Inor fresh - 10 Minute App
+          Inor fresh
         </a>
       </div>
     </div>

@@ -4,7 +4,7 @@ import DeliveryHeader from "../components/DeliveryHeader";
 import SummaryBar from "../components/SummaryBar";
 import DashboardCard from "../components/DashboardCard";
 import DeliveryBottomNav from "../components/DeliveryBottomNav";
-import { getDashboardStats } from "../../../services/api/delivery/deliveryService";
+import { getDashboardStats, updateOrderStatus } from "../../../services/api/delivery/deliveryService";
 import { useDeliveryStatus } from "../context/DeliveryStatusContext";
 
 export default function DeliveryDashboard() {
@@ -13,21 +13,43 @@ export default function DeliveryDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchStats = async () => {
+    try {
+      if (!refreshing) setLoading(true);
+      const data = await getDashboardStats();
+      setStats(data);
+    } catch (err: any) {
+      setError(err.message || "Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const handleAcceptOrder = async (e: React.MouseEvent, orderId: string) => {
+    e.stopPropagation();
+    try {
+      setRefreshing(true);
+      await updateOrderStatus(orderId, 'Processed');
+      alert('Order accepted successfully!');
+      fetchStats();
+    } catch (err: any) {
+      alert(err.message || 'Failed to accept order');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await getDashboardStats();
-        setStats(data);
-      } catch (err: any) {
-        setError(err.message || "Failed to load dashboard data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchStats();
-  }, []);
+  }, [isOnline]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchStats();
+  };
 
   // Icons for dashboard cards (Keep existing SVGs)
   const pendingOrderIcon = (
@@ -274,9 +296,23 @@ export default function DeliveryDashboard() {
   return (
     <div className="min-h-screen bg-neutral-100 pb-20">
       {/* Header */}
-      <DeliveryHeader />
+      <DeliveryHeader onRefresh={handleRefresh} isRefreshing={refreshing} />
 
       <div className="px-4 py-4 space-y-4">
+        {/* Account Status Banner */}
+        {stats?.accountStatus === "Inactive" && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+            <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-amber-900 text-sm font-bold">Account Pending Approval</p>
+              <p className="text-amber-700 text-xs mt-0.5">Your documents are being verified. You'll be able to accept orders once approved.</p>
+            </div>
+          </div>
+        )}
         {/* Daily Collection & Cash Balance Bar */}
         <SummaryBar
           leftIcon={dailyCollectionIcon}
@@ -479,13 +515,26 @@ export default function DeliveryDashboard() {
                     <p className="text-neutral-900 font-bold text-base">
                       ₹ {order.totalAmount}
                     </p>
-                    <button className="bg-teal-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm active:bg-teal-700">
-                      VIEW & ACCEPT
+                    <button 
+                      className="bg-teal-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm active:bg-teal-700"
+                      onClick={(e) => handleAcceptOrder(e, order.id)}
+                    >
+                      ACCEPT
                     </button>
                   </div>
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {isOnline && (!stats?.availableOrders || stats.availableOrders.length === 0) && (
+          <div className="bg-white rounded-xl p-8 text-center border-2 border-dashed border-neutral-200">
+            <div className="w-12 h-12 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-3 text-neutral-400">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <p className="text-neutral-900 font-semibold text-sm">No new orders nearby</p>
+            <p className="text-neutral-500 text-xs mt-1">We'll notify you when new orders arrive in your area.</p>
           </div>
         )}
 

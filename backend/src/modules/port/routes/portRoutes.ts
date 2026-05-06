@@ -6,9 +6,13 @@ import offerRoutes from './offerRoutes';
 import productRoutes from './productRoutes';
 import notificationRoutes from './notificationRoutes';
 
+import { authenticate, requireUserType } from '../../../middleware/auth';
+import { getWarehousePortOrders } from '../controllers/offer.controller';
+
 const router = Router();
 
 router.use('/dashboard', dashboardRoutes);
+router.get('/warehouse-orders', authenticate, requireUserType('Warehouse', 'Admin'), getWarehousePortOrders);
 router.use('/requirements', requirementRoutes);
 router.use('/offers', offerRoutes);
 router.use('/products', productRoutes);

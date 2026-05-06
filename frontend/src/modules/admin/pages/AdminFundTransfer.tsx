@@ -406,7 +406,7 @@ export default function AdminFundTransfer() {
       <div className="text-center text-sm text-neutral-500 py-4">
         Copyright © 2025. Developed By{' '}
         <a href="#" className="text-[#12b2a2] hover:text-[#0e8f82]">
-          Inor fresh - 10 Minute App
+          Inor fresh
         </a>
       </div>
     </div>

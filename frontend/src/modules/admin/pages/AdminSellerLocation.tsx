@@ -235,7 +235,7 @@ export default function AdminSellerLocation() {
       <div className="text-center text-sm text-neutral-500 py-4">
         Copyright (c) 2025. Developed By{' '}
         <a href="#" className="text-teal-600 hover:text-teal-700">
-          Inor fresh - 10 Minute App
+          Inor fresh
         </a>
       </div>
     </div>

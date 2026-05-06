@@ -630,7 +630,7 @@ export default function AdminManageCustomer() {
                           </button>
                           <button
                             onClick={() => handleOpenEditModal(customer)}
-                            className="p-1.5 bg-#12b2a2 hover:bg-#0e7490 text-white rounded transition-colors"
+                            className="p-1.5 bg-[#12b2a2] hover:bg-[#0e7490] text-white rounded transition-colors"
                             title="Edit">
                             <svg
                               width="14"

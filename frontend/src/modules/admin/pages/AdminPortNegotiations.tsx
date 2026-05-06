@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { adminGetAllPortOffers, adminCounterPortOffer, adminConfirmPortOffer } from '../../../services/api/adminPortService';
 import { useToast } from '../../../context/ToastContext';
 import StatusBadge from '../../../components/common/StatusBadge';
@@ -56,11 +57,12 @@ export default function AdminPortNegotiations() {
 
   const handleConfirm = async (offerId: string) => {
     if (!window.confirm('Are you sure you want to confirm this order? This will close the requirement.')) return;
-
+    
     setSubmitting(true);
-    const response = await adminConfirmPortOffer(offerId);
+    const response = await adminConfirmPortOffer(offerId, notes);
     if (response.success) {
       showToast('Order confirmed successfully!', 'success');
+      setNotes('');
       fetchOffers();
       setSelectedOffer(null);
     } else {
@@ -178,101 +180,198 @@ export default function AdminPortNegotiations() {
         </div>
 
         {/* Negotiation Panel */}
-        {selectedOffer && (
-          <div className="lg:w-1/3 animate-in slide-in-from-right duration-300">
-            <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden sticky top-6">
-              <div className="p-4 bg-teal-600 text-white flex justify-between items-center">
-                <h3 className="font-bold">Negotiation Details</h3>
-                <button onClick={() => setSelectedOffer(null)} className="text-white hover:bg-teal-700 p-1 rounded">
-                  <span className="material-icons-outlined">close</span>
-                </button>
-              </div>
-
-              <div className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-                {/* Info summary */}
-                <div className="bg-slate-50 rounded-lg p-4 grid grid-cols-2 gap-4">
+        <AnimatePresence>
+          {selectedOffer && (
+            <motion.div 
+              initial={{ x: 300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 300, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="lg:w-1/3 min-w-[400px] z-20"
+            >
+              <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden sticky top-6 flex flex-col max-h-[calc(100vh-80px)]">
+                {/* Header */}
+                <div className="px-6 py-4 bg-white border-b border-slate-100 flex justify-between items-center">
                   <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Port Price</p>
-                    <p className="text-lg font-bold text-slate-800">₹{selectedOffer.offeredPrice}</p>
+                    <h3 className="font-semibold text-lg text-slate-800">Negotiation Details</h3>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="px-2 py-0.5 bg-teal-50 text-teal-600 text-xs font-medium rounded-md">Active</span>
+                      <span className="text-xs text-slate-400 font-medium">#{selectedOffer._id.slice(-6).toUpperCase()}</span>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Admin Price</p>
-                    <p className="text-lg font-bold text-amber-600">{selectedOffer.counterPrice ? `₹${selectedOffer.counterPrice}` : '--'}</p>
-                  </div>
+                  <button 
+                    onClick={() => setSelectedOffer(null)} 
+                    className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                  >
+                    <span className="material-icons-outlined text-sm">close</span>
+                  </button>
                 </div>
 
-                {/* History */}
-                <div>
-                  <h4 className="text-xs font-bold text-slate-500 uppercase mb-4 tracking-wider">Negotiation History</h4>
-                  <div className="space-y-4">
-                    {selectedOffer.negotiationHistory?.map((entry: any, idx: number) => (
-                      <div key={idx} className={`flex gap-3 ${entry.offeredBy === 'admin' ? 'flex-row-reverse' : ''}`}>
-                        <div className={`flex-1 p-3 rounded-lg text-sm ${entry.offeredBy === 'admin' ? 'bg-teal-50 border border-teal-100' : 'bg-slate-50 border border-slate-100'}`}>
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-bold text-[10px] uppercase">{entry.offeredBy}</span>
-                            <span className="text-[10px] text-slate-400">{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
-                          <p className="font-bold text-slate-700 mb-1">₹{entry.price}/kg</p>
-                          {entry.notes && <p className="text-xs text-slate-500 italic">"{entry.notes}"</p>}
-                        </div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                  {/* Price Comparison */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                      <p className="text-xs font-medium text-slate-500 mb-1">Port's Offer</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-semibold text-slate-800">₹{selectedOffer.offeredPrice}</span>
+                        <span className="text-xs font-medium text-slate-400">/kg</span>
                       </div>
-                    ))}
+                    </div>
+                    <div className="bg-teal-50/50 border border-teal-100/50 rounded-xl p-4">
+                      <p className="text-xs font-medium text-teal-700 mb-1">Your Counter</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-semibold text-teal-800">
+                          {selectedOffer.counterPrice ? `₹${selectedOffer.counterPrice}` : '--'}
+                        </span>
+                        {selectedOffer.counterPrice && <span className="text-xs font-medium text-teal-600">/kg</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Port Partner Profile */}
+                  {typeof selectedOffer.portId === 'object' && selectedOffer.portId !== null && (
+                    <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center">
+                        <span className="material-icons-outlined">storefront</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold text-slate-800 truncate">{selectedOffer.portId.portName || selectedOffer.portId.name}</h4>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {selectedOffer.portId.managerName || 'Operations Manager'}
+                        </p>
+                      </div>
+                      {selectedOffer.portId.mobile && (
+                        <a 
+                          href={`tel:${selectedOffer.portId.mobile}`} 
+                          className="w-8 h-8 flex items-center justify-center text-teal-600 hover:bg-teal-50 rounded-md transition-colors"
+                          title="Call Port"
+                        >
+                          <span className="material-icons-outlined text-sm">call</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Negotiation History */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-sm font-semibold text-slate-800">History</h4>
+                      <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                        {selectedOffer.negotiationHistory?.length || 0} updates
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {selectedOffer.negotiationHistory?.map((entry: any, idx: number) => {
+                        const isAdmin = entry.offeredBy === 'admin';
+                        return (
+                          <div key={idx} className="flex gap-3 text-sm">
+                            <div className="mt-1">
+                              <div className={`w-2 h-2 rounded-full ${isAdmin ? 'bg-slate-400' : 'bg-teal-500'}`} />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-0.5">
+                                <span className="font-medium text-slate-700">
+                                  {isAdmin ? 'You' : 'Port'}
+                                </span>
+                                <span className="text-xs text-slate-400">
+                                  {new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              <p className="text-slate-800 font-semibold mb-1">₹{entry.price} <span className="text-xs font-normal text-slate-500">/kg</span></p>
+                              {entry.notes && (
+                                <p className="text-xs text-slate-500 bg-slate-50 p-2 rounded-md border border-slate-100">
+                                  {entry.notes}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
                 {/* Action Form */}
                 {selectedOffer.status !== 'approved' && (
-                  <div className="pt-6 border-t border-slate-100 space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-700 uppercase">Your Counter Price (₹)</label>
-                      <input
-                        type="number"
-                        value={counterPrice}
-                        onChange={(e) => setCounterPrice(e.target.value)}
-                        placeholder="Enter price per kg"
-                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
-                      />
+                  <div className="p-6 bg-slate-50 border-t border-slate-200 space-y-4">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="text-sm font-medium text-slate-700">Counter Price (₹)</label>
+                        <button 
+                          onClick={() => setCounterPrice(selectedOffer.offeredPrice.toString())}
+                          className="text-xs text-teal-600 hover:text-teal-700 font-medium"
+                        >
+                          Match Port
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">₹</div>
+                        <input
+                          type="number"
+                          value={counterPrice}
+                          onChange={(e) => setCounterPrice(e.target.value)}
+                          placeholder="0.00"
+                          className="w-full pl-8 pr-4 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition-shadow"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-700 uppercase">Negotiation Notes</label>
+                    
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="text-sm font-medium text-slate-700">Notes</label>
+                        <div className="flex gap-1.5">
+                           {['Deal Done', 'Negotiate', 'Call Me'].map(msg => (
+                             <button
+                               key={msg}
+                               type="button"
+                               onClick={() => setNotes(msg)}
+                               className={`text-xs px-2 py-1 rounded border transition-colors ${notes === msg ? 'bg-slate-800 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                             >
+                               {msg}
+                             </button>
+                           ))}
+                        </div>
+                      </div>
                       <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Add terms or instructions..."
-                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none h-20 resize-none"
+                        placeholder="Add your note here..."
+                        className="w-full p-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none h-20 resize-none transition-shadow"
                       />
                     </div>
 
                     <div className="flex gap-3 pt-2">
                       <button
                         onClick={handleCounter}
-                        disabled={submitting}
-                        className="flex-1 bg-white border border-teal-600 text-teal-600 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-50 transition-all disabled:opacity-50"
+                        disabled={submitting || !counterPrice}
+                        className="flex-1 bg-white border border-slate-300 text-slate-700 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50"
                       >
                         Send Counter
                       </button>
                       <button
                         onClick={() => handleConfirm(selectedOffer._id)}
                         disabled={submitting}
-                        className="flex-1 bg-teal-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-teal-700 shadow-md shadow-teal-600/20 transition-all disabled:opacity-50"
+                        className="flex-1 bg-teal-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                       >
-                        Confirm Deal
+                         <span className="material-icons-outlined text-sm">check_circle</span>
+                         Confirm Deal
                       </button>
                     </div>
                   </div>
                 )}
 
                 {selectedOffer.status === 'approved' && (
-                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
-                    <span className="material-icons-outlined text-emerald-600 text-3xl mb-2">check_circle</span>
-                    <p className="text-sm font-bold text-emerald-800">Deal Confirmed</p>
-                    <p className="text-xs text-emerald-600 mt-1">This order has been finalized and requirement is closed.</p>
+                  <div className="p-6 bg-teal-50 text-center border-t border-teal-100">
+                    <span className="material-icons-outlined text-teal-500 text-3xl mb-2">check_circle</span>
+                    <h4 className="text-lg font-semibold text-teal-800 mb-1">Deal Finalized</h4>
+                    <p className="text-sm text-teal-600">This transaction is confirmed and moving to fulfillment.</p>
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

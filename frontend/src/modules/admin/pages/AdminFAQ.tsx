@@ -442,7 +442,7 @@ export default function AdminFAQ() {
                             <button
                               onClick={() => handleEdit(faq)}
                               disabled={submitting}
-                              className="p-1.5 bg-#12b2a2 hover:bg-#0e7490 disabled:bg-neutral-400 disabled:cursor-not-allowed text-white rounded transition-colors"
+                              className="p-1.5 bg-[#12b2a2] hover:bg-[#0e7490] disabled:bg-neutral-400 disabled:cursor-not-allowed text-white rounded transition-colors"
                               title="Edit">
                               <svg
                                 width="14"
@@ -555,7 +555,7 @@ export default function AdminFAQ() {
       <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
         Copyright © 2025. Developed By{" "}
         <a href="#" className="text-blue-600 hover:underline">
-          Inor fresh - 10 Minute App
+          Inor fresh
         </a>
       </footer>
     </div>

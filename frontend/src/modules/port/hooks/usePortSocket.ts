@@ -55,6 +55,11 @@ export const usePortSocket = (onNewRequirement?: (requirement: any) => void) => 
             console.log('✅ Offer approved by Admin:', data);
             showToast('Your offer has been approved and confirmed!', 'success');
         });
+        
+        newSocket.on('delivery-update', (data: any) => {
+            console.log('🚚 Delivery update received:', data);
+            showToast(`Shipment status updated: ${data.status}`, 'info');
+        });
 
         newSocket.on('disconnect', () => {
             console.log('❌ Port disconnected from socket server');
