@@ -5,7 +5,7 @@ import { ApiResponse } from "./types";
 
 export interface Notification {
   _id: string;
-  recipientType: "Admin" | "Seller" | "Customer" | "Delivery" | "All";
+  recipientType: "Admin" | "Seller" | "Customer" | "Delivery" | "Warehouse" | "Port" | "All";
   recipientId?: string;
   title: string;
   message: string;
@@ -29,7 +29,7 @@ export interface Notification {
 }
 
 export interface CreateNotificationData {
-  recipientType: "Admin" | "Seller" | "Customer" | "Delivery" | "All";
+  recipientType: "Admin" | "Seller" | "Customer" | "Delivery" | "Warehouse" | "Port" | "All";
   recipientId?: string;
   title: string;
   message: string;
@@ -50,7 +50,7 @@ export interface CreateNotificationData {
 export interface GetNotificationsParams {
   page?: number;
   limit?: number;
-  recipientType?: "Admin" | "Seller" | "Customer" | "Delivery" | "All";
+  recipientType?: "Admin" | "Seller" | "Customer" | "Delivery" | "Warehouse" | "Port" | "All";
   recipientId?: string;
   isRead?: boolean;
   type?:

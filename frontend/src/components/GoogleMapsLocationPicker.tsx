@@ -214,9 +214,40 @@ export default function GoogleMapsLocationPicker({
                 </div>
             </div>
 
-            {/* Instruction overlay */}
-            <div className="absolute bottom-2 left-2 right-2 z-10">
-                <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-center shadow-sm">
+            {/* Instruction overlay and Locate Me button */}
+            <div className="absolute bottom-4 left-2 right-2 z-10 flex flex-col items-end gap-2">
+                <button
+                    onClick={() => {
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(
+                                (position) => {
+                                    const newLat = position.coords.latitude;
+                                    const newLng = position.coords.longitude;
+                                    setCenter({ lat: newLat, lng: newLng });
+                                    if (mapRef.current) {
+                                        mapRef.current.panTo({ lat: newLat, lng: newLng });
+                                        mapRef.current.setZoom(17);
+                                    }
+                                },
+                                (err) => {
+                                    console.error("Geolocation error:", err);
+                                    alert("Could not get your current location. Please ensure location permissions are granted.");
+                                },
+                                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                            );
+                        } else {
+                            alert("Geolocation is not supported by your browser.");
+                        }
+                    }}
+                    className="bg-white p-3 rounded-full shadow-md text-neutral-700 hover:text-blue-600 transition-colors"
+                    title="Use my current location"
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
+                <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-center shadow-sm w-full">
                     <p className="text-xs text-neutral-700 font-medium">
                         📍 Move the map to set your exact delivery location
                     </p>
