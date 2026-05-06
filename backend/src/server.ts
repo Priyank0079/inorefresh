@@ -1,4 +1,4 @@
-import express, { Application, Request, Response } from "express";
+import express, { Application } from "express";
 import { createServer } from "http";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -10,10 +10,6 @@ import { ensureDefaultAdmin } from "./utils/ensureDefaultAdmin";
 import { seedHeaderCategories } from "./utils/seedHeaderCategories";
 import { initializeSocket } from "./socket/socketService";
 import { initializeFirebaseAdmin } from "./services/firebaseAdmin";
-
-// Port Auth Prioritized Routes (Imports moved to top)
-import * as portAuthController from "./modules/port/controllers/portAuthController";
-import { authenticate, requireUserType } from "./middleware/auth";
 
 // Load environment variables
 dotenv.config();
@@ -53,7 +49,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Global Debug Route
-app.get("/api/v1/debug-status", (req, res) => {
+app.get("/api/v1/debug-status", (_req, res) => {
   res.json({ success: true, timestamp: new Date().toISOString(), reloaded: true });
 });
 
@@ -63,7 +59,7 @@ import portRoutes from "./modules/port/routes/portRoutes";
 app.use("/api/v1/port/auth", portAuthRoutes);
 app.use("/api/v1/port", portRoutes);
 
-app.get("/api/v1/port/public-test", (req, res) => {
+app.get("/api/v1/port/public-test", (_req, res) => {
   res.json({ success: true, message: "Port routing is working" });
 });
 

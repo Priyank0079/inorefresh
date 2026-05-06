@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import Notification from "../../../models/Notification";
 
-const getCustomerUserId = (req: Request) => req.user?.userId || req.user?.id || req.user?._id;
+const getCustomerUserId = (req: Request) => (req as any).user?.userId;
 
 /**
  * Get all notifications for the logged-in customer-like user

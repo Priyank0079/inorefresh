@@ -62,11 +62,11 @@ const PortSidebar = ({ isOpen, onClose }) => {
 
   return (
     <aside
-      className={`fixed top-0 left-0 h-full w-64 bg-[#0D9488] text-white transition-transform duration-300 z-50 overflow-y-auto ${
+      className={`fixed top-0 left-0 h-[100dvh] w-64 bg-[#0D9488] text-white transition-transform duration-300 z-50 flex flex-col overflow-hidden ${
         isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}
     >
-      <div className="flex items-center justify-between p-6 border-b border-white/10">
+      <div className="flex items-center justify-between p-6 border-b border-white/10 flex-shrink-0">
         <div className="flex items-center gap-3">
           <img src="/assets/Inor fresh.png" alt="Logo" className="h-8 brightness-0 invert" />
           <span className="font-bold text-xl tracking-tight">PORT HUB</span>
@@ -76,7 +76,7 @@ const PortSidebar = ({ isOpen, onClose }) => {
         </button>
       </div>
 
-      <nav className="p-4 space-y-8">
+      <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-8">
         {menuSections.map((section, idx) => (
           <div key={idx}>
             <h3 className="px-4 mb-3 text-[11px] font-bold uppercase tracking-[2px] text-white/40">

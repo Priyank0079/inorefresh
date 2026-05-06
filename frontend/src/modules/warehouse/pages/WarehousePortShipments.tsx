@@ -6,12 +6,12 @@ import StatusBadge from '../../../components/common/StatusBadge';
 
 const WarehousePortShipments = () => {
   const { showToast } = useToast();
-  const [shipments, setShipments] = useState([]);
+  const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
-  const [selectedShipment, setSelectedShipment] = useState(null);
+  const [selectedShipment, setSelectedShipment] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deliveryData, setDeliveryData] = useState({
     vehicleType: 'Truck',
@@ -42,7 +42,7 @@ const WarehousePortShipments = () => {
     fetchShipments();
   }, []);
 
-  const handleUpdateDelivery = (shipment) => {
+  const handleUpdateDelivery = (shipment: any) => {
     setSelectedShipment(shipment);
     setDeliveryData({
       vehicleType: shipment.deliveryDetails?.vehicleType || 'Truck',
@@ -55,6 +55,10 @@ const WarehousePortShipments = () => {
   };
 
   const submitDeliveryUpdate = async () => {
+    if (!selectedShipment?._id) {
+      showToast('Please select a shipment first', 'error');
+      return;
+    }
     setSubmitting(true);
     try {
       const response = await updateDeliveryDetails(selectedShipment._id, deliveryData);
@@ -72,7 +76,7 @@ const WarehousePortShipments = () => {
     }
   };
 
-  const filteredShipments = shipments.filter(shipment => {
+  const filteredShipments = shipments.filter((shipment: any) => {
     const requirementId = shipment.requirementId?.requirementId || '';
     const fishName = shipment.requirementId?.fishName || '';
     const portName = shipment.portId?.portName || shipment.portId?.name || '';
@@ -86,7 +90,7 @@ const WarehousePortShipments = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-IN', {
       day: '2-digit',
@@ -144,14 +148,14 @@ const WarehousePortShipments = () => {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mb-4"></div>
                       <p className="text-sm font-medium">Loading shipments...</p>
                     </div>
                   </td>
                 </tr>
-              ) : filteredShipments.length > 0 ? filteredShipments.map((shipment) => (
+              ) : filteredShipments.length > 0 ? filteredShipments.map((shipment: any) => (
                 <tr key={shipment._id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <p className="text-sm font-bold text-teal-600">{shipment.requirementId?.requirementId}</p>
@@ -233,7 +237,7 @@ const WarehousePortShipments = () => {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400 font-medium">
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-medium">
                     <span className="material-icons-outlined text-4xl block mb-2 opacity-20">inventory_2</span>
                     No active port shipments found.
                   </td>
@@ -324,4 +328,3 @@ const WarehousePortShipments = () => {
 };
 
 export default WarehousePortShipments;
-

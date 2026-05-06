@@ -937,6 +937,7 @@ export default function DeliveryOrderDetail() {
                         </div>
                     </div>
                 </div>
+            )}
             {/* Floating Action Button for Status Updates */}
             {((!order.deliveryBoy) || (order.status === 'Picked up')) && (
                 <div className="fixed bottom-6 left-6 right-6 z-40">

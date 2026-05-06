@@ -154,9 +154,9 @@ const AdminWallet = lazy(() => import("./modules/admin/pages/AdminWallet"));
 const AdminBillingSettings = lazy(() => import("./modules/admin/pages/AdminBillingSettings"));
 
 // Lazy load port routes
-const PortRoutes = lazy(() => import("./modules/port/routes/portRoutes"));
-const PortLogin = lazy(() => import("./modules/port/pages/auth/PortLogin"));
-const PortSignup = lazy(() => import("./modules/port/pages/auth/PortSignup"));
+const PortRoutes = lazy(() => import("./modules/port/routes/portRoutes.jsx"));
+const PortLogin = lazy(() => import("./modules/port/pages/auth/PortLogin.jsx"));
+const PortSignup = lazy(() => import("./modules/port/pages/auth/PortSignup.jsx"));
 
 function App() {
   // Initialize push notifications on app load
