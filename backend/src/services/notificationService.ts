@@ -2,9 +2,20 @@ import Notification from "../models/Notification";
 import Admin from "../models/Admin";
 import Warehouse from "../models/Warehouse";
 import Customer from "../models/Customer";
+import HorecaUser from "../models/HorecaUser";
+import RetailerUser from "../models/RetailerUser";
 import Delivery from "../models/Delivery";
 import PortUser from "../models/PortUser";
 import { getIO } from "../socket/socketService";
+
+const getNotificationRoom = (recipientType: string, recipientId?: string) => {
+  if (recipientType === "Admin") return "admin-notifications";
+  if (recipientType === "Warehouse") return recipientId ? `warehouse-${recipientId}` : "warehouse-notifications";
+  if (recipientType === "Port") return recipientId ? `port-${recipientId}` : "port-notifications";
+  if (recipientType === "Delivery") return recipientId ? `delivery-${recipientId}` : "delivery-notifications";
+  if (recipientType === "Customer") return recipientId ? `customer-${recipientId}` : "customer-notifications";
+  return recipientId ? `${recipientType.toLowerCase()}-${recipientId}` : `${recipientType.toLowerCase()}-notifications`;
+};
 
 /**
  * Send notification to specific user
@@ -50,7 +61,7 @@ export const sendNotification = async (
   // Emit real-time notification via socket
   try {
     const io = getIO();
-    const room = recipientType === "Admin" ? "admin-notifications" : `${recipientType.toLowerCase()}-${recipientId}`;
+    const room = getNotificationRoom(recipientType, recipientId);
     io.to(room).emit("new-notification", notification);
   } catch (error) {
     console.error("Socket emission failed for notification:", error);
@@ -95,7 +106,13 @@ export const sendBroadcastNotification = async (
       break;
     case "Customer":
       const customers = await Customer.find().select("_id");
-      userIds = customers.map((c) => c._id.toString());
+      const horecaUsers = await HorecaUser.find().select("_id");
+      const retailerUsers = await RetailerUser.find().select("_id");
+      userIds = [
+        ...customers.map((c) => c._id.toString()),
+        ...horecaUsers.map((c) => c._id.toString()),
+        ...retailerUsers.map((c) => c._id.toString()),
+      ];
       break;
     case "Delivery":
       const deliveries = await Delivery.find().select("_id");
@@ -126,7 +143,7 @@ export const sendBroadcastNotification = async (
       // Emit real-time notification via socket
       try {
         const io = getIO();
-        const room = recipientType === "Admin" ? "admin-notifications" : `${recipientType.toLowerCase()}-${userId}`;
+        const room = getNotificationRoom(recipientType, userId);
         io.to(room).emit("new-notification", notification);
       } catch (error) {
         console.error("Socket emission failed for broadcast notification:", error);

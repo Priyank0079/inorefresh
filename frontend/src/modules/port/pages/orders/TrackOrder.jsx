@@ -4,6 +4,17 @@ import PageTitle from '../../components/common/PageTitle';
 import { getOfferById } from '../../../../services/api/portOfferService';
 import { useToast } from '../../../../context/ToastContext';
 
+const getWarehouseName = (warehouse) => {
+  if (!warehouse) return '';
+  if (typeof warehouse === 'string') return warehouse;
+  return warehouse.warehouseName || warehouse.storeName || warehouse.name || '';
+};
+
+const getWarehouseAddress = (warehouse) => {
+  if (!warehouse || typeof warehouse === 'string') return '';
+  return warehouse.address || [warehouse.city, warehouse.state].filter(Boolean).join(', ');
+};
+
 const TrackOrder = () => {
   const { id } = useParams();
   const { showToast } = useToast();
@@ -106,7 +117,11 @@ const TrackOrder = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-12">
           <div>
             <h3 className="text-xl font-bold text-slate-800">Order #{order.requirementId?.requirementId || 'N/A'}</h3>
-            <p className="text-sm text-slate-500">{order.requirementId?.fishName} ({order.quantityOffered} KG) • {order.warehouseId?.warehouseName || order.warehouseId?.name}</p>
+            <p className="text-sm text-slate-500">
+              {order.requirementId?.fishName}
+              {order.quantityOffered ? ` (${order.quantityOffered} KG)` : ''}
+              {getWarehouseName(order.warehouseId) ? ` • ${getWarehouseName(order.warehouseId)}` : ''}
+            </p>
           </div>
           <div className="bg-teal-50 px-4 py-2 rounded-xl border border-teal-100">
             <p className="text-[10px] font-bold text-teal-600 uppercase tracking-widest mb-1">Expected Delivery</p>
@@ -166,7 +181,7 @@ const TrackOrder = () => {
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Warehouse Address</h4>
             <div className="bg-slate-50 rounded-lg p-4 flex items-center gap-3">
               <span className="material-icons-outlined text-teal-600">location_on</span>
-              <p className="text-sm font-medium text-slate-700">{order.warehouseId?.address}, {order.warehouseId?.city}</p>
+              <p className="text-sm font-medium text-slate-700">{getWarehouseAddress(order.warehouseId) || 'N/A'}</p>
             </div>
           </div>
         </div>

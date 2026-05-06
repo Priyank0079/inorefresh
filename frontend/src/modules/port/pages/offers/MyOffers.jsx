@@ -13,6 +13,19 @@ const formatDate = (dateString) => {
   });
 };
 
+const getWarehouseName = (warehouse) => {
+  if (!warehouse) return 'N/A';
+  if (typeof warehouse === 'string') return `ID: ${warehouse}`;
+
+  return (
+    warehouse.warehouseName ||
+    warehouse.name ||
+    warehouse.storeName ||
+    warehouse.title ||
+    'Unknown Warehouse'
+  );
+};
+
 const MyOffers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,8 +59,8 @@ const MyOffers = () => {
 
   return (
     <div className="space-y-6">
-      <PageTitle 
-        title="My Offers" 
+      <PageTitle
+        title="My Offers"
         subtitle="Track and manage all your submitted offers"
       />
 
@@ -70,7 +83,7 @@ const MyOffers = () => {
                 <tr key={offer._id} className="hover:bg-slate-50 transition-colors group">
                   <td className="px-6 py-4 text-sm font-bold text-teal-600">OFF-{offer._id.slice(-4).toUpperCase()}</td>
                   <td className="px-6 py-4 text-sm font-medium text-slate-600">{offer.requirementId?.requirementId || 'N/A'}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-slate-800">{offer.warehouseId?.warehouseName || 'N/A'}</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-slate-800">{getWarehouseName(offer.warehouseId)}</td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-bold text-slate-800">{offer.requirementId?.fishName || 'N/A'}</p>
                     <p className="text-xs text-slate-500">{offer.quantityOffered} KG @ ₹{offer.offeredPrice}/kg</p>
@@ -81,7 +94,7 @@ const MyOffers = () => {
                   <td className="px-6 py-4 text-sm text-slate-500">{formatDate(offer.createdAt)}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button 
+                      <button
                         onClick={() => navigate(`/port/offers/negotiations`)}
                         className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all"
                       >

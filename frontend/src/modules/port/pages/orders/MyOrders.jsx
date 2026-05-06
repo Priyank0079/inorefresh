@@ -5,6 +5,12 @@ import StatusBadge from '../../components/common/StatusBadge';
 import { getPortOrders, updateDeliveryDetails } from '../../../../services/api/portOfferService';
 import { useToast } from '../../../../context/ToastContext';
 
+const getWarehouseName = (warehouse) => {
+  if (!warehouse) return '';
+  if (typeof warehouse === 'string') return warehouse;
+  return warehouse.warehouseName || warehouse.storeName || warehouse.name || '';
+};
+
 const MyOrders = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -97,7 +103,7 @@ const MyOrders = () => {
 
   const filteredOrders = orders.filter(order => {
     const requirementId = order.requirementId?.requirementId || '';
-    const warehouseName = order.warehouseId?.warehouseName || '';
+    const warehouseName = getWarehouseName(order.warehouseId);
     const fishName = order.requirementId?.fishName || '';
     
     const matchesSearch = requirementId.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -202,7 +208,7 @@ const MyOrders = () => {
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-500 font-medium">{formatDate(order.createdAt)}</td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-semibold text-slate-800">{order.warehouseId?.name}</p>
+                    <p className="text-sm font-semibold text-slate-800">{getWarehouseName(order.warehouseId) || 'N/A'}</p>
                     <p className="text-[10px] text-slate-400 font-bold uppercase">{order.warehouseId?.city}, {order.warehouseId?.state}</p>
                   </td>
                   <td className="px-6 py-4">
@@ -300,7 +306,7 @@ const MyOrders = () => {
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase">Warehouse</p>
-                  <p className="text-sm font-bold text-slate-800">{selectedOrder.warehouseId?.warehouseName || selectedOrder.warehouseId?.name}</p>
+                  <p className="text-sm font-bold text-slate-800">{getWarehouseName(selectedOrder.warehouseId) || 'N/A'}</p>
                   <p className="text-[10px] text-slate-500">{selectedOrder.warehouseId?.address || (selectedOrder.warehouseId?.city + ', ' + selectedOrder.warehouseId?.state)}</p>
                 </div>
                 <div>

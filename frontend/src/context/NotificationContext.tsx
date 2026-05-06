@@ -43,6 +43,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (user.userType === 'Warehouse') modulePrefix = 'warehouse';
       if (user.userType === 'Port') modulePrefix = 'port';
       if (user.userType === 'Delivery') modulePrefix = 'delivery';
+      if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') modulePrefix = 'customer';
       
       const response = await api.get(`/${modulePrefix}/notifications`);
       
@@ -64,6 +65,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       let modulePrefix = 'admin';
       if (user.userType === 'Warehouse') modulePrefix = 'warehouse';
       if (user.userType === 'Port') modulePrefix = 'port';
+      if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') modulePrefix = 'customer';
       
       const response = await api.patch(`/${modulePrefix}/notifications/${id}/read`);
       
@@ -92,6 +94,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         method = 'patch';
       } else if (user.userType === 'Warehouse') {
         endpoint = '/warehouse/notifications/mark-all-read';
+        method = 'patch';
+      } else if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') {
+        endpoint = '/customer/notifications/mark-all-read';
         method = 'patch';
       }
       
@@ -130,6 +135,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           newSocket.emit('join-warehouse-room', userId);
         } else if (user.userType === 'Port') {
           newSocket.emit('join-port-room', userId);
+        } else if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') {
+          newSocket.emit('join-customer-room', userId);
         } else if (user.userType === 'Delivery') {
           newSocket.emit('join-delivery-notifications', userId);
         }

@@ -10,8 +10,11 @@ export interface PortOffer {
   portId: string;
   warehouseId: {
     _id: string;
-    name: string;
-    location: string;
+    warehouseName?: string;
+    name?: string;
+    storeName?: string;
+    address?: string;
+    location?: string;
     city: string;
     state: string;
   };

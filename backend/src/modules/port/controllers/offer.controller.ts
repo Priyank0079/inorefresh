@@ -19,7 +19,7 @@ export const getMyNegotiations = asyncHandler(async (req: Request, res: Response
     status: { $in: ['pending', 'countered', 'negotiating'] }
   })
     .populate('requirementId')
-    .populate('warehouseId', 'name location city state')
+    .populate('warehouseId', 'warehouseName name storeName address location city state')
     .sort({ updatedAt: -1 });
 
   return res.status(200).json({
@@ -39,7 +39,7 @@ export const getMyOrders = asyncHandler(async (req: Request, res: Response) => {
     status: 'approved'
   })
     .populate('requirementId')
-    .populate('warehouseId', 'warehouseName managerName mobile address location')
+    .populate('warehouseId', 'warehouseName name storeName managerName mobile address location city state')
     .sort({ updatedAt: -1 });
 
   return res.status(200).json({
@@ -57,7 +57,7 @@ export const getOfferById = asyncHandler(async (req: Request, res: Response) => 
 
   const offer = await PortOffer.findOne({ _id: offerId, portId })
     .populate('requirementId')
-    .populate('warehouseId', 'warehouseName managerName mobile address location');
+    .populate('warehouseId', 'warehouseName name storeName managerName mobile address location city state');
 
   if (!offer) {
     return res.status(404).json({ success: false, message: "Offer not found" });

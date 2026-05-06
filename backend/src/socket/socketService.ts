@@ -226,6 +226,19 @@ export const initializeSocket = (httpServer: HttpServer) => {
             });
         });
 
+        socket.on('join-customer-room', (customerId: string) => {
+            const normalizedCustomerId = String(customerId).trim();
+            console.log(`👤 Customer ${normalizedCustomerId} joined notifications room`);
+            socket.join(`customer-notifications`);
+            socket.join(`customer-${normalizedCustomerId}`);
+
+            socket.emit('joined-customer-room', {
+                success: true,
+                message: 'Successfully joined customer notifications room',
+                customerId: normalizedCustomerId
+            });
+        });
+
         // Admin joins notification room
         socket.on('join-admin-room', () => {
             console.log(`👑 Admin joined notifications room`);

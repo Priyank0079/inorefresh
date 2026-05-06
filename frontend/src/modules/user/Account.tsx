@@ -2,19 +2,23 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { getProfile, updateProfile, CustomerProfile } from '../../services/api/customerService';
 import { uploadImage } from '../../services/api/uploadService';
 
 export default function Account() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
   const { user, logout: authLogout, updateUser } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const [showGstModal, setShowGstModal] = useState(false);
   const [gstNumber, setGstNumber] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -43,6 +47,25 @@ export default function Account() {
       setLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleNotificationClick = (notification: any) => {
+    markAsRead(notification._id);
+    if (notification.link) {
+      navigate(notification.link);
+    }
+    setShowNotifications(false);
+  };
 
   const handleImageClick = () => {
     fileInputRef.current?.click();
@@ -151,9 +174,65 @@ export default function Account() {
       <div className="bg-gradient-to-b from-teal-600 to-teal-700 pb-20 pt-10 rounded-b-[40px] shadow-lg relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none" />
         <div className="px-6 relative z-10">
-          <button onClick={() => navigate(-1)} className="mb-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-all backdrop-blur-md">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18L9 12L15 6" /></svg>
-          </button>
+          <div className="mb-6 flex items-center justify-between">
+            <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-all backdrop-blur-md">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18L9 12L15 6" /></svg>
+            </button>
+
+            <div className="relative" ref={notificationsRef}>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-all backdrop-blur-md relative"
+                aria-label="Notifications"
+              >
+                <span className="material-icons-outlined text-[18px]">notifications</span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-rose-500 text-white text-[10px] flex items-center justify-center rounded-full font-bold border-2 border-white">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 max-w-[85vw] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                    <p className="text-sm font-bold text-gray-900">Notifications</p>
+                    {unreadCount > 0 && (
+                      <button onClick={markAllAsRead} className="text-[10px] font-bold text-teal-600 hover:underline">
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-6 text-center text-gray-400 text-sm">
+                        No notifications
+                      </div>
+                    ) : (
+                      notifications.map((notification: any) => (
+                        <button
+                          key={notification._id}
+                          onClick={() => handleNotificationClick(notification)}
+                          className={`w-full text-left px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 flex gap-3 ${!notification.isRead ? 'bg-teal-50/30' : ''}`}
+                        >
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notification.type === 'Success' ? 'bg-emerald-100 text-emerald-600' : notification.type === 'Error' ? 'bg-rose-100 text-rose-600' : 'bg-teal-100 text-teal-600'}`}>
+                            <span className="material-icons-outlined text-sm">
+                              {notification.type === 'Order' ? 'shopping_bag' : 'notifications'}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs truncate ${!notification.isRead ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'}`}>{notification.title}</p>
+                            <p className="text-[10px] text-gray-500 line-clamp-2">{notification.message}</p>
+                          </div>
+                          {!notification.isRead && <div className="w-2 h-2 mt-2 rounded-full bg-teal-500" />}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="flex flex-col items-center">
             <div className="relative mb-6">
