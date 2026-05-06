@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminGetAllPortOffers, adminCounterPortOffer, adminConfirmPortOffer } from '../../../services/api/adminPortService';
 import { useToast } from '../../../context/ToastContext';
+import { useNotifications } from '../../../context/NotificationContext';
 import StatusBadge from '../../../components/common/StatusBadge';
 import PageTitle from '../../../components/common/PageTitle';
 
@@ -13,6 +14,7 @@ export default function AdminPortNegotiations() {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { showToast } = useToast();
+  const { notifications } = useNotifications();
 
   const fetchOffers = useCallback(async () => {
     setLoading(true);
@@ -25,9 +27,10 @@ export default function AdminPortNegotiations() {
     setLoading(false);
   }, [showToast]);
 
+  // Initial fetch and auto-refresh when new notifications arrive
   useEffect(() => {
     fetchOffers();
-  }, [fetchOffers]);
+  }, [fetchOffers, notifications.length]);
 
   const handleCounter = async () => {
     if (!counterPrice || isNaN(Number(counterPrice))) {

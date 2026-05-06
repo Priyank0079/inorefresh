@@ -65,7 +65,13 @@ export const getNotifications = asyncHandler(
 
     const query: any = {};
 
-    if (recipientType) query.recipientType = recipientType;
+    if (recipientType) {
+      query.recipientType = recipientType;
+    } else {
+      // By default, Admin should only see notifications addressed to Admin or All
+      query.recipientType = { $in: ["Admin", "All"] };
+    }
+    
     if (recipientId) query.recipientId = recipientId;
     if (isRead !== undefined) query.isRead = isRead === "true";
     if (type) query.type = type;

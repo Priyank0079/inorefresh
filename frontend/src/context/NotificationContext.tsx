@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useAuth } from './AuthContext';
 import api, { getSocketBaseURL } from '../services/api/config';
 import { io, Socket } from 'socket.io-client';
+import { useToast } from './ToastContext';
 
 interface Notification {
   _id: string;
@@ -26,6 +27,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, token } = useAuth();
+  const { showToast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -137,6 +139,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         console.log('New real-time notification received:', notification);
         setNotifications(prev => [notification, ...prev]);
         setUnreadCount(prev => prev + 1);
+        
+        // Show a toast when a new notification is received
+        showToast(notification.title, 'info');
       });
 
       setSocket(newSocket);
