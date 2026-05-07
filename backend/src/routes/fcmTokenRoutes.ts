@@ -6,6 +6,7 @@ import Warehouse from "../models/Warehouse";
 import Delivery from "../models/Delivery";
 import HorecaUser from "../models/HorecaUser";
 import RetailerUser from "../models/RetailerUser";
+import PortUser from "../models/PortUser";
 
 const router = Router();
 
@@ -57,6 +58,9 @@ router.post("/save", async (req: Request, res: Response): Promise<void> => {
         break;
       case "retailer":
         UserModel = RetailerUser;
+        break;
+      case "Port":
+        UserModel = PortUser;
         break;
       default:
         res.status(400).json({
@@ -177,6 +181,9 @@ router.delete("/remove", async (req: Request, res: Response): Promise<void> => {
       case "retailer":
         UserModel = (await import("../models/RetailerUser")).default;
         break;
+      case "Port":
+        UserModel = (await import("../models/PortUser")).default;
+        break;
       default:
         res.status(400).json({
           success: false,
@@ -261,6 +268,9 @@ router.post("/test", async (req: Request, res: Response): Promise<void> => {
         break;
       case "retailer":
         UserModel = (await import("../models/RetailerUser")).default;
+        break;
+      case "Port":
+        UserModel = (await import("../models/PortUser")).default;
         break;
       default:
         res.status(400).json({

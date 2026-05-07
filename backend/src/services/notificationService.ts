@@ -7,6 +7,7 @@ import RetailerUser from "../models/RetailerUser";
 import Delivery from "../models/Delivery";
 import PortUser from "../models/PortUser";
 import { getIO } from "../socket/socketService";
+import { sendNotificationToUser } from "./firebaseAdmin";
 
 const getNotificationRoom = (recipientType: string, recipientId?: string) => {
   if (recipientType === "Admin") return "admin-notifications";
@@ -65,6 +66,28 @@ export const sendNotification = async (
     io.to(room).emit("new-notification", notification);
   } catch (error) {
     console.error("Socket emission failed for notification:", error);
+  }
+
+  // Send Firebase push notification for a single recipient when possible.
+  // Broadcast notifications are handled separately below.
+  if (recipientId) {
+    try {
+      await sendNotificationToUser(recipientId, recipientType as any, {
+        title,
+        body: message,
+        data: {
+          notificationId: notification._id.toString(),
+          recipientType,
+          link: options?.link || "",
+          actionLabel: options?.actionLabel || "",
+          type: options?.type || "Info",
+        },
+      }, true);
+      notification.sentAt = new Date();
+      await notification.save();
+    } catch (error) {
+      console.error("Firebase push send failed for notification:", error);
+    }
   }
 
   return notification;
@@ -147,6 +170,24 @@ export const sendBroadcastNotification = async (
         io.to(room).emit("new-notification", notification);
       } catch (error) {
         console.error("Socket emission failed for broadcast notification:", error);
+      }
+
+      try {
+        await sendNotificationToUser(userId, recipientType as any, {
+          title,
+          body: message,
+          data: {
+            notificationId: notification._id.toString(),
+            recipientType,
+            link: options?.link || "",
+            actionLabel: options?.actionLabel || "",
+            type: options?.type || "Info",
+          },
+        }, true);
+        notification.sentAt = new Date();
+        await notification.save();
+      } catch (error) {
+        console.error("Firebase push send failed for broadcast notification:", error);
       }
 
       return notification;

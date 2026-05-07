@@ -11,6 +11,7 @@ export interface IPortUser extends Document {
   userType: 'Port';
   profileImage?: string;
   fcmTokens?: string[];
+  fcmTokenMobile?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,6 +67,10 @@ const PortUserSchema = new Schema<IPortUser>(
       default: 'Port',
     },
     fcmTokens: {
+      type: [String],
+      default: [],
+    },
+    fcmTokenMobile: {
       type: [String],
       default: [],
     },

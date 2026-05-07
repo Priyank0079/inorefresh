@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import InwardStock from "../../../models/InwardStock";
 import PortRequirement from "../../../models/PortRequirement";
 import { asyncHandler } from "../../../utils/asyncHandler";
+import { sendBroadcastNotification } from "../../../services/notificationService";
 
 /**
  * Get all inward stock for a warehouse
@@ -140,6 +141,22 @@ export const addInwardStock = asyncHandler(async (req: Request, res: Response) =
       });
     } catch (socketErr) {
       console.error("Socket emission failed:", socketErr);
+    }
+
+    // Create persistent notifications and push alerts for all Port users
+    try {
+      await sendBroadcastNotification(
+        'Port',
+        'New Requirement Available',
+        `A new requirement for ${req.body.productName} has been created by a warehouse.`,
+        {
+          type: 'Info',
+          link: '/port/requirements',
+          priority: 'High',
+        }
+      );
+    } catch (notificationErr) {
+      console.error("Failed to create Port notification:", notificationErr);
     }
   } catch (err) {
     console.error("Error creating PortRequirement:", err);
