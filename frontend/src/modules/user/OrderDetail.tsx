@@ -7,7 +7,7 @@ import { OrderStatus } from "../../types/order";
 import GoogleMapsTracking from "../../components/GoogleMapsTracking";
 import { useDeliveryTracking } from "../../hooks/useDeliveryTracking";
 import DeliveryPartnerCard from "../../components/DeliveryPartnerCard";
-import { cancelOrder, updateOrderNotes, getSellerLocationsForOrder, refreshDeliveryOtp } from "../../services/api/customerOrderService";
+import { cancelOrder, updateOrderNotes, getSellerLocationsForOrder } from "../../services/api/customerOrderService";
 import { parseWeight } from "../../utils/cartUtils";
 
 // Icon Components
@@ -604,24 +604,6 @@ export default function OrderDetail() {
     }
     // Add a small delay for the animation
     setTimeout(() => setIsRefreshing(false), 500);
-  };
-
-  const handleRefreshOtp = async () => {
-    if (!id || isRefreshing) return;
-    setIsRefreshing(true);
-    try {
-      await refreshDeliveryOtp(id);
-      // Re-fetch order to get updated OTP and expiry
-      const fetchedOrder = await fetchOrderById(id);
-      if (fetchedOrder) {
-        setOrder(fetchedOrder);
-        setOrderStatus(fetchedOrder.status);
-      }
-    } catch (error) {
-      console.error("Failed to refresh OTP:", error);
-    } finally {
-      setIsRefreshing(false);
-    }
   };
 
   const handleShare = async () => {

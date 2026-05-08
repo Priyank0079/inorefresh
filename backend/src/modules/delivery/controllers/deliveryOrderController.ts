@@ -228,6 +228,7 @@ export const getOrderDetails = asyncHandler(
       deliveryEarning: commission ? commission.commissionAmount : 0,
       deliveryBoy: order.deliveryBoy,
       warehousePickups: order.warehousePickups || [],
+      deliveryOtpSentAt: order.deliveryOtpSentAt || null,
     };
 
     return res.status(200).json({
@@ -483,8 +484,19 @@ export const sendDeliveryOtp = asyncHandler(
         });
     }
 
+    if (order.deliveryOtpSentAt) {
+      return res.status(200).json({
+        success: true,
+        message: "Delivery OTP has already been sent for this order.",
+        alreadySent: true,
+      });
+    }
+
     try {
       const result = await generateDeliveryOtp(id);
+
+      order.deliveryOtpSentAt = new Date();
+      await order.save();
 
       // Emit otp-sent event to delivery boy
       const io = (req.app as any).get("io");
@@ -499,6 +511,7 @@ export const sendDeliveryOtp = asyncHandler(
       return res.status(200).json({
         success: true,
         message: result.message,
+        alreadySent: false,
       });
     } catch (error: any) {
       return res.status(400).json({

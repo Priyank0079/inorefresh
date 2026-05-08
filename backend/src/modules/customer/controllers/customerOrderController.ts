@@ -10,7 +10,7 @@ import Warehouse from "../../../models/Warehouse";
 import mongoose from "mongoose";
 import { calculateDistance } from "../../../utils/locationHelper";
 import { notifyWarehousesOfOrderUpdate } from "../../../services/warehouseNotificationService";
-import { generateDeliveryOtp, getOrCreateDeliveryOtp } from "../../../services/deliveryOtpService";
+import { getOrCreateDeliveryOtp } from "../../../services/deliveryOtpService";
 import AppSettings from "../../../models/AppSettings";
 import { getRoadDistances } from "../../../services/mapService";
 import { Server as SocketIOServer } from "socket.io";
@@ -18,6 +18,26 @@ import { getOrderItemCommissionRate } from "../../../services/commissionService"
 import WalletTransaction from "../../../models/WalletTransaction";
 import { findNearestWarehouseWithStock } from "../../../services/warehouseFulfillmentService";
 import { calculateItemPrice } from "../../../utils/priceUtils";
+
+/**
+ * Ensure an order has a stable delivery OTP stored on the order itself.
+ * This keeps older orders compatible and prevents any refresh-time fallback churn.
+ */
+async function ensureOrderDeliveryOtp(order: any): Promise<string | null> {
+    if (!order) return null;
+
+    if (order.deliveryOtp && String(order.deliveryOtp).trim()) {
+        return String(order.deliveryOtp).trim();
+    }
+
+    const customerOtp = await getOrCreateDeliveryOtp(order.customer.toString());
+    if (!customerOtp) return null;
+
+    order.deliveryOtp = customerOtp;
+    await order.save();
+
+    return customerOtp;
+}
 
 
 // Create a new order
@@ -121,6 +141,10 @@ export const createOrder = async (req: Request, res: Response) => {
             });
         }
 
+        // Capture the customer's permanent OTP once so this order always shows the same code.
+        // This prevents the OTP from changing on page refresh or later profile updates.
+        const customerDeliveryOtp = await getOrCreateDeliveryOtp(userId);
+
         // Validate delivery address location
         // Handle both string and number types, and check for null/undefined (not truthy, since 0 is valid)
         const deliveryLat = address.latitude != null
@@ -159,6 +183,7 @@ export const createOrder = async (req: Request, res: Response) => {
             customerName: buyer.name || buyer.shopName || buyer.ownerName,
             customerEmail: buyer.email || "",
             customerPhone: buyer.phone || buyer.shopPhone || buyer.ownerPhone,
+            deliveryOtp: customerDeliveryOtp || undefined,
             deliveryAddress: {
                 address: address.address || address.street || 'N/A',
                 city: address.city || 'N/A',
@@ -695,11 +720,9 @@ export const getOrderById = async (req: Request, res: Response) => {
             });
         }
 
-        // Get buyer's permanent delivery OTP using self-healing helper
-        const deliveryOtp = await getOrCreateDeliveryOtp(userId);
-
         // Transform order to match frontend Order type
         const orderObj = order.toObject();
+        const deliveryOtp = await ensureOrderDeliveryOtp(order);
         const transformedOrder = {
             ...orderObj,
             id: orderObj._id.toString(),
@@ -750,20 +773,28 @@ export const refreshDeliveryOtp = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: "Order is already delivered" });
         }
 
-        // Generate and send new OTP
-        const result = await generateDeliveryOtp(id);
+        const customerOtp = await ensureOrderDeliveryOtp(order);
+        if (!customerOtp) {
+            return res.status(400).json({ success: false, message: "Customer delivery OTP not found" });
+        }
 
         // Emit socket event if needed (customer room)
         const io = (req.app as any).get("io");
         if (io) {
             io.to(`order-${id}`).emit('delivery-otp-refreshed', {
                 orderId: id,
-                deliveryOtp: order.deliveryOtp, // The service saves it to the order
-                expiresAt: order.deliveryOtpExpiresAt
+                deliveryOtp: customerOtp,
+                expiresAt: order.deliveryOtpExpiresAt || null
             });
         }
 
-        return res.status(200).json(result);
+        return res.status(200).json({
+            success: true,
+            message: "Delivery OTP loaded successfully",
+            data: {
+                deliveryOtp: customerOtp,
+            }
+        });
     } catch (error: any) {
         console.error('Error refreshing delivery OTP:', error);
         return res.status(500).json({

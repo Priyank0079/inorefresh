@@ -98,6 +98,7 @@ export default function DeliveryOrderDetail() {
     const [otpValue, setOtpValue] = useState('');
     const [otpSending, setOtpSending] = useState(false);
     const [otpVerifying, setOtpVerifying] = useState(false);
+    const [otpAlreadySent, setOtpAlreadySent] = useState(false);
     const locationIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const [deliveryBoyLocation, setDeliveryBoyLocation] = useState<{ lat: number; lng: number } | undefined>(undefined);
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -111,6 +112,7 @@ export default function DeliveryOrderDetail() {
     // New state for customer proximity
     const [customerProximity, setCustomerProximity] = useState<{ withinRange: boolean; distance: number } | null>(null);
     const [getOtpEnabled, setGetOtpEnabled] = useState(false);
+    const canSendOtp = getOtpEnabled && !otpSending && !otpAlreadySent;
 
     const fetchOrder = async () => {
         if (!id) return;
@@ -118,6 +120,7 @@ export default function DeliveryOrderDetail() {
             setLoading(true);
             const data = await getOrderDetails(id);
             setOrder(data);
+            setOtpAlreadySent(Boolean(data?.deliveryOtpSentAt));
         } catch (err: any) {
             setError(err.message || 'Failed to load order details');
         } finally {
@@ -168,10 +171,20 @@ export default function DeliveryOrderDetail() {
 
     const handleSendOtp = async () => {
         if (!id) return;
+        if (otpAlreadySent || order?.deliveryOtpSentAt) {
+            alert('Delivery OTP has already been sent for this order.');
+            return;
+        }
         try {
             setOtpSending(true);
-            await sendDeliveryOtp(id);
+            const response = await sendDeliveryOtp(id);
+            if (response?.alreadySent) {
+                setOtpAlreadySent(true);
+                alert(response.message || 'Delivery OTP has already been sent for this order.');
+                return;
+            }
             setShowOtpInput(true);
+            setOtpAlreadySent(true);
             alert('OTP sent to customer successfully');
         } catch (err: any) {
             alert(err.message || 'Failed to send OTP');
@@ -906,13 +919,19 @@ export default function DeliveryOrderDetail() {
                             {!showOtpInput ? (
                                 <button
                                     onClick={handleSendOtp}
-                                    disabled={!getOtpEnabled || otpSending}
-                                    className={`flex-1 py-3 rounded-xl font-semibold transition-all ${getOtpEnabled && !otpSending
+                                    disabled={!getOtpEnabled || otpSending || otpAlreadySent}
+                                    className={`flex-1 py-3 rounded-xl font-semibold transition-all ${canSendOtp
                                             ? 'bg-green-600 text-white hover:bg-green-700 active:scale-[0.98]'
                                             : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
                                         }`}
                                 >
-                                    {otpSending ? 'Sending...' : getOtpEnabled ? 'Get OTP' : 'Move within 500m to get OTP'}
+                                    {otpSending
+                                        ? 'Sending...'
+                                        : otpAlreadySent
+                                            ? 'OTP already sent'
+                                            : getOtpEnabled
+                                                ? 'Get OTP'
+                                                : 'Move within 500m to get OTP'}
                                 </button>
                             ) : (
                                 <>
