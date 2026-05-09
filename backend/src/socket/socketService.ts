@@ -58,6 +58,9 @@ export const initializeSocket = (httpServer: HttpServer) => {
                     const defaultOrigins = [
                         "https://www.dhakadsnazzy.com",
                         "https://dhakadsnazzy.com",
+                        "https://app.inorfresh.com",
+                        "https://www.inorfresh.com",
+                        "https://inorfresh.com",
                     ];
 
                     const allAllowedOrigins = allowedOrigins.length > 0

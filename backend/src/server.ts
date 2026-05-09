@@ -22,6 +22,9 @@ const httpServer = createServer(app);
 const allowedOrigins = [
   "https://www.dhakadsnazzy.com",
   "https://dhakadsnazzy.com",
+  "https://app.inorfresh.com",
+  "https://www.inorfresh.com",
+  "https://inorfresh.com",
   ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",").map(url => url.trim()) : [])
 ];
 

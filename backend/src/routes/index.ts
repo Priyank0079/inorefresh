@@ -105,6 +105,7 @@ router.use("/customer", customerRoutes);
 
 // Warehouse
 router.use("/warehouse/dashboard", dashboardRoutes);
+router.use("/warehouse", dashboardRoutes); // Alias for notifications and other dashboard routes
 router.use("/warehouses", warehouseRoutes);
 
 // Admin
