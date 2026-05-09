@@ -7,7 +7,7 @@ import { sendPortOTP, verifyPortOTP } from '@/services/api/auth/portAuthService'
 export default function PortLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [mobileNumber, setMobileNumber] = useState('9111966732');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [showOTP, setShowOTP] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
