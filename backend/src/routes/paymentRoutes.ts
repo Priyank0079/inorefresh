@@ -9,7 +9,7 @@ const router = Router();
 /**
  * Create Razorpay order for payment
  */
-router.post('/create-order', authenticate, requireUserType('Customer'), async (req: Request, res: Response) => {
+router.post('/create-order', authenticate, requireUserType('Customer', 'horeca', 'retailer'), async (req: Request, res: Response) => {
     try {
         const { orderId } = req.body;
 
@@ -55,7 +55,7 @@ router.post('/create-order', authenticate, requireUserType('Customer'), async (r
 /**
  * Verify payment after Razorpay checkout
  */
-router.post('/verify', authenticate, requireUserType('Customer'), async (req: Request, res: Response) => {
+router.post('/verify', authenticate, requireUserType('Customer', 'horeca', 'retailer'), async (req: Request, res: Response) => {
     try {
         const { orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
 

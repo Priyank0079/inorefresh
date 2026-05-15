@@ -145,9 +145,9 @@ export default function Checkout() {
   const isPlaceholderUser =
     !userName.trim() || userName === "User";
   
-  const isPendingUser = user?.status === "Pending";
+  const isPendingUser = false;
   const isInactiveUser = user?.status === "Inactive";
-  const isAllowedToOrder = user?.status === "Active" || !user?.status; // Default to true if status missing for backward compatibility
+  const isAllowedToOrder = true; // Bypassing admin approval as requested
 
   // Redirect if empty
   useEffect(() => {
@@ -2549,16 +2549,7 @@ export default function Checkout() {
         </SheetContent>
       </Sheet>
 
-      {/* User Status Warning */}
-      {!isAllowedToOrder && (
-        <div className="fixed bottom-[48px] left-0 right-0 bg-amber-50 border-t border-amber-200 px-4 py-2 z-[60]">
-          <p className="text-[10px] text-amber-700 font-medium text-center">
-            {isPendingUser 
-              ? "Your account is pending admin approval. You can place orders once approved." 
-              : "Your account is currently inactive. Please contact support."}
-          </p>
-        </div>
-      )}
+      {/* User Status Warning Removed */}
 
       {/* Bottom Sticky Button */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-[60] shadow-lg">
@@ -2572,7 +2563,7 @@ export default function Checkout() {
               }`}
             style={cart.items.length > 0 && isMinWeightMet && isAllowedToOrder ? { backgroundColor: currentTheme.primary[3] } : {}}
           >
-            {isPendingUser ? "Awaiting Approval" : isInactiveUser ? "Account Inactive" : "Place Order"}
+            {isInactiveUser ? "Account Inactive" : "Place Order"}
           </button>
         ) : (
           <button

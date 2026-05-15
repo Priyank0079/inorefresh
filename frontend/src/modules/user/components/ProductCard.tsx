@@ -113,12 +113,14 @@ export default function ProductCard({
       ? String((product as any).category.image)
       : '';
   const categoryImageFromProductData = product.categoryData?.imageUrl || '';
+  // Always prioritize the product's own image (uploaded from warehouse).
+  // Only fall back to category image → fish fallback if the product has no image.
   const productImageSrc =
-    (fishCategoryKey
-      ? (categoryImageFromApi || categoryImageFromProductData || FISH_CATEGORY_FALLBACK_IMAGES[fishCategoryKey])
-      : '') ||
     product.imageUrl ||
-    product.mainImage;
+    product.mainImage ||
+    categoryImageFromApi ||
+    categoryImageFromProductData ||
+    (fishCategoryKey ? FISH_CATEGORY_FALLBACK_IMAGES[fishCategoryKey] : '');
 
   const isFish = isFishProduct(product);
   const isMarineCategoryImage = fishCategoryKey === 'marine';
@@ -268,13 +270,19 @@ export default function ProductCard({
                 const parent = target.parentElement;
                 if (parent && !parent.querySelector('.fallback-icon')) {
                   const fallback = document.createElement('div');
-                  fallback.className = 'w-full h-full flex items-center justify-center bg-gray-50 text-3xl font-bold text-gray-200';
+                  fallback.className = 'w-full h-full flex items-center justify-center bg-gray-50 text-3xl font-bold text-gray-200 fallback-icon';
                   fallback.textContent = (product.name || product.productName || '?').charAt(0).toUpperCase();
                   parent.appendChild(fallback);
                 }
                 return;
               }
               target.dataset.triedFallback = 'true';
+              // Try category image first, then static fish fallback
+              const catImg = categoryImageFromApi || categoryImageFromProductData;
+              if (catImg) {
+                target.src = catImg;
+                return;
+              }
               const fallbackFishCategoryKey = getFishCategoryKey(product);
               if (fallbackFishCategoryKey) {
                 target.src = FISH_CATEGORY_FALLBACK_IMAGES[fallbackFishCategoryKey];

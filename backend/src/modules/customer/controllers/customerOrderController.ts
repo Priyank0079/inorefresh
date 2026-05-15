@@ -128,24 +128,9 @@ export const createOrder = async (req: Request, res: Response) => {
             });
         }
 
-        // Check user approval status
-        if (buyer.status !== 'Active') {
-            if (session) await session.abortTransaction();
-            const statusMessage = buyer.status === 'Pending' 
-                ? "Your account is pending admin approval. You can place orders once approved."
-                : "Your account is currently inactive. Please contact support.";
-            
-            return res.status(403).json({
-                success: false,
-                message: statusMessage,
-            });
-        }
-
         // Capture the customer's permanent OTP once so this order always shows the same code.
         // This prevents the OTP from changing on page refresh or later profile updates.
         const customerDeliveryOtp = await getOrCreateDeliveryOtp(userId);
-
-        // Validate delivery address location
         // Handle both string and number types, and check for null/undefined (not truthy, since 0 is valid)
         const deliveryLat = address.latitude != null
             ? (typeof address.latitude === 'number' ? address.latitude : parseFloat(address.latitude))

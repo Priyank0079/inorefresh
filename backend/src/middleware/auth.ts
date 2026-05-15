@@ -90,12 +90,14 @@ export const requireUserType = (...userTypes: AuthUserType[]) => {
       return;
     }
 
-    if (!userTypes.includes(req.user.userType as any) && !userTypes.includes(req.user.userType)) {
-      // Support for both old and new types if needed during transition, 
-      // but we'll stick to the new types.
+    let currentUserType = req.user.userType;
+
+    // Fallback for legacy tokens that might not have userType
+    if (!currentUserType && userTypes.includes('Customer')) {
+      currentUserType = 'Customer' as any;
     }
 
-    if (!userTypes.includes(req.user.userType)) {
+    if (!currentUserType || !userTypes.includes(currentUserType as any)) {
       res.status(403).json({
         success: false,
         message: 'Access denied. Required user type: ' + userTypes.join(' or '),

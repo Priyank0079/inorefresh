@@ -38,7 +38,7 @@ const HorecaUserSchema: Schema = new Schema(
         ownerPhone: { type: String, required: true, unique: true },
         profileImage: { type: String },
         documents: [{ type: String }],
-        status: { type: String, enum: ['Pending', 'Active', 'Inactive'], default: 'Pending' },
+        status: { type: String, enum: ['Pending', 'Active', 'Inactive'], default: 'Active' },
         walletAmount: { type: Number, default: 0 },
         totalOrders: { type: Number, default: 0 },
         totalSpent: { type: Number, default: 0 },
