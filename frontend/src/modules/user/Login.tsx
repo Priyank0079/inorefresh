@@ -21,7 +21,12 @@ const productList = [
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
+
+  // Clear any existing session on mount
+  useEffect(() => {
+    logout();
+  }, [logout]);
 
   const [mobileNumber, setMobileNumber] = useState('');
   const [showOTP, setShowOTP] = useState(false);

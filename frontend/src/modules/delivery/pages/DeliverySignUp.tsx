@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   register,
@@ -6,9 +6,11 @@ import {
   verifyOTP,
 } from "../../../services/api/auth/deliveryAuthService";
 import OTPInput from "../../../components/OTPInput";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function DeliverySignUp() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -24,6 +26,11 @@ export default function DeliverySignUp() {
     ifscCode: "",
     bonusType: "",
   });
+
+  // Clear any existing session on mount
+  useEffect(() => {
+    logout();
+  }, [logout]);
 
   const [showOTP, setShowOTP] = useState(false);
   const [sessionId, setSessionId] = useState("");

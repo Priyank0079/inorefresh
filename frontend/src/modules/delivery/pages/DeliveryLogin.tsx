@@ -7,7 +7,7 @@ import { removeAuthToken } from '../../../services/api/config';
 
 export default function DeliveryLogin() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { logout, login } = useAuth();
   const [mobileNumber, setMobileNumber] = useState('');
   const [sessionId, setSessionId] = useState('');
   const [showOTP, setShowOTP] = useState(false);
@@ -15,10 +15,10 @@ export default function DeliveryLogin() {
   const [error, setError] = useState('');
   const [isNotRegistered, setIsNotRegistered] = useState(false);
 
-  // Clear any existing token on mount to prevent role conflicts
+  // Clear any existing session on mount to prevent role conflicts
   useEffect(() => {
-    removeAuthToken();
-  }, []);
+    logout();
+  }, [logout]);
 
   const handleMobileLogin = async () => {
     if (mobileNumber.length !== 10) return;

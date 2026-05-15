@@ -6,11 +6,16 @@ import { useAuth } from '../../../context/AuthContext';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { logout, login } = useAuth();
   const [mobileNumber, setMobileNumber] = useState('');
   const [showOTP, setShowOTP] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Clear any existing session on mount
+  useEffect(() => {
+    logout();
+  }, [logout]);
 
   const handleMobileLogin = async () => {
     if (mobileNumber.length !== 10) return;

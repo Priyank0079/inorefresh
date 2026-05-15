@@ -41,7 +41,14 @@ export const login = async (req: Request, res: Response): Promise<any> => {
 
         const token = generateToken(user._id.toString(), userType as any);
 
-        res.json({ success: true, token, user });
+        res.json({ 
+            success: true, 
+            token, 
+            user: {
+                ...user.toObject(),
+                userType
+            } 
+        });
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -91,7 +98,14 @@ export const signupHoreca = async (req: Request, res: Response): Promise<any> =>
         const { processSignupRewards } = require('../services/rewardService');
         await processSignupRewards(newHoreca._id.toString(), 'horeca', userData.referralCode);
 
-        res.status(201).json({ success: true, message: 'HORECA user signed up successfully', user: newHoreca });
+        res.status(201).json({ 
+            success: true, 
+            message: 'HORECA user signed up successfully', 
+            user: {
+                ...newHoreca.toObject(),
+                userType: 'horeca'
+            } 
+        });
     } catch (error: any) {
 
         res.status(500).json({ success: false, message: error.message });
@@ -142,7 +156,14 @@ export const signupRetailer = async (req: Request, res: Response): Promise<any> 
         const { processSignupRewards } = require('../services/rewardService');
         await processSignupRewards(newRetailer._id.toString(), 'retailer', userData.referralCode);
 
-        res.status(201).json({ success: true, message: 'Retailer user signed up successfully', user: newRetailer });
+        res.status(201).json({ 
+            success: true, 
+            message: 'Retailer user signed up successfully', 
+            user: {
+                ...newRetailer.toObject(),
+                userType: 'retailer'
+            } 
+        });
     } catch (error: any) {
 
         res.status(500).json({ success: false, message: error.message });

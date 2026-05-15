@@ -39,12 +39,19 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setLoading(true);
     try {
       // Determine module prefix based on user type
-      let modulePrefix = 'admin';
-      if (user.userType === 'Warehouse') modulePrefix = 'warehouse';
-      if (user.userType === 'Port') modulePrefix = 'port';
-      if (user.userType === 'Delivery') modulePrefix = 'delivery';
-      if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') modulePrefix = 'customer';
+      let modulePrefix = '';
+      if (user.userType === 'Admin') modulePrefix = 'admin';
+      else if (user.userType === 'Warehouse') modulePrefix = 'warehouse';
+      else if (user.userType === 'Port') modulePrefix = 'port';
+      else if (user.userType === 'Delivery') modulePrefix = 'delivery';
+      else if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') modulePrefix = 'customer';
       
+      if (!modulePrefix) {
+        console.warn('[NotificationContext] Unknown user type:', user.userType);
+        setLoading(false);
+        return;
+      }
+
       const response = await api.get(`/${modulePrefix}/notifications`);
       
       if (response.data.success) {
@@ -62,11 +69,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!token || !user) return;
     
     try {
-      let modulePrefix = 'admin';
-      if (user.userType === 'Warehouse') modulePrefix = 'warehouse';
-      if (user.userType === 'Port') modulePrefix = 'port';
-      if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') modulePrefix = 'customer';
+      let modulePrefix = '';
+      if (user.userType === 'Admin') modulePrefix = 'admin';
+      else if (user.userType === 'Warehouse') modulePrefix = 'warehouse';
+      else if (user.userType === 'Port') modulePrefix = 'port';
+      else if (user.userType === 'Delivery') modulePrefix = 'delivery';
+      else if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') modulePrefix = 'customer';
       
+      if (!modulePrefix) return;
+
       const response = await api.patch(`/${modulePrefix}/notifications/${id}/read`);
       
       if (response.data.success) {
@@ -82,9 +93,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!token || !user || notifications.length === 0) return;
     
     try {
-      let modulePrefix = 'admin';
+      let modulePrefix = '';
       let method: 'post' | 'patch' = 'patch';
-      let endpoint = `/${modulePrefix}/notifications/mark-all-read`;
+      let endpoint = '';
 
       if (user.userType === 'Admin') {
         endpoint = '/admin/notifications/mark-read';
@@ -95,10 +106,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       } else if (user.userType === 'Warehouse') {
         endpoint = '/warehouse/notifications/mark-all-read';
         method = 'patch';
+      } else if (user.userType === 'Delivery') {
+        endpoint = '/delivery/notifications/mark-all-read';
+        method = 'patch';
       } else if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') {
         endpoint = '/customer/notifications/mark-all-read';
         method = 'patch';
       }
+
+      if (!endpoint) return;
       
       const unreadIds = notifications.filter(n => !n.isRead).map(n => n._id);
       if (unreadIds.length === 0) return;

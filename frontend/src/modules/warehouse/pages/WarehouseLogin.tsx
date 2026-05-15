@@ -1,15 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginWarehouse } from '../../../services/api/auth/warehouseAuthService';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function WarehouseLogin() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { logout, login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Clear any existing session on mount
+  useEffect(() => {
+    logout();
+  }, [logout]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

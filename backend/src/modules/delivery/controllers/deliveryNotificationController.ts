@@ -51,3 +51,20 @@ export const markNotificationRead = asyncHandler(async (req: Request, res: Respo
         message: "Notification marked as read"
     });
 });
+
+/**
+ * Mark All Notifications as Read
+ */
+export const markAllAsRead = asyncHandler(async (req: Request, res: Response) => {
+    const deliveryId = req.user?.userId;
+
+    await Notification.updateMany(
+        { recipientType: "Delivery", recipientId: deliveryId, isRead: false },
+        { isRead: true, readAt: new Date() }
+    );
+
+    return res.status(200).json({
+        success: true,
+        message: "All notifications marked as read"
+    });
+});
