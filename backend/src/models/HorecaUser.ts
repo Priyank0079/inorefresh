@@ -43,6 +43,7 @@ const HorecaUserSchema: Schema = new Schema(
         totalOrders: { type: Number, default: 0 },
         totalSpent: { type: Number, default: 0 },
         refCode: { type: String },
+        deliveryOtp: { type: String, trim: true },
         fcmTokenMobile: { type: [String], default: [] },
     },
     { timestamps: true }

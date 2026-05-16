@@ -104,6 +104,7 @@ export default function DeliveryOrderDetail() {
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
     const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
     const [locationError, setLocationError] = useState<string | null>(null);
+    const [resendCooldown, setResendCooldown] = useState(0);
 
     // New state for seller proximity and pickup tracking
     const [sellerProximity, setSellerProximity] = useState<Record<string, { withinRange: boolean; distance: number }>>({});
@@ -112,7 +113,7 @@ export default function DeliveryOrderDetail() {
     // New state for customer proximity
     const [customerProximity, setCustomerProximity] = useState<{ withinRange: boolean; distance: number } | null>(null);
     const [getOtpEnabled, setGetOtpEnabled] = useState(false);
-    const canSendOtp = getOtpEnabled && !otpSending && !otpAlreadySent;
+    const canSendOtp = getOtpEnabled && !otpSending; // Allow interaction if already sent or ready to send
 
     const fetchOrder = async () => {
         if (!id) return;
@@ -120,7 +121,11 @@ export default function DeliveryOrderDetail() {
             setLoading(true);
             const data = await getOrderDetails(id);
             setOrder(data);
-            setOtpAlreadySent(Boolean(data?.deliveryOtpSentAt));
+            const isOtpSent = Boolean(data?.deliveryOtpSentAt);
+            setOtpAlreadySent(isOtpSent);
+            if (isOtpSent) {
+                setShowOtpInput(true);
+            }
         } catch (err: any) {
             setError(err.message || 'Failed to load order details');
         } finally {
@@ -171,23 +176,32 @@ export default function DeliveryOrderDetail() {
 
     const handleSendOtp = async () => {
         if (!id) return;
-        if (otpAlreadySent || order?.deliveryOtpSentAt) {
-            alert('Delivery OTP has already been sent for this order.');
+        // Cooldown check on frontend to avoid unnecessary API calls
+        if (resendCooldown > 0) {
+            alert(`Please wait ${resendCooldown} seconds before resending OTP.`);
             return;
         }
         try {
             setOtpSending(true);
             const response = await sendDeliveryOtp(id);
-            if (response?.alreadySent) {
-                setOtpAlreadySent(true);
-                alert(response.message || 'Delivery OTP has already been sent for this order.');
-                return;
-            }
+            
             setShowOtpInput(true);
             setOtpAlreadySent(true);
-            alert('OTP sent to customer successfully');
+            setResendCooldown(60); // 60 seconds cooldown after successful send
+
+            if (response?.alreadySent) {
+                alert('Delivery OTP has already been sent. You can now enter the code.');
+            } else {
+                alert('OTP sent to customer successfully');
+            }
         } catch (err: any) {
-            alert(err.message || 'Failed to send OTP');
+            // Handle backend cooldown message
+            if (err.message && err.message.includes('wait')) {
+                alert(err.message);
+                setResendCooldown(30); 
+            } else {
+                alert(err.message || 'Failed to send OTP');
+            }
         } finally {
             setOtpSending(false);
         }
@@ -918,8 +932,8 @@ export default function DeliveryOrderDetail() {
                         <div className="flex gap-3">
                             {!showOtpInput ? (
                                 <button
-                                    onClick={handleSendOtp}
-                                    disabled={!getOtpEnabled || otpSending || otpAlreadySent}
+                                    onClick={otpAlreadySent ? () => setShowOtpInput(true) : handleSendOtp}
+                                    disabled={!getOtpEnabled || otpSending}
                                     className={`flex-1 py-3 rounded-xl font-semibold transition-all ${canSendOtp
                                             ? 'bg-green-600 text-white hover:bg-green-700 active:scale-[0.98]'
                                             : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
@@ -928,7 +942,7 @@ export default function DeliveryOrderDetail() {
                                     {otpSending
                                         ? 'Sending...'
                                         : otpAlreadySent
-                                            ? 'OTP already sent'
+                                            ? 'Enter OTP'
                                             : getOtpEnabled
                                                 ? 'Get OTP'
                                                 : 'Move within 500m to get OTP'}
@@ -954,6 +968,26 @@ export default function DeliveryOrderDetail() {
                                 </>
                             )}
                         </div>
+
+                        {showOtpInput && (
+                            <div className="mt-4 text-center">
+                                <button
+                                    onClick={handleSendOtp}
+                                    disabled={otpSending || resendCooldown > 0}
+                                    className={`text-sm font-medium transition-colors ${
+                                        otpSending || resendCooldown > 0 
+                                            ? 'text-neutral-400 cursor-not-allowed' 
+                                            : 'text-blue-600 hover:text-blue-700'
+                                    }`}
+                                >
+                                    {otpSending 
+                                        ? 'Sending...' 
+                                        : resendCooldown > 0 
+                                            ? `Resend OTP in ${resendCooldown}s` 
+                                            : 'Didn\'t receive code? Resend OTP'}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

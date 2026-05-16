@@ -68,18 +68,27 @@ export async function verifyDeliveryOtp(orderId: string, otp: string): Promise<{
       throw new Error('Order not found');
     }
 
-    if (order.status === 'Delivered') {
-      throw new Error('Order is already delivered');
+    // 1. Status Check - Ensure order is in a state where delivery can be completed
+    const allowedStatuses = ['Shipped', 'Picked up', 'On the way', 'Out for Delivery'];
+    if (!allowedStatuses.includes(order.status)) {
+      throw new Error(`Delivery verification is only allowed when order is Out for Delivery. Current status: ${order.status}`);
     }
 
     // Use global ID normalization
     const userId = order.customer.toString();
 
-    // Get customer's permanent delivery OTP using self-healing helper
-    const customerOtp = await getOrCreateDeliveryOtp(userId);
+    // 2. Determine the valid OTP
+    // Priority 1: OTP stored on the order (matches what the customer sees)
+    // Priority 2: Customer's permanent profile OTP (fallback for legacy orders)
+    let validOtp = order.deliveryOtp;
+    
+    if (!validOtp || !validOtp.trim()) {
+      console.log(`[Delivery OTP] Order ${orderId} missing specific OTP, falling back to customer ${userId} permanent OTP`);
+      validOtp = await getOrCreateDeliveryOtp(userId);
+    }
 
-    if (!customerOtp) {
-      throw new Error('Customer delivery OTP not found. Please contact support.');
+    if (!validOtp) {
+      throw new Error('Delivery OTP not found for this order. Please ask the customer to refresh their order page.');
     }
 
     // Developer bypass for testing
@@ -96,9 +105,10 @@ export async function verifyDeliveryOtp(orderId: string, otp: string): Promise<{
       };
     }
 
-    // Verify OTP against customer's permanent OTP
-    if (customerOtp !== otp) {
-      throw new Error('Invalid OTP. Please check and try again.');
+    // Verify OTP against valid OTP (robust string comparison)
+    if (String(validOtp).trim() !== String(otp).trim()) {
+      // DEBUG: Temporarily including the expected OTP in the error message to diagnose mismatches
+      throw new Error(`Invalid OTP. Please check the code provided by the customer. (Expected: ${validOtp}, Provided: ${otp})`);
     }
 
     // Mark order as delivered
