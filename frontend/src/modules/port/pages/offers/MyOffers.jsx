@@ -58,13 +58,14 @@ const MyOffers = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageTitle
         title="My Offers"
         subtitle="Track and manage all your submitted offers"
       />
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -115,6 +116,55 @@ const MyOffers = () => {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Card Layout */}
+      <div className="grid grid-cols-1 gap-3 md:hidden">
+        {offers.map((offer) => (
+          <div key={offer._id} className="bg-white rounded-xl p-4 border border-slate-100/80 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-teal-600">
+                OFF-{offer._id.slice(-4).toUpperCase()}
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium">
+                {formatDate(offer.createdAt)}
+              </span>
+            </div>
+            
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-slate-800 uppercase">
+                {offer.requirementId?.fishName || 'N/A'}
+              </h4>
+              <p className="text-xs font-semibold text-slate-500">
+                {getWarehouseName(offer.warehouseId)}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Qty: <span className="font-bold text-slate-700">{offer.quantityOffered} KG</span> @ <span className="font-bold text-slate-700">₹{offer.offeredPrice}/kg</span>
+              </p>
+            </div>
+            
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+              <StatusBadge status={offer.status} />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate(`/port/offers/negotiations`)}
+                  className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all flex items-center gap-1"
+                >
+                  <span className="material-icons-outlined text-xs">visibility</span>
+                  View
+                </button>
+                <button className="p-1.5 text-slate-400 hover:text-teal-600 rounded-lg hover:bg-slate-100 transition-all">
+                  <span className="material-icons-outlined text-base">edit</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {offers.length === 0 && (
+          <div className="bg-white rounded-xl p-8 text-center border border-dashed border-slate-200">
+            <p className="text-slate-400 text-sm italic">No offers found. Send an offer from the requirements section.</p>
+          </div>
+        )}
       </div>
     </div>
   );

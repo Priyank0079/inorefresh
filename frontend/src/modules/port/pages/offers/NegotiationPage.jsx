@@ -91,7 +91,7 @@ const NegotiationPage = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-5xl mx-auto">
       <PageTitle 
         title="Negotiations" 
         subtitle="Active price negotiations with Admin for warehouse requirements"
@@ -102,56 +102,89 @@ const NegotiationPage = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
         </div>
       ) : negotiations.length === 0 ? (
-        <div className="bg-white rounded-xl p-12 text-center border border-dashed border-slate-200">
+        <div className="bg-white rounded-xl p-8 sm:p-12 text-center border border-dashed border-slate-200">
           <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="material-icons-outlined text-3xl">handshake</span>
           </div>
-          <h3 className="text-lg font-bold text-slate-800 mb-1">No Active Negotiations</h3>
-          <p className="text-slate-500 max-w-xs mx-auto">You don't have any active price negotiations with warehouses at the moment.</p>
+          <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-1">No Active Negotiations</h3>
+          <p className="text-slate-500 text-sm max-w-xs mx-auto">You don't have any active price negotiations with warehouses at the moment.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6">
           {negotiations.map((neg) => (
-            <div key={neg._id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center shadow-inner">
-                    <span className="material-icons-outlined">storefront</span>
+            <div 
+              key={neg._id} 
+              className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 hover:border-slate-200 hover:shadow-md transition-all duration-300 overflow-hidden"
+            >
+              {/* Card Header */}
+              <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/40">
+                <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0 shadow-inner">
+                    <span className="material-icons-outlined text-base sm:text-xl">storefront</span>
                   </div>
-                  <div>
-                    <h4 className="text-base font-black text-slate-800 tracking-tight uppercase">
+                  <div className="min-w-0">
+                    <h4 className="text-sm sm:text-base font-bold text-slate-800 tracking-tight uppercase truncate">
                       {neg.requirementId?.fishName}
                     </h4>
-                    <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                    <p className="text-[10px] sm:text-xs font-semibold text-slate-400 mt-0.5 truncate">
                       REQ: {neg.requirementId?.requirementId} • {neg.warehouseId?.warehouseName || neg.warehouseId?.name}
                     </p>
                   </div>
                 </div>
-                <StatusBadge status={getStatusLabel(neg.status)} />
+                <div className="flex-shrink-0">
+                  <StatusBadge status={getStatusLabel(neg.status)} />
+                </div>
               </div>
               
-              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Price Info */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Your Last Offer</p>
-                    <p className="text-2xl font-black text-slate-800">
-                      ₹{neg.offeredPrice}<span className="text-xs font-bold text-slate-400 ml-1">/kg</span>
+              {/* Card Body */}
+              <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+                {/* Price Info Grid */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  {/* Your Offer */}
+                  <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 sm:p-4 hover:bg-slate-50 transition-colors">
+                    <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Your Last Offer</p>
+                    <p className="text-lg sm:text-xl md:text-2xl font-black text-slate-800">
+                      ₹{neg.offeredPrice}
+                      <span className="text-[10px] sm:text-xs font-semibold text-slate-400 ml-0.5">/kg</span>
                     </p>
                     <p className="text-[10px] text-slate-500 mt-1 font-semibold">Qty: {neg.quantityOffered}kg</p>
                   </div>
-                  <div className={`border rounded-2xl p-4 ${neg.counterPrice ? 'bg-amber-50/50 border-amber-100' : 'bg-slate-50 border-slate-100'}`}>
-                    <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${neg.counterPrice ? 'text-amber-600' : 'text-slate-400'}`}>
+
+                  {/* Admin Counter */}
+                  <div className={`border rounded-xl p-3 sm:p-4 transition-colors ${
+                    neg.counterPrice 
+                      ? 'bg-amber-50/30 border-amber-200/60 hover:bg-amber-50/50' 
+                      : 'bg-slate-50/50 border-slate-100 hover:bg-slate-50'
+                  }`}>
+                    <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                      neg.counterPrice ? 'text-amber-600' : 'text-slate-400'
+                    }`}>
                       Admin Counter
                     </p>
-                    <p className={`text-2xl font-black ${neg.counterPrice ? 'text-amber-700' : 'text-slate-300'}`}>
-                      {neg.counterPrice ? `₹${neg.counterPrice}` : 'Waiting...'}<span className="text-xs font-bold text-slate-400 ml-1">/kg</span>
+                    <p className={`text-lg sm:text-xl md:text-2xl font-black ${
+                      neg.counterPrice ? 'text-amber-700' : 'text-slate-300'
+                    }`}>
+                      {neg.counterPrice ? (
+                        <>
+                          ₹{neg.counterPrice}
+                          <span className="text-[10px] sm:text-xs font-semibold text-amber-500/80 ml-0.5">/kg</span>
+                        </>
+                      ) : (
+                        <span className="text-xs sm:text-sm font-medium text-slate-400 italic">Waiting...</span>
+                      )}
                     </p>
-                    {neg.counterPrice && <p className="text-[10px] text-amber-600 mt-1 font-semibold">Action Required</p>}
+                    {neg.counterPrice ? (
+                      <span className="text-[10px] text-amber-600 mt-1 font-semibold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                        Action Required
+                      </span>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 mt-1 font-medium">Pending Review</p>
+                    )}
                   </div>
                 </div>
 
-                {/* Actions */}
+                {/* Action Form or Buttons */}
                 <div className="flex flex-col justify-center">
                   <AnimatePresence mode="wait">
                     {activeOfferId === neg._id ? (
@@ -159,16 +192,16 @@ const NegotiationPage = () => {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="space-y-3"
+                        className="space-y-2.5"
                       >
                         <div className="relative group">
-                          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black">₹</div>
+                          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm sm:text-base">₹</div>
                           <input
                             type="number"
                             value={counterPrice}
                             onChange={(e) => setCounterPrice(e.target.value)}
                             placeholder="Enter new price"
-                            className="w-full pl-8 pr-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-lg font-black text-slate-800 focus:border-teal-500 focus:ring-0 outline-none transition-all"
+                            className="w-full pl-8 pr-4 py-2 sm:py-2.5 bg-white border border-slate-200 rounded-xl text-sm sm:text-base font-bold text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all"
                           />
                         </div>
                         <input
@@ -176,14 +209,15 @@ const NegotiationPage = () => {
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
                           placeholder="Add a note (optional)..."
-                          className="w-full px-4 py-2 bg-white border-2 border-slate-200 rounded-xl text-xs font-medium text-slate-600 focus:border-teal-500 focus:ring-0 outline-none transition-all"
+                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all"
                         />
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleNewCounter(neg._id)}
                             disabled={submitting || !counterPrice}
-                            className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-colors disabled:opacity-50"
+                            className="flex-1 bg-slate-900 text-white py-2 sm:py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
                           >
+                            <span className="material-icons-outlined text-sm">send</span>
                             Send Offer
                           </button>
                           <button
@@ -192,7 +226,7 @@ const NegotiationPage = () => {
                               setCounterPrice('');
                               setNotes('');
                             }}
-                            className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors"
+                            className="px-4 py-2 sm:py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors"
                           >
                             Cancel
                           </button>
@@ -202,18 +236,18 @@ const NegotiationPage = () => {
                       <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="flex flex-col gap-3"
+                        className="flex flex-row md:flex-col gap-2.5"
                       >
                         <button 
                           onClick={() => handleAcceptCounter(neg._id)}
                           disabled={neg.status !== 'countered' || submitting}
-                          className={`w-full py-3.5 rounded-xl text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                          className={`flex-1 md:w-full py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
                             neg.status === 'countered' 
-                              ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/20 hover:bg-teal-700 hover:-translate-y-0.5' 
-                              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                              ? 'bg-teal-600 text-white shadow-md shadow-teal-600/10 hover:bg-teal-700 hover:-translate-y-0.5' 
+                              : 'bg-slate-50 text-slate-400 border border-slate-200/50 cursor-not-allowed'
                           }`}
                         >
-                          <span className="material-icons-outlined text-lg">verified</span>
+                          <span className="material-icons-outlined text-base sm:text-lg">verified</span>
                           Deal Done
                         </button>
                         <button 
@@ -222,8 +256,9 @@ const NegotiationPage = () => {
                             setCounterPrice(neg.counterPrice?.toString() || neg.offeredPrice.toString());
                           }}
                           disabled={submitting}
-                          className="w-full py-3 border-2 border-slate-900 text-slate-900 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all"
+                          className="flex-1 md:w-full py-2.5 sm:py-3 border border-slate-900 text-slate-900 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-1.5"
                         >
+                          <span className="material-icons-outlined text-base sm:text-lg">gavel</span>
                           Negotiate
                         </button>
                       </motion.div>
@@ -232,13 +267,16 @@ const NegotiationPage = () => {
                 </div>
               </div>
               
-              <div className="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              {/* Card Footer */}
+              <div className="px-4 py-2.5 sm:px-5 sm:py-3 bg-slate-50/20 border-t border-slate-100/80 flex items-center justify-between">
+                <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                  <span className="material-icons-outlined text-xs text-slate-400">schedule</span>
                   Last update: {formatTimeAgo(neg.updatedAt)} ago
                 </p>
-                <div className="text-[10px] font-black text-teal-600 uppercase tracking-widest hover:underline cursor-pointer">
+                <button className="text-[9px] sm:text-[10px] font-bold text-teal-600 hover:text-teal-700 uppercase tracking-wider hover:underline transition-colors flex items-center gap-0.5 bg-transparent border-0 cursor-pointer p-0 outline-none">
+                  <span className="material-icons-outlined text-xs">history</span>
                   View History
-                </div>
+                </button>
               </div>
             </div>
           ))}
