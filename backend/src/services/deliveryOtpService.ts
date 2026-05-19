@@ -84,7 +84,7 @@ export async function verifyDeliveryOtp(orderId: string, otp: string): Promise<{
     
     if (!validOtp || !validOtp.trim()) {
       console.log(`[Delivery OTP] Order ${orderId} missing specific OTP, falling back to customer ${userId} permanent OTP`);
-      validOtp = await getOrCreateDeliveryOtp(userId);
+      validOtp = (await getOrCreateDeliveryOtp(userId)) ?? undefined;
     }
 
     if (!validOtp) {

@@ -44,19 +44,29 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+            const parts = id.split('node_modules/');
+            const pathAfterNodeModules = parts[parts.length - 1];
+            let packageName = '';
+            if (pathAfterNodeModules.startsWith('@')) {
+              const segments = pathAfterNodeModules.split('/');
+              packageName = segments.slice(0, 2).join('/');
+            } else {
+              packageName = pathAfterNodeModules.split('/')[0];
+            }
+
+            if (['react', 'react-dom', 'react-router', 'react-router-dom', 'scheduler'].includes(packageName)) {
               return 'react-vendor';
             }
-            if (id.includes('apexcharts') || id.includes('recharts')) {
+            if (['apexcharts', 'recharts', 'react-apexcharts'].includes(packageName)) {
               return 'chart-vendor';
             }
-            if (id.includes('leaflet') || id.includes('@react-google-maps')) {
+            if (['leaflet', 'react-leaflet'].includes(packageName) || packageName.startsWith('@react-google-maps')) {
               return 'map-vendor';
             }
-            if (id.includes('jspdf') || id.includes('html2canvas')) {
+            if (['jspdf', 'html2canvas'].includes(packageName)) {
               return 'pdf-vendor';
             }
-            if (id.includes('framer-motion') || id.includes('gsap') || id.includes('lucide-react')) {
+            if (['framer-motion', 'gsap', 'lucide-react'].includes(packageName)) {
               return 'ui-vendor';
             }
             return 'vendor';

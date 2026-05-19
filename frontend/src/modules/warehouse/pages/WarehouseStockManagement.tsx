@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getProducts, updateStock, Product } from '../../../services/api/productService';
 import { getCategories } from '../../../services/api/categoryService';
 import { useAuth } from '../../../context/AuthContext';
@@ -16,6 +17,10 @@ interface StockItem {
 }
 
 export default function WarehouseStockManagement() {
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const initialStockFilter = queryParams.get('stock') === 'out' ? 'Out of Stock' : (queryParams.get('stock') === 'low' ? 'Low Stock' : 'All Products');
+
     const [stockItems, setStockItems] = useState<StockItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
@@ -23,7 +28,19 @@ export default function WarehouseStockManagement() {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All Category');
     const [statusFilter, setStatusFilter] = useState('All Products');
-    const [stockFilter, setStockFilter] = useState('All Products');
+    const [stockFilter, setStockFilter] = useState(initialStockFilter);
+
+    useEffect(() => {
+        const qParams = new URLSearchParams(location.search);
+        const stockParam = qParams.get('stock');
+        if (stockParam === 'out') {
+            setStockFilter('Out of Stock');
+        } else if (stockParam === 'low') {
+            setStockFilter('Low Stock');
+        } else {
+            setStockFilter('All Products');
+        }
+    }, [location.search]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -157,7 +174,8 @@ export default function WarehouseStockManagement() {
             (statusFilter === 'Unpublished' && item.status === 'Unpublished');
         const matchesStock = stockFilter === 'All Products' ||
             (stockFilter === 'In Stock' && (typeof item.stock === 'number' && item.stock > 0)) ||
-            (stockFilter === 'Out of Stock' && item.stock === 0);
+            (stockFilter === 'Out of Stock' && item.stock === 0) ||
+            (stockFilter === 'Low Stock' && (typeof item.stock === 'number' && item.stock > 0 && item.stock <= 10));
         return matchesSearch && matchesCategory && matchesStatus && matchesStock;
     });
 
@@ -254,6 +272,7 @@ export default function WarehouseStockManagement() {
                                 <option value="All Products">All Products</option>
                                 <option value="In Stock">In Stock</option>
                                 <option value="Out of Stock">Out of Stock</option>
+                                <option value="Low Stock">Low Stock</option>
                             </select>
                         </div>
                     </div>
