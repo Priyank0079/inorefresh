@@ -45,61 +45,7 @@ export const initializeSocket = (httpServer: HttpServer) => {
                 // Allow requests with no origin (like mobile apps or server-to-server)
                 if (!origin) return callback(null, true);
 
-                // In production, check against allowed origins
-                if (process.env.NODE_ENV === 'production') {
-                    // Get allowed origins from environment variable (comma-separated)
-                    const frontendUrl = process.env.FRONTEND_URL || "";
-                    const allowedOrigins = frontendUrl
-                        .split(",")
-                        .map((url) => url.trim())
-                        .filter((url) => url.length > 0);
-
-                    // Default production origins if FRONTEND_URL not set
-                    const defaultOrigins = [
-                        "https://www.dhakadsnazzy.com",
-                        "https://dhakadsnazzy.com",
-                        "https://app.inorfresh.com",
-                        "https://www.inorfresh.com",
-                        "https://inorfresh.com",
-                    ];
-
-                    const allAllowedOrigins = allowedOrigins.length > 0
-                        ? [...allowedOrigins, ...defaultOrigins]
-                        : defaultOrigins;
-
-                    // Normalize origins for comparison (remove trailing slash, lowercase)
-                    const normalizeUrl = (url: string) => url.replace(/\/$/, '').toLowerCase();
-                    const normalizedOrigin = normalizeUrl(origin);
-
-                    // Check if origin matches any allowed origin
-                    const isAllowed = allAllowedOrigins.some((allowedOrigin) => {
-                        const normalizedAllowed = normalizeUrl(allowedOrigin);
-
-                        // Exact match
-                        if (normalizedOrigin === normalizedAllowed) return true;
-
-                        // Support for www and non-www variants
-                        if (normalizedAllowed.includes("www.")) {
-                            const nonWww = normalizedAllowed.replace("www.", "");
-                            if (normalizedOrigin === nonWww) return true;
-                        } else {
-                            const withWww = normalizedAllowed.replace(/^(https?:\/\/)/, "$1www.");
-                            if (normalizedOrigin === withWww) return true;
-                        }
-                        return false;
-                    });
-
-                    if (!isAllowed) {
-                        console.warn(`⚠️ Socket.io connection rejected from origin: ${origin}. Allowed origins: ${allAllowedOrigins.join(', ')}`);
-                        console.warn(`⚠️ Normalized origin: ${normalizedOrigin}`);
-                    } else {
-                        console.log(`✅ Socket.io connection allowed from origin: ${origin}`);
-                    }
-
-                    return callback(null, isAllowed);
-                }
-
-                // In development, allow any localhost port
+                // Always allow localhost in development/testing
                 if (
                     origin.startsWith('http://localhost:') ||
                     origin.startsWith('http://127.0.0.1:') ||
@@ -108,7 +54,53 @@ export const initializeSocket = (httpServer: HttpServer) => {
                     return callback(null, true);
                 }
 
-                return callback(null, false);
+                // Get allowed origins from environment variable (comma-separated)
+                const frontendUrl = process.env.FRONTEND_URL || "";
+                const allowedOrigins = frontendUrl
+                    .split(",")
+                    .map((url) => url.trim())
+                    .filter((url) => url.length > 0);
+
+                // Default production origins
+                const defaultOrigins = [
+                    "https://www.dhakadsnazzy.com",
+                    "https://dhakadsnazzy.com",
+                    "https://app.inorfresh.com",
+                    "https://www.inorfresh.com",
+                    "https://inorfresh.com",
+                ];
+
+                const allAllowedOrigins = [...allowedOrigins, ...defaultOrigins];
+
+                // Normalize origins for comparison (remove trailing slash, lowercase)
+                const normalizeUrl = (url: string) => url.replace(/\/$/, '').toLowerCase();
+                const normalizedOrigin = normalizeUrl(origin);
+
+                // Check if origin matches any allowed origin
+                const isAllowed = allAllowedOrigins.some((allowedOrigin) => {
+                    const normalizedAllowed = normalizeUrl(allowedOrigin);
+
+                    // Exact match
+                    if (normalizedOrigin === normalizedAllowed) return true;
+
+                    // Support for www and non-www variants
+                    if (normalizedAllowed.includes("www.")) {
+                        const nonWww = normalizedAllowed.replace("www.", "");
+                        if (normalizedOrigin === nonWww) return true;
+                    } else {
+                        const withWww = normalizedAllowed.replace(/^(https?:\/\/)/, "$1www.");
+                        if (normalizedOrigin === withWww) return true;
+                    }
+                    return false;
+                });
+
+                if (!isAllowed) {
+                    console.warn(`⚠️ Socket.io connection rejected from origin: ${origin}. Allowed origins: ${allAllowedOrigins.join(', ')}`);
+                } else {
+                    console.log(`✅ Socket.io connection allowed from origin: ${origin}`);
+                }
+
+                return callback(null, isAllowed);
             },
             methods: ['GET', 'POST'],
             credentials: true,
