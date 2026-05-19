@@ -100,26 +100,28 @@ const WarehousePortShipments = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Port Inward Shipments</h1>
-          <p className="text-sm text-slate-500">Track and manage incoming shipments from port partners</p>
+    <div className="flex flex-col gap-4 animate-in fade-in duration-500">
+      {/* Header: title left, controls right — always in one row */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-slate-800 leading-tight">Port Inward Shipments</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Track and manage incoming shipments from port partners</p>
         </div>
-        
-        <div className="flex flex-col sm:flex-row gap-3">
+
+        {/* Search + Filter — pinned to top-right */}
+        <div className="flex items-center gap-2 flex-shrink-0">
           <div className="relative">
-            <span className="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-            <input 
-              type="text" 
-              placeholder="Search by ID, Port, Item..." 
-              className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none w-full sm:w-64 transition-all"
+            <span className="material-icons-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+            <input
+              type="text"
+              placeholder="Search…"
+              className="pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none w-36 sm:w-52 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <select 
-            className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 bg-white outline-none focus:ring-2 focus:ring-teal-500/20"
+          <select
+            className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 bg-white outline-none focus:ring-2 focus:ring-teal-500/20"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >

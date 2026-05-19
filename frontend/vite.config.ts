@@ -42,13 +42,26 @@ export default defineConfig({
     // Code splitting optimization
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Vendor chunks
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['framer-motion', 'gsap'],
-          'chart-vendor': ['apexcharts', 'react-apexcharts', 'recharts'],
-          'map-vendor': ['@react-google-maps/api', 'leaflet', 'react-leaflet'],
-        },
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            if (id.includes('apexcharts') || id.includes('recharts')) {
+              return 'chart-vendor';
+            }
+            if (id.includes('leaflet') || id.includes('@react-google-maps')) {
+              return 'map-vendor';
+            }
+            if (id.includes('jspdf') || id.includes('html2canvas')) {
+              return 'pdf-vendor';
+            }
+            if (id.includes('framer-motion') || id.includes('gsap') || id.includes('lucide-react')) {
+              return 'ui-vendor';
+            }
+            return 'vendor';
+          }
+        }
       },
     },
     // Optimize chunk size

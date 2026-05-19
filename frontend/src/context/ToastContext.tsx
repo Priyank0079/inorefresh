@@ -23,8 +23,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToast((prev) => ({ ...prev, isVisible: false }));
   }, []);
 
+  const contextValue = React.useMemo(() => ({ showToast, hideToast }), [showToast, hideToast]);
+
   return (
-    <ToastContext.Provider value={{ showToast, hideToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <Toast
         message={toast.message}

@@ -74,9 +74,9 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
       className="bg-white shadow-sm sticky top-0 z-30 border-b-2"
       style={{ borderBottomColor: currentTheme.primary[3] }}
     >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4 gap-3 sm:gap-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-3 sm:px-4 md:px-6 sm:py-4">
         {/* Logo and Hamburger Menu */}
-        <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           {/* Hamburger Menu Button */}
           <button
             onClick={onMenuClick}
@@ -119,7 +119,7 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
         </div>
 
         {/* Navigation Tabs */}
-        <div className="hidden md:flex items-center gap-4 lg:gap-6">
+        <div className="hidden xl:flex items-center gap-4 lg:gap-6">
           <button
             onClick={() => navigate('/Warehouse/orders')}
             className={`relative px-3 lg:px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${isActive('/Warehouse/orders') ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900'
@@ -144,7 +144,7 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
         </div>
 
         {/* Action Icons */}
-        <div className="flex items-center gap-2 md:gap-4 relative">
+        <div className="ml-auto flex items-center gap-2 md:gap-4 relative">
           {/* Notifications Button */}
           <div className="relative" ref={notificationsRef}>
             <button

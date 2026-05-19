@@ -101,7 +101,7 @@ export default function ProductCard({
       className="relative bg-white rounded-xl flex flex-col group transition-all duration-500 cursor-pointer overflow-hidden border border-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] w-full max-w-[280px] mx-auto"
     >
       {/* Product Image Area */}
-      <div className="relative aspect-square w-full overflow-hidden bg-[#F9FBFC]">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F9FBFC]">
         {/* Badges Overlay */}
         <div className="absolute top-2.5 left-2.5 z-20 flex flex-col gap-1.5">
           {discount > 0 && (
@@ -129,12 +129,12 @@ export default function ProductCard({
         </div>
 
         {/* Image with smooth zoom */}
-        <motion.div className="w-full h-full p-4 flex items-center justify-center transition-transform duration-700 ease-out group-hover:scale-110">
+        <motion.div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-110">
           <img
             ref={imageRef}
             src={productImageSrc}
             alt={product.name || 'Product'}
-            className="w-full h-full object-contain mix-blend-multiply"
+            className="w-full h-full object-cover"
             loading="lazy"
             onError={(e) => {
               const target = e.target as HTMLImageElement;

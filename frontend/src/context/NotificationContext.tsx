@@ -65,7 +65,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [token, user]);
 
-  const markAsRead = async (id: string) => {
+  const markAsRead = useCallback(async (id: string) => {
     if (!token || !user) return;
     
     try {
@@ -87,9 +87,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
-  };
+  }, [token, user]);
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     if (!token || !user || notifications.length === 0) return;
     
     try {
@@ -128,7 +128,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch (error) {
       console.error('Error marking all as read:', error);
     }
-  };
+  }, [token, user, notifications]);
 
   useEffect(() => {
     if (token && user) {
@@ -175,15 +175,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [token, user, fetchNotifications]);
 
+  const contextValue = React.useMemo(() => ({ 
+    notifications, 
+    unreadCount, 
+    loading, 
+    fetchNotifications, 
+    markAsRead, 
+    markAllAsRead 
+  }), [notifications, unreadCount, loading, fetchNotifications, markAsRead, markAllAsRead]);
+
   return (
-    <NotificationContext.Provider value={{ 
-      notifications, 
-      unreadCount, 
-      loading, 
-      fetchNotifications, 
-      markAsRead, 
-      markAllAsRead 
-    }}>
+    <NotificationContext.Provider value={contextValue}>
       {children}
     </NotificationContext.Provider>
   );

@@ -28,7 +28,7 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-neutral-50">
+    <div className="flex h-[100dvh] overflow-hidden bg-neutral-50">
       {/* Real-time Notification Alert */}
       <WarehouseNotificationAlert
         notification={activeNotification}
@@ -53,13 +53,15 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 min-w-0 flex flex-col h-screen transition-all duration-300 w-full lg:ml-64">
+      <div className="flex-1 min-w-0 flex flex-col h-[100dvh] transition-all duration-300 w-full lg:ml-64">
         {/* Header */}
         <WarehouseHeader onMenuClick={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
         {/* Page Content */}
-        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 bg-neutral-50">
-          {children}
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 bg-neutral-50 pb-24 sm:pb-6 touch-pan-y overscroll-contain">
+          <div className="min-h-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>

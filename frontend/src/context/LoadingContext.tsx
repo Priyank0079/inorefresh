@@ -18,7 +18,8 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const routeLoadingStartTime = useRef<number | null>(Date.now()); // Start timing immediately
   const activeRequests = useRef(0);
   const activeRouteRequests = useRef(1); // Start with 1 to represent initial page load
-  const MINIMUM_LOADING_TIME = 1000; // 1 second
+  const MINIMUM_LOADING_TIME = 1000; // 1 second for API/general
+  const MINIMUM_ROUTE_LOADING_TIME = 0; // 0 delay for routes to ensure instant load
 
   const safetyTimer = useRef<NodeJS.Timeout | null>(null);
   const routeSafetyTimer = useRef<NodeJS.Timeout | null>(null);
@@ -85,7 +86,7 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const now = Date.now();
       const startTime = routeLoadingStartTime.current || now;
       const elapsed = now - startTime;
-      const remainingTime = Math.max(0, MINIMUM_LOADING_TIME - elapsed);
+      const remainingTime = Math.max(0, MINIMUM_ROUTE_LOADING_TIME - elapsed);
       setTimeout(() => {
         if (activeRouteRequests.current === 0) {
           setIsRouteLoading(false);
@@ -95,15 +96,17 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, []);
 
+  const contextValue = React.useMemo(() => ({
+    isLoading,
+    isRouteLoading,
+    startLoading,
+    stopLoading,
+    startRouteLoading,
+    stopRouteLoading
+  }), [isLoading, isRouteLoading, startLoading, stopLoading, startRouteLoading, stopRouteLoading]);
+
   return (
-    <LoadingContext.Provider value={{
-      isLoading,
-      isRouteLoading,
-      startLoading,
-      stopLoading,
-      startRouteLoading,
-      stopRouteLoading
-    }}>
+    <LoadingContext.Provider value={contextValue}>
       {children}
     </LoadingContext.Provider>
   );
