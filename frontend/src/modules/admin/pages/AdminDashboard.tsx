@@ -446,6 +446,9 @@ export default function AdminDashboard() {
     );
   }
 
+  const currentMonthName = new Date().toLocaleString('default', { month: 'long' });
+  const currentYear = new Date().getFullYear();
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* KPI Cards Grid - 2 columns on mobile, 4 on desktop */}
@@ -599,7 +602,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <ErrorBoundary fallback={<div className="text-sm text-red-600 p-4">Chart failed to load</div>}>
           <OrderChart
-            title="Order - Dec 2025"
+            title={`Daily Orders - ${currentMonthName} ${currentYear}`}
             data={orderDataDec2025}
             maxValue={3}
             height={400}
@@ -607,7 +610,7 @@ export default function AdminDashboard() {
         </ErrorBoundary>
         <ErrorBoundary fallback={<div className="text-sm text-red-600 p-4">Chart failed to load</div>}>
           <OrderChart
-            title="Order - 2025"
+            title={`Monthly Orders - ${currentYear}`}
             data={orderData2025}
             maxValue={80}
             height={400}

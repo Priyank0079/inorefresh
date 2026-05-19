@@ -67,7 +67,7 @@ export default function SalesLineChart({ thisMonthData, lastMonthData, height = 
           colors: '#6b7280',
           fontSize: '10px',
         },
-        formatter: (value) => `₹${value.toLocaleString()}`,
+        formatter: (value) => typeof value === 'number' ? `₹${value.toLocaleString()}` : '',
       },
     },
     grid: {
@@ -85,7 +85,7 @@ export default function SalesLineChart({ thisMonthData, lastMonthData, height = 
       theme: 'light',
       y: {
         formatter: function (val) {
-          return `₹${val.toLocaleString()}`;
+          return typeof val === 'number' ? `₹${val.toLocaleString()}` : '';
         },
       },
     },

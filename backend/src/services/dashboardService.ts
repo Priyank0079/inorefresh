@@ -69,11 +69,11 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
       Product.countDocuments({ stock: 0, status: "Active" }).catch(() => 0),
       Product.countDocuments({ stock: { $lte: 10, $gt: 0 }, status: "Active" }).catch(() => 0),
       Order.aggregate([
-        { $match: { status: "Delivered", paymentStatus: "Paid" } },
+        { $match: { status: "Delivered" } },
         { $group: { _id: null, total: { $sum: { $ifNull: ["$total", 0] } } } },
       ]).catch(() => []),
       Order.aggregate([
-        { $match: { status: "Delivered", paymentStatus: "Paid" } },
+        { $match: { status: "Delivered" } },
         { $group: { _id: null, avg: { $avg: { $ifNull: ["$total", 0] } } } },
       ]).catch(() => []),
     ]);
@@ -168,7 +168,6 @@ export const getSalesAnalytics = async (
       {
         $match: {
           status: "Delivered",
-          paymentStatus: "Paid",
           orderDate: { $gte: startDate },
         },
       },
@@ -184,7 +183,6 @@ export const getSalesAnalytics = async (
       {
         $match: {
           status: "Delivered",
-          paymentStatus: "Paid",
           orderDate: { $gte: lastPeriodStart, $lt: startDate },
         },
       },
@@ -416,7 +414,6 @@ export const getTopwarehouses = async (
       {
         $match: {
           status: "Delivered",
-          paymentStatus: "Paid",
         },
       },
       {
@@ -534,7 +531,6 @@ export const getSalesByLocation = async () => {
       {
         $match: {
           status: "Delivered",
-          paymentStatus: "Paid",
         },
       },
       {

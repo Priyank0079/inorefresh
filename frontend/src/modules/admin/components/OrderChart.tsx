@@ -66,9 +66,8 @@ export default function OrderChart({ title, data, maxValue, height = 400 }: Orde
           colors: '#6b7280',
           fontSize: '12px',
         },
-        formatter: (value) => value.toFixed(0),
+        formatter: (value) => typeof value === 'number' ? value.toFixed(0) : '',
       },
-      max: maxValue, // Maintain consistent scale with prop
     },
     grid: {
       show: true,
@@ -85,7 +84,7 @@ export default function OrderChart({ title, data, maxValue, height = 400 }: Orde
       theme: 'light',
       y: {
         formatter: function (val) {
-          return val.toString();
+          return val !== undefined && val !== null ? val.toString() : '';
         },
       },
       marker: {
