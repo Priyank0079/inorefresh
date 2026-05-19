@@ -54,9 +54,6 @@ export default defineConfig({
               packageName = pathAfterNodeModules.split('/')[0];
             }
 
-            if (['react', 'react-dom', 'react-router', 'react-router-dom', 'scheduler'].includes(packageName)) {
-              return 'react-vendor';
-            }
             if (['apexcharts', 'recharts', 'react-apexcharts'].includes(packageName)) {
               return 'chart-vendor';
             }
@@ -65,9 +62,6 @@ export default defineConfig({
             }
             if (['jspdf', 'html2canvas'].includes(packageName)) {
               return 'pdf-vendor';
-            }
-            if (['framer-motion', 'gsap', 'lucide-react'].includes(packageName)) {
-              return 'ui-vendor';
             }
             return 'vendor';
           }
