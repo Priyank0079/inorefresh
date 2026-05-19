@@ -135,7 +135,7 @@ export default function AdminAllOrders() {
           order.orderDate || "",
           order.status || "",
           order.deliveryBoyStatus || "Not Assigned",
-          `?${order.total?.toFixed(2) || "0.00"}`,
+          `₹${order.total?.toFixed(2) || "0.00"}`,
         ].join(",")
       ),
     ].join("\n");
@@ -801,7 +801,7 @@ export default function AdminAllOrders() {
                         </span>
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900 font-medium">
-                        ?{order.total?.toFixed(2) || "0.00"}
+                        ₹{order.total?.toFixed(2) || "0.00"}
                       </td>
                       <td className="px-4 sm:px-6 py-3">
                         <Link to={`/admin/orders/${order._id}`}>

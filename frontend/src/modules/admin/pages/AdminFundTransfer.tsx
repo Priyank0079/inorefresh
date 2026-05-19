@@ -270,7 +270,7 @@ export default function AdminFundTransfer() {
                   onClick={() => handleSort('openingBalance')}
                 >
                   <div className="flex items-center gap-2">
-                    Opening Balance (?)
+                    Opening Balance (₹)
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-neutral-400">
                       <path d="M7 10L12 5L17 10M7 14L12 19L17 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -281,7 +281,7 @@ export default function AdminFundTransfer() {
                   onClick={() => handleSort('closingBalance')}
                 >
                   <div className="flex items-center gap-2">
-                    Closing Balance (?)
+                    Closing Balance (₹)
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-neutral-400">
                       <path d="M7 10L12 5L17 10M7 14L12 19L17 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -292,7 +292,7 @@ export default function AdminFundTransfer() {
                   onClick={() => handleSort('amount')}
                 >
                   <div className="flex items-center gap-2">
-                    amount (?)
+                    amount (₹)
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-neutral-400">
                       <path d="M7 10L12 5L17 10M7 14L12 19L17 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -346,9 +346,9 @@ export default function AdminFundTransfer() {
                     <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900">{transfer.id}</td>
                     <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900 font-medium">{transfer.name}</td>
                     <td className="px-4 sm:px-6 py-3 text-sm text-neutral-600">{transfer.mobile}</td>
-                    <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900">?{transfer.openingBalance.toFixed(2)}</td>
-                    <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900">?{transfer.closingBalance.toFixed(2)}</td>
-                    <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900 font-medium">?{transfer.amount.toFixed(2)}</td>
+                    <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900">₹{transfer.openingBalance.toFixed(2)}</td>
+                    <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900">₹{transfer.closingBalance.toFixed(2)}</td>
+                    <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900 font-medium">₹{transfer.amount.toFixed(2)}</td>
                     <td className="px-4 sm:px-6 py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${transfer.type === 'Credit'
                           ? 'bg-teal-50 text-teal-700 border border-teal-200'

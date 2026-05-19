@@ -541,8 +541,8 @@ export default function AdminManageDeliveryBoy() {
                                                     <span className="text-xs">Fixed</span>
                                                 )}
                                             </td>
-                                            <td className="p-4 align-middle">?{deliveryBoy.balance.toFixed(2)}</td>
-                                            <td className="p-4 align-middle">?{deliveryBoy.cashCollected.toFixed(2)}</td>
+                                            <td className="p-4 align-middle">₹{deliveryBoy.balance.toFixed(2)}</td>
+                                            <td className="p-4 align-middle">₹{deliveryBoy.cashCollected.toFixed(2)}</td>
                                             <td className="p-4 align-middle">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${deliveryBoy.status === 'Active'
                                                     ? 'bg-teal-50 text-[#12b2a2]'
