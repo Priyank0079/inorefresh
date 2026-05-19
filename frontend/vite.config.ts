@@ -39,35 +39,7 @@ export default defineConfig({
       include: [/node_modules/],
       transformMixedEsModules: true,
     },
-    // Code splitting optimization
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            const parts = id.split('node_modules/');
-            const pathAfterNodeModules = parts[parts.length - 1];
-            let packageName = '';
-            if (pathAfterNodeModules.startsWith('@')) {
-              const segments = pathAfterNodeModules.split('/');
-              packageName = segments.slice(0, 2).join('/');
-            } else {
-              packageName = pathAfterNodeModules.split('/')[0];
-            }
 
-            if (['apexcharts', 'recharts', 'react-apexcharts'].includes(packageName)) {
-              return 'chart-vendor';
-            }
-            if (['leaflet', 'react-leaflet'].includes(packageName) || packageName.startsWith('@react-google-maps')) {
-              return 'map-vendor';
-            }
-            if (['jspdf', 'html2canvas'].includes(packageName)) {
-              return 'pdf-vendor';
-            }
-            return 'vendor';
-          }
-        }
-      },
-    },
     // Optimize chunk size
     chunkSizeWarningLimit: 1000,
     // Enable source maps for production debugging (optional)
