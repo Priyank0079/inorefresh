@@ -1430,7 +1430,7 @@ export default function OrderDetail() {
             transition={{ delay: 0.7 }}>
             <SectionItem
               icon={PhoneIcon}
-              title={`${order.address?.name || "Customer"}, ${order.address?.phone || "9XXXXXXXX"
+              title={`${order.customerName || "Customer"}, ${order.customerPhone || "9XXXXXXXX"
                 }`}
               subtitle="Delivery partner may call this number"
             />
@@ -1498,7 +1498,7 @@ export default function OrderDetail() {
                         <span className="w-2 h-2 rounded-full bg-green-600" />
                       </span>
                       <span>
-                        {(parseWeight(item.variant || item.product?.pack || "", item.product?.productName || item.productName) * item.quantity).toFixed(1)} kg x{" "}
+                        {(parseWeight(item.variation || item.variant || item.product?.pack || "", item.product?.productName || item.productName) * item.quantity).toFixed(1)} kg x{" "}
                         {item.product?.productName || item.productName || "Product"}
                       </span>
                     </div>

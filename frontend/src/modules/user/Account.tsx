@@ -226,7 +226,7 @@ export default function Account() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18L9 12L15 6" /></svg>
             </button>
 
-            <div className="relative" ref={notificationsRef}>
+            <div className="relative z-50" ref={notificationsRef}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-all backdrop-blur-md relative"
@@ -241,7 +241,7 @@ export default function Account() {
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 max-w-[85vw] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-80 max-w-[85vw] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
                   <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                     <p className="text-sm font-bold text-gray-900">Notifications</p>
                     {unreadCount > 0 && (

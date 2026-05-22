@@ -86,7 +86,7 @@ export default function ProductCard({ product, badgeText = '' }: ProductCardProp
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2, scale: 1.01 }}
       onClick={() => navigate(`/product/${String((product as any).id || product._id)}`)}
-      className="relative bg-white rounded-2xl flex flex-col cursor-pointer overflow-hidden border border-neutral-100/80 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.10)] transition-all duration-300 w-full"
+      className="relative bg-white rounded-2xl flex flex-col cursor-pointer overflow-hidden border border-neutral-100/80 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.10)] transition-all duration-300 w-full h-fit"
     >
       {/* ── Image ─────────────────────────────── */}
       <div className="relative w-full overflow-hidden bg-[#F4F7F9]" style={{ aspectRatio: '1 / 1' }}>

@@ -140,26 +140,28 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
                 <div className="flex-1 flex items-center justify-end gap-0.5">
 
                     {/* 🔔 Notifications */}
-                    <button
-                        id="navbar-notifications-btn"
-                        onClick={() => internalNavigate('/account')}
-                        className={`relative p-2 rounded-xl transition-all duration-200 active:scale-90 ${iconColorClass}`}
-                        aria-label="Notifications"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                        </svg>
-                        {unreadCount > 0 && (
-                            <motion.span
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                className="absolute top-1 right-1 min-w-[16px] h-4 px-0.5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none shadow-md"
-                            >
-                                {unreadCount > 99 ? '99+' : unreadCount}
-                            </motion.span>
-                        )}
-                    </button>
+                    {!isHome && (
+                        <button
+                            id="navbar-notifications-btn"
+                            onClick={() => internalNavigate('/account')}
+                            className={`relative p-2 rounded-xl transition-all duration-200 active:scale-90 ${iconColorClass}`}
+                            aria-label="Notifications"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                            </svg>
+                            {unreadCount > 0 && (
+                                <motion.span
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="absolute top-1 right-1 min-w-[16px] h-4 px-0.5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none shadow-md"
+                                >
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                </motion.span>
+                            )}
+                        </button>
+                    )}
 
                     {/* ⚙️ Settings / Account */}
                     <button
