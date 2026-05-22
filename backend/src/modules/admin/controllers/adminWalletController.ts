@@ -56,7 +56,9 @@ export const getFinancialDashboard = asyncHandler(
           // Real-time aggregates of balances (Liabilities)
           pendingFromDeliveryBoy: realTimePendingFromDeliveryBoy,
           WarehousePendingPayouts: realTimeWarehousePending,
+          sellerPendingPayouts: realTimeWarehousePending,
           deliveryBoyPendingPayouts: realTimeDeliveryPendingPayouts,
+          deliveryPendingPayouts: realTimeDeliveryPendingPayouts,
 
           // Legacy fields for backward compatibility
           totalGMV: platformWallet.totalPlatformEarning,
@@ -181,7 +183,9 @@ export const getFinancialDashboard = asyncHandler(
         totalWithdrawals,
         currentAccountBalance,
         WarehousePendingPayouts,
+        sellerPendingPayouts: WarehousePendingPayouts,
         deliveryPendingPayouts,
+        deliveryBoyPendingPayouts: deliveryPendingPayouts,
         pendingAmountFromDeliveryBoy,
         // Legacy field just in case
         pendingWithdrawalsCount: await WithdrawRequest.countDocuments({

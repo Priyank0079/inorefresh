@@ -18,6 +18,7 @@ import { getOrderItemCommissionRate } from "../../../services/commissionService"
 import WalletTransaction from "../../../models/WalletTransaction";
 import { findNearestWarehouseWithStock } from "../../../services/warehouseFulfillmentService";
 import { calculateItemPrice } from "../../../utils/priceUtils";
+import { checkAndAutoCloseVerification } from "../../../controllers/returnWorkflowController";
 
 /**
  * Ensure an order has a stable delivery OTP stored on the order itself.
@@ -704,6 +705,9 @@ export const getOrderById = async (req: Request, res: Response) => {
                 message: "Order not found",
             });
         }
+
+        // Auto-complete verification if timeout is reached
+        await checkAndAutoCloseVerification(order);
 
         // Transform order to match frontend Order type
         const orderObj = order.toObject();

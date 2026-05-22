@@ -115,6 +115,10 @@ export interface IAppSettings extends Document {
   // Withdrawal Settings
   minimumWithdrawalAmount?: number;
 
+  // Logistics & SLA Settings
+  inspectionDurationMinutes?: number;
+  riderMaxWaitingTimeMinutes?: number;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -132,6 +136,16 @@ const AppSettingsSchema = new Schema<IAppSettings>(
     minimumWithdrawalAmount: {
       type: Number,
       default: 100
+    },
+
+    // Logistics & SLA Settings
+    inspectionDurationMinutes: {
+      type: Number,
+      default: 10
+    },
+    riderMaxWaitingTimeMinutes: {
+      type: Number,
+      default: 10
     },
 
     // App Info

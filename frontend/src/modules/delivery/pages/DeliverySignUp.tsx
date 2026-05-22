@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   register,
   sendOTP,
@@ -38,6 +38,39 @@ export default function DeliverySignUp() {
   const [error, setError] = useState("");
   const [isCityLoading, setIsCityLoading] = useState(false);
 
+  // Document upload state (#11, #12)
+  const [drivingLicenseFile, setDrivingLicenseFile] = useState<File | null>(null);
+  const [nationalIdFile, setNationalIdFile] = useState<File | null>(null);
+  const [drivingLicensePreview, setDrivingLicensePreview] = useState<string>("");
+  const [nationalIdPreview, setNationalIdPreview] = useState<string>("");
+
+  // Max DOB: must be at least 18 years old (#8)
+  const maxDOB = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 18);
+    return d.toISOString().split("T")[0];
+  })();
+
+  const handleDocumentChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "drivingLicense" | "nationalId"
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Document file must be under 5MB");
+      return;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    if (type === "drivingLicense") {
+      setDrivingLicenseFile(file);
+      setDrivingLicensePreview(previewUrl);
+    } else {
+      setNationalIdFile(file);
+      setNationalIdPreview(previewUrl);
+    }
+  };
+
   const bonusTypes = [
     "Select Bonus Type",
     "Fixed or Salaried",
@@ -54,6 +87,24 @@ export default function DeliverySignUp() {
       setFormData((prev) => ({
         ...prev,
         [name]: value.replace(/\D/g, "").slice(0, 10),
+      }));
+    } else if (name === "name" || name === "accountName") {
+      // Letters and spaces only for name fields
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value.replace(/[^a-zA-Z\s]/g, ""),
+      }));
+    } else if (name === "city") {
+      // No digits in city
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value.replace(/[0-9]/g, ""),
+      }));
+    } else if (name === "pincode") {
+      // Digits only, max 6
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value.replace(/\D/g, "").slice(0, 6),
       }));
     } else {
       setFormData((prev) => ({
@@ -127,6 +178,31 @@ export default function DeliverySignUp() {
 
     if (formData.mobile.length !== 10) {
       setError("Please enter a valid 10-digit mobile number");
+      return;
+    }
+
+    if (!/^[a-zA-Z\s]+$/.test(formData.name.trim())) {
+      setError("Name must contain letters only");
+      return;
+    }
+
+    if (formData.dateOfBirth) {
+      const dob = new Date(formData.dateOfBirth);
+      const ageDiff = Date.now() - dob.getTime();
+      const ageYears = ageDiff / (1000 * 60 * 60 * 24 * 365.25);
+      if (ageYears < 18) {
+        setError("You must be at least 18 years old to register");
+        return;
+      }
+    }
+
+    if (/[0-9]/.test(formData.city)) {
+      setError("City name should not contain numbers");
+      return;
+    }
+
+    if (formData.pincode && !/^\d{6}$/.test(formData.pincode)) {
+      setError("Pincode must be exactly 6 digits");
       return;
     }
 
@@ -262,6 +338,8 @@ export default function DeliverySignUp() {
                     onChange={handleInputChange}
                     placeholder="Enter your full name"
                     required
+                    pattern="[a-zA-Z\s]+"
+                    title="Name should contain letters and spaces only"
                     className="w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
                     disabled={loading}
                   />
@@ -314,9 +392,12 @@ export default function DeliverySignUp() {
                     name="dateOfBirth"
                     value={formData.dateOfBirth}
                     onChange={handleInputChange}
+                    max={maxDOB}
+                    title="You must be at least 18 years old"
                     className="w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
                     disabled={loading}
                   />
+                  <p className="text-xs text-neutral-400 mt-1">Must be 18 years or older</p>
                 </div>
 
                 <div>
@@ -364,6 +445,8 @@ export default function DeliverySignUp() {
                       onChange={handleInputChange}
                       placeholder="Enter your city"
                       required
+                      pattern="[^0-9]+"
+                      title="City name should not contain numbers"
                       className="w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
                       disabled={loading || isCityLoading}
                     />
@@ -391,14 +474,80 @@ export default function DeliverySignUp() {
                     Pincode
                   </label>
                   <input
-                    type="text"
+                    type="tel"
                     name="pincode"
                     value={formData.pincode}
                     onChange={handleInputChange}
-                    placeholder="Enter pincode"
+                    placeholder="6-digit pincode"
+                    maxLength={6}
+                    pattern="\d{6}"
+                    title="Pincode must be exactly 6 digits"
                     className="w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
                     disabled={loading}
                   />
+                </div>
+              </div>
+
+              {/* Document Uploads — Bug #11, #12 */}
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-sm font-semibold text-neutral-700 border-b pb-2">
+                  Documents <span className="text-neutral-400 font-normal">(Required for verification)</span>
+                </h3>
+
+                {/* Driving License */}
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    Driving License <span className="text-red-500">*</span>
+                  </label>
+                  <label className="flex items-center gap-3 w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 transition-colors">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                    </svg>
+                    <span className="text-neutral-500 flex-1 truncate">
+                      {drivingLicenseFile ? drivingLicenseFile.name : "Upload driving license (JPG/PNG/PDF, max 5MB)"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => handleDocumentChange(e, "drivingLicense")}
+                      className="hidden"
+                      disabled={loading}
+                    />
+                  </label>
+                  {drivingLicensePreview && drivingLicenseFile?.type.startsWith("image/") && (
+                    <img src={drivingLicensePreview} alt="Driving License Preview" className="mt-2 h-16 object-contain rounded border border-neutral-200" />
+                  )}
+                  {drivingLicensePreview && drivingLicenseFile?.type === "application/pdf" && (
+                    <p className="mt-1 text-xs text-teal-600">✓ PDF selected: {drivingLicenseFile.name}</p>
+                  )}
+                </div>
+
+                {/* National ID (Aadhaar) */}
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    National ID / Aadhaar <span className="text-red-500">*</span>
+                  </label>
+                  <label className="flex items-center gap-3 w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 transition-colors">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                    </svg>
+                    <span className="text-neutral-500 flex-1 truncate">
+                      {nationalIdFile ? nationalIdFile.name : "Upload Aadhaar / national ID (JPG/PNG/PDF, max 5MB)"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => handleDocumentChange(e, "nationalId")}
+                      className="hidden"
+                      disabled={loading}
+                    />
+                  </label>
+                  {nationalIdPreview && nationalIdFile?.type.startsWith("image/") && (
+                    <img src={nationalIdPreview} alt="National ID Preview" className="mt-2 h-16 object-contain rounded border border-neutral-200" />
+                  )}
+                  {nationalIdPreview && nationalIdFile?.type === "application/pdf" && (
+                    <p className="mt-1 text-xs text-teal-600">✓ PDF selected: {nationalIdFile.name}</p>
+                  )}
                 </div>
               </div>
 
@@ -578,9 +727,16 @@ export default function DeliverySignUp() {
         </div>
       </div>
 
-      {/* Footer Text */}
+      {/* Footer Text — Bug #161 */}
       <p className="mt-6 text-xs text-neutral-500 text-center max-w-md">
-        By continuing, you agree to Inor Fresh's Terms of Service and Privacy Policy
+        By continuing, you agree to Inor Fresh's{' '}
+        <Link to="/terms" target="_blank" className="text-teal-600 underline underline-offset-2 hover:text-teal-700">
+          Terms of Service
+        </Link>
+        {' '}and{' '}
+        <Link to="/privacy-policy" target="_blank" className="text-teal-600 underline underline-offset-2 hover:text-teal-700">
+          Privacy Policy
+        </Link>
       </p>
     </div>
   );

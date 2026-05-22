@@ -40,6 +40,8 @@ export default function AdminCoupon() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [couponDeleteError, setCouponDeleteError] = useState('');
+  const [confirmDeleteCouponId, setConfirmDeleteCouponId] = useState<string | null>(null);
 
   // Fetch coupons from API
   const fetchCoupons = async () => {
@@ -187,14 +189,22 @@ export default function AdminCoupon() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
+    setConfirmDeleteCouponId(id);
+  };
+
+  const handleConfirmDeleteCoupon = async () => {
+    if (!confirmDeleteCouponId) return;
+    const id = confirmDeleteCouponId;
+    setConfirmDeleteCouponId(null);
     try {
       const response = await deleteCoupon(id);
       if (response.success) {
         setCoupons(coupons.filter((coupon) => coupon._id !== id));
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || "Failed to delete coupon");
+      setCouponDeleteError(error.response?.data?.message || "Failed to delete coupon");
+      setTimeout(() => setCouponDeleteError(''), 3000);
     }
   };
 
@@ -651,12 +661,12 @@ export default function AdminCoupon() {
                       <td className="p-4 align-middle">
                         {coupon.discountType === "Percentage"
                           ? `${coupon.discountValue}%`
-                          : `?${coupon.discountValue}`}
+                          : `₹${coupon.discountValue}`}
                       </td>
                       <td className="p-4 align-middle">{coupon.discountType}</td>
                       <td className="p-4 align-middle">
                         {coupon.minimumPurchase
-                          ? `?${coupon.minimumPurchase}`
+                          ? `₹${coupon.minimumPurchase}`
                           : "N/A"}
                       </td>
                       <td className="p-4 align-middle">
@@ -763,11 +773,34 @@ export default function AdminCoupon() {
 
       {/* Footer */}
       <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
-        Copyright © 2025. Developed By{" "}
+        Copyright © 2026. Developed By{" "}
         <a href="#" className="text-blue-600 hover:underline">
           Inor fresh
         </a>
       </footer>
+
+      {couponDeleteError && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white text-sm font-semibold rounded-xl px-6 py-3 shadow-lg">
+          {couponDeleteError}
+        </div>
+      )}
+
+      {confirmDeleteCouponId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteCouponId(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <h4 className="font-bold text-neutral-800 mb-1">Delete Coupon?</h4>
+            <p className="text-sm text-neutral-500 mb-4">Are you sure you want to delete this coupon?</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDeleteCouponId(null)} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors">Cancel</button>
+              <button onClick={handleConfirmDeleteCoupon} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

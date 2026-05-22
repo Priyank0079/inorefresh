@@ -13,6 +13,7 @@ export default function AdminPortNegotiations() {
   const [counterPrice, setCounterPrice] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [confirmPortOrderId, setConfirmPortOrderId] = useState<string | null>(null);
   const { showToast } = useToast();
   const { notifications } = useNotifications();
 
@@ -58,9 +59,14 @@ export default function AdminPortNegotiations() {
     setSubmitting(false);
   };
 
-  const handleConfirm = async (offerId: string) => {
-    if (!window.confirm('Are you sure you want to confirm this order? This will close the requirement.')) return;
-    
+  const handleConfirm = (offerId: string) => {
+    setConfirmPortOrderId(offerId);
+  };
+
+  const handleConfirmPortOrder = async () => {
+    if (!confirmPortOrderId) return;
+    const offerId = confirmPortOrderId;
+    setConfirmPortOrderId(null);
     setSubmitting(true);
     const response = await adminConfirmPortOffer(offerId, notes);
     if (response.success) {
@@ -155,7 +161,7 @@ export default function AdminPortNegotiations() {
                         <td className="p-4 text-center text-slate-600">{offer.quantityOffered} kg</td>
                         <td className="p-4 text-center">
                           <div className="text-xs font-bold text-slate-600">
-                            {offer.deliveryDate ? Math.ceil((new Date(offer.deliveryDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24)) : '--'} Days
+                            {offer.deliveryDate && offer.createdAt ? Math.ceil((new Date(offer.deliveryDate).getTime() - new Date(offer.createdAt).getTime()) / (1000 * 3600 * 24)) : '--'} Days
                           </div>
                           <div className="text-[10px] text-slate-400">Est. Arrival</div>
                         </td>
@@ -376,6 +382,21 @@ export default function AdminPortNegotiations() {
           )}
         </AnimatePresence>
       </div>
+
+      {confirmPortOrderId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmPortOrderId(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">✅</div>
+            <h4 className="font-bold text-neutral-800 mb-1">Confirm This Order?</h4>
+            <p className="text-sm text-neutral-500 mb-4">This will finalize the deal and close the requirement.</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmPortOrderId(null)} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors">Cancel</button>
+              <button onClick={handleConfirmPortOrder} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-teal-600 text-white hover:bg-teal-700 transition-colors">Confirm Order</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -24,6 +24,13 @@ export default function PortSignup() {
     setError("");
     
     try {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(formData.email)) {
+        setError("Please enter a valid email address format (e.g., name@gmail.com).");
+        setLoading(false);
+        return;
+      }
+
       const response = await registerPort(formData);
       if (response.success && response.data) {
         const { token, user } = response.data;
@@ -64,17 +71,24 @@ export default function PortSignup() {
                 className="w-full border border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all text-sm"
                 placeholder="Enter your name or business name"
                 required
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                pattern="[a-zA-Z\s]+"
+                title="Name should only contain letters and spaces"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value.replace(/[^a-zA-Z\s]/g, '')})}
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Bug #2: portName is now a controlled input with value + alphanumeric-only filter */}
               <div className="space-y-1">
                 <label className="text-sm font-semibold text-neutral-700">Port Name</label>
                 <input
                   className="w-full border border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all text-sm"
                   placeholder="e.g. Veraval Port"
                   required
-                  onChange={(e) => setFormData({...formData, portName: e.target.value})}
+                  value={formData.portName}
+                  pattern="[a-zA-Z0-9\s\-]+"
+                  title="Port name should only contain letters, numbers, spaces, and hyphens"
+                  onChange={(e) => setFormData({...formData, portName: e.target.value.replace(/[^a-zA-Z0-9\s\-]/g, '')})}
                 />
               </div>
               <div className="space-y-1">
@@ -83,7 +97,10 @@ export default function PortSignup() {
                   className="w-full border border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all text-sm"
                   placeholder="Full Name"
                   required
-                  onChange={(e) => setFormData({...formData, managerName: e.target.value})}
+                  pattern="[a-zA-Z\s]+"
+                  title="Manager name should only contain letters and spaces"
+                  value={formData.managerName}
+                  onChange={(e) => setFormData({...formData, managerName: e.target.value.replace(/[^a-zA-Z\s]/g, '')})}
                 />
               </div>
             </div>
@@ -97,7 +114,10 @@ export default function PortSignup() {
                   placeholder="10-digit number"
                   maxLength={10}
                   required
-                  onChange={(e) => setFormData({...formData, mobile: e.target.value})}
+                  pattern="[0-9]{10}"
+                  title="Mobile number must be exactly 10 digits"
+                  value={formData.mobile}
+                  onChange={(e) => setFormData({...formData, mobile: e.target.value.replace(/\D/g, '')})}
                 />
               </div>
               <div className="space-y-1">
@@ -107,19 +127,25 @@ export default function PortSignup() {
                   className="w-full border border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all text-sm"
                   placeholder="email@port.com"
                   required
+                  pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                  title="Please enter a valid email address"
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Bug #3: location filter extended to also block special chars (except , / -) */}
               <div className="space-y-1">
                 <label className="text-sm font-semibold text-neutral-700">Location (City/State)</label>
                 <input
                   className="w-full border border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all text-sm"
                   placeholder="e.g. Veraval, Gujarat"
                   required
-                  onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  pattern="[a-zA-Z\s,\/\-]+"
+                  title="Location should only contain letters, spaces, commas, slashes, and hyphens"
+                  value={formData.location}
+                  onChange={(e) => setFormData({...formData, location: e.target.value.replace(/[^a-zA-Z\s,\/\-]/g, '')})}
                 />
               </div>
               <div className="space-y-1">
@@ -131,6 +157,25 @@ export default function PortSignup() {
                   onChange={(e) => setFormData({...formData, licenseNumber: e.target.value})}
                 />
               </div>
+            </div>
+
+            <div className="flex items-start gap-3 mt-2">
+              <input
+                type="checkbox"
+                id="terms"
+                required
+                className="mt-1 w-4 h-4 text-teal-600 rounded border-neutral-300 focus:ring-teal-500 cursor-pointer"
+              />
+              <label htmlFor="terms" className="text-sm text-neutral-600">
+                I agree to the{' '}
+                <Link to="/terms" className="text-teal-700 hover:text-teal-800 font-bold hover:underline" target="_blank">
+                  Terms of Service
+                </Link>
+                {' '}and{' '}
+                <Link to="/privacy-policy" className="text-teal-700 hover:text-teal-800 font-bold hover:underline" target="_blank">
+                  Privacy Policy
+                </Link>
+              </label>
             </div>
 
             {error && (

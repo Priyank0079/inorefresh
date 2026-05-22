@@ -16,6 +16,8 @@ const IncomingRequirements = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
+  const [confirmRejectId, setConfirmRejectId] = useState(null);
+  const [viewingReq, setViewingReq] = useState(null);
 
   const fetchRequirements = useCallback(async () => {
     setLoading(true);
@@ -74,21 +76,26 @@ const IncomingRequirements = () => {
     }
   };
 
-  const handleReject = async (reqId) => {
-    if (window.confirm('Are you sure you want to reject this requirement?')) {
-      try {
-        const res = await updateRequirementStatus(reqId, 'Cancelled');
-        if (res.success) {
-          setRequirements(prev => prev.filter(req => req._id !== reqId));
-        }
-      } catch (err) {
-        console.error("Error rejecting requirement:", err);
+  const handleReject = (reqId) => {
+    setConfirmRejectId(reqId);
+  };
+
+  const handleConfirmReject = async () => {
+    if (!confirmRejectId) return;
+    try {
+      const res = await updateRequirementStatus(confirmRejectId, 'Cancelled');
+      if (res.success) {
+        setRequirements(prev => prev.filter(req => req._id !== confirmRejectId));
       }
+    } catch (err) {
+      console.error("Error rejecting requirement:", err);
+    } finally {
+      setConfirmRejectId(null);
     }
   };
 
   const handleView = (req) => {
-    alert(`Viewing Details for ${req.requirementId}:\nFish: ${req.fishName}\nWarehouse: ${req.warehouseId?.name}\nQty: ${req.quantityRequired} ${req.unit}\nTarget Price: ₹${req.targetPrice}`);
+    setViewingReq(req);
   };
 
   return (
@@ -109,29 +116,33 @@ const IncomingRequirements = () => {
               />
             </div>
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-semibold transition-all ${showFilters ? 'bg-teal-50 border-teal-200 text-teal-600' : 'bg-white border-slate-200 text-slate-600 hover:shadow-sm'}`}
               >
                 <span className="material-icons-outlined text-lg">filter_list</span>
                 {statusFilter === 'All' ? 'Filters' : `Status: ${statusFilter}`}
               </button>
-              
+
+              {/* Bug #166: fixed dropdown position — right-aligned on sm+, left-aligned on mobile to prevent off-screen overflow */}
               {showFilters && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {['All', 'Open', 'Pending', 'Negotiating', 'Expired'].map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => {
-                        setStatusFilter(status);
-                        setShowFilters(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 transition-colors ${statusFilter === status ? 'text-teal-600 font-bold bg-teal-50/50' : 'text-slate-600'}`}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <div className="fixed inset-0 z-[90]" onClick={() => setShowFilters(false)} />
+                  <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+                    {['All', 'Open', 'Pending', 'Negotiating', 'Expired'].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => {
+                          setStatusFilter(status);
+                          setShowFilters(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 transition-colors ${statusFilter === status ? 'text-teal-600 font-bold bg-teal-50/50' : 'text-slate-600'}`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -245,12 +256,83 @@ const IncomingRequirements = () => {
         </div>
       </div>
 
-      <SendOfferModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <SendOfferModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         requirement={selectedReq}
         onOfferSent={onOfferSent}
       />
+
+      {/* Inline Reject Confirmation Modal */}
+      {confirmRejectId && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setConfirmRejectId(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10">
+            <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="material-icons-outlined text-2xl">block</span>
+            </div>
+            <h3 className="text-base font-bold text-slate-800 text-center mb-1">Reject Requirement?</h3>
+            <p className="text-sm text-slate-500 text-center mb-6">This action will mark the requirement as cancelled.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmRejectId(null)}
+                className="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                className="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-rose-500 text-white hover:bg-rose-600 transition-colors"
+              >
+                Yes, Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline View Details Modal */}
+      {viewingReq && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setViewingReq(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-slate-800">Requirement Details</h3>
+              <button onClick={() => setViewingReq(null)} className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+                <span className="material-icons-outlined text-xl">close</span>
+              </button>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between py-2 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Requirement ID</span>
+                <span className="font-bold text-teal-600">{viewingReq.requirementId}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Fish Name</span>
+                <span className="font-semibold text-slate-800">{viewingReq.fishName}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Warehouse</span>
+                <span className="font-semibold text-slate-800">{viewingReq.warehouseId?.warehouseName || viewingReq.warehouseId?.name || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Quantity</span>
+                <span className="font-semibold text-slate-800">{viewingReq.quantityRequired} {viewingReq.unit}</span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-slate-500 font-medium">Target Price</span>
+                <span className="font-bold text-slate-800">₹{viewingReq.targetPrice}/kg</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setViewingReq(null)}
+              className="w-full mt-5 py-2.5 rounded-xl font-semibold text-sm bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -10,6 +10,7 @@ const DeliveryLayout = lazy(() => import("./components/DeliveryLayout"));
 const DeliveryDashboard = lazy(() => import("./pages/DeliveryDashboard"));
 const DeliveryOrders = lazy(() => import("./pages/DeliveryOrders"));
 const DeliveryOrderDetail = lazy(() => import("./pages/DeliveryOrderDetail"));
+const RiderInspectionControl = lazy(() => import("./pages/RiderInspectionControl"));
 const DeliveryNotifications = lazy(() => import("./pages/DeliveryNotifications"));
 const DeliveryMenu = lazy(() => import("./pages/DeliveryMenu"));
 const DeliveryPendingOrders = lazy(() => import("./pages/DeliveryPendingOrders"));
@@ -32,6 +33,7 @@ export default function DeliveryRoutes() {
             <Route index element={<DeliveryDashboard />} />
             <Route path="orders" element={<DeliveryOrders />} />
             <Route path="orders/:id" element={<DeliveryOrderDetail />} />
+            <Route path="orders/:id/inspection" element={<RiderInspectionControl />} />
             <Route path="orders/pending" element={<DeliveryPendingOrders />} />
             <Route path="orders/all" element={<DeliveryAllOrders />} />
             <Route path="orders/return" element={<DeliveryReturnOrders />} />

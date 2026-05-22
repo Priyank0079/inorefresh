@@ -65,20 +65,37 @@ export default function DeliveryHelp() {
           <h2 className="text-neutral-900 text-xl font-semibold">Help & Support</h2>
         </div>
 
-        {/* Contact Options */}
+        {/* Contact Options — Bug #76-79: made actionable */}
         <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden mb-4">
           <div className="p-4 border-b border-neutral-200">
             <h3 className="text-neutral-900 font-semibold">Contact Us</h3>
           </div>
           <div className="divide-y divide-neutral-200">
             {contacts.map((option, index) => (
-              <div key={index} className="p-4 flex items-center justify-between">
+              <button
+                key={index}
+                onClick={() => {
+                  if (option.icon === 'phone') {
+                    window.location.href = `tel:${option.value}`;
+                  } else if (option.icon === 'email') {
+                    window.location.href = `mailto:${option.value}`;
+                  } else if (option.icon === 'chat') {
+                    navigate('/delivery/help/chat');
+                  }
+                }}
+                className="w-full p-4 flex items-center justify-between hover:bg-neutral-50 transition-colors text-left"
+              >
                 <div>
                   <p className="text-neutral-900 text-sm font-medium mb-1">{option.label}</p>
-                  <p className="text-neutral-500 text-xs">{option.value}</p>
+                  <p className="text-teal-600 text-xs">{option.value}</p>
                 </div>
-                <div className="text-2xl">{getIcon(option.icon)}</div>
-              </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{getIcon(option.icon)}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-400">
+                    <path d="M9 18L15 12L9 6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </button>
             ))}
           </div>
         </div>
@@ -98,8 +115,11 @@ export default function DeliveryHelp() {
           </div>
         </div>
 
-        {/* Support Button */}
-        <button className="w-full mt-4 bg-orange-500 text-white rounded-xl py-3 font-semibold hover:bg-orange-600 transition-colors shadow-md active:scale-[0.98]">
+        {/* Support Button — Bug #79: wired to email/support action */}
+        <button
+          onClick={() => window.location.href = 'mailto:support@inorfresh.com'}
+          className="w-full mt-4 bg-orange-500 text-white rounded-xl py-3 font-semibold hover:bg-orange-600 transition-colors shadow-md active:scale-[0.98]"
+        >
           Contact Support
         </button>
       </div>

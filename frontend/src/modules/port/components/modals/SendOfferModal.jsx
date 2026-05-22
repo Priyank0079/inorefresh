@@ -97,40 +97,44 @@ const SendOfferModal = ({ isOpen, onClose, requirement, onOfferSent }) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Offered Quantity (KG)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 name="offeredQuantity"
                 value={formData.offeredQuantity}
                 onChange={handleChange}
-                required 
-                placeholder="e.g. 500" 
-                className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" 
+                required
+                min="1"
+                placeholder="e.g. 500"
+                className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Price per KG (₹)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 name="offeredPrice"
                 value={formData.offeredPrice}
                 onChange={handleChange}
-                required 
-                placeholder={`Target: ₹${requirement?.targetPrice || '...'}`} 
-                className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" 
+                required
+                min="0.01"
+                step="0.01"
+                placeholder={`Target: ₹${requirement?.targetPrice || '...'}`}
+                className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Estimated Delivery (Days)</label>
-            <input 
-              type="number" 
+            <input
+              type="number"
               name="deliveryDays"
               value={formData.deliveryDays}
               onChange={handleChange}
-              required 
-              placeholder="e.g. 2" 
-              className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" 
+              required
+              min="1"
+              placeholder="e.g. 2"
+              className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all"
             />
           </div>
 

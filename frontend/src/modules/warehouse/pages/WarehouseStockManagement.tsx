@@ -47,6 +47,7 @@ export default function WarehouseStockManagement() {
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [categories, setCategories] = useState<string[]>([]);
     const [totalPages, setTotalPages] = useState(1);
+    const [stockUpdateError, setStockUpdateError] = useState('');
     const { user } = useAuth();
 
     // Fetch categories for filter
@@ -155,10 +156,12 @@ export default function WarehouseStockManagement() {
                         : item
                 ));
             } else {
-                alert(response.message || 'Failed to update stock');
+                setStockUpdateError(response.message || 'Failed to update stock');
+                setTimeout(() => setStockUpdateError(''), 3000);
             }
         } catch (err: any) {
-            alert(err.response?.data?.message || err.message || 'Failed to update stock');
+            setStockUpdateError(err.response?.data?.message || err.message || 'Failed to update stock');
+            setTimeout(() => setStockUpdateError(''), 3000);
         } finally {
             setUpdatingStock(null);
         }
@@ -227,6 +230,12 @@ export default function WarehouseStockManagement() {
                     <span className="text-white font-medium">Dashboard</span>
                 </div>
             </div>
+
+            {stockUpdateError && (
+                <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
+                    {stockUpdateError}
+                </div>
+            )}
 
             {/* Content Card */}
             <div className="bg-white rounded-lg shadow-sm border border-neutral-200 flex-1 flex flex-col">

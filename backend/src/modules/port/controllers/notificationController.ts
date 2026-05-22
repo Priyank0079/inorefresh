@@ -9,9 +9,16 @@ export const getMyNotifications = asyncHandler(async (req: Request, res: Respons
   const portId = (req as any).user.userId || (req as any).user.id || (req as any).user._id;
 
   const notifications = await Notification.find({
-    $or: [
-      { recipientType: "Port", recipientId: portId },
-      { recipientType: "All" }
+    $and: [
+      { recipientType: { $in: ["Port", "All"] } },
+      {
+        $or: [
+          { recipientId: portId },
+          { recipientId: { $exists: false } },
+          { recipientId: null },
+          { recipientType: "All" }
+        ]
+      }
     ]
   }).sort({ createdAt: -1 });
 
@@ -29,7 +36,20 @@ export const markAsRead = asyncHandler(async (req: Request, res: Response) => {
   const portId = (req as any).user.userId || (req as any).user.id || (req as any).user._id;
 
   const notification = await Notification.findOneAndUpdate(
-    { _id: id, $or: [{ recipientId: portId }, { recipientType: "All" }] },
+    { 
+      _id: id, 
+      $and: [
+        { recipientType: { $in: ["Port", "All"] } },
+        {
+          $or: [
+            { recipientId: portId },
+            { recipientId: { $exists: false } },
+            { recipientId: null },
+            { recipientType: "All" }
+          ]
+        }
+      ]
+    },
     { isRead: true, readAt: new Date() },
     { new: true }
   );
@@ -56,9 +76,16 @@ export const markAllAsRead = asyncHandler(async (req: Request, res: Response) =>
 
   await Notification.updateMany(
     { 
-      $or: [
-        { recipientType: "Port", recipientId: portId },
-        { recipientType: "All" }
+      $and: [
+        { recipientType: { $in: ["Port", "All"] } },
+        {
+          $or: [
+            { recipientId: portId },
+            { recipientId: { $exists: false } },
+            { recipientId: null },
+            { recipientType: "All" }
+          ]
+        }
       ],
       isRead: false 
     },
@@ -80,7 +107,17 @@ export const deleteNotification = asyncHandler(async (req: Request, res: Respons
 
   const result = await Notification.findOneAndDelete({
     _id: id,
-    $or: [{ recipientId: portId }, { recipientType: "All" }]
+    $and: [
+      { recipientType: { $in: ["Port", "All"] } },
+      {
+        $or: [
+          { recipientId: portId },
+          { recipientId: { $exists: false } },
+          { recipientId: null },
+          { recipientType: "All" }
+        ]
+      }
+    ]
   });
 
   if (!result) {

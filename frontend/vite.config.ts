@@ -14,6 +14,7 @@ export default defineConfig({
   ],
   assetsInclude: ['**/*.jpg', '**/*.jpeg', '**/*.png', '**/*.webp'],
   server: {
+    host: '127.0.0.1',
     fs: {
       strict: false,
     },

@@ -35,6 +35,9 @@ const PortSignup = lazy(() => import("./modules/port/pages/auth/PortSignup.jsx")
 const WarehouseLayout = lazy(() => import("./modules/warehouse/components/WarehouseLayout"));
 const WarehouseCategory = lazy(() => import("./modules/warehouse/pages/WarehouseCategory"));
 
+// Common pages
+const Terms = lazy(() => import("./components/Terms.jsx"));
+
 function App() {
   // Initialize push notifications on app load
   useEffect(() => {
@@ -143,6 +146,16 @@ function App() {
                                 <PortSignup />
                               </Suspense>
                             </PublicRoute>
+                          }
+                        />
+
+                        {/* Common Routes */}
+                        <Route
+                          path="/terms"
+                          element={
+                            <Suspense fallback={<IconLoader forceShow />}>
+                              <Terms />
+                            </Suspense>
                           }
                         />
 

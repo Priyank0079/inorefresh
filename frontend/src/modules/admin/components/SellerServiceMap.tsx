@@ -12,7 +12,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const storeIcon = new L.DivIcon({
-  html: `<div style="font-size: 20px; text-align: center;">??</div>`,
+  html: `<div style="font-size: 24px; text-align: center; line-height: 1;">📍</div>`,
   className: 'store-marker',
   iconSize: [30, 30],
   iconAnchor: [15, 15],

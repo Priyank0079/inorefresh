@@ -10,6 +10,8 @@ export default function WarehouseOrderDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [orderStatus, setOrderStatus] = useState<string>('Out For Delivery');
+  const [statusUpdateError, setStatusUpdateError] = useState('');
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
 
   // Fetch order detail from API
   useEffect(() => {
@@ -46,11 +48,18 @@ export default function WarehouseOrderDetail() {
         setOrderStatus(newStatus);
         setOrderDetail({ ...orderDetail, status: newStatus as any });
       } else {
-        alert('Failed to update order status');
+        setStatusUpdateError('Failed to update order status');
+        setTimeout(() => setStatusUpdateError(''), 3000);
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update order status');
+      setStatusUpdateError(err.response?.data?.message || 'Failed to update order status');
+      setTimeout(() => setStatusUpdateError(''), 3000);
     }
+  };
+
+  const handleConfirmReject = () => {
+    setShowRejectConfirm(false);
+    handleStatusUpdate('Rejected');
   };
 
   if (loading) {
@@ -299,7 +308,7 @@ export default function WarehouseOrderDetail() {
     yPos += 8;
 
     doc.setFontSize(8);
-    doc.text('Copyright © 2025. Developed By Inor fresh', pageWidth / 2, yPos, { align: 'center' });
+    doc.text('Copyright © 2026. Developed By Inor fresh', pageWidth / 2, yPos, { align: 'center' });
 
     // Save the PDF
     const fileName = `Invoice_${orderDetail.invoiceNumber}_${orderDetail.id}.pdf`;
@@ -375,11 +384,7 @@ export default function WarehouseOrderDetail() {
                     Accept Order
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm('Are you sure you want to reject this order? This cannot be undone.')) {
-                        handleStatusUpdate('Rejected');
-                      }
-                    }}
+                    onClick={() => setShowRejectConfirm(true)}
                     className="flex-1 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors font-medium shadow-sm"
                   >
                     Reject Order
@@ -400,6 +405,11 @@ export default function WarehouseOrderDetail() {
                 </select>
               )}
             </div>
+            {statusUpdateError && (
+              <div className="w-full sm:w-auto px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
+                {statusUpdateError}
+              </div>
+            )}
             <button
               onClick={handleExportPDF}
               className="flex items-center gap-2 bg-[#12b2a2] hover:bg-[#0e7490] text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
@@ -531,10 +541,40 @@ export default function WarehouseOrderDetail() {
       {/* Footer */}
       <footer className="mt-6 px-4 sm:px-6 text-center py-4 bg-neutral-100 rounded-lg">
         <p className="text-xs sm:text-sm text-neutral-600">
-          Copyright © 2025. Developed By{' '}
+          Copyright © 2026. Developed By{' '}
           <span className="font-semibold text-teal-600">Inor fresh</span>
         </p>
       </footer>
+
+      {/* Reject Confirmation Modal */}
+      {showRejectConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowRejectConfirm(false)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+            </div>
+            <h3 className="text-base font-bold text-neutral-800 mb-1">Reject Order?</h3>
+            <p className="text-sm text-neutral-500 mb-6">Are you sure you want to reject this order? This cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowRejectConfirm(false)}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Yes, Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

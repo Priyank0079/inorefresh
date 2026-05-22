@@ -17,6 +17,8 @@ export default function WarehouseDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isShopOpen, setIsShopOpen] = useState(true);
   const [statusLoading, setStatusLoading] = useState(false);
+  // Bug #142: inline shop-toggle feedback instead of alert()
+  const [shopMessage, setShopMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -53,25 +55,18 @@ export default function WarehouseDashboard() {
   const handleToggleShop = async () => {
     try {
       setStatusLoading(true);
-      console.log('Toggle shop status - current state:', isShopOpen);
       const response = await toggleShopStatus();
-      console.log('Toggle shop status - API response:', response);
 
       if (response.success) {
         setIsShopOpen(response.data.isShopOpen);
-        alert(`Shop is now ${response.data.isShopOpen ? 'Open' : 'Closed'}`);
+        setShopMessage({ text: `Shop is now ${response.data.isShopOpen ? 'Open 🟢' : 'Closed 🔴'}`, type: 'success' });
       } else {
-        console.error('Toggle failed - response not successful:', response);
-        alert('Failed to toggle shop status: ' + (response.message || 'Unknown error'));
+        setShopMessage({ text: 'Failed to toggle shop status: ' + (response.message || 'Unknown error'), type: 'error' });
       }
+      setTimeout(() => setShopMessage(null), 3000);
     } catch (error: any) {
-      console.error('Failed to toggle shop status - error:', error);
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      alert('Error toggling shop status: ' + (error.response?.data?.message || error.message || 'Unknown error'));
+      setShopMessage({ text: error.response?.data?.message || error.message || 'Error toggling shop status', type: 'error' });
+      setTimeout(() => setShopMessage(null), 3000);
     } finally {
       setStatusLoading(false);
     }
@@ -280,6 +275,14 @@ export default function WarehouseDashboard() {
           </button>
         </div>
       </div>
+      {/* Bug #142: inline shop toggle feedback */}
+      {shopMessage && (
+        <div className={`px-4 py-2.5 rounded-lg text-sm font-medium text-center transition-all ${
+          shopMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+        }`}>
+          {shopMessage.text}
+        </div>
+      )}
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <DashboardCard icon={userIcon} title="Total User" value={stats.totalUser} accentColor="#3b82f6" />

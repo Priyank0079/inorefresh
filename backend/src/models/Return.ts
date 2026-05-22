@@ -9,11 +9,29 @@ export interface IReturn extends Document {
   // Return Info
   reason: string;
   description?: string;
-  status: "Pending" | "Approved" | "Rejected" | "Processing" | "Completed";
+  status: "Pending" | "Approved" | "Rejected" | "Processing" | "Completed" | "REQUESTED" | "UNDER_REVIEW" | "COLLECTED_BY_RIDER" | "IN_TRANSIT_TO_WAREHOUSE" | "RECEIVED_AT_WAREHOUSE" | "REFUND_PENDING" | "REFUND_APPROVED" | "REFUNDED";
 
   // Items
   quantity: number;
+  acceptedQuantity: number;
+  orderedQuantity: number;
   images?: string[]; // Images of returned items
+  videos?: string[];
+
+  // Logistics tracking
+  warehouse?: mongoose.Types.ObjectId;
+  deliveryBoy?: mongoose.Types.ObjectId;
+  warehouseVerificationOtp?: string;
+  warehouseVerificationOtpExpiresAt?: Date;
+  warehouseVerificationOtpVerified?: boolean;
+  wholesalerStatus?: "Approved" | "Rejected" | "Escalated_To_Admin";
+  escalatedAt?: Date;
+  escalatedReason?: string;
+  riderWaitingStartedAt?: Date;
+  riderWaitingLimitMinutes?: number;
+  reverseLogisticsCode?: string;
+  proofOfPickupEvidence?: string[];
+  riderRemarks?: string;
 
   // Processing
   processedBy?: mongoose.Types.ObjectId;
@@ -67,7 +85,12 @@ const ReturnSchema = new Schema<IReturn>(
     },
     status: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected", "Processing", "Completed"],
+      enum: [
+        "Pending", "Approved", "Rejected", "Processing", "Completed",
+        "REQUESTED", "UNDER_REVIEW", "COLLECTED_BY_RIDER",
+        "IN_TRANSIT_TO_WAREHOUSE", "RECEIVED_AT_WAREHOUSE",
+        "REFUND_PENDING", "REFUND_APPROVED", "REFUNDED"
+      ],
       default: "Pending",
     },
 
@@ -77,9 +100,74 @@ const ReturnSchema = new Schema<IReturn>(
       required: [true, "Quantity is required"],
       min: [1, "Quantity must be at least 1"],
     },
+    acceptedQuantity: {
+      type: Number,
+      required: [true, "Accepted quantity is required"],
+      default: 0,
+    },
+    orderedQuantity: {
+      type: Number,
+      required: [true, "Ordered quantity is required"],
+      default: 0,
+    },
     images: {
       type: [String],
       default: [],
+    },
+    videos: {
+      type: [String],
+      default: [],
+    },
+
+    // Logistics tracking
+    warehouse: {
+      type: Schema.Types.ObjectId,
+      ref: "Warehouse",
+    },
+    deliveryBoy: {
+      type: Schema.Types.ObjectId,
+      ref: "Delivery",
+    },
+    warehouseVerificationOtp: {
+      type: String,
+    },
+    warehouseVerificationOtpExpiresAt: {
+      type: Date,
+    },
+    warehouseVerificationOtpVerified: {
+      type: Boolean,
+      default: false,
+    },
+    wholesalerStatus: {
+      type: String,
+      enum: ["Approved", "Rejected", "Escalated_To_Admin"],
+    },
+    escalatedAt: {
+      type: Date,
+    },
+    escalatedReason: {
+      type: String,
+      trim: true,
+    },
+    riderWaitingStartedAt: {
+      type: Date,
+    },
+    riderWaitingLimitMinutes: {
+      type: Number,
+      default: 10,
+    },
+    reverseLogisticsCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    proofOfPickupEvidence: {
+      type: [String],
+      default: [],
+    },
+    riderRemarks: {
+      type: String,
+      trim: true,
     },
 
     // Processing

@@ -24,6 +24,7 @@ export default function AdminManageDeliveryBoy() {
     const [totalPages, setTotalPages] = useState(1);
     const [totalDeliveryBoys, setTotalDeliveryBoys] = useState(0);
     const [successMessage, setSuccessMessage] = useState('');
+    const [confirmDeleteDeliveryId, setConfirmDeleteDeliveryId] = useState<string | null>(null);
 
     // Debounce search term and fetch delivery boys
     useEffect(() => {
@@ -93,7 +94,7 @@ export default function AdminManageDeliveryBoy() {
             'balance': 'balance',
             'cashCollected': 'cashCollected',
             'status': 'status',
-            'available': 'available',
+            'available': 'isOnline',
         };
         const backendColumn = columnMap[column] || column;
 
@@ -157,7 +158,7 @@ export default function AdminManageDeliveryBoy() {
             if (response.success) {
                 // Update local state
                 setDeliveryBoys(deliveryBoys.map(deliveryBoy =>
-                    deliveryBoy._id === deliveryBoyId ? { ...deliveryBoy, available: newAvailability } : deliveryBoy
+                    deliveryBoy._id === deliveryBoyId ? { ...deliveryBoy, isOnline: newAvailability === 'Available' } : deliveryBoy
                 ));
                 setSuccessMessage(`Delivery boy availability updated to ${newAvailability} successfully!`);
                 setError('');
@@ -192,11 +193,14 @@ export default function AdminManageDeliveryBoy() {
         }
     };
 
-    const handleDelete = async (deliveryBoyId: string) => {
-        if (!window.confirm('Are you sure you want to delete this delivery boy? This action cannot be undone.')) {
-            return;
-        }
+    const handleDelete = (deliveryBoyId: string) => {
+        setConfirmDeleteDeliveryId(deliveryBoyId);
+    };
 
+    const handleConfirmDeleteDelivery = async () => {
+        if (!confirmDeleteDeliveryId) return;
+        const deliveryBoyId = confirmDeleteDeliveryId;
+        setConfirmDeleteDeliveryId(null);
         try {
             setProcessing(deliveryBoyId);
             const response = await deleteDeliveryBoy(deliveryBoyId);
@@ -251,7 +255,7 @@ export default function AdminManageDeliveryBoy() {
                 deliveryBoy.balance,
                 deliveryBoy.cashCollected,
                 deliveryBoy.status,
-                deliveryBoy.available
+                deliveryBoy.isOnline ? 'Available' : 'Not Available'
             ].join(','))
         ].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -276,7 +280,7 @@ export default function AdminManageDeliveryBoy() {
             'balance': 'balance',
             'cashCollected': 'cashCollected',
             'status': 'status',
-            'available': 'available',
+            'available': 'isOnline',
         };
         const backendColumn = columnMap[column] || column;
 
@@ -552,11 +556,11 @@ export default function AdminManageDeliveryBoy() {
                                                 </span>
                                             </td>
                                             <td className="p-4 align-middle">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${deliveryBoy.available === 'Available'
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${deliveryBoy.isOnline
                                                     ? 'bg-teal-50 text-[#12b2a2]'
                                                     : 'bg-red-100 text-red-800'
                                                     }`}>
-                                                    {deliveryBoy.available}
+                                                    {deliveryBoy.isOnline ? 'Available' : 'Not Available'}
                                                 </span>
                                             </td>
                                             <td className="p-4 align-middle">
@@ -582,13 +586,13 @@ export default function AdminManageDeliveryBoy() {
                                                         )}
                                                     </button>
                                                     <button
-                                                        onClick={() => handleAvailabilityChange(deliveryBoy._id, deliveryBoy.available === 'Available' ? 'Not Available' : 'Available')}
+                                                        onClick={() => handleAvailabilityChange(deliveryBoy._id, deliveryBoy.isOnline ? 'Not Available' : 'Available')}
                                                         disabled={processing === deliveryBoy._id}
-                                                        className={`p-1.5 rounded transition-colors ${deliveryBoy.available === 'Available'
+                                                        className={`p-1.5 rounded transition-colors ${deliveryBoy.isOnline
                                                             ? 'text-yellow-600 hover:bg-yellow-50'
                                                             : 'text-[#12b2a2] hover:bg-green-50'
                                                             }`}
-                                                        title={deliveryBoy.available === 'Available' ? 'Mark as Not Available' : 'Mark as Available'}
+                                                        title={deliveryBoy.isOnline ? 'Mark as Not Available' : 'Mark as Available'}
                                                     >
                                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                             <circle cx="12" cy="12" r="10"></circle>
@@ -705,9 +709,26 @@ export default function AdminManageDeliveryBoy() {
 
             {/* Footer */}
             <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
-                Copyright © 2025. Developed By{' '}
+                Copyright © 2026. Developed By{' '}
                 <a href="#" className="text-blue-600 hover:underline">Inor fresh</a>
             </footer>
+
+            {confirmDeleteDeliveryId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteDeliveryId(null)} />
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+                        <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </div>
+                        <h4 className="font-bold text-neutral-800 mb-1">Delete Delivery Boy?</h4>
+                        <p className="text-sm text-neutral-500 mb-4">This action cannot be undone.</p>
+                        <div className="flex gap-2">
+                            <button onClick={() => setConfirmDeleteDeliveryId(null)} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors">Cancel</button>
+                            <button onClick={handleConfirmDeleteDelivery} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -21,6 +21,10 @@ export default function AdminReturnRequest() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [returnReqMessage, setReturnReqMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [rejectModalId, setRejectModalId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const showReturnReqMsg = (text: string, type: 'success' | 'error') => { setReturnReqMessage({ text, type }); setTimeout(() => setReturnReqMessage(null), 3000); };
 
   // Fetch return requests on component mount
   useEffect(() => {
@@ -100,68 +104,63 @@ export default function AdminReturnRequest() {
       });
 
       if (response.success) {
-        // Update local state
         setReturnRequests((requests) =>
           requests.map((req) =>
             req._id === requestId ? { ...req, status: "Approved" } : req
           )
         );
-        alert("Return request approved successfully!");
+        showReturnReqMsg("Return request approved successfully!", 'success');
       } else {
-        alert(
-          "Failed to approve return request: " +
-          (response.message || "Unknown error")
-        );
+        showReturnReqMsg("Failed to approve return request: " + (response.message || "Unknown error"), 'error');
       }
     } catch (err: any) {
       console.error("Error approving return request:", err);
-      alert(
-        "Failed to approve return request: " +
-        (err.response?.data?.message || "Please try again.")
-      );
+      showReturnReqMsg("Failed to approve return request: " + (err.response?.data?.message || "Please try again."), 'error');
     } finally {
       setUpdating(null);
     }
   };
 
-  const handleRejectReturn = async (requestId: string) => {
-    const reason = prompt("Enter rejection reason:");
-    if (!reason) return;
+  const handleRejectReturn = (requestId: string) => {
+    setRejectReason('');
+    setRejectModalId(requestId);
+  };
 
+  const handleConfirmRejectReturn = async () => {
+    if (!rejectModalId) return;
+    if (!rejectReason.trim()) {
+      showReturnReqMsg("Please enter a rejection reason", 'error');
+      return;
+    }
+    const requestId = rejectModalId;
+    setRejectModalId(null);
     try {
       setUpdating(requestId);
       const response = await updateReturnRequest(requestId, {
         status: "Rejected",
-        adminNotes: reason,
+        adminNotes: rejectReason.trim(),
       });
 
       if (response.success) {
-        // Update local state
         setReturnRequests((requests) =>
           requests.map((req) =>
             req._id === requestId ? { ...req, status: "Rejected" } : req
           )
         );
-        alert("Return request rejected successfully!");
+        showReturnReqMsg("Return request rejected successfully!", 'success');
       } else {
-        alert(
-          "Failed to reject return request: " +
-          (response.message || "Unknown error")
-        );
+        showReturnReqMsg("Failed to reject return request: " + (response.message || "Unknown error"), 'error');
       }
     } catch (err: any) {
       console.error("Error rejecting return request:", err);
-      alert(
-        "Failed to reject return request: " +
-        (err.response?.data?.message || "Please try again.")
-      );
+      showReturnReqMsg("Failed to reject return request: " + (err.response?.data?.message || "Please try again."), 'error');
     } finally {
       setUpdating(null);
     }
   };
 
   const handleExport = () => {
-    alert("Export functionality will be implemented here");
+    // Export functionality placeholder
   };
 
   const handleClearDate = () => {
@@ -181,6 +180,12 @@ export default function AdminReturnRequest() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Inline Message */}
+      {returnReqMessage && (
+        <div className={`px-4 py-3 rounded-lg text-sm font-medium ${returnReqMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          {returnReqMessage.text}
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
         <h1 className="text-2xl font-semibold text-neutral-800">
@@ -804,11 +809,43 @@ export default function AdminReturnRequest() {
 
       {/* Footer */}
       <div className="text-center text-sm text-neutral-500 py-4">
-        Copyright © 2025. Developed By{" "}
+        Copyright © 2026. Developed By{" "}
         <a href="#" className="text-teal-600 hover:text-teal-700">
           Inor fresh
         </a>
       </div>
+
+      {/* Reject Return Request Modal */}
+      {rejectModalId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setRejectModalId(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10">
+            <h3 className="text-lg font-semibold text-neutral-800 mb-2">Reject Return Request</h3>
+            <p className="text-sm text-neutral-500 mb-4">Please provide a reason for rejection.</p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Enter rejection reason..."
+              rows={3}
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setRejectModalId(null)}
+                className="flex-1 px-4 py-2 border border-neutral-300 rounded-lg text-neutral-700 hover:bg-neutral-50 font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRejectReturn}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

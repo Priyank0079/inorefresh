@@ -79,8 +79,8 @@ export const getAllDeliveryBoys = asyncHandler(
 
     const query: any = {};
 
-    if (status) query.status = status;
-    if (available) query.available = available;
+    if (status && status !== 'All') query.status = status;
+    if (available && available !== 'All') query.isOnline = available === 'Available';
     if (search) {
       query.$or = [
         { name: { $regex: search as string, $options: "i" } },
@@ -269,9 +269,11 @@ export const updateDeliveryBoyAvailability = asyncHandler(
       });
     }
 
+    const isOnline = available === "Available";
+
     const deliveryBoy = await Delivery.findByIdAndUpdate(
       id,
-      { available },
+      { isOnline },
       { new: true, runValidators: true }
     ).select("-password");
 
@@ -429,6 +431,168 @@ export const getDeliveryBoyCashCollections = asyncHandler(
         total,
         pages: Math.ceil(total / parseInt(limit as string)),
       },
+    });
+  }
+);
+
+/**
+ * Get delivery boy fund transfers (wallet transactions)
+ */
+export const getDeliveryBoyFundTransfers = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { page = 1, limit = 10, deliveryBoyId, type, fromDate, toDate, search } = req.query;
+
+    const query: any = { userType: "DELIVERY_BOY" };
+    
+    if (deliveryBoyId && deliveryBoyId !== 'all') {
+      query.userId = deliveryBoyId;
+    }
+    
+    if (type && type !== 'all' && type !== 'All') {
+      query.type = type;
+    }
+    
+    if (fromDate || toDate) {
+      query.createdAt = {};
+      if (fromDate) query.createdAt.$gte = new Date(fromDate as string);
+      if (toDate) query.createdAt.$lte = new Date(toDate as string);
+    }
+    
+    // For search, we might need to populate the delivery boy first if we want to search by name/mobile.
+    // However, since WalletTransaction doesn't duplicate name/mobile, searching by name requires aggregation or a two-step query.
+    // For now, we'll handle standard pagination.
+    
+    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+
+    // If search is provided, we first find the delivery boys matching the search
+    if (search) {
+      const matchingDeliveryBoys = await Delivery.find({
+        $or: [
+          { name: { $regex: search as string, $options: "i" } },
+          { mobile: { $regex: search as string, $options: "i" } }
+        ]
+      }).select("_id");
+      
+      const matchingIds = matchingDeliveryBoys.map(db => db._id);
+      
+      if (query.userId) {
+        // If deliveryBoyId is already specified, ensure it's in the search results
+        if (!matchingIds.some(id => id.toString() === query.userId.toString())) {
+           // No match
+           return res.status(200).json({
+             success: true,
+             message: "Fund transfers fetched successfully",
+             data: [],
+             pagination: { page: parseInt(page as string), limit: parseInt(limit as string), total: 0, pages: 0 }
+           });
+        }
+      } else {
+        query.userId = { $in: matchingIds };
+      }
+    }
+
+    const [transfers, total] = await Promise.all([
+      WalletTransaction.find(query)
+        .populate("userId", "name mobile")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit as string)),
+      WalletTransaction.countDocuments(query),
+    ]);
+
+    // Format the response for the frontend
+    const formattedTransfers = transfers.map((t: any) => ({
+      id: t._id,
+      name: t.userId?.name || "Unknown",
+      mobile: t.userId?.mobile || "Unknown",
+      openingBalance: t.openingBalance || 0,
+      closingBalance: t.closingBalance || 0,
+      amount: t.amount,
+      type: t.type,
+      message: t.description,
+      date: t.createdAt,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: "Fund transfers fetched successfully",
+      data: formattedTransfers,
+      pagination: {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        total,
+        pages: Math.ceil(total / parseInt(limit as string)),
+      },
+    });
+  }
+);
+
+/**
+ * Add a fund transfer for a delivery boy
+ */
+export const addDeliveryBoyFundTransfer = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { deliveryBoyId, amount, type, message } = req.body;
+
+    if (!deliveryBoyId || !amount || amount <= 0 || !type || !message) {
+      return res.status(400).json({
+        success: false,
+        message: "Delivery boy ID, valid amount, type, and message are required",
+      });
+    }
+
+    if (!["Credit", "Debit"].includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: "Type must be Credit or Debit",
+      });
+    }
+
+    const deliveryBoy = await Delivery.findById(deliveryBoyId);
+    if (!deliveryBoy) {
+      return res.status(404).json({
+        success: false,
+        message: "Delivery boy not found",
+      });
+    }
+
+    const openingBalance = deliveryBoy.balance || 0;
+    
+    // Calculate closing balance
+    let closingBalance = openingBalance;
+    if (type === "Credit") {
+      closingBalance += Number(amount);
+    } else {
+      if (openingBalance < Number(amount)) {
+        return res.status(400).json({
+          success: false,
+          message: "Insufficient balance for Debit transaction",
+        });
+      }
+      closingBalance -= Number(amount);
+    }
+
+    // Create the transaction
+    const transaction = await WalletTransaction.create({
+      userId: deliveryBoyId,
+      userType: "DELIVERY_BOY",
+      amount: Number(amount),
+      type,
+      description: message,
+      status: "Completed",
+      reference: `FT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      openingBalance,
+      closingBalance,
+    });
+
+    // Update delivery boy balance
+    deliveryBoy.balance = closingBalance;
+    await deliveryBoy.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Fund transfer added successfully",
+      data: transaction,
     });
   }
 );

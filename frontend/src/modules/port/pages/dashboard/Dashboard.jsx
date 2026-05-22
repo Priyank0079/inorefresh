@@ -61,7 +61,8 @@ const Dashboard = () => {
       value: stats.totalRequirements.toString(), 
       icon: 'list_alt', 
       color: 'bg-blue-500', 
-      trend: '+5%', 
+      trend: 5, 
+      link: '/port/requirements',
       isPositive: true 
     },
     { 
@@ -69,7 +70,8 @@ const Dashboard = () => {
       value: (stats.activeOffers + stats.approvedOffers).toString(), 
       icon: 'send', 
       color: 'bg-emerald-500', 
-      trend: '+12%', 
+      trend: 12, 
+      link: '/port/offers',
       isPositive: true 
     },
     { 
@@ -77,7 +79,8 @@ const Dashboard = () => {
       value: stats.activeOffers.toString(), 
       icon: 'sync', 
       color: 'bg-amber-500', 
-      trend: '-2%', 
+      trend: -2, 
+      link: '/port/offers/negotiations',
       isPositive: false 
     },
     { 
@@ -85,7 +88,8 @@ const Dashboard = () => {
       value: `₹${stats.totalRevenue.toLocaleString()}`, 
       icon: 'payments', 
       color: 'bg-teal-600', 
-      trend: '+18%', 
+      trend: 18, 
+      link: null,
       isPositive: true 
     }
   ];

@@ -10,6 +10,8 @@ interface SmsGateway {
 }
 
 export default function AdminSmsGateway() {
+  const [gatewayMessage, setGatewayMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const showGatewayMsg = (text: string, type: 'success' | 'error') => { setGatewayMessage({ text, type }); setTimeout(() => setGatewayMessage(null), 3000); };
   const [gateways, setGateways] = useState<SmsGateway[]>([
     {
       id: 'smsindiahub',
@@ -51,7 +53,7 @@ export default function AdminSmsGateway() {
     if (gateway) {
       // Handle update logic here
       console.log('Updating gateway:', gateway);
-      alert(`${gateway.name} configuration updated successfully!`);
+      showGatewayMsg(`${gateway.name} configuration updated successfully!`, 'success');
     }
   };
 
@@ -79,6 +81,12 @@ export default function AdminSmsGateway() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Inline Message */}
+      {gatewayMessage && (
+        <div className={`mx-4 sm:mx-6 mt-4 px-4 py-3 rounded-lg text-sm font-medium ${gatewayMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          {gatewayMessage.text}
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white px-4 sm:px-6 py-4 border-b border-neutral-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

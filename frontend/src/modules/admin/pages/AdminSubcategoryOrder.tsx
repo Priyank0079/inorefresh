@@ -57,6 +57,8 @@ export default function AdminSubcategoryOrder() {
     const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
     const [draggedItem, setDraggedItem] = useState<number | null>(null);
     const [originalOrder, setOriginalOrder] = useState<Subcategory[]>([]);
+    const [orderMsg, setOrderMsg] = useState<{ text: string; type: 'success'|'error' } | null>(null);
+    const showOrderMsg = (text: string, type: 'success'|'error') => { setOrderMsg({ text, type }); setTimeout(() => setOrderMsg(null), 3000); };
 
     const handleCategoryChange = (category: string) => {
         setSelectedCategory(category);
@@ -115,32 +117,35 @@ export default function AdminSubcategoryOrder() {
 
     const handleUpdateOrder = () => {
         if (selectedCategory === 'Select category') {
-            alert('Please select a category');
-            return;
-        }
-        
-        if (subcategories.length === 0) {
-            alert('No subcategories to update');
+            showOrderMsg('Please select a category', 'error');
             return;
         }
 
-        // In real app, this would make an API call to update the order
+        if (subcategories.length === 0) {
+            showOrderMsg('No subcategories to update', 'error');
+            return;
+        }
+
         console.log('Updating subcategory order:', subcategories);
-        alert('Subcategory order updated successfully!');
-        
-        // Update original order to match current order
+        showOrderMsg('Subcategory order updated successfully!', 'success');
+
         setOriginalOrder([...subcategories]);
     };
 
     const handleResetOrder = () => {
         if (originalOrder.length > 0) {
             setSubcategories([...originalOrder]);
-            alert('Order reset to original');
+            showOrderMsg('Order reset to original', 'success');
         }
     };
 
     return (
         <div className="flex flex-col h-full bg-gray-50">
+            {orderMsg && (
+                <div className={`mx-6 mt-4 px-4 py-3 rounded-lg text-sm font-medium ${orderMsg.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+                    {orderMsg.text}
+                </div>
+            )}
             {/* Page Content */}
             <div className="flex-1 p-6">
                 <div className="max-w-4xl mx-auto">
@@ -247,7 +252,7 @@ export default function AdminSubcategoryOrder() {
 
             {/* Footer */}
             <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
-                Copyright © 2025. Developed By{' '}
+                Copyright © 2026. Developed By{' '}
                 <a href="#" className="text-blue-600 hover:underline">Inor fresh</a>
             </footer>
         </div>

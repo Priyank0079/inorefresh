@@ -10,6 +10,9 @@ export default function WarehouseInwardReport() {
     const [error, setError] = useState<string | null>(null);
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
+
+    // Bug #101: today's date as max to block future date selection
+    const todayStr = new Date().toISOString().split('T')[0];
     const [searchTerm, setSearchTerm] = useState('');
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
@@ -159,22 +162,32 @@ export default function WarehouseInwardReport() {
                     {/* Filter Bar */}
                     <div className="p-6 border-b border-neutral-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                         <div className="flex flex-wrap items-center gap-4">
+                            {/* Bug #100, #101: added max=today, labels as htmlFor to make clicking open picker */}
                             <div className="flex flex-col gap-1">
-                                <label className="text-[10px] font-bold text-neutral-400 uppercase">From Date</label>
-                                <input 
+                                <label htmlFor="inward-from-date" className="text-[10px] font-bold text-neutral-400 uppercase cursor-pointer">From Date</label>
+                                <input
+                                    id="inward-from-date"
                                     type="date"
                                     value={fromDate}
-                                    onChange={(e) => setFromDate(e.target.value)}
-                                    className="px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#12b2a2]"
+                                    onChange={(e) => {
+                                        setFromDate(e.target.value);
+                                        // Reset toDate if it's before fromDate
+                                        if (toDate && e.target.value > toDate) setToDate(e.target.value);
+                                    }}
+                                    max={todayStr}
+                                    className="px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#12b2a2] cursor-pointer"
                                 />
                             </div>
                             <div className="flex flex-col gap-1">
-                                <label className="text-[10px] font-bold text-neutral-400 uppercase">To Date</label>
-                                <input 
+                                <label htmlFor="inward-to-date" className="text-[10px] font-bold text-neutral-400 uppercase cursor-pointer">To Date</label>
+                                <input
+                                    id="inward-to-date"
                                     type="date"
                                     value={toDate}
                                     onChange={(e) => setToDate(e.target.value)}
-                                    className="px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#12b2a2]"
+                                    min={fromDate || undefined}
+                                    max={todayStr}
+                                    className="px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#12b2a2] cursor-pointer"
                                 />
                             </div>
                             <button 

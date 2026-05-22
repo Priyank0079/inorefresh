@@ -8,9 +8,11 @@ const PortNavbar = ({ onMenuClick, title }) => {
   const { logout, user } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const notificationRef = useRef(null);
 
   const handleLogout = () => {
+    setShowLogoutModal(false);
     logout();
     navigate('/port/login', { replace: true });
   };
@@ -27,12 +29,17 @@ const PortNavbar = ({ onMenuClick, title }) => {
 
   const handleNotificationClick = (n) => {
     markAsRead(n._id);
-    if (n.link) navigate(n.link);
+    if (n.link) {
+      navigate(n.link);
+    } else {
+      navigate('/port/notifications');
+    }
     setShowNotifications(false);
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <>
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
       <div className="flex items-center justify-between px-4 sm:px-6 h-16">
         <div className="flex items-center gap-4">
           <button
@@ -65,7 +72,7 @@ const PortNavbar = ({ onMenuClick, title }) => {
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 flex flex-col">
+              <div className="absolute -right-4 sm:right-0 mt-2 w-[300px] sm:w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 flex flex-col">
                 <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
                   <h3 className="text-sm font-bold text-slate-800">Notifications</h3>
                   {unreadCount > 0 && (
@@ -128,7 +135,7 @@ const PortNavbar = ({ onMenuClick, title }) => {
 
           {/* Logout */}
           <button 
-            onClick={handleLogout}
+            onClick={() => setShowLogoutModal(true)}
             className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
             title="Logout"
           >
@@ -137,6 +144,33 @@ const PortNavbar = ({ onMenuClick, title }) => {
         </div>
       </div>
     </header>
+      {/* Logout Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+            <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mb-4 text-rose-500 mx-auto">
+              <span className="material-icons-outlined">logout</span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 mb-2 text-center">Confirm Logout</h3>
+            <p className="text-sm text-slate-500 mb-6 text-center">Are you sure you want to log out of your account?</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="flex-1 px-4 py-2.5 bg-rose-500 text-white font-bold rounded-xl hover:bg-rose-600 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

@@ -114,6 +114,8 @@ export default function DeliveryOrderDetail() {
     const [customerProximity, setCustomerProximity] = useState<{ withinRange: boolean; distance: number } | null>(null);
     const [getOtpEnabled, setGetOtpEnabled] = useState(false);
     const canSendOtp = getOtpEnabled && !otpSending; // Allow interaction if already sent or ready to send
+    const [deliveryMessage, setDeliveryMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const showDeliveryMsg = (text: string, type: 'success' | 'error') => { setDeliveryMessage({ text, type }); setTimeout(() => setDeliveryMessage(null), 3000); };
 
     const fetchOrder = async () => {
         if (!id) return;
@@ -170,7 +172,7 @@ export default function DeliveryOrderDetail() {
         } else if (address) {
             window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
         } else {
-            alert('Location details not available');
+            showDeliveryMsg('Location details not available', 'error');
         }
     };
 
@@ -229,17 +231,17 @@ export default function DeliveryOrderDetail() {
     // Handle seller pickup confirmation
     const handleSellerPickup = async (sellerId: string) => {
         if (!id || !deliveryBoyLocation) {
-            alert('Location not available');
+            showDeliveryMsg('Location not available', 'error');
             return;
         }
 
         try {
             setPickupLoading(prev => ({ ...prev, [sellerId]: true }));
             const result = await confirmSellerPickup(id, sellerId, deliveryBoyLocation.lat, deliveryBoyLocation.lng);
-            alert(result.message || 'Pickup confirmed successfully');
-            await fetchOrder(); // Refresh order data
+            showDeliveryMsg(result.message || 'Pickup confirmed successfully', 'success');
+            await fetchOrder();
         } catch (err: any) {
-            alert(err.message || 'Failed to confirm pickup');
+            showDeliveryMsg(err.message || 'Failed to confirm pickup', 'error');
         } finally {
             setPickupLoading(prev => ({ ...prev, [sellerId]: false }));
         }
@@ -420,7 +422,7 @@ export default function DeliveryOrderDetail() {
                 socket.on('order-cancelled', (data: any) => {
                     if (isMounted && data.orderId === id) {
                         console.log('Order cancelled event received:', data);
-                        alert(data.message || 'Order has been cancelled');
+                        showDeliveryMsg(data.message || 'Order has been cancelled', 'error');
                         // Update order status locally
                         setOrder((prev: any) => prev ? { ...prev, status: 'Cancelled' } : null);
                         // Optional: Navigate back or force re-fetch
@@ -556,7 +558,7 @@ export default function DeliveryOrderDetail() {
             if (updatedOrder && updatedOrder.data) {
                 setOrder(updatedOrder.data);
                 if (newStatus === 'Processed') {
-                   alert("Order Accepted! It's now assigned to you.");
+                    showDeliveryMsg("Order Accepted! It's now assigned to you.", 'success');
                 }
             } else {
                 // Fallback - re-fetch everything
@@ -564,9 +566,9 @@ export default function DeliveryOrderDetail() {
             }
         } catch (err: any) {
             if (err.message?.includes('403') || err.response?.status === 403) {
-                alert("Order already accepted by another partner");
+                showDeliveryMsg("Order already accepted by another partner", 'error');
             } else {
-                alert(err.message || "Failed to update status");
+                showDeliveryMsg(err.message || "Failed to update status", 'error');
             }
             setLoading(false);
         }
@@ -591,6 +593,12 @@ export default function DeliveryOrderDetail() {
 
     return (
         <div className="min-h-screen bg-neutral-50 pb-32 relative">
+            {/* Delivery Message Toast */}
+            {deliveryMessage && (
+                <div className={`fixed top-20 left-4 right-4 z-[60] px-4 py-3 rounded-lg text-sm font-medium shadow-lg ${deliveryMessage.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+                    {deliveryMessage.text}
+                </div>
+            )}
 
             {/* Top Bar with Back Button */}
             <div className="sticky top-0 z-20 bg-white border-b border-neutral-100 px-4 py-3 flex items-center shadow-sm">
@@ -794,6 +802,23 @@ export default function DeliveryOrderDetail() {
                     </div>
                 )}
 
+                {/* Mandatory Verification / Payout Alert for Rider */}
+                {order.status === 'Delivered' && !order.isVerifiedByCustomer && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-4 space-y-3">
+                        <div className="flex items-start gap-3">
+                            <div className="text-2xl mt-0.5">⚠️</div>
+                            <div>
+                                <h4 className="text-sm font-bold text-amber-900">Verification is Mandatory for Payout!</h4>
+                                <p className="text-xs text-amber-700 font-semibold leading-relaxed mt-1">
+                                    Do not leave the customer's location. The customer must verify the delivery items on their app now.
+                                </p>
+                                <p className="text-[11px] text-red-600 font-bold mt-1.5 uppercase tracking-wider">
+                                    🚫 If you leave without verification, your delivery payout will NOT be processed!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Customer Details */}
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-neutral-100">
@@ -1011,6 +1036,26 @@ export default function DeliveryOrderDetail() {
                                 START DELIVERY
                             </>
                         )}
+                    </button>
+                </div>
+            )}
+
+            {/* Start Order Verification Button */}
+            {((order.status === 'Out for Delivery' || order.status === 'On the way') || 
+              (order.status === 'Delivered' && !order.isVerifiedByCustomer) || 
+              (order.status === 'Partially Returned' || order.status === 'Fully Returned')) && order.deliveryBoy && (
+                <div
+                    className="fixed left-6 right-6 z-40"
+                    style={{
+                        bottom: '80px'
+                    }}
+                >
+                    <button
+                        onClick={() => navigate(`/delivery/orders/${id}/inspection`)}
+                        className="w-full py-4 rounded-2xl font-bold text-lg shadow-xl shadow-red-200 bg-gradient-to-r from-red-600 to-rose-600 text-white active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    >
+                        <Icons.CheckCircle size={20} />
+                        {order.status === 'Delivered' ? 'GO TO VERIFICATION & RETURNS' : 'START ORDER VERIFICATION'}
                     </button>
                 </div>
             )}

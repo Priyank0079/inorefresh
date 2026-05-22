@@ -16,6 +16,8 @@ export const getMyNotifications = asyncHandler(async (req: Request, res: Respons
       {
         $or: [
           { recipientId: customerId },
+          { recipientId: { $exists: false } },
+          { recipientId: null },
           { recipientType: "All" },
         ],
       },
@@ -50,6 +52,8 @@ export const markAsRead = asyncHandler(async (req: Request, res: Response) => {
         {
           $or: [
             { recipientId: customerId },
+            { recipientId: { $exists: false } },
+            { recipientId: null },
             { recipientType: "All" },
           ],
         },
@@ -86,6 +90,8 @@ export const markAllAsRead = asyncHandler(async (req: Request, res: Response) =>
         {
           $or: [
             { recipientId: customerId },
+            { recipientId: { $exists: false } },
+            { recipientId: null },
             { recipientType: "All" },
           ],
         },

@@ -44,7 +44,7 @@ const PortLayout = () => {
 
         <footer className="py-6 px-8 border-t border-slate-200 text-center">
           <p className="text-slate-400 text-sm">
-            &copy; 2024 Inor Fresh Port Module. Professional Enterprise Admin Panel.
+            &copy; 2026 Inor Fresh Port Module. Professional Enterprise Admin Panel.
           </p>
         </footer>
       </div>

@@ -25,18 +25,16 @@ export default function AdminNotification() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [totalPages, setTotalPages] = useState(1);
   const [totalNotifications, setTotalNotifications] = useState(0);
+  const [confirmDeleteNotifId, setConfirmDeleteNotifId] = useState<string | null>(null);
   const [filterRecipientType, setFilterRecipientType] = useState<string>('All');
 
-  // Debounce search term
   useEffect(() => {
     const timer = setTimeout(() => {
-      setCurrentPage(1); // Reset to first page when search changes
+      setCurrentPage(1);
     }, 500);
-
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch notifications on component mount and when filters change
   useEffect(() => {
     fetchNotifications();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,13 +81,8 @@ export default function AdminNotification() {
     setError('');
     setSuccessMessage('');
 
-    if (!formData.title.trim()) {
-      setError('Please enter a title');
-      return;
-    }
-
-    if (!formData.message.trim()) {
-      setError('Please enter a message');
+    if (!formData.title.trim() || !formData.message.trim()) {
+      setError('Please enter a title and a message');
       return;
     }
 
@@ -107,13 +100,11 @@ export default function AdminNotification() {
 
       if (response.success) {
         setSuccessMessage('Notification sent successfully!');
-        // Reset form
         setFormData({
           recipientType: 'All',
           title: '',
           message: '',
         });
-        // Refresh notifications list
         fetchNotifications();
       } else {
         setError(response.message || 'Failed to send notification');
@@ -125,11 +116,14 @@ export default function AdminNotification() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this notification?')) {
-      return;
-    }
+  const handleDelete = (id: string) => {
+    setConfirmDeleteNotifId(id);
+  };
 
+  const handleConfirmDeleteNotif = async () => {
+    if (!confirmDeleteNotifId) return;
+    const id = confirmDeleteNotifId;
+    setConfirmDeleteNotifId(null);
     setLoading(true);
     setError('');
     setSuccessMessage('');
@@ -164,10 +158,7 @@ export default function AdminNotification() {
     </span>
   );
 
-  // Client-side filtering and sorting
   let filteredNotifications = notifications;
-
-  // Client-side search filter
   if (searchTerm) {
     const searchLower = searchTerm.toLowerCase();
     filteredNotifications = filteredNotifications.filter((notification) =>
@@ -177,7 +168,6 @@ export default function AdminNotification() {
     );
   }
 
-  // Client-side sorting (since backend sorting might not support all columns)
   let sortedNotifications = [...filteredNotifications];
   if (sortColumn) {
     sortedNotifications = [...filteredNotifications].sort((a, b) => {
@@ -193,13 +183,9 @@ export default function AdminNotification() {
           aValue = a.title;
           bValue = b.title;
           break;
-        case 'message':
-          aValue = a.message;
-          bValue = b.message;
-          break;
         case 'createdAt':
-          aValue = new Date(a.createdAt || '').getTime();
-          bValue = new Date(b.createdAt || '').getTime();
+          aValue = new Date(a.createdAt || 0).getTime();
+          bValue = new Date(b.createdAt || 0).getTime();
           break;
         default:
           return 0;
@@ -217,82 +203,48 @@ export default function AdminNotification() {
   const formatDate = (dateString?: string): string => {
     if (!dateString) return '-';
     const date = new Date(dateString);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
-  };
-
-  const getRecipientDisplayName = (recipientType: string): string => {
-    if (recipientType === 'All') return 'All Users';
-    return recipientType;
+    return date.toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true
+    });
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
-      {/* Page Content */}
-      <div className="flex-1 p-6">
-        {/* Header with Title and Breadcrumb */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <h1 className="text-2xl font-semibold text-neutral-800">Notification</h1>
-          <div className="text-sm">
-            <span className="text-[#12b2a2] hover:underline cursor-pointer">Home</span>
-            <span className="text-neutral-400 mx-1">/</span>
-            <span className="text-neutral-600">Notification</span>
-          </div>
+    <div className="flex flex-col h-full bg-gray-50 text-sm">
+      <div className="flex-1 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <h1 className="text-2xl font-semibold text-neutral-800">Notifications</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-          {/* Left Panel: Send Notification */}
-          <div className="bg-white rounded-lg shadow-sm border border-neutral-200 flex flex-col">
-            <div className="bg-gradient-to-r from-[#12b2a2] to-[#0d9488] text-white px-6 py-4 rounded-t-lg shadow-sm">
-              <h2 className="text-lg font-semibold">Send Notification</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6 items-start h-full">
+          {/* Send Notification Card */}
+          <div className="bg-white rounded-xl shadow-sm border border-neutral-200 sticky top-4">
+            <div className="bg-gradient-to-r from-[#12b2a2] to-[#0d9488] text-white px-5 py-3 rounded-t-xl">
+              <h2 className="font-semibold">Send Notification</h2>
             </div>
+            
+            <div className="p-5">
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 text-xs rounded flex justify-between">
+                  <span>{error}</span>
+                  <button onClick={() => setError('')} className="font-bold ml-2">×</button>
+                </div>
+              )}
+              {successMessage && (
+                <div className="mb-4 p-3 bg-teal-50 text-teal-700 text-xs rounded flex justify-between">
+                  <span>{successMessage}</span>
+                  <button onClick={() => setSuccessMessage('')} className="font-bold ml-2">×</button>
+                </div>
+              )}
 
-            {/* Error Message */}
-            {error && (
-              <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 flex items-center justify-between">
-                <p className="text-sm">{error}</p>
-                <button
-                  onClick={() => setError('')}
-                  className="text-red-700 hover:text-red-900 ml-4 text-lg font-bold"
-                  type="button"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-
-            {/* Success Message */}
-            {successMessage && (
-              <div className="p-4 bg-teal-50 border-l-4 border-[#12b2a2] text-teal-700 flex items-center justify-between">
-                <p className="text-sm">{successMessage}</p>
-                <button
-                  onClick={() => setSuccessMessage('')}
-                  className="text-teal-700 hover:text-teal-900 ml-4 text-lg font-bold"
-                  type="button"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-
-            <div className="p-6 flex-1 flex flex-col">
-              <form onSubmit={handleSendNotification} className="space-y-4 flex-1 flex flex-col">
+              <form onSubmit={handleSendNotification} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Select User Type
-                  </label>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">Select User Type</label>
                   <select
                     name="recipientType"
                     value={formData.recipientType}
                     onChange={handleInputChange}
-                    disabled={loading}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none bg-white"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none bg-white text-sm"
                   >
                     <option value="All">All Users</option>
                     <option value="Admin">Admin</option>
@@ -302,198 +254,120 @@ export default function AdminNotification() {
                     <option value="Port">Port</option>
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Title <span className="text-red-500">*</span>
-                  </label>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">Title *</label>
                   <input
                     type="text"
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
                     required
-                    disabled={loading}
                     placeholder="Enter Title"
-                    className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none text-sm"
                   />
                 </div>
-
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Message <span className="text-red-500">*</span>
-                  </label>
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">Message *</label>
                   <textarea
                     name="message"
                     value={formData.message}
                     onChange={handleInputChange}
                     required
-                    disabled={loading}
                     placeholder="Enter Message"
-                    rows={6}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none resize-none"
+                    rows={4}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] outline-none resize-none text-sm"
                   />
                 </div>
-
-                <div className="mt-auto">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-[#12b2a2] hover:bg-[#0e8f82] disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded font-medium transition-colors"
-                  >
-                    {loading ? 'Sending...' : 'Send Notification'}
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-[#12b2a2] hover:bg-[#0e8f82] disabled:opacity-50 text-white px-4 py-2 rounded font-semibold transition-colors mt-2"
+                >
+                  {loading ? 'Sending...' : 'Send Notification'}
+                </button>
               </form>
             </div>
           </div>
 
-          {/* Right Panel: View Notification */}
-          <div className="bg-white rounded-lg shadow-sm border border-neutral-200 flex flex-col">
-            <div className="px-6 py-4 border-b border-neutral-200">
-              <h2 className="text-lg font-semibold text-neutral-800">View Notification</h2>
-            </div>
-
-            {/* Controls */}
-            <div className="p-4 border-b border-neutral-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-neutral-600">Filter by Type:</span>
+          {/* Manage Notifications Table */}
+          <div className="bg-white rounded-xl shadow-sm border border-neutral-200 flex flex-col min-h-[600px]">
+            <div className="px-5 py-3 border-b border-neutral-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <h2 className="font-semibold text-neutral-800 text-lg">Manage Notifications</h2>
+              <div className="flex flex-wrap gap-2 items-center">
                 <select
                   value={filterRecipientType}
                   onChange={(e) => {
                     setFilterRecipientType(e.target.value);
                     setCurrentPage(1);
                   }}
-                  disabled={loading}
-                  className="bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-[#12b2a2] focus:outline-none cursor-pointer"
+                  className="border border-neutral-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#12b2a2]"
                 >
-                  <option value="All">All</option>
+                  <option value="All">All Types</option>
                   <option value="Admin">Admin</option>
                   <option value="Warehouse">Warehouse</option>
                   <option value="Customer">Customer</option>
                   <option value="Delivery">Delivery</option>
                   <option value="Port">Port</option>
                 </select>
-                <select
-                  value={rowsPerPage}
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchTerm}
                   onChange={(e) => {
-                    setRowsPerPage(Number(e.target.value));
+                    setSearchTerm(e.target.value);
                     setCurrentPage(1);
                   }}
-                  disabled={loading}
-                  className="bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-[#12b2a2] focus:outline-none cursor-pointer"
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 text-xs">Search:</span>
-                  <input
-                    type="text"
-                    className="pl-14 pr-3 py-1.5 bg-neutral-100 border-none rounded text-sm focus:ring-1 focus:ring-[#12b2a2] w-48"
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    placeholder=""
-                    disabled={loading}
-                  />
-                </div>
+                  className="border border-neutral-300 rounded px-3 py-1 focus:outline-none focus:ring-1 focus:ring-[#12b2a2] w-40 sm:w-48"
+                />
               </div>
             </div>
 
-            {/* Loading State */}
-            {loading && (
+            {loading ? (
               <div className="flex-1 flex items-center justify-center p-8">
-                <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#12b2a2]"></div>
-                  <p className="mt-2 text-sm text-neutral-600">Loading...</p>
-                </div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#12b2a2]"></div>
               </div>
-            )}
-
-            {/* Table */}
-            {!loading && (
+            ) : (
               <div className="overflow-x-auto flex-1">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-neutral-50 text-xs font-bold text-neutral-800 border-b border-neutral-200">
-                      <th className="p-4">Sr No</th>
-                      <th
-                        className="p-4 cursor-pointer hover:bg-neutral-100 transition-colors"
-                        onClick={() => handleSort('recipientType')}
-                      >
-                        <div className="flex items-center">
-                          Users <SortIcon column="recipientType" />
-                        </div>
+                    <tr className="bg-neutral-50 text-xs font-bold text-neutral-600 uppercase border-b border-neutral-200 tracking-wider">
+                      <th className="px-5 py-3">#</th>
+                      <th className="px-5 py-3 cursor-pointer hover:text-neutral-900" onClick={() => handleSort('recipientType')}>
+                        Audience <SortIcon column="recipientType" />
                       </th>
-                      <th
-                        className="p-4 cursor-pointer hover:bg-neutral-100 transition-colors"
-                        onClick={() => handleSort('title')}
-                      >
-                        <div className="flex items-center">
-                          Title <SortIcon column="title" />
-                        </div>
+                      <th className="px-5 py-3">Notification</th>
+                      <th className="px-5 py-3 cursor-pointer hover:text-neutral-900" onClick={() => handleSort('createdAt')}>
+                        Date <SortIcon column="createdAt" />
                       </th>
-                      <th
-                        className="p-4 cursor-pointer hover:bg-neutral-100 transition-colors"
-                        onClick={() => handleSort('message')}
-                      >
-                        <div className="flex items-center">
-                          Message <SortIcon column="message" />
-                        </div>
-                      </th>
-                      <th
-                        className="p-4 cursor-pointer hover:bg-neutral-100 transition-colors"
-                        onClick={() => handleSort('createdAt')}
-                      >
-                        <div className="flex items-center">
-                          Date <SortIcon column="createdAt" />
-                        </div>
-                      </th>
-                      <th className="p-4">Action</th>
+                      <th className="px-5 py-3 text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="text-sm">
                     {displayedNotifications.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-8 text-center text-neutral-400">
-                          No notifications found.
-                        </td>
+                        <td colSpan={5} className="p-8 text-center text-neutral-500">No notifications found.</td>
                       </tr>
                     ) : (
                       displayedNotifications.map((notification, index) => (
-                        <tr
-                          key={notification._id}
-                          className="hover:bg-neutral-50 transition-colors text-sm text-neutral-700 border-b border-neutral-200"
-                        >
-                          <td className="p-4 align-middle">{startIndex + index + 1}</td>
-                          <td className="p-4 align-middle">{getRecipientDisplayName(notification.recipientType)}</td>
-                          <td className="p-4 align-middle">{notification.title}</td>
-                          <td className="p-4 align-middle max-w-md">{notification.message}</td>
-                          <td className="p-4 align-middle">{formatDate(notification.createdAt)}</td>
-                          <td className="p-4 align-middle">
+                        <tr key={notification._id} className="hover:bg-neutral-50 border-b border-neutral-100 last:border-0">
+                          <td className="px-5 py-3 text-neutral-500">{startIndex + index + 1}</td>
+                          <td className="px-5 py-3 font-medium text-neutral-700">
+                            <span className="bg-neutral-100 text-neutral-700 px-2.5 py-0.5 rounded-full text-xs">
+                              {notification.recipientType}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3">
+                            <div className="font-semibold text-neutral-800">{notification.title}</div>
+                            <div className="text-neutral-500 text-xs mt-0.5 line-clamp-2" title={notification.message}>{notification.message}</div>
+                          </td>
+                          <td className="px-5 py-3 text-neutral-500 whitespace-nowrap">{formatDate(notification.createdAt)}</td>
+                          <td className="px-5 py-3 text-right">
                             <button
                               onClick={() => handleDelete(notification._id)}
-                              disabled={loading}
-                              className="p-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
+                              className="text-red-500 hover:text-red-700 transition-colors p-1.5 hover:bg-red-50 rounded"
                               title="Delete"
                             >
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                               </svg>
@@ -507,93 +381,27 @@ export default function AdminNotification() {
               </div>
             )}
 
-            {/* Pagination Footer */}
+            {/* Pagination */}
             {!loading && totalPages > 1 && (
-              <div className="px-4 sm:px-6 py-3 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
-                <div className="text-xs sm:text-sm text-neutral-700">
-                  Showing {displayedNotifications.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + displayedNotifications.length, totalNotifications)} of {totalNotifications} entries
+              <div className="px-5 py-3 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-3 bg-neutral-50/50 rounded-b-xl">
+                <div className="text-xs text-neutral-500">
+                  Showing {displayedNotifications.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + displayedNotifications.length, totalNotifications)} of {totalNotifications}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex gap-1">
                   <button
-                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1 || loading}
-                    className={`p-2 border border-[#12b2a2] rounded ${
-                      currentPage === 1
-                        ? 'text-neutral-400 cursor-not-allowed bg-neutral-50'
-                        : 'text-[#12b2a2] hover:bg-teal-50'
-                    }`}
-                    aria-label="Previous page"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-1.5 border border-neutral-200 rounded text-neutral-600 disabled:opacity-50 hover:bg-white bg-white"
                   >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M15 18L9 12L15 6"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
                   </button>
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        disabled={loading}
-                        className={`px-3 py-1.5 border border-[#12b2a2] rounded font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                          currentPage === pageNum
-                            ? 'bg-[#12b2a2] text-white'
-                            : 'text-[#12b2a2] hover:bg-teal-50'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-                  {totalPages > 5 && currentPage < totalPages - 2 && (
-                    <span className="px-2 text-neutral-400">...</span>
-                  )}
+                  <span className="px-3 py-1.5 text-xs font-semibold text-neutral-700">Page {currentPage} of {totalPages}</span>
                   <button
-                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages || loading}
-                    className={`p-2 border border-[#12b2a2] rounded ${
-                      currentPage === totalPages
-                        ? 'text-neutral-400 cursor-not-allowed bg-neutral-50'
-                        : 'text-[#12b2a2] hover:bg-teal-50'
-                    }`}
-                    aria-label="Next page"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-1.5 border border-neutral-200 rounded text-neutral-600 disabled:opacity-50 hover:bg-white bg-white"
                   >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M9 18L15 12L9 6"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                   </button>
                 </div>
               </div>
@@ -602,14 +410,22 @@ export default function AdminNotification() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
-        Copyright © 2025. Developed By{' '}
-        <a href="#" className="text-blue-600 hover:underline">
-          Inor fresh
-        </a>
-      </footer>
+      {confirmDeleteNotifId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteNotifId(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <h4 className="font-bold text-neutral-800 mb-1">Delete Notification?</h4>
+            <p className="text-sm text-neutral-500 mb-4">Are you sure you want to delete this notification?</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDeleteNotifId(null)} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors">Cancel</button>
+              <button onClick={handleConfirmDeleteNotif} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-

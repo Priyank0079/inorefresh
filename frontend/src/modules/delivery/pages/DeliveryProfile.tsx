@@ -8,6 +8,7 @@ import { getDeliveryProfile, updateProfile } from '../../../services/api/deliver
 export default function DeliveryProfile() {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const { userName, setUserName } = useDeliveryUser();
 
   const [profileData, setProfileData] = useState({
@@ -39,8 +40,8 @@ export default function DeliveryProfile() {
           vehicleNumber: data.vehicleNumber || '',
           vehicleType: data.vehicleType || 'Bike',
           joinDate: new Date(data.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
-          totalDeliveries: data.totalDeliveredCount || 0, // Assuming backend sends this or we need to fetch dashboard stats
-          rating: 4.8, // Mock for now
+          totalDeliveries: data.totalDeliveredCount || 0,
+          rating: data.rating ?? 0, // Bug #114: use real rating from backend, not hardcoded 4.8
           accountName: data.accountName || '',
           bankName: data.bankName || '',
           accountNumber: data.accountNumber || '',
@@ -64,6 +65,7 @@ export default function DeliveryProfile() {
   };
 
   const handleSave = async () => {
+    setSaveError('');
     try {
       await updateProfile({
         name: profileData.name,
@@ -78,10 +80,9 @@ export default function DeliveryProfile() {
       });
       setUserName(profileData.name);
       setIsEditing(false);
-      // You could add a toast notification here
     } catch (error) {
       console.error("Failed to update profile", error);
-      alert("Failed to update profile");
+      setSaveError("Failed to update profile. Please try again.");
     }
   };
 
@@ -150,7 +151,9 @@ export default function DeliveryProfile() {
                   fill="#22c55e"
                 />
               </svg>
-              <span className="text-neutral-900 font-semibold">{profileData.rating}</span>
+              <span className="text-neutral-900 font-semibold">
+                {profileData.rating > 0 ? profileData.rating.toFixed(1) : 'N/A'}
+              </span>
             </div>
           </div>
         </div>
@@ -301,19 +304,26 @@ export default function DeliveryProfile() {
 
         {/* Edit/Save/Cancel Buttons */}
         {isEditing ? (
-          <div className="flex gap-3 mt-4">
-            <button
-              onClick={handleCancel}
-              className="flex-1 bg-neutral-200 text-neutral-900 rounded-xl py-3 font-semibold hover:bg-neutral-300 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              className="flex-1 bg-orange-500 text-white rounded-xl py-3 font-semibold hover:bg-orange-600 transition-colors"
-            >
-              Save Changes
-            </button>
+          <div className="mt-4 space-y-3">
+            {saveError && (
+              <div className="px-4 py-2.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium text-center">
+                {saveError}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancel}
+                className="flex-1 bg-neutral-200 text-neutral-900 rounded-xl py-3 font-semibold hover:bg-neutral-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="flex-1 bg-orange-500 text-white rounded-xl py-3 font-semibold hover:bg-orange-600 transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
           </div>
         ) : (
           <button

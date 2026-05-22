@@ -175,6 +175,8 @@ router.get(
   "/delivery/:id/cash-collections",
   deliveryController.getDeliveryBoyCashCollections
 );
+router.get("/delivery-fund-transfers", deliveryController.getDeliveryBoyFundTransfers);
+router.post("/delivery-fund-transfers", deliveryController.addDeliveryBoyFundTransfer);
 
 // ==================== Payment Routes ====================
 router.get("/payment-methods", paymentController.getPaymentMethods);

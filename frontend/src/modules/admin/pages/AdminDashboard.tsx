@@ -41,8 +41,13 @@ export default function AdminDashboard() {
   const [todaySales, setTodaySales] = useState<TodaySales | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
+  // Independent pagination state for "View New Orders" table
+  const [ordersEntriesPerPage, setOrdersEntriesPerPage] = useState(10);
+  const [ordersCurrentPage, setOrdersCurrentPage] = useState(1);
+
+  // Independent pagination state for "View Top Seller" table
+  const [sellersEntriesPerPage, setSellersEntriesPerPage] = useState(10);
+  const [sellersCurrentPage, setSellersCurrentPage] = useState(1);
 
   // Fetch dashboard data on component mount
   useEffect(() => {
@@ -364,17 +369,17 @@ export default function AdminDashboard() {
   const orderDataDec2025 = orderAnalyticsDaily?.thisPeriod || [];
   const orderData2025 = orderAnalytics?.thisPeriod || [];
 
-  const totalPagesNewOrders = Math.ceil(newOrders.length / entriesPerPage);
-  const startIndexNewOrders = (currentPage - 1) * entriesPerPage;
-  const endIndexNewOrders = startIndexNewOrders + entriesPerPage;
+  const totalPagesNewOrders = Math.ceil(newOrders.length / ordersEntriesPerPage);
+  const startIndexNewOrders = (ordersCurrentPage - 1) * ordersEntriesPerPage;
+  const endIndexNewOrders = startIndexNewOrders + ordersEntriesPerPage;
   const displayedNewOrders = newOrders.slice(
     startIndexNewOrders,
     endIndexNewOrders
   );
 
-  const totalPagesTopSellers = Math.ceil(topSellers.length / entriesPerPage);
-  const startIndexTopSellers = (currentPage - 1) * entriesPerPage;
-  const endIndexTopSellers = startIndexTopSellers + entriesPerPage;
+  const totalPagesTopSellers = Math.ceil(topSellers.length / sellersEntriesPerPage);
+  const startIndexTopSellers = (sellersCurrentPage - 1) * sellersEntriesPerPage;
+  const endIndexTopSellers = startIndexTopSellers + sellersEntriesPerPage;
   const displayedTopSellers = topSellers.slice(
     startIndexTopSellers,
     endIndexTopSellers
@@ -633,11 +638,11 @@ export default function AdminDashboard() {
               <span className="text-sm text-neutral-700">Show</span>
               <input
                 type="number"
-                value={entriesPerPage}
+                value={ordersEntriesPerPage}
                 onChange={(e) => {
                   const value = parseInt(e.target.value) || 10;
-                  setEntriesPerPage(Math.max(1, Math.min(100, value)));
-                  setCurrentPage(1);
+                  setOrdersEntriesPerPage(Math.max(1, Math.min(100, value)));
+                  setOrdersCurrentPage(1);
                 }}
                 className="w-16 px-2 py-1 border border-neutral-300 rounded text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2]"
                 min="1"
@@ -766,6 +771,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 sm:px-6 py-3">
                         <button
+                          onClick={() => navigate(`/admin/orders/${order.id}`)}
                           className="bg-[#12b2a2] hover:bg-[#0d9488] text-white p-2 rounded transition-colors"
                           aria-label="View order">
                           <svg
@@ -808,9 +814,9 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className={`p-2 border border-neutral-300 rounded ${currentPage === 1
+                onClick={() => setOrdersCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={ordersCurrentPage === 1}
+                className={`p-2 border border-neutral-300 rounded ${ordersCurrentPage === 1
                     ? "text-neutral-400 cursor-not-allowed bg-neutral-50"
                     : "text-neutral-700 hover:bg-neutral-50"
                   }`}
@@ -832,12 +838,12 @@ export default function AdminDashboard() {
               </button>
               <button
                 onClick={() =>
-                  setCurrentPage((prev) =>
+                  setOrdersCurrentPage((prev) =>
                     Math.min(totalPagesNewOrders, prev + 1)
                   )
                 }
-                disabled={currentPage === totalPagesNewOrders}
-                className={`p-2 border border-neutral-300 rounded ${currentPage === totalPagesNewOrders
+                disabled={ordersCurrentPage === totalPagesNewOrders}
+                className={`p-2 border border-neutral-300 rounded ${ordersCurrentPage === totalPagesNewOrders
                     ? "text-neutral-400 cursor-not-allowed bg-neutral-50"
                     : "text-neutral-700 hover:bg-neutral-50"
                   }`}
@@ -874,11 +880,11 @@ export default function AdminDashboard() {
               <span className="text-sm text-neutral-700">Show</span>
               <input
                 type="number"
-                value={entriesPerPage}
+                value={sellersEntriesPerPage}
                 onChange={(e) => {
                   const value = parseInt(e.target.value) || 10;
-                  setEntriesPerPage(Math.max(1, Math.min(100, value)));
-                  setCurrentPage(1);
+                  setSellersEntriesPerPage(Math.max(1, Math.min(100, value)));
+                  setSellersCurrentPage(1);
                 }}
                 className="w-16 px-2 py-1 border border-neutral-300 rounded text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2]"
                 min="1"
@@ -967,6 +973,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 sm:px-6 py-3">
                         <button
+                          onClick={() => navigate(`/admin/manage-warehouse/list?seller=${seller.sellerId}`)}
                           className="bg-[#12b2a2] hover:bg-[#0d9488] text-white p-2 rounded transition-colors"
                           aria-label="View seller">
                           <svg
@@ -1009,9 +1016,9 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className={`p-2 border border-neutral-300 rounded ${currentPage === 1
+                onClick={() => setSellersCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={sellersCurrentPage === 1}
+                className={`p-2 border border-neutral-300 rounded ${sellersCurrentPage === 1
                     ? "text-neutral-400 cursor-not-allowed bg-neutral-50"
                     : "text-neutral-700 hover:bg-neutral-50"
                   }`}
@@ -1032,16 +1039,16 @@ export default function AdminDashboard() {
                 </svg>
               </button>
               <span className="px-3 py-2 border border-neutral-300 rounded text-sm text-neutral-700 bg-white">
-                {currentPage}
+                {sellersCurrentPage}
               </span>
               <button
                 onClick={() =>
-                  setCurrentPage((prev) =>
+                  setSellersCurrentPage((prev) =>
                     Math.min(totalPagesTopSellers, prev + 1)
                   )
                 }
-                disabled={currentPage === totalPagesTopSellers}
-                className={`p-2 border border-neutral-300 rounded ${currentPage === totalPagesTopSellers
+                disabled={sellersCurrentPage === totalPagesTopSellers}
+                className={`p-2 border border-neutral-300 rounded ${sellersCurrentPage === totalPagesTopSellers
                     ? "text-neutral-400 cursor-not-allowed bg-neutral-50"
                     : "text-neutral-700 hover:bg-neutral-50"
                   }`}
@@ -1068,7 +1075,7 @@ export default function AdminDashboard() {
 
       {/* Footer */}
       <div className="text-center text-sm text-neutral-500 py-4">
-        Copyright © 2025. Developed By{" "}
+        Copyright © 2026. Developed By{" "}
         <a href="#" className="text-[#12b2a2] hover:text-[#0d9488]">
           Inor fresh
         </a>

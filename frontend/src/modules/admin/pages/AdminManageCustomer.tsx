@@ -61,6 +61,8 @@ export default function AdminManageCustomer() {
     status: "Active"
   });
   const [isUpdating, setIsUpdating] = useState(false);
+  const [customerMessage, setCustomerMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const showCustomerMsg = (text: string, type: 'success' | 'error') => { setCustomerMessage({ text, type }); setTimeout(() => setCustomerMessage(null), 3000); };
 
   // Fetch customers on component mount
   useEffect(() => {
@@ -273,7 +275,7 @@ export default function AdminManageCustomer() {
 
     const amount = Number(walletAmountToAdd);
     if (isNaN(amount) || amount <= 0) {
-      alert("Please enter a valid amount");
+      showCustomerMsg("Please enter a valid amount", 'error');
       return;
     }
 
@@ -286,19 +288,17 @@ export default function AdminManageCustomer() {
       );
 
       if (response.success) {
-        // Update local state
         setCustomers(prev => prev.map(c =>
           c._id === selectedCustomerForWallet._id
             ? { ...c, walletAmount: (c.walletAmount || 0) + amount }
             : c
         ));
         setShowWalletModal(false);
-        // Could show toast here if toast context is available
-        alert("Wallet balance updated successfully");
+        showCustomerMsg("Wallet balance updated successfully", 'success');
       }
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.message || "Failed to update wallet");
+      showCustomerMsg(err.response?.data?.message || "Failed to update wallet", 'error');
     } finally {
       setIsAddingWallet(false);
     }
@@ -328,11 +328,11 @@ export default function AdminManageCustomer() {
       if (response.success) {
         setCustomers(prev => prev.map(c => c._id === selectedCustomer._id ? response.data : c));
         setShowEditModal(false);
-        alert("Customer updated successfully");
+        showCustomerMsg("Customer updated successfully", 'success');
       }
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.message || "Failed to update customer");
+      showCustomerMsg(err.response?.data?.message || "Failed to update customer", 'error');
     } finally {
       setIsUpdating(false);
     }
@@ -346,6 +346,12 @@ export default function AdminManageCustomer() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Inline Message */}
+      {customerMessage && (
+        <div className={`mx-4 sm:mx-6 mt-4 px-4 py-3 rounded-lg text-sm font-medium ${customerMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          {customerMessage.text}
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white px-4 sm:px-6 py-4 border-b border-neutral-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

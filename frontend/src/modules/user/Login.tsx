@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { sendOTP, verifyOTP } from '../../services/api/auth/customerAuthService';
 import { useAuth } from '../../context/AuthContext';
 import OTPInput from '../../components/OTPInput';
@@ -41,6 +41,7 @@ export default function Login() {
     cheque: null
   });
   const [error, setError] = useState('');
+  const [signupSuccess, setSignupSuccess] = useState('');
   const { currentTheme } = useThemeContext();
 
   const [flowStep, setFlowStep] = useState<FlowStep>('accountType');
@@ -196,6 +197,38 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSignupSuccess('');
+
+    // Client-side validation
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(formData.shopPhone)) {
+      setError('Shop phone number must be exactly 10 digits.');
+      setLoading(false);
+      return;
+    }
+    if (!phoneRegex.test(formData.ownerPhone)) {
+      setError('Owner phone number must be exactly 10 digits.');
+      setLoading(false);
+      return;
+    }
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(formData.ownerName)) {
+      setError('Owner name should only contain letters and spaces.');
+      setLoading(false);
+      return;
+    }
+    if (formData.highValueProducts.length === 0) {
+      setError('Please select at least one high value product.');
+      setLoading(false);
+      return;
+    }
+    const googleMapsRegex = /^https?:\/\/(www\.)?(google\.(com|co\.[a-z]{2})\/maps|maps\.google\.(com|co\.[a-z]{2})|maps\.app\.goo\.gl)/i;
+    if (formData.googleMapLink && !googleMapsRegex.test(formData.googleMapLink)) {
+      setError('Please enter a valid Google Maps link.');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Create FormData
       const fd = new FormData();
@@ -215,8 +248,11 @@ export default function Login() {
       await api.post(endpoint, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
 
       // Go back to login on success
-      setFlowStep('login');
-      alert("Sign up successful! Please log in.");
+      setSignupSuccess('Registration successful! Please log in to continue.');
+      setTimeout(() => {
+        setSignupSuccess('');
+        setFlowStep('login');
+      }, 2000);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed.');
     } finally {
@@ -467,11 +503,51 @@ export default function Login() {
           {/* Signup Forms */}
           {flowStep.includes('signup') && (
             <form onSubmit={handleSignupSubmit} className="space-y-4 pt-4">
+              {signupSuccess && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-2 text-sm text-green-700">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  {signupSuccess}
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input required placeholder="Shop Name *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, shopName: e.target.value })} />
-                <input required placeholder="Shop Phone Number *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, shopPhone: e.target.value })} />
-                <input required placeholder="Shop Owner Name *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, ownerName: e.target.value })} />
-                <input required placeholder="Owner Phone Number *" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, ownerPhone: e.target.value })} />
+                <input
+                  required
+                  placeholder="Shop Name *"
+                  className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl"
+                  value={formData.shopName}
+                  onChange={e => setFormData({ ...formData, shopName: e.target.value })}
+                />
+                <input
+                  required
+                  type="tel"
+                  placeholder="Shop Phone Number *"
+                  className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl"
+                  maxLength={10}
+                  pattern="[0-9]{10}"
+                  title="Enter a valid 10-digit phone number"
+                  value={formData.shopPhone}
+                  onChange={e => setFormData({ ...formData, shopPhone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                />
+                <input
+                  required
+                  placeholder="Shop Owner Name *"
+                  className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl"
+                  pattern="[a-zA-Z\s]+"
+                  title="Owner name should only contain letters and spaces"
+                  value={formData.ownerName}
+                  onChange={e => setFormData({ ...formData, ownerName: e.target.value.replace(/[^a-zA-Z\s]/g, '') })}
+                />
+                <input
+                  required
+                  type="tel"
+                  placeholder="Owner Phone Number *"
+                  className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl"
+                  maxLength={10}
+                  pattern="[0-9]{10}"
+                  title="Enter a valid 10-digit phone number"
+                  value={formData.ownerPhone}
+                  onChange={e => setFormData({ ...formData, ownerPhone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                />
                 <input placeholder="Inor Representative (Optional)" className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl" onChange={e => setFormData({ ...formData, inorRepresentative: e.target.value })} />
                 <div className="md:col-span-2 space-y-2">
                   <div className="flex items-center justify-between">
@@ -553,11 +629,16 @@ export default function Login() {
                           accept="image/*,.pdf"
                           onChange={e => {
                             const file = e.target.files?.[0] || null;
+                            if (file && file.size > 5 * 1024 * 1024) {
+                              setError(`${doc.label}: File size must be under 5MB.`);
+                              e.target.value = '';
+                              return;
+                            }
                             setDocFiles(prev => ({ ...prev, [doc.id]: file }));
                           }}
                           className="hidden"
                           id={`file-${doc.id}`}
-                          required={doc.id !== 'gst' && doc.id !== 'cheque'} // Some might be optional? User said * so I'll follow that.
+                          required={doc.id !== 'gst' && doc.id !== 'cheque'}
                         />
                         <label
                           htmlFor={`file-${doc.id}`}
@@ -593,7 +674,10 @@ export default function Login() {
           {flowStep !== 'accountType' && !flowStep.includes('signup') && (
             <div className="mt-8 text-center pt-4">
               <p className="text-xs text-neutral-400">
-                {t.terms} <a href="#" className="hover:underline" style={{ color: currentTheme.primary[3] }}>{t.termsLink}</a> {t.and} <a href="#" className="hover:underline" style={{ color: currentTheme.primary[3] }}>{t.privacyLink}</a>
+                {t.terms}{' '}
+                <Link to="/terms" target="_blank" className="hover:underline" style={{ color: currentTheme.primary[3] }}>{t.termsLink}</Link>
+                {t.and}
+                <Link to="/privacy-policy" target="_blank" className="hover:underline" style={{ color: currentTheme.primary[3] }}>{t.privacyLink}</Link>
               </p>
             </div>
           )}

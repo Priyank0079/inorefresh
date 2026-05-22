@@ -15,6 +15,8 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
+  // Bug #122 — logout confirmation
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { user, logout } = useAuth();
   const { currentTheme } = useThemeContext();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
@@ -45,6 +47,12 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
   }, []);
 
   const handleLogout = () => {
+    // Bug #122: show confirm modal instead of immediate logout
+    setShowLogoutModal(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
     logout();
     navigate('/Warehouse/login');
   };
@@ -70,6 +78,39 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
   };
 
   return (
+    <>
+    {/* Bug #122 — Warehouse Logout Confirmation Modal */}
+    {showLogoutModal && (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+        <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+          <div className="flex justify-center mb-4">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-600">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
+          <h3 className="text-lg font-bold text-neutral-900 text-center mb-1">Logout?</h3>
+          <p className="text-sm text-neutral-500 text-center mb-6">
+            Are you sure you want to logout from your warehouse account?
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowLogoutModal(false)}
+              className="flex-1 py-3 rounded-xl border border-neutral-300 text-neutral-700 font-semibold text-sm hover:bg-neutral-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmLogout}
+              className="flex-1 py-3 rounded-xl bg-red-600 text-white font-semibold text-sm hover:bg-red-700 transition-colors"
+            >
+              Yes, Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     <header
       className="bg-white shadow-sm sticky top-0 z-30 border-b-2"
       style={{ borderBottomColor: currentTheme.primary[3] }}
@@ -283,6 +324,7 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
         </div>
       </div>
     </header>
+    </>
   );
 }
 

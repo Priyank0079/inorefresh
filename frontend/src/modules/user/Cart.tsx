@@ -13,7 +13,9 @@ export default function Cart() {
 
   const deliveryFee = cart.total >= appConfig.freeDeliveryThreshold ? 0 : appConfig.deliveryFee;
   const platformFee = appConfig.platformFee;
-  const totalAmount = cart.total + deliveryFee + platformFee;
+  const gstRate = appConfig.taxes?.gst || 0;
+  const gstAmount = gstRate > 0 ? Math.round(cart.total * gstRate / 100) : 0;
+  const totalAmount = cart.total + deliveryFee + platformFee + gstAmount;
 
   const handleCheckout = () => {
     navigate('/checkout');
@@ -101,13 +103,21 @@ export default function Cart() {
 
                   {/* Quantity Controls */}
                   <div className="flex items-center gap-3 md:gap-4">
+                    {/* Bug #143: show trash icon when qty=1 to indicate auto-remove */}
                     <Button
                       variant="outline"
                       size="icon"
                       onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.variant)}
-                      className="w-8 h-8 md:w-10 md:h-10 p-0 border-neutral-300 text-neutral-600 md:text-lg transition-colors group"
+                      className={`w-8 h-8 md:w-10 md:h-10 p-0 transition-colors group ${item.quantity === 1 ? 'border-red-300 text-red-500 hover:bg-red-500 hover:border-red-500' : 'border-neutral-300 text-neutral-600'} md:text-lg`}
+                      title={item.quantity === 1 ? 'Remove item' : 'Decrease quantity'}
                     >
-                      <span className="group-hover:text-white transition-colors" style={{ color: 'inherit' }}>−</span>
+                      {item.quantity === 1 ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:stroke-white transition-colors">
+                          <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                        </svg>
+                      ) : (
+                        <span className="group-hover:text-white transition-colors" style={{ color: 'inherit' }}>−</span>
+                      )}
                       <style>{`
                         .group:hover {
                           background-color: ${currentTheme.primary[3]} !important;
@@ -119,11 +129,14 @@ export default function Cart() {
                     <span className="text-base md:text-lg font-semibold text-neutral-900 min-w-[2rem] md:min-w-[2.5rem] text-center">
                       {item.quantity}
                     </span>
+                    {/* Bug #144: disable + at max allowed quantity */}
                     <Button
                       variant="outline"
                       size="icon"
                       onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.variant)}
-                      className="w-8 h-8 md:w-10 md:h-10 p-0 border-neutral-300 text-neutral-600 md:text-lg transition-colors group"
+                      disabled={item.quantity >= ((item.product as any).totalAllowedQuantity || 100)}
+                      className="w-8 h-8 md:w-10 md:h-10 p-0 border-neutral-300 text-neutral-600 md:text-lg transition-colors group disabled:opacity-40 disabled:cursor-not-allowed"
+                      title={item.quantity >= ((item.product as any).totalAllowedQuantity || 100) ? 'Maximum quantity reached' : 'Increase quantity'}
                     >
                       <span className="group-hover:text-white transition-colors" style={{ color: 'inherit' }}>+</span>
                     </Button>
@@ -179,6 +192,13 @@ export default function Cart() {
                 {deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toLocaleString('en-IN')}`}
               </span>
             </div>
+            {/* Bug #145: GST line in order summary */}
+            {gstAmount > 0 && (
+              <div className="flex justify-between text-neutral-700 md:text-base">
+                <span>GST ({gstRate}%)</span>
+                <span className="font-medium">₹{gstAmount.toLocaleString('en-IN')}</span>
+              </div>
+            )}
             {cart.total < appConfig.freeDeliveryThreshold && (
               <div
                 className="text-xs md:text-sm px-2 py-1 rounded"

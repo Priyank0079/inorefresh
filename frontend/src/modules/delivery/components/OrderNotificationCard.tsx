@@ -17,6 +17,7 @@ export default function OrderNotificationCard({
     const [isProcessing, setIsProcessing] = useState(false);
     const [hasUserInteracted, setHasUserInteracted] = useState(false);
     const [audioError, setAudioError] = useState<string | null>(null);
+    const [actionError, setActionError] = useState<string>('');
     const vibrationPatternRef = useRef<number[]>([200, 100, 200, 100, 200]);
 
     // Vibrate on notification (if supported)
@@ -163,9 +164,10 @@ export default function OrderNotificationCard({
         try {
             const result = await onAccept(notification.orderId);
             if (!result.success) {
-                // Suppress alert for "Order notification not found" as it's handled by the hook clearing the notification
+                // Suppress message for "Order notification not found" as it's handled by the hook clearing the notification
                 if (result.message !== 'Order notification not found') {
-                    alert(result.message || 'Failed to accept order');
+                    setActionError(result.message || 'Failed to accept order');
+                    setTimeout(() => setActionError(''), 3000);
                 }
                 setIsProcessing(false);
                 // Resume audio if accept failed
@@ -176,7 +178,8 @@ export default function OrderNotificationCard({
             }
         } catch (error) {
             console.error('Error accepting order:', error);
-            alert('Failed to accept order');
+            setActionError('Failed to accept order');
+            setTimeout(() => setActionError(''), 3000);
             setIsProcessing(false);
             // Resume audio if accept failed
             if (audioRef.current && hasUserInteracted) {
@@ -203,9 +206,10 @@ export default function OrderNotificationCard({
         try {
             const result = await onReject(notification.orderId);
             if (!result.success) {
-                // Suppress alert for "Order notification not found"
+                // Suppress message for "Order notification not found"
                 if (result.message !== 'Order notification not found') {
-                    alert(result.message || 'Failed to reject order');
+                    setActionError(result.message || 'Failed to reject order');
+                    setTimeout(() => setActionError(''), 3000);
                 }
                 // Resume audio if reject failed
                 if (audioRef.current && hasUserInteracted) {
@@ -215,7 +219,8 @@ export default function OrderNotificationCard({
             }
         } catch (error) {
             console.error('Error rejecting order:', error);
-            alert('Failed to reject order');
+            setActionError('Failed to reject order');
+            setTimeout(() => setActionError(''), 3000);
             // Resume audio if reject failed
             if (audioRef.current && hasUserInteracted) {
                 audioRef.current.play().catch(console.error);
@@ -316,6 +321,11 @@ export default function OrderNotificationCard({
                         {isProcessing ? 'Processing...' : 'Accept'}
                     </button>
                 </div>
+                {actionError && (
+                    <div className="mt-2 px-3 py-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg text-center">
+                        {actionError}
+                    </div>
+                )}
             </div>
         </motion.div>
     );

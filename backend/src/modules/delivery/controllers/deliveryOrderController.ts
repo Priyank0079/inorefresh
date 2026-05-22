@@ -10,6 +10,7 @@ import {
   verifyDeliveryOtp,
 } from "../../../services/deliveryOtpService";
 import { processOrderStatusTransition } from "../../../services/orderService";
+import { checkAndAutoCloseVerification } from "../../../controllers/returnWorkflowController";
 
 /**
  * Helper to map order items for response
@@ -206,6 +207,9 @@ export const getOrderDetails = asyncHandler(
         .json({ success: false, message: "Order not found" });
     }
 
+    // Auto-complete verification if timeout is reached
+    await checkAndAutoCloseVerification(order);
+
     // Fetch Delivery Earning for this order
     const { default: Commission } = await import("../../../models/Commission");
     const commission = await Commission.findOne({
@@ -229,6 +233,9 @@ export const getOrderDetails = asyncHandler(
       deliveryBoy: order.deliveryBoy,
       warehousePickups: order.warehousePickups || [],
       deliveryOtpSentAt: order.deliveryOtpSentAt || null,
+      isVerifiedByCustomer: order.isVerifiedByCustomer,
+      inspectionExpiresAt: order.inspectionExpiresAt,
+      riderStatusDuringInspection: order.riderStatusDuringInspection,
     };
 
     return res.status(200).json({

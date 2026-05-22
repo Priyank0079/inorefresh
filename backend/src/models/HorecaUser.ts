@@ -64,4 +64,10 @@ HorecaUserSchema.pre('save', async function (next) {
     next();
 });
 
-export default mongoose.models.HorecaUser || mongoose.model<IHorecaUser>('HorecaUser', HorecaUserSchema, 'horeca_users');
+const HorecaUser = mongoose.models.HorecaUser || mongoose.model<IHorecaUser>('HorecaUser', HorecaUserSchema, 'horeca_users');
+
+if (!(mongoose.models.horeca as mongoose.Model<IHorecaUser>)) {
+  mongoose.model<IHorecaUser>('horeca', HorecaUserSchema, 'horeca_users');
+}
+
+export default HorecaUser;

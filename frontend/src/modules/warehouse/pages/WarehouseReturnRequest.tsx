@@ -14,6 +14,7 @@ export default function WarehouseReturnRequest() {
     const [currentPage, setCurrentPage] = useState(1);
     const [sortColumn, setSortColumn] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+    const [viewingRequest, setViewingRequest] = useState<ReturnRequest | null>(null);
 
     // Fetch return requests from API
     useEffect(() => {
@@ -388,9 +389,7 @@ export default function WarehouseReturnRequest() {
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{request.date}</td>
                                                 <td className="p-4 border border-neutral-200 text-sm text-neutral-900">
                                                     <button
-                                                        onClick={() => {
-                                                            alert(`Return Request Details:\n\nOrder Item ID: ${request.orderItemId}\nProduct: ${request.product}\nVariant: ${request.variant}\nPrice: ₹${request.price.toFixed(2)}\nDiscounted Price: ₹${request.discPrice.toFixed(2)}\nQuantity: ${request.quantity}\nTotal: ₹${request.total.toFixed(2)}\nStatus: ${request.status}\nDate: ${request.date}`);
-                                                        }}
+                                                        onClick={() => setViewingRequest(request)}
                                                         className="text-[#12b2a2] hover:text-[#0e7490] text-xs font-medium transition-colors"
                                                     >
                                                         View
@@ -436,10 +435,53 @@ export default function WarehouseReturnRequest() {
             {/* Footer */}
             <footer className="px-4 sm:px-6 py-4 text-center bg-white border-t border-neutral-200">
                 <p className="text-xs sm:text-sm text-neutral-600">
-                    Copyright © 2025. Developed By{' '}
+                    Copyright © 2026. Developed By{' '}
                     <span className="font-semibold text-teal-600">Inor fresh</span>
                 </p>
             </footer>
+
+            {/* Return Request Details Modal */}
+            {viewingRequest && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setViewingRequest(null)} />
+                    <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl relative z-10 overflow-hidden">
+                        <div className="bg-teal-600 text-white px-5 py-4 flex items-center justify-between">
+                            <h3 className="font-bold text-base">Return Request Details</h3>
+                            <button onClick={() => setViewingRequest(null)} className="text-white hover:bg-white/10 p-1 rounded-full transition-colors">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="p-5 space-y-3">
+                            {[
+                                { label: 'Order Item ID', value: viewingRequest.orderItemId },
+                                { label: 'Product', value: viewingRequest.product },
+                                { label: 'Variant', value: viewingRequest.variant },
+                                { label: 'Price', value: `₹${viewingRequest.price.toFixed(2)}` },
+                                { label: 'Discounted Price', value: `₹${viewingRequest.discPrice.toFixed(2)}` },
+                                { label: 'Quantity', value: String(viewingRequest.quantity) },
+                                { label: 'Total', value: `₹${viewingRequest.total.toFixed(2)}` },
+                                { label: 'Status', value: viewingRequest.status },
+                                { label: 'Date', value: viewingRequest.date },
+                            ].map(({ label, value }) => (
+                                <div key={label} className="flex justify-between items-start py-2 border-b border-neutral-100 last:border-0">
+                                    <span className="text-sm font-medium text-neutral-500 w-40 flex-shrink-0">{label}</span>
+                                    <span className="text-sm text-neutral-800 font-semibold text-right">{value}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="px-5 pb-5">
+                            <button
+                                onClick={() => setViewingRequest(null)}
+                                className="w-full py-3 rounded-xl font-semibold text-sm bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

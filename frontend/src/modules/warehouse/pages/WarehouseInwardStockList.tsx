@@ -15,6 +15,8 @@ export default function WarehouseInwardStockList() {
     const [sortColumn, setSortColumn] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [selectedDate, setSelectedDate] = useState('');
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    const [statusErrorId, setStatusErrorId] = useState<string | null>(null);
 
     const fetchStocks = async () => {
         setLoading(true);
@@ -56,19 +58,27 @@ export default function WarehouseInwardStockList() {
                 setStocks(prev => prev.map(stock => stock._id === id ? { ...stock, status: newStatus as any } : stock));
             }
         } catch (err: any) {
-            alert(err.message || "Failed to update status");
+            setStatusErrorId(id);
+            setTimeout(() => setStatusErrorId(null), 3000);
+            console.error(err.message || "Failed to update status");
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!window.confirm("Are you sure you want to delete this record?")) return;
+    const handleDelete = (id: string) => {
+        setConfirmDeleteId(id);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!confirmDeleteId) return;
         try {
-            const res = await deleteInwardStock(id);
+            const res = await deleteInwardStock(confirmDeleteId);
             if (res.success) {
-                setStocks(prev => prev.filter(stock => stock._id !== id));
+                setStocks(prev => prev.filter(stock => stock._id !== confirmDeleteId));
             }
         } catch (err: any) {
-            alert(err.message || "Failed to delete record");
+            setError(err.message || "Failed to delete record");
+        } finally {
+            setConfirmDeleteId(null);
         }
     };
 
@@ -272,6 +282,36 @@ export default function WarehouseInwardStockList() {
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {confirmDeleteId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)} />
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10">
+                        <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                            </svg>
+                        </div>
+                        <h3 className="text-base font-bold text-neutral-800 text-center mb-1">Delete Record?</h3>
+                        <p className="text-sm text-neutral-500 text-center mb-6">This will permanently delete this inward stock record.</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmDelete}
+                                className="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-red-500 text-white hover:bg-red-600 transition-colors"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

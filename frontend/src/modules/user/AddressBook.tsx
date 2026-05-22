@@ -26,6 +26,8 @@ export default function AddressBook() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [copySuccessId, setCopySuccessId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const loadAddresses = async () => {
     try {
@@ -64,13 +66,22 @@ export default function AddressBook() {
       }
     } else if (navigator.clipboard) {
       await navigator.clipboard.writeText(text);
-      alert("Address copied to clipboard");
+      if (address._id) {
+        setCopySuccessId(address._id);
+        setTimeout(() => setCopySuccessId(null), 2000);
+      }
     }
   };
 
-  const handleDelete = async (id?: string) => {
+  const handleDelete = (id?: string) => {
     if (!id) return;
-    if (!confirm("Remove this address?")) return;
+    setConfirmDeleteId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
     try {
       setBusyId(id);
       await deleteAddress(id);
@@ -83,6 +94,7 @@ export default function AddressBook() {
       setBusyId(null);
     }
   };
+
 
   const handleMakeDefault = async (id?: string) => {
     if (!id) return;
@@ -217,22 +229,33 @@ export default function AddressBook() {
                           className="flex items-center gap-1 text-sm font-semibold hover:text-teal-800"
                           disabled={isBusy}
                         >
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <circle cx="18" cy="5" r="3" />
-                            <circle cx="6" cy="12" r="3" />
-                            <circle cx="18" cy="19" r="3" />
-                            <path d="m8.59 13.51 6.83 3.98" />
-                            <path d="m15.41 6.51-6.82 3.98" />
-                          </svg>
-                          Share
+                          {copySuccessId === addr._id ? (
+                            <>
+                              <svg viewBox="0 0 24 24" className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="m9 11 3 3L22 4" />
+                              </svg>
+                              <span className="text-green-600">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                viewBox="0 0 24 24"
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <circle cx="18" cy="5" r="3" />
+                                <circle cx="6" cy="12" r="3" />
+                                <circle cx="18" cy="19" r="3" />
+                                <path d="m8.59 13.51 6.83 3.98" />
+                                <path d="m15.41 6.51-6.82 3.98" />
+                              </svg>
+                              Share
+                            </>
+                          )}
                         </button>
                         <button
                           onClick={() => handleMakeDefault(addr._id)}
@@ -283,6 +306,32 @@ export default function AddressBook() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🗑️</div>
+            <h3 className="text-base font-bold text-neutral-800 mb-1">Remove Address?</h3>
+            <p className="text-sm text-neutral-500 mb-6">Are you sure you want to remove this address?</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

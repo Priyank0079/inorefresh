@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
 import DeliveryHeader from "../components/DeliveryHeader";
 import DeliveryBottomNav from "../components/DeliveryBottomNav";
 
 export default function DeliveryMenu() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const menuItems = [
     { id: "menu-1", title: "Profile", route: "/delivery/profile" },
@@ -238,18 +242,56 @@ export default function DeliveryMenu() {
 
   const handleMenuClick = (route: string) => {
     if (route === "/delivery/login") {
-      // Handle logout logic here
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("userData");
-      navigate(route);
+      // Bug #81: Show confirm modal instead of immediate logout
+      setShowLogoutModal(true);
     } else {
-      // Navigate to the selected route
       navigate(route);
     }
   };
 
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
+    logout();
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userData");
+    navigate("/delivery/login");
+  };
+
   return (
     <div className="min-h-screen bg-neutral-100 pb-20">
+      {/* Bug #81 — Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <div className="flex justify-center mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-600">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-lg font-bold text-neutral-900 text-center mb-1">Logout?</h3>
+            <p className="text-sm text-neutral-500 text-center mb-6">
+              Are you sure you want to logout from your delivery account?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 py-3 rounded-xl border border-neutral-300 text-neutral-700 font-semibold text-sm hover:bg-neutral-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmLogout}
+                className="flex-1 py-3 rounded-xl bg-red-600 text-white font-semibold text-sm hover:bg-red-700 transition-colors"
+              >
+                Yes, Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <DeliveryHeader />
       <div className="px-4 py-4">
         <h2 className="text-neutral-900 text-xl font-semibold mb-4">Menu</h2>

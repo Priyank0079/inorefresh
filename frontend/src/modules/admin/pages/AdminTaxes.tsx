@@ -25,6 +25,9 @@ export default function AdminTaxes() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [taxMessage, setTaxMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [confirmDeleteTaxId, setConfirmDeleteTaxId] = useState<string | null>(null);
+  const showTaxMsg = (text: string, type: 'success' | 'error') => { setTaxMessage({ text, type }); setTimeout(() => setTaxMessage(null), 3000); };
 
   // Fetch taxes on component mount
   useEffect(() => {
@@ -97,7 +100,7 @@ export default function AdminTaxes() {
 
   const handleAddTax = async () => {
     if (!taxTitle.trim() || !percentage.trim()) {
-      alert("Please fill in all fields");
+      showTaxMsg("Please fill in all fields", 'error');
       return;
     }
 
@@ -107,7 +110,7 @@ export default function AdminTaxes() {
       percentageValue < 0 ||
       percentageValue > 100
     ) {
-      alert("Please enter a valid percentage (0-100)");
+      showTaxMsg("Please enter a valid percentage (0-100)", 'error');
       return;
     }
 
@@ -133,12 +136,10 @@ export default function AdminTaxes() {
                 : tax
             )
           );
-          alert("Tax updated successfully!");
+          showTaxMsg("Tax updated successfully!", 'success');
           setEditingTax(null);
         } else {
-          alert(
-            "Failed to update tax: " + (response.message || "Unknown error")
-          );
+          showTaxMsg("Failed to update tax: " + (response.message || "Unknown error"), 'error');
         }
       } else {
         // Add new tax
@@ -152,9 +153,9 @@ export default function AdminTaxes() {
         if (response.success) {
           // Add to local state
           setTaxes([...taxes, response.data]);
-          alert("Tax added successfully!");
+          showTaxMsg("Tax added successfully!", 'success');
         } else {
-          alert("Failed to add tax: " + (response.message || "Unknown error"));
+          showTaxMsg("Failed to add tax: " + (response.message || "Unknown error"), 'error');
         }
       }
 
@@ -163,10 +164,7 @@ export default function AdminTaxes() {
       setPercentage("");
     } catch (err: any) {
       console.error("Error saving tax:", err);
-      alert(
-        "Failed to save tax: " +
-        (err.response?.data?.message || "Please try again.")
-      );
+      showTaxMsg("Failed to save tax: " + (err.response?.data?.message || "Please try again."), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -176,13 +174,17 @@ export default function AdminTaxes() {
     setTaxTitle(tax.name);
     setPercentage(tax.percentage.toString());
     setEditingTax(tax);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this tax?")) {
-      return;
-    }
+  const handleDelete = (id: string) => {
+    setConfirmDeleteTaxId(id);
+  };
 
+  const handleConfirmDeleteTax = async () => {
+    if (!confirmDeleteTaxId) return;
+    const id = confirmDeleteTaxId;
+    setConfirmDeleteTaxId(null);
     try {
       setSubmitting(true);
       const response = await deleteTax(id);
@@ -190,7 +192,7 @@ export default function AdminTaxes() {
       if (response.success) {
         // Remove from local state
         setTaxes(taxes.filter((tax) => tax._id !== id));
-        alert("Tax deleted successfully!");
+        showTaxMsg("Tax deleted successfully!", 'success');
 
         // Reset form if editing this tax
         if (editingTax?._id === id) {
@@ -199,14 +201,11 @@ export default function AdminTaxes() {
           setPercentage("");
         }
       } else {
-        alert("Failed to delete tax: " + (response.message || "Unknown error"));
+        showTaxMsg("Failed to delete tax: " + (response.message || "Unknown error"), 'error');
       }
     } catch (err: any) {
       console.error("Error deleting tax:", err);
-      alert(
-        "Failed to delete tax: " +
-        (err.response?.data?.message || "Please try again.")
-      );
+      showTaxMsg("Failed to delete tax: " + (err.response?.data?.message || "Please try again."), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -236,6 +235,12 @@ export default function AdminTaxes() {
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
+      {/* Inline Message */}
+      {taxMessage && (
+        <div className={`mx-6 mt-4 px-4 py-3 rounded-lg text-sm font-medium ${taxMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          {taxMessage.text}
+        </div>
+      )}
       {/* Page Content */}
       <div className="flex-1 p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
@@ -574,11 +579,41 @@ export default function AdminTaxes() {
 
       {/* Footer */}
       <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
-        Copyright © 2025. Developed By{" "}
+        Copyright © 2026. Developed By{" "}
         <a href="#" className="text-blue-600 hover:underline">
           Inor fresh
         </a>
       </footer>
+
+      {/* Delete Tax Confirmation Modal */}
+      {confirmDeleteTaxId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteTaxId(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-neutral-800 mb-2">Delete Tax</h3>
+            <p className="text-sm text-neutral-500 mb-6">Are you sure you want to delete this tax? This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDeleteTaxId(null)}
+                className="flex-1 px-4 py-2 border border-neutral-300 rounded-lg text-neutral-700 hover:bg-neutral-50 font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDeleteTax}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

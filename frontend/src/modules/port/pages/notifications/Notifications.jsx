@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageTitle from '../../components/common/PageTitle';
 import { getMyNotifications, markAsRead, markAllAsRead, deleteNotification } from '../../../../services/api/portNotificationService';
 import { useToast } from '../../../../context/ToastContext';
 
 const Notifications = () => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
@@ -147,7 +149,12 @@ const Notifications = () => {
                   <p className="text-sm text-slate-600 leading-relaxed">{notif.message}</p>
                   <div className="mt-3 flex items-center gap-4">
                     {notif.link && (
-                      <button className="text-xs font-bold text-teal-600 hover:underline">View Details</button>
+                      <button 
+                        onClick={() => navigate(notif.link)}
+                        className="text-xs font-bold text-teal-600 hover:underline"
+                      >
+                        View Details
+                      </button>
                     )}
                     <button 
                       onClick={() => handleDelete(notif._id)}

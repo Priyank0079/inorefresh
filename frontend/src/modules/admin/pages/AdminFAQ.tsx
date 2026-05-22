@@ -24,6 +24,13 @@ export default function AdminFAQ() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [faqMessage, setFaqMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [confirmDeleteFaqId, setConfirmDeleteFaqId] = useState<string | null>(null);
+
+  const showFaqMsg = (text: string, type: 'success' | 'error') => {
+    setFaqMessage({ text, type });
+    setTimeout(() => setFaqMessage(null), 4000);
+  };
 
   // Fetch FAQs on component mount
   useEffect(() => {
@@ -96,7 +103,7 @@ export default function AdminFAQ() {
 
   const handleAddFAQ = async () => {
     if (!faqQuestion.trim() || !faqAnswer.trim()) {
-      alert("Please fill in both question and answer");
+      showFaqMsg("Please fill in both question and answer", 'error');
       return;
     }
 
@@ -104,62 +111,44 @@ export default function AdminFAQ() {
       setSubmitting(true);
 
       if (editingFAQ !== null) {
-        // Update existing FAQ
         const updateData: UpdateFAQData = {
           question: faqQuestion.trim(),
           answer: faqAnswer.trim(),
         };
-
         const response = await updateFAQ(editingFAQ._id, updateData);
-
         if (response.success) {
-          // Update local state
           setFaqs((prev) =>
             prev.map((faq) =>
               faq._id === editingFAQ._id
-                ? {
-                  ...faq,
-                  question: faqQuestion.trim(),
-                  answer: faqAnswer.trim(),
-                }
+                ? { ...faq, question: faqQuestion.trim(), answer: faqAnswer.trim() }
                 : faq
             )
           );
-          alert("FAQ updated successfully!");
+          showFaqMsg("FAQ updated successfully!", 'success');
           setEditingFAQ(null);
         } else {
-          alert(
-            "Failed to update FAQ: " + (response.message || "Unknown error")
-          );
+          showFaqMsg("Failed to update FAQ: " + (response.message || "Unknown error"), 'error');
         }
       } else {
-        // Add new FAQ
         const faqData: CreateFAQData = {
           question: faqQuestion.trim(),
           answer: faqAnswer.trim(),
           isActive: true,
         };
-
         const response = await createFAQ(faqData);
-
         if (response.success) {
-          // Add to local state
           setFaqs((prev) => [...prev, response.data]);
-          alert("FAQ added successfully!");
+          showFaqMsg("FAQ added successfully!", 'success');
         } else {
-          alert("Failed to add FAQ: " + (response.message || "Unknown error"));
+          showFaqMsg("Failed to add FAQ: " + (response.message || "Unknown error"), 'error');
         }
       }
 
-      // Reset form
       setFaqQuestion("");
       setFaqAnswer("");
     } catch (err: any) {
       console.error("Error saving FAQ:", err);
-      alert(
-        "Failed to save FAQ: " +
-        (err.response?.data?.message || "Please try again.")
-      );
+      showFaqMsg("Failed to save FAQ: " + (err.response?.data?.message || "Please try again."), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -169,37 +158,34 @@ export default function AdminFAQ() {
     setFaqQuestion(faq.question);
     setFaqAnswer(faq.answer);
     setEditingFAQ(faq);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this FAQ?")) {
-      return;
-    }
+  const handleDelete = (id: string) => {
+    setConfirmDeleteFaqId(id);
+  };
 
+  const handleConfirmDeleteFaq = async () => {
+    if (!confirmDeleteFaqId) return;
+    const id = confirmDeleteFaqId;
+    setConfirmDeleteFaqId(null);
     try {
       setSubmitting(true);
       const response = await deleteFAQ(id);
-
       if (response.success) {
-        // Remove from local state
         setFaqs((prev) => prev.filter((faq) => faq._id !== id));
-        alert("FAQ deleted successfully!");
-
-        // Reset form if editing this FAQ
+        showFaqMsg("FAQ deleted successfully!", 'success');
         if (editingFAQ?._id === id) {
           setEditingFAQ(null);
           setFaqQuestion("");
           setFaqAnswer("");
         }
       } else {
-        alert("Failed to delete FAQ: " + (response.message || "Unknown error"));
+        showFaqMsg("Failed to delete FAQ: " + (response.message || "Unknown error"), 'error');
       }
     } catch (err: any) {
       console.error("Error deleting FAQ:", err);
-      alert(
-        "Failed to delete FAQ: " +
-        (err.response?.data?.message || "Please try again.")
-      );
+      showFaqMsg("Failed to delete FAQ: " + (err.response?.data?.message || "Please try again."), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -244,6 +230,13 @@ export default function AdminFAQ() {
           </div>
         </div>
       </div>
+
+      {/* Inline Message */}
+      {faqMessage && (
+        <div className={`mx-6 mb-2 px-4 py-3 rounded-lg text-sm font-medium ${faqMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          {faqMessage.text}
+        </div>
+      )}
 
       {/* Page Content */}
       <div className="flex-1 px-6 pb-6">
@@ -553,11 +546,29 @@ export default function AdminFAQ() {
 
       {/* Footer */}
       <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
-        Copyright © 2025. Developed By{" "}
+        Copyright © 2026. Developed By{" "}
         <a href="#" className="text-blue-600 hover:underline">
           Inor fresh
         </a>
       </footer>
+
+      {/* Delete FAQ Confirmation */}
+      {confirmDeleteFaqId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteFaqId(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <h4 className="font-bold text-neutral-800 mb-1">Delete FAQ?</h4>
+            <p className="text-sm text-neutral-500 mb-4">Are you sure you want to delete this FAQ?</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDeleteFaqId(null)} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors">Cancel</button>
+              <button onClick={handleConfirmDeleteFaq} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

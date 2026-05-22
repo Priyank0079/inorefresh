@@ -116,8 +116,7 @@ export default function AdminCashCollection() {
   const endIndex = startIndex + entriesPerPage;
 
   const handleAddCollection = async () => {
-    // For now, just show an alert. In a real app, this would open a modal to add a cash collection
-    alert("Add cash collection functionality would be implemented here");
+    // Add cash collection functionality - placeholder for future implementation
   };
 
   const handleExport = () => {
@@ -639,7 +638,7 @@ export default function AdminCashCollection() {
 
       {/* Footer */}
       <div className="bg-neutral-800 text-white text-center text-sm py-4">
-        Copyright © 2025. Developed By{" "}
+        Copyright © 2026. Developed By{" "}
         <a href="#" className="text-[#12b2a2] hover:text-[#0e8f82]">
           Inor fresh
         </a>

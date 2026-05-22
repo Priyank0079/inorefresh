@@ -10,8 +10,17 @@ export const getMyNotifications = asyncHandler(
     const userId = req.user?.userId;
     
     const notifications = await Notification.find({
-      recipientType: "Warehouse",
-      recipientId: userId,
+      $and: [
+        { recipientType: { $in: ["Warehouse", "All"] } },
+        {
+          $or: [
+            { recipientId: userId },
+            { recipientId: { $exists: false } },
+            { recipientId: null },
+            { recipientType: "All" },
+          ],
+        },
+      ],
       $or: [
         { expiresAt: { $exists: false } },
         { expiresAt: null },
@@ -36,7 +45,20 @@ export const markAsRead = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
 
   const notification = await Notification.findOneAndUpdate(
-    { _id: id, recipientId: userId },
+    {
+      _id: id,
+      $and: [
+        { recipientType: { $in: ["Warehouse", "All"] } },
+        {
+          $or: [
+            { recipientId: userId },
+            { recipientId: { $exists: false } },
+            { recipientId: null },
+            { recipientType: "All" },
+          ],
+        },
+      ],
+    },
     {
       isRead: true,
       readAt: new Date(),
@@ -64,7 +86,20 @@ export const markAllAsRead = asyncHandler(async (req: Request, res: Response) =>
   const userId = req.user?.userId;
 
   await Notification.updateMany(
-    { recipientId: userId, isRead: false },
+    {
+      $and: [
+        { recipientType: { $in: ["Warehouse", "All"] } },
+        {
+          $or: [
+            { recipientId: userId },
+            { recipientId: { $exists: false } },
+            { recipientId: null },
+            { recipientType: "All" },
+          ],
+        },
+        { isRead: false },
+      ],
+    },
     {
       isRead: true,
       readAt: new Date(),

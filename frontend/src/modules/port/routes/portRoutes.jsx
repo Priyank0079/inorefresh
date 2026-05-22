@@ -12,31 +12,34 @@ import Notifications from '../pages/notifications/Notifications';
 import ProfileSettings from '../pages/settings/ProfileSettings';
 import NegotiationPage from '../pages/offers/NegotiationPage';
 import RequirementHistory from '../pages/requirements/RequirementHistory';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const PortRoutes = () => {
   return (
-    <Routes>
-      <Route element={<PortLayout />}>
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        
-        <Route path="requirements" element={<IncomingRequirements />} />
-        <Route path="requirements/history" element={<RequirementHistory />} />
-        
-        <Route path="offers" element={<MyOffers />} />
-        <Route path="offers/negotiations" element={<NegotiationPage />} />
-        
-        <Route path="products" element={<MyProducts />} />
-        <Route path="products/add" element={<AddProduct />} />
-        
-        <Route path="orders" element={<MyOrders />} />
-        <Route path="orders/track/:id" element={<TrackOrder />} />
-        
-        <Route path="notifications" element={<Notifications />} />
-        
-        <Route path="settings/profile" element={<ProfileSettings />} />
-      </Route>
-    </Routes>
+    <ProtectedRoute requiredUserType="Port" redirectTo="/port/login">
+      <Routes>
+        <Route element={<PortLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          
+          <Route path="requirements" element={<IncomingRequirements />} />
+          <Route path="requirements/history" element={<RequirementHistory />} />
+          
+          <Route path="offers" element={<MyOffers />} />
+          <Route path="offers/negotiations" element={<NegotiationPage />} />
+          
+          <Route path="products" element={<MyProducts />} />
+          <Route path="products/add" element={<AddProduct />} />
+          
+          <Route path="orders" element={<MyOrders />} />
+          <Route path="orders/track/:id" element={<TrackOrder />} />
+          
+          <Route path="notifications" element={<Notifications />} />
+          
+          <Route path="settings/profile" element={<ProfileSettings />} />
+        </Route>
+      </Routes>
+    </ProtectedRoute>
   );
 };
 

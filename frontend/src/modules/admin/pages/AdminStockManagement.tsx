@@ -54,6 +54,8 @@ export default function AdminStockManagement() {
   const [filterSeller, setFilterSeller] = useState("All Warehouses");
   const [filterStatus, setFilterStatus] = useState("All Products");
   const [filterStock, setFilterStock] = useState(initialStockFilter);
+  const [confirmDeleteProductId, setConfirmDeleteProductId] = useState<string | null>(null);
+  const [deleteMessage, setDeleteMessage] = useState<{ text: string; type: 'success'|'error' } | null>(null);
 
   useEffect(() => {
     if (initialStockFilter) {
@@ -126,20 +128,28 @@ export default function AdminStockManagement() {
     filterStatus,
   ]);
 
-  const handleDelete = async (productId: string) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      try {
-        const response = await deleteProduct(productId);
-        if (response.success || response.message === "Product deleted successfully") {
-          alert("Product deleted successfully");
-          fetchData();
-        } else {
-          alert("Failed to delete product");
-        }
-      } catch (error) {
-        console.error("Error deleting product:", error);
-        alert("An error occurred while deleting the product");
+  const handleDelete = (productId: string) => {
+    setConfirmDeleteProductId(productId);
+  };
+
+  const handleConfirmDeleteProduct = async () => {
+    if (!confirmDeleteProductId) return;
+    const productId = confirmDeleteProductId;
+    setConfirmDeleteProductId(null);
+    try {
+      const response = await deleteProduct(productId);
+      if (response.success || response.message === "Product deleted successfully") {
+        setDeleteMessage({ text: "Product deleted successfully", type: 'success' });
+        setTimeout(() => setDeleteMessage(null), 3000);
+        fetchData();
+      } else {
+        setDeleteMessage({ text: "Failed to delete product", type: 'error' });
+        setTimeout(() => setDeleteMessage(null), 3000);
       }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      setDeleteMessage({ text: "An error occurred while deleting the product", type: 'error' });
+      setTimeout(() => setDeleteMessage(null), 3000);
     }
   };
 
@@ -260,17 +270,17 @@ export default function AdminStockManagement() {
         (filterStock === "Unlimited" && product.stock === "Unlimited") ||
         (filterStock === "In Stock" &&
           product.stock !== "Unlimited" &&
-          typeof product.stock === "number" &&
-          product.stock > 0) ||
+          !isNaN(Number(product.stock)) &&
+          Number(product.stock) > 0) ||
         (filterStock === "Out of Stock" &&
           product.stock !== "Unlimited" &&
-          typeof product.stock === "number" &&
-          product.stock === 0) ||
+          !isNaN(Number(product.stock)) &&
+          Number(product.stock) === 0) ||
         (filterStock === "Low Stock" &&
           product.stock !== "Unlimited" &&
-          typeof product.stock === "number" &&
-          product.stock > 0 &&
-          product.stock <= 10);
+          !isNaN(Number(product.stock)) &&
+          Number(product.stock) > 0 &&
+          Number(product.stock) <= 10);
       const matchesSearch =
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.seller.toLowerCase().includes(searchTerm.toLowerCase());
@@ -378,6 +388,11 @@ export default function AdminStockManagement() {
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
+      {deleteMessage && (
+        <div className={`mx-6 mt-4 px-4 py-3 rounded-lg text-sm font-medium ${deleteMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          {deleteMessage.text}
+        </div>
+      )}
       {/* Page Content */}
       <div className="flex-1 p-6">
         {/* Main Panel */}
@@ -746,11 +761,28 @@ export default function AdminStockManagement() {
 
       {/* Footer */}
       <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
-        Copyright © 2025. Developed By{" "}
+        Copyright © 2026. Developed By{" "}
         <a href="#" className="text-blue-600 hover:underline">
           Inor fresh
         </a>
       </footer>
+
+      {confirmDeleteProductId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteProductId(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <h4 className="font-bold text-neutral-800 mb-1">Delete Product?</h4>
+            <p className="text-sm text-neutral-500 mb-4">Are you sure you want to delete this product?</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDeleteProductId(null)} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors">Cancel</button>
+              <button onClick={handleConfirmDeleteProduct} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

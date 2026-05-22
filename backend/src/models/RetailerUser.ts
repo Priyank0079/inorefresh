@@ -64,4 +64,10 @@ RetailerUserSchema.pre('save', async function (next) {
     next();
 });
 
-export default mongoose.models.RetailerUser || mongoose.model<IRetailerUser>('RetailerUser', RetailerUserSchema, 'retailer_users');
+const RetailerUser = mongoose.models.RetailerUser || mongoose.model<IRetailerUser>('RetailerUser', RetailerUserSchema, 'retailer_users');
+
+if (!(mongoose.models.retailer as mongoose.Model<IRetailerUser>)) {
+  mongoose.model<IRetailerUser>('retailer', RetailerUserSchema, 'retailer_users');
+}
+
+export default RetailerUser;

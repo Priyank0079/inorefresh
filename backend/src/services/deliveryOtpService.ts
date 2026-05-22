@@ -91,12 +91,30 @@ export async function verifyDeliveryOtp(orderId: string, otp: string): Promise<{
       throw new Error('Delivery OTP not found for this order. Please ask the customer to refresh their order page.');
     }
 
+    // Fetch dynamic duration settings
+    let duration = 10;
+    try {
+      const AppSettings = require('../models/AppSettings').default;
+      const settings = await AppSettings.getSettings();
+      duration = settings?.inspectionDurationMinutes || 10;
+    } catch (e) {
+      console.error("Failed to load inspection duration settings:", e);
+    }
+
     // Developer bypass for testing
     if ((process.env.NODE_ENV !== 'production' || process.env.USE_MOCK_OTP === 'true') && otp === '9999') {
       order.deliveryOtpVerified = true;
       order.status = 'Delivered';
       order.deliveredAt = new Date();
       order.invoiceEnabled = true;
+      
+      // Verification Countdown Settings
+      order.inspectionStartedAt = new Date();
+      order.inspectionExpiresAt = new Date(Date.now() + duration * 60000);
+      order.inspectionDurationMinutes = duration;
+      order.riderStatusDuringInspection = "WAITING_FOR_CUSTOMER_VERIFICATION";
+      order.isVerifiedByCustomer = false;
+      
       await order.save();
 
       return {
@@ -116,6 +134,14 @@ export async function verifyDeliveryOtp(orderId: string, otp: string): Promise<{
     order.status = 'Delivered';
     order.deliveredAt = new Date();
     order.invoiceEnabled = true;
+    
+    // Verification Countdown Settings
+    order.inspectionStartedAt = new Date();
+    order.inspectionExpiresAt = new Date(Date.now() + duration * 60000);
+    order.inspectionDurationMinutes = duration;
+    order.riderStatusDuringInspection = "WAITING_FOR_CUSTOMER_VERIFICATION";
+    order.isVerifiedByCustomer = false;
+    
     await order.save();
 
     return {

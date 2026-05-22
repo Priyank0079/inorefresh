@@ -20,6 +20,8 @@ const WarehouseStockManagement = lazy(() => import("./pages/WarehouseStockManage
 const WarehouseWallet = lazy(() => import("./pages/WarehouseWallet"));
 const WarehouseSalesReport = lazy(() => import("./pages/WarehouseSalesReport"));
 const WarehouseReturnRequest = lazy(() => import("./pages/WarehouseReturnRequest"));
+const WholesalerReturnInbox = lazy(() => import("./pages/WholesalerReturnInbox"));
+const WarehouseReturnVerification = lazy(() => import("./pages/WarehouseReturnVerification"));
 const WarehouseInwardStockList = lazy(() => import("./pages/WarehouseInwardStockList"));
 const WarehouseAddInwardStock = lazy(() => import("./pages/WarehouseAddInwardStock"));
 const WarehouseInwardReport = lazy(() => import("./pages/WarehouseInwardReport"));
@@ -47,6 +49,8 @@ export default function WarehouseRoutes() {
             <Route path="inward-stock/add" element={<WarehouseAddInwardStock />} />
             <Route path="inward-stock/edit/:id" element={<WarehouseAddInwardStock />} />
             <Route path="return" element={<WarehouseReturnRequest />} />
+            <Route path="return/inbox" element={<WholesalerReturnInbox />} />
+            <Route path="return/verify" element={<WarehouseReturnVerification />} />
             <Route path="return-order" element={<WarehouseReturnRequest />} />
             <Route path="wallet" element={<WarehouseWallet />} />
             <Route path="reports/sales" element={<WarehouseSalesReport />} />

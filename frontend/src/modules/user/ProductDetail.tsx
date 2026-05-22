@@ -47,6 +47,7 @@ export default function ProductDetail() {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [cartError, setCartError] = useState('');
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -263,12 +264,13 @@ export default function ProductDetail() {
 
   const handleAddToCart = async () => {
     if (!isAvailableAtLocation) {
-      // Show alert if trying to add item outside delivery area
-      alert("This product is not available for delivery at your location.");
+      setCartError("This product is not available for delivery at your location.");
+      setTimeout(() => setCartError(''), 4000);
       return;
     }
     if (!isVariantAvailable && variantStock !== 0) {
-      alert("This variant is currently out of stock.");
+      setCartError("This variant is currently out of stock.");
+      setTimeout(() => setCartError(''), 4000);
       return;
     }
     const productWithVariant = buildProductWithVariant();
@@ -1176,6 +1178,13 @@ export default function ProductDetail() {
           </div>
         )}
       </div>
+
+      {/* Cart error toast */}
+      {cartError && (
+        <div className="fixed bottom-24 left-4 right-4 z-[60] bg-red-600 text-white text-sm font-semibold rounded-xl px-4 py-3 text-center shadow-lg">
+          {cartError}
+        </div>
+      )}
 
       {/* Sticky Footer */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-neutral-200 shadow-lg">

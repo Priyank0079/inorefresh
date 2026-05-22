@@ -19,6 +19,8 @@ export default function DeliveryEarnings() {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState<string>("");
   const [error, setError] = useState("");
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
+  const [pendingWithdrawAmount, setPendingWithdrawAmount] = useState<number>(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,25 +64,25 @@ export default function DeliveryEarnings() {
     0,
   );
 
-  const handleWithdraw = async () => {
+  const handleWithdraw = () => {
+    const amount = parseFloat(withdrawAmount);
+    if (!amount || amount <= 0) {
+      showToast("Please enter a valid amount", "error");
+      return;
+    }
+    if (stats?.walletBalance !== undefined && amount > stats.walletBalance) {
+      showToast("Withdrawal amount cannot exceed available balance", "error");
+      return;
+    }
+    setPendingWithdrawAmount(amount);
+    setShowWithdrawConfirm(true);
+  };
+
+  const handleConfirmWithdraw = async () => {
+    setShowWithdrawConfirm(false);
     try {
-      const amount = parseFloat(withdrawAmount);
-      if (!amount || amount <= 0) {
-        showToast("Please enter a valid amount", "error");
-        return;
-      }
-
-      if (stats?.walletBalance !== undefined && amount > stats.walletBalance) {
-        showToast("Withdrawal amount cannot exceed available balance", "error");
-        return;
-      }
-
-      if (!window.confirm(`Are you sure you want to withdraw ₹${amount}?`)) {
-        return;
-      }
-
       setIsWithdrawing(true);
-      await requestWithdrawal(amount);
+      await requestWithdrawal(pendingWithdrawAmount);
       showToast("Withdrawal request submitted successfully", "success");
       setWithdrawAmount("");
       // Refresh data
@@ -255,6 +257,38 @@ export default function DeliveryEarnings() {
         </div>
       </div>
       <DeliveryBottomNav />
+
+      {/* Withdraw Confirmation Modal */}
+      {showWithdrawConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowWithdrawConfirm(false)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-14 h-14 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                <path d="M1 10h22" />
+              </svg>
+            </div>
+            <h3 className="text-base font-bold text-neutral-800 mb-1">Confirm Withdrawal</h3>
+            <p className="text-sm text-neutral-500 mb-1">You are requesting a withdrawal of:</p>
+            <p className="text-2xl font-bold text-orange-500 mb-6">₹{pendingWithdrawAmount.toFixed(2)}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowWithdrawConfirm(false)}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmWithdraw}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

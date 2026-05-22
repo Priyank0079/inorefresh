@@ -11,10 +11,16 @@ export const getNotifications = asyncHandler(async (req: Request, res: Response)
     const deliveryId = req.user?.userId;
 
     const notifications = await Notification.find({
-        recipientType: "Delivery",
-        $or: [
-            { recipientId: deliveryId },
-            { recipientId: null } // Broadcasts to all delivery partners
+        $and: [
+            { recipientType: { $in: ["Delivery", "All"] } },
+            {
+                $or: [
+                    { recipientId: deliveryId },
+                    { recipientId: { $exists: false } },
+                    { recipientId: null },
+                    { recipientType: "All" }
+                ]
+            }
         ]
     })
         .sort({ createdAt: -1 })
@@ -34,7 +40,20 @@ export const markNotificationRead = asyncHandler(async (req: Request, res: Respo
     const deliveryId = req.user?.userId;
 
     const notification = await Notification.findOneAndUpdate(
-        { _id: id, recipientType: "Delivery", recipientId: deliveryId },
+        {
+            _id: id,
+            $and: [
+                { recipientType: { $in: ["Delivery", "All"] } },
+                {
+                    $or: [
+                        { recipientId: deliveryId },
+                        { recipientId: { $exists: false } },
+                        { recipientId: null },
+                        { recipientType: "All" }
+                    ]
+                }
+            ]
+        },
         { isRead: true, readAt: new Date() },
         { new: true }
     );
@@ -59,7 +78,20 @@ export const markAllAsRead = asyncHandler(async (req: Request, res: Response) =>
     const deliveryId = req.user?.userId;
 
     await Notification.updateMany(
-        { recipientType: "Delivery", recipientId: deliveryId, isRead: false },
+        {
+            $and: [
+                { recipientType: { $in: ["Delivery", "All"] } },
+                {
+                    $or: [
+                        { recipientId: deliveryId },
+                        { recipientId: { $exists: false } },
+                        { recipientId: null },
+                        { recipientType: "All" }
+                    ]
+                },
+                { isRead: false }
+            ]
+        },
         { isRead: true, readAt: new Date() }
     );
 

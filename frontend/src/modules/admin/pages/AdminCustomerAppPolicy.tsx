@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 export default function AdminCustomerAppPolicy() {
+  const [policyMessage, setPolicyMessage] = useState('');
   const [policyContent, setPolicyContent] = useState(`Welcome to Inor fresh!
 
 By using our customer app, you agree to the following terms and conditions:
@@ -48,12 +49,18 @@ Last updated: December 2025`);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    alert('Customer App Policy updated successfully!');
+    setPolicyMessage('Customer App Policy updated successfully!');
+    setTimeout(() => setPolicyMessage(''), 3000);
   };
 
   return (
     <div className="flex flex-col h-full">
+      {/* Inline Message */}
+      {policyMessage && (
+        <div className="mx-4 sm:mx-6 mt-4 px-4 py-3 rounded-lg text-sm font-medium bg-green-50 border border-green-200 text-green-700">
+          {policyMessage}
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white px-4 sm:px-6 py-4 border-b border-neutral-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

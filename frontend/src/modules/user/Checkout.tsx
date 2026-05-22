@@ -120,6 +120,8 @@ export default function Checkout() {
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
   const [showRazorpayCheckout, setShowRazorpayCheckout] = useState(false);
   const [useWallet, setUseWallet] = useState<boolean>(false);
+  const [checkoutError, setCheckoutError] = useState<string>('');
+  const [gstinError, setGstinError] = useState<string>('');
 
   // Check if user has placeholder data (needs profile completion)
   // Refresh user profile data on load to get latest status (e.g. from Pending to Active)
@@ -291,22 +293,6 @@ export default function Checkout() {
     fetchSimilar();
   }, [cart?.items?.length]);
 
-  if (cartLoading || ((cart?.items?.length || 0) === 0 && !showOrderSuccess)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="flex flex-col items-center">
-          <div
-            className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mb-4"
-            style={{ borderColor: `${currentTheme.primary[3]} transparent ${currentTheme.primary[3]} ${currentTheme.primary[3]}` }}
-          ></div>
-          <p className="text-sm font-medium text-neutral-600">
-            {cartLoading ? "Loading checkout..." : "Redirecting..."}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   const displayItems = (cart?.items || []).filter(
     (item) => item && item.product,
   );
@@ -404,8 +390,8 @@ export default function Checkout() {
   const walletThreshold = 10000;
   const isWalletEligible = discountedTotal >= walletThreshold;
   const walletBalance = user?.walletAmount || 0;
-  
-  // Auto-disable wallet if not eligible
+
+  // Keep hook order stable: this effect must run before any early return.
   useEffect(() => {
     if (!isWalletEligible && useWallet) {
       setUseWallet(false);
@@ -414,6 +400,22 @@ export default function Checkout() {
 
   const walletAmountUsed = (useWallet && isWalletEligible) ? Math.min(grandTotal, walletBalance) : 0;
   const payableAmount = Math.max(0, grandTotal - walletAmountUsed);
+
+  if (cartLoading || ((cart?.items?.length || 0) === 0 && !showOrderSuccess)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center">
+          <div
+            className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mb-4"
+            style={{ borderColor: `${currentTheme.primary[3]} transparent ${currentTheme.primary[3]} ${currentTheme.primary[3]}` }}
+          ></div>
+          <p className="text-sm font-medium text-neutral-600">
+            {cartLoading ? "Loading checkout..." : "Redirecting..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleApplyCoupon = async (coupon: ApiCoupon) => {
     setIsValidatingCoupon(true);
@@ -526,7 +528,8 @@ export default function Checkout() {
     // Validate required address fields
     if (!selectedAddress.city || !selectedAddress.pincode) {
       console.error("Address is missing required fields (city or pincode)");
-      alert("Please ensure your address has city and pincode.");
+      setCheckoutError("Please ensure your address has city and pincode.");
+      setTimeout(() => setCheckoutError(''), 4000);
       return;
     }
 
@@ -543,9 +546,8 @@ export default function Checkout() {
       console.error(
         "Address is missing location data (latitude/longitude) and user location is not available",
       );
-      alert(
-        "Location is required for delivery. Please ensure your address has location data or enable location access.",
-      );
+      setCheckoutError("Location is required for delivery. Please ensure your address has location data or enable location access.");
+      setTimeout(() => setCheckoutError(''), 4000);
       return;
     }
 
@@ -604,7 +606,8 @@ export default function Checkout() {
         error.message ||
         error.response?.data?.message ||
         "Failed to place order. Please try again.";
-      alert(errorMessage);
+      setCheckoutError(errorMessage);
+      setTimeout(() => setCheckoutError(''), 5000);
     }
   };
 
@@ -2329,13 +2332,17 @@ export default function Checkout() {
               <p className="text-xs text-neutral-500 mt-1">
                 Format: 15 characters (e.g., 27AAAAA0000A1Z5)
               </p>
+              {gstinError && (
+                <p className="text-xs text-red-600 mt-1 font-medium">{gstinError}</p>
+              )}
             </div>
             <button
               onClick={() => {
                 if (gstin.length === 15) {
+                  setGstinError('');
                   setShowGstinSheet(false);
                 } else {
-                  alert("Please enter a valid 15-character GSTIN");
+                  setGstinError("Please enter a valid 15-character GSTIN");
                 }
               }}
               className="w-full bg-green-600 text-white py-3 px-4 font-bold text-sm uppercase tracking-wide hover:bg-green-700 transition-colors rounded-lg">
@@ -2550,6 +2557,13 @@ export default function Checkout() {
       </Sheet>
 
       {/* User Status Warning Removed */}
+
+      {/* Checkout Error Toast */}
+      {checkoutError && (
+        <div className="fixed bottom-24 left-4 right-4 z-[70] bg-red-600 text-white text-sm px-4 py-3 rounded-lg shadow-lg text-center">
+          {checkoutError}
+        </div>
+      )}
 
       {/* Bottom Sticky Button */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-[60] shadow-lg">

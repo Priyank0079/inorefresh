@@ -1,4 +1,4 @@
-import { useParams, Link, useSearchParams } from "react-router-dom";
+import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "../../components/ui/button";
@@ -9,6 +9,7 @@ import { useDeliveryTracking } from "../../hooks/useDeliveryTracking";
 import DeliveryPartnerCard from "../../components/DeliveryPartnerCard";
 import { cancelOrder, updateOrderNotes, getSellerLocationsForOrder } from "../../services/api/customerOrderService";
 import { parseWeight } from "../../utils/cartUtils";
+import api from "../../services/api/config";
 
 // Icon Components
 const ArrowLeftIcon = ({ className }: { className?: string }) => (
@@ -442,6 +443,7 @@ const SectionItem = ({
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const confirmed = searchParams.get("confirmed") === "true";
   const { getOrderById, fetchOrderById, loading: contextLoading } = useOrders();
@@ -492,6 +494,44 @@ export default function OrderDetail() {
   // Seller locations for the order
   const [sellerLocations, setSellerLocations] = useState<any[]>([]);
   const [loadingSellerLocations, setLoadingSellerLocations] = useState(false);
+  const [acceptingAll, setAcceptingAll] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [showAcceptAllConfirm, setShowAcceptAllConfirm] = useState(false);
+  const [acceptAllMessage, setAcceptAllMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [shareMessage, setShareMessage] = useState('');
+  const [cancelError, setCancelError] = useState('');
+  const [cancelSuccess, setCancelSuccess] = useState('');
+  const [instructionsError, setInstructionsError] = useState('');
+  const [specialRequestsError, setSpecialRequestsError] = useState('');
+
+  const handleAcceptAll = () => {
+    if (!id || acceptingAll) return;
+    setShowAcceptAllConfirm(true);
+  };
+
+  const handleConfirmAcceptAll = async () => {
+    setShowAcceptAllConfirm(false);
+    if (!id) return;
+    try {
+      setAcceptingAll(true);
+      await api.post(`/returns/workflow/retailer/accept-all/${id}`);
+      // Refresh order data
+      await fetchOrderById(id);
+      const updatedOrder = getOrderById(id);
+      if (updatedOrder) {
+        setOrder(updatedOrder);
+        setOrderStatus(updatedOrder.status);
+      }
+      setAcceptAllMessage({ text: "Verification completed successfully!", type: 'success' });
+      setTimeout(() => setAcceptAllMessage(null), 4000);
+    } catch (err: any) {
+      console.error("Error accepting all items:", err);
+      setAcceptAllMessage({ text: err.response?.data?.message || "Failed to complete verification", type: 'error' });
+      setTimeout(() => setAcceptAllMessage(null), 4000);
+    } finally {
+      setAcceptingAll(false);
+    }
+  };
 
   // Fetch order if not in context
   useEffect(() => {
@@ -517,6 +557,41 @@ export default function OrderDetail() {
 
     loadOrder();
   }, [id, getOrderById, fetchOrderById]);
+
+  // Timer effect for Order Verification countdown
+  useEffect(() => {
+    if (order?.inspectionExpiresAt && !order?.isVerifiedByCustomer) {
+      const remainingTime = () => {
+        const rem = new Date(order.inspectionExpiresAt).getTime() - Date.now();
+        return rem <= 0 ? 0 : Math.floor(rem / 1000);
+      };
+
+      setTimeLeft(remainingTime());
+
+      const interval = setInterval(() => {
+        const rem = remainingTime();
+        setTimeLeft(rem);
+        if (rem <= 0) {
+          clearInterval(interval);
+          // Refresh order data from server (triggers auto-close if expired)
+          fetchOrderById(id!).then(updatedOrder => {
+            if (updatedOrder) {
+              setOrder(updatedOrder);
+              setOrderStatus(updatedOrder.status);
+            }
+          });
+        }
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [order, id, fetchOrderById]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
 
   // Fetch seller locations when order is loaded
   useEffect(() => {
@@ -620,7 +695,8 @@ export default function OrderDetail() {
       } else {
         // Fallback: copy link to clipboard
         await navigator.clipboard.writeText(window.location.href);
-        alert("Link copied to clipboard!");
+        setShareMessage("Link copied to clipboard!");
+        setTimeout(() => setShareMessage(''), 2500);
       }
     } catch (error) {
       console.error("Error sharing:", error);
@@ -635,23 +711,24 @@ export default function OrderDetail() {
 
   const handleCancelOrder = async () => {
     if (!cancellationReason.trim()) {
-      alert("Please provide a cancellation reason");
+      setCancelError("Please provide a cancellation reason");
       return;
     }
 
     if (!id) return;
 
     try {
-      // TODO: Call backend API to cancel order
       await cancelOrder(id, cancellationReason);
       setOrderStatus("Cancelled" as any);
-      setShowCancelModal(false);
-      alert("Order cancelled successfully");
-      // Refresh order to get updated status
-      handleRefresh();
+      setCancelSuccess("Order cancelled successfully");
+      setTimeout(() => {
+        setCancelSuccess('');
+        setShowCancelModal(false);
+        handleRefresh();
+      }, 1500);
     } catch (error) {
       console.error("Error cancelling order:", error);
-      alert("Failed to cancel order");
+      setCancelError("Failed to cancel order");
     }
   };
 
@@ -660,11 +737,10 @@ export default function OrderDetail() {
       if (!id) return;
       await updateOrderNotes(id, { deliveryInstructions });
       setShowInstructionsModal(false);
-      // alert("Delivery instructions saved!");
       handleRefresh();
     } catch (error) {
       console.error("Failed to save instructions:", error);
-      alert("Failed to save instructions");
+      setInstructionsError("Failed to save instructions");
     }
   };
 
@@ -673,11 +749,10 @@ export default function OrderDetail() {
       if (!id) return;
       await updateOrderNotes(id, { specialRequests });
       setShowSpecialRequestsModal(false);
-      // alert("Special requests saved!");
       handleRefresh();
     } catch (error) {
       console.error("Failed to save special requests:", error);
-      alert("Failed to save special requests");
+      setSpecialRequestsError("Failed to save special requests");
     }
   };
 
@@ -762,12 +837,33 @@ export default function OrderDetail() {
       subtitle: "This order has been returned",
       color: "bg-gray-600",
     },
+    "Verification Pending": {
+      title: "Order Verification",
+      subtitle: "The rider is at your door — please verify your items",
+      color: "bg-orange-600",
+    },
+    "Partially Returned": {
+      title: "Partial Return Submitted",
+      subtitle: "Awaiting wholesaler review",
+      color: "bg-amber-600",
+    },
+    "Fully Returned": {
+      title: "Full Return Requested",
+      subtitle: "Awaiting wholesaler review",
+      color: "bg-red-600",
+    },
+    "Return Under Review": {
+      title: "Return Under Review",
+      subtitle: "Wholesaler is reviewing your request",
+      color: "bg-blue-600",
+    },
   };
 
   const currentStatus = statusConfig[orderStatus] || statusConfig["Received"];
 
   return (
     <div className="min-h-screen bg-gray-100">
+
       {/* Order Confirmed Modal */}
       <AnimatePresence>
         {showConfirmation && (
@@ -868,6 +964,68 @@ export default function OrderDetail() {
         </div>
       </motion.div>
 
+      {/* Verification Pending Banner — urgent CTA for retailer */}
+      {((orderStatus === "Verification Pending") || (orderStatus === "Delivered" && !order?.isVerifiedByCustomer)) && (
+        <div className="mx-4 my-4 bg-gradient-to-br from-orange-500 via-red-500 to-rose-600 text-white p-5 rounded-2xl shadow-lg border border-orange-400/20 relative z-30">
+          <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xl">🚨</span>
+                <p className="font-bold text-lg md:text-xl">Rider is present at your location!</p>
+                {timeLeft > 0 && (
+                  <span className="ml-2 px-3 py-1 bg-white/20 text-white font-mono text-sm font-bold rounded-full animate-pulse flex items-center gap-1.5 border border-white/10">
+                    ⏱️ {formatTime(timeLeft)}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm opacity-95 font-medium">Please verify your items before the rider leaves.</p>
+              <p className="text-xs opacity-80">Note: Returns cannot be requested after completing verification.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mt-2 md:mt-0">
+              <button
+                onClick={handleAcceptAll}
+                disabled={acceptingAll}
+                className="w-full sm:w-auto px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 border border-emerald-500/30"
+              >
+                {acceptingAll ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <span>✅</span> Accept All (No Returns)
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => navigate(`/orders/${id}/inspection`)}
+                className="w-full sm:w-auto px-5 py-3 bg-white text-orange-700 font-bold rounded-xl text-sm shadow-md hover:bg-orange-50 hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              >
+                <span>🔍</span> Return / Verify Items →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Accept All Message */}
+      {acceptAllMessage && (
+        <div className={`mx-4 mb-4 px-4 py-3 rounded-xl text-sm font-semibold text-center ${acceptAllMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+          {acceptAllMessage.text}
+        </div>
+      )}
+
+      {/* Share Message */}
+      {shareMessage && (
+        <div className="fixed top-20 left-4 right-4 z-[60] bg-neutral-800 text-white text-sm font-semibold rounded-xl px-4 py-3 text-center shadow-lg">
+          {shareMessage}
+        </div>
+      )}
+
       {/* Map Section */}
       {!showConfirmation && !['Delivered', 'Cancelled', 'Returned'].includes(order?.status) && (
         <GoogleMapsTracking
@@ -934,7 +1092,11 @@ export default function OrderDetail() {
           eta={routeInfo ? Math.ceil(routeInfo.durationValue / 60) : eta}
           distance={routeInfo ? routeInfo.distanceValue : distance}
           isTracking={isConnected && !!deliveryLocation}
-          deliveryOtp={order?.deliveryOtp}
+          deliveryOtp={
+            !['Delivered', 'Cancelled', 'Returned', 'Rejected', 'Partially Returned', 'Fully Returned', 'Return Under Review'].includes(order?.status || '')
+              ? order?.deliveryOtp
+              : undefined
+          }
           onCall={() => {
             const phone = order?.deliveryPartner?.phone || "1234567890";
             window.location.href = `tel:${phone}`;
@@ -1194,13 +1356,23 @@ export default function OrderDetail() {
                 rows={3}
                 placeholder="Enter cancellation reason..."
                 value={cancellationReason}
-                onChange={(e) => setCancellationReason(e.target.value)}
+                onChange={(e) => { setCancellationReason(e.target.value); setCancelError(''); }}
               />
+              {cancelError && (
+                <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
+                  {cancelError}
+                </div>
+              )}
+              {cancelSuccess && (
+                <div className="mb-3 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 font-medium">
+                  {cancelSuccess}
+                </div>
+              )}
               <div className="flex gap-3">
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => setShowCancelModal(false)}>
+                  onClick={() => { setShowCancelModal(false); setCancelError(''); setCancelSuccess(''); }}>
                   Keep Order
                 </Button>
                 <Button
@@ -1246,11 +1418,16 @@ export default function OrderDetail() {
               <p className="text-xs text-gray-500 mb-4">
                 {deliveryInstructions.length}/200
               </p>
+              {instructionsError && (
+                <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
+                  {instructionsError}
+                </div>
+              )}
               <div className="flex gap-3">
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => setShowInstructionsModal(false)}>
+                  onClick={() => { setShowInstructionsModal(false); setInstructionsError(''); }}>
                   Cancel
                 </Button>
                 <Button
@@ -1361,11 +1538,16 @@ export default function OrderDetail() {
               <p className="text-xs text-gray-500 mb-4">
                 {specialRequests.length}/200
               </p>
+              {specialRequestsError && (
+                <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
+                  {specialRequestsError}
+                </div>
+              )}
               <div className="flex gap-3">
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => setShowSpecialRequestsModal(false)}>
+                  onClick={() => { setShowSpecialRequestsModal(false); setSpecialRequestsError(''); }}>
                   Cancel
                 </Button>
                 <Button
@@ -1373,6 +1555,33 @@ export default function OrderDetail() {
                   onClick={handleSaveSpecialRequests}>
                   Save
                 </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Accept All Confirmation Modal */}
+      <AnimatePresence>
+        {showAcceptAllConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            onClick={() => setShowAcceptAllConfirm(false)}>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl p-6 max-w-sm w-full text-center">
+              <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">✅</div>
+              <h3 className="text-base font-bold text-neutral-800 mb-1">Accept All Items?</h3>
+              <p className="text-sm text-neutral-500 mb-6">Are you sure you accept all items in this delivery with no returns?</p>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setShowAcceptAllConfirm(false)}>Cancel</Button>
+                <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleConfirmAcceptAll}>Yes, Accept All</Button>
               </div>
             </motion.div>
           </motion.div>

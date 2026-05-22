@@ -48,6 +48,8 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
     markAsRead(notification._id);
     if (notification.link) {
       navigate(notification.link);
+    } else {
+      navigate('/admin/notification');
     }
     setShowNotificationsDropdown(false);
   };

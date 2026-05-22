@@ -625,7 +625,7 @@ export default function WarehouseOrders() {
       {/* Footer */}
       <footer className="px-3 sm:px-4 md:px-6 text-center py-4 sm:py-6">
         <p className="text-xs sm:text-sm text-neutral-600">
-          Copyright © 2025. Developed By{' '}
+          Copyright © 2026. Developed By{' '}
           <Link to="/Warehouse" className="text-[#12b2a2] hover:text-[#0e8f82]">
             Inor fresh
           </Link>

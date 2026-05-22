@@ -11,7 +11,7 @@ import { seedHeaderCategories } from "./utils/seedHeaderCategories";
 import { initializeSocket } from "./socket/socketService";
 import { initializeFirebaseAdmin } from "./services/firebaseAdmin";
 
-// Load environment variables
+// Load environment variables - trigger admin notifications reload
 dotenv.config();
 
 // Application initialization

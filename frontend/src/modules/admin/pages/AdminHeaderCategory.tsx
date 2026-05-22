@@ -33,6 +33,9 @@ export default function AdminHeaderCategory() {
   const [selectedTheme, setSelectedTheme] = useState('all'); // This maps to slug
   const [selectedStatus, setSelectedStatus] = useState<'Published' | 'Unpublished'>('Published');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [headerCatMessage, setHeaderCatMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [confirmDeleteHeaderCatId, setConfirmDeleteHeaderCatId] = useState<string | null>(null);
+  const showHeaderCatMsg = (text: string, type: 'success' | 'error') => { setHeaderCatMessage({ text, type }); setTimeout(() => setHeaderCatMessage(null), 3000); };
 
   // Icon search state
   const [iconSearchTerm, setIconSearchTerm] = useState('');
@@ -61,7 +64,7 @@ export default function AdminHeaderCategory() {
       setHeaderCategories(data);
     } catch (error) {
       console.error('Failed to fetch header categories', error);
-      alert('Failed to fetch categories');
+      showHeaderCatMsg('Failed to fetch categories', 'error');
     } finally {
       setLoading(false);
     }
@@ -129,33 +132,33 @@ export default function AdminHeaderCategory() {
   };
 
   const handleAddOrUpdate = async () => {
-    if (!headerCategoryName.trim()) return alert('Please enter a header category name');
-    if (!headerCategoryIcon.trim()) return alert('Please select an icon. If your category is unique, try searching for a generic icon.');
-    if (!selectedTheme) return alert('Please select a theme');
+    if (!headerCategoryName.trim()) { showHeaderCatMsg('Please enter a header category name', 'error'); return; }
+    if (!headerCategoryIcon.trim()) { showHeaderCatMsg('Please select an icon. If your category is unique, try searching for a generic icon.', 'error'); return; }
+    if (!selectedTheme) { showHeaderCatMsg('Please select a theme', 'error'); return; }
 
     try {
       const payload = {
         name: headerCategoryName,
         iconLibrary: selectedIconLibrary,
         iconName: headerCategoryIcon,
-        slug: selectedTheme, // Use theme as slug for color mapping
+        slug: selectedTheme,
         relatedCategory: selectedCategory,
         status: selectedStatus,
       };
 
       if (editingId) {
         await updateHeaderCategory(editingId, payload);
-        alert('Header Category updated successfully!');
+        showHeaderCatMsg('Header Category updated successfully!', 'success');
       } else {
         await createHeaderCategory(payload);
-        alert('Header Category added successfully!');
+        showHeaderCatMsg('Header Category added successfully!', 'success');
       }
 
       fetchCategories();
       resetForm();
     } catch (error: any) {
       console.error(error);
-      alert(error.response?.data?.message || 'Operation failed');
+      showHeaderCatMsg(error.response?.data?.message || 'Operation failed', 'error');
     }
   };
 
@@ -170,16 +173,21 @@ export default function AdminHeaderCategory() {
     setIconSearchTerm('');
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this header category?')) {
-      try {
-        await deleteHeaderCategory(id);
-        alert('Header Category deleted successfully!');
-        fetchCategories();
-      } catch (error) {
-        console.error(error);
-        alert('Failed to delete category');
-      }
+  const handleDelete = (id: string) => {
+    setConfirmDeleteHeaderCatId(id);
+  };
+
+  const handleConfirmDeleteHeaderCat = async () => {
+    if (!confirmDeleteHeaderCatId) return;
+    const id = confirmDeleteHeaderCatId;
+    setConfirmDeleteHeaderCatId(null);
+    try {
+      await deleteHeaderCategory(id);
+      showHeaderCatMsg('Header Category deleted successfully!', 'success');
+      fetchCategories();
+    } catch (error) {
+      console.error(error);
+      showHeaderCatMsg('Failed to delete category', 'error');
     }
   };
 
@@ -189,6 +197,12 @@ export default function AdminHeaderCategory() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Inline Message */}
+      {headerCatMessage && (
+        <div className={`px-4 py-3 rounded-lg text-sm font-medium ${headerCatMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          {headerCatMessage.text}
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
         <h1 className="text-2xl font-semibold text-neutral-800">Header Category</h1>
@@ -523,6 +537,36 @@ export default function AdminHeaderCategory() {
           </div>
         </div>
       </div>
+
+      {/* Delete Header Category Confirmation Modal */}
+      {confirmDeleteHeaderCatId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteHeaderCatId(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-neutral-800 mb-2">Delete Header Category</h3>
+            <p className="text-sm text-neutral-500 mb-6">Are you sure you want to delete this header category? This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDeleteHeaderCatId(null)}
+                className="flex-1 px-4 py-2 border border-neutral-300 rounded-lg text-neutral-700 hover:bg-neutral-50 font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDeleteHeaderCat}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

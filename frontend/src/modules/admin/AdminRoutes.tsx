@@ -16,6 +16,7 @@ const AdminSubcategoryOrder = lazy(() => import("./pages/AdminSubcategoryOrder")
 const AdminBrand = lazy(() => import("./pages/AdminBrand"));
 const AdminTaxes = lazy(() => import("./pages/AdminTaxes"));
 const AdminStockManagement = lazy(() => import("./pages/AdminStockManagement"));
+const AdminEditProduct = lazy(() => import("./pages/AdminEditProduct"));
 const AdminManageSellerList = lazy(() => import("./pages/AdminManageSellerList"));
 const AdminCreateSeller = lazy(() => import("./pages/AdminCreateSeller"));
 const AdminWarehouseInwardStock = lazy(() => import("./pages/AdminWarehouseInwardStock"));
@@ -57,6 +58,7 @@ const AdminWithdrawals = lazy(() => import("./pages/AdminWithdrawals"));
 const AdminPayments = lazy(() => import("./pages/AdminPayments"));
 const AdminWallet = lazy(() => import("./pages/AdminWallet"));
 const AdminBillingSettings = lazy(() => import("./pages/AdminBillingSettings"));
+const AdminRefundApproval = lazy(() => import("./pages/AdminRefundApproval"));
 
 export default function AdminRoutes() {
   return (
@@ -73,6 +75,7 @@ export default function AdminRoutes() {
           <Route path="brand" element={<AdminBrand />} />
           <Route path="product/taxes" element={<AdminTaxes />} />
           <Route path="product/list" element={<AdminStockManagement />} />
+          <Route path="product/edit/:id" element={<AdminEditProduct />} />
           <Route path="manage-warehouse/list" element={<AdminManageSellerList />} />
           <Route path="manage-warehouse/create" element={<AdminCreateSeller />} />
           <Route path="manage-warehouse/inward-stock" element={<AdminWarehouseInwardStock />} />
@@ -86,6 +89,7 @@ export default function AdminRoutes() {
 
           <Route path="coupon" element={<AdminCoupon />} />
           <Route path="return" element={<AdminReturnRequest />} />
+          <Route path="return/refunds" element={<AdminRefundApproval />} />
           <Route path="notification" element={<AdminNotification />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="customers" element={<AdminManageCustomer />} />

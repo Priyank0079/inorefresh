@@ -165,6 +165,42 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         
         // Show a toast when a new notification is received
         showToast(notification.title, 'info');
+
+        // Play notification beep sound using Web Audio API
+        try {
+          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioContextClass) {
+            const audioCtx = new AudioContextClass();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.18);
+          }
+        } catch (audioErr) {
+          console.error("Audio beep failed:", audioErr);
+        }
+
+        // Text-to-speech voice alert
+        try {
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Cancel any ongoing speech
+            const textToSpeak = `${notification.title}. ${notification.message}`;
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+          }
+        } catch (speechError) {
+          console.error("Speech Synthesis failed:", speechError);
+        }
       });
 
       setSocket(newSocket);

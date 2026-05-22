@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import Notification from "../../../models/Notification";
+import { getIO } from "../../../socket/socketService";
 
 /**
  * Create a new notification
@@ -39,6 +40,26 @@ export const createNotification = asyncHandler(
       createdBy: req.user?.userId,
       isRead: false,
     });
+
+    try {
+      const io = getIO();
+      if (recipientType === "All") {
+        io.to("admin-notifications").emit("new-notification", notification);
+        io.to("warehouse-notifications").emit("new-notification", notification);
+        io.to("customer-notifications").emit("new-notification", notification);
+        io.to("delivery-notifications").emit("new-notification", notification);
+        io.to("port-notifications").emit("new-notification", notification);
+        io.to("seller-notifications").emit("new-notification", notification);
+      } else {
+        if (recipientId) {
+          io.to(`${recipientType.toLowerCase()}-${recipientId}`).emit("new-notification", notification);
+        } else {
+          io.to(`${recipientType.toLowerCase()}-notifications`).emit("new-notification", notification);
+        }
+      }
+    } catch (socketError) {
+      console.error("Socket error emitting notification:", socketError);
+    }
 
     return res.status(201).json({
       success: true,

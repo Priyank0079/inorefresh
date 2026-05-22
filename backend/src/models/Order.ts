@@ -56,7 +56,11 @@ export interface IOrder extends Document {
   | "Delivered"
   | "Cancelled"
   | "Rejected"
-  | "Returned";
+  | "Returned"
+  | "Verification Pending"
+  | "Partially Returned"
+  | "Fully Returned"
+  | "Return Under Review";
 
   // Delivery Assignment
   deliveryBoy?: mongoose.Types.ObjectId;
@@ -80,6 +84,16 @@ export interface IOrder extends Document {
   deliveryOtpSentAt?: Date;
   invoiceEnabled?: boolean;
   deliveryDistanceKm?: number;
+
+  // Inspection & Return Tracking
+  returnAllowed?: boolean;
+  inspectionStartedAt?: Date;
+  inspectionExpiresAt?: Date;
+  inspectionDurationMinutes?: number;
+  riderLatitudeAtInspection?: number;
+  riderLongitudeAtInspection?: number;
+  riderStatusDuringInspection?: "WAITING_FOR_RETURN_APPROVAL" | "NORMAL_DELIVERY" | "IDLE" | "WAITING_FOR_CUSTOMER_VERIFICATION";
+  isVerifiedByCustomer?: boolean;
 
   // Warehouse Pickups (for orders fulfilled by warehouses)
   warehousePickups?: Array<{
@@ -270,6 +284,10 @@ const OrderSchema = new Schema<IOrder>(
         "Cancelled",
         "Rejected",
         "Returned",
+        "Verification Pending",
+        "Partially Returned",
+        "Fully Returned",
+        "Return Under Review",
       ],
       default: "Received",
     },
@@ -285,6 +303,37 @@ const OrderSchema = new Schema<IOrder>(
     },
     assignedAt: {
       type: Date,
+    },
+
+    // Inspection & Return Tracking
+    returnAllowed: {
+      type: Boolean,
+      default: false,
+    },
+    inspectionStartedAt: {
+      type: Date,
+    },
+    inspectionExpiresAt: {
+      type: Date,
+    },
+    inspectionDurationMinutes: {
+      type: Number,
+      default: 10,
+    },
+    riderLatitudeAtInspection: {
+      type: Number,
+    },
+    riderLongitudeAtInspection: {
+      type: Number,
+    },
+    riderStatusDuringInspection: {
+      type: String,
+      enum: ["WAITING_FOR_RETURN_APPROVAL", "NORMAL_DELIVERY", "IDLE"],
+      default: "IDLE",
+    },
+    isVerifiedByCustomer: {
+      type: Boolean,
+      default: false,
     },
 
     // Tracking

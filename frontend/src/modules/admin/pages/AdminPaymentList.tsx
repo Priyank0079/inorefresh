@@ -13,6 +13,8 @@ export default function AdminPaymentList() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [paymentMessage, setPaymentMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const showPaymentMsg = (text: string, type: 'success' | 'error') => { setPaymentMessage({ text, type }); setTimeout(() => setPaymentMessage(null), 3000); };
 
   // Default payment methods - COD and Razorpay only
   const defaultPaymentMethods: PaymentMethod[] = [
@@ -91,18 +93,13 @@ export default function AdminPaymentList() {
             method._id === id ? { ...method, status: newStatus } : method
           )
         );
-        alert(`Payment method status updated successfully!`);
+        showPaymentMsg("Payment method status updated successfully!", 'success');
       } else {
-        alert(
-          "Failed to update status: " + (response.message || "Unknown error")
-        );
+        showPaymentMsg("Failed to update status: " + (response.message || "Unknown error"), 'error');
       }
     } catch (err: any) {
       console.error("Error updating payment method status:", err);
-      alert(
-        "Failed to update status: " +
-        (err.response?.data?.message || "Please try again.")
-      );
+      showPaymentMsg("Failed to update status: " + (err.response?.data?.message || "Please try again."), 'error');
     }
   };
 
@@ -126,19 +123,13 @@ export default function AdminPaymentList() {
       const response = await updatePaymentMethod(id, updateData);
 
       if (response.success) {
-        alert(`${method.name} updated successfully!`);
+        showPaymentMsg(`${method.name} updated successfully!`, 'success');
       } else {
-        alert(
-          "Failed to update payment method: " +
-          (response.message || "Unknown error")
-        );
+        showPaymentMsg("Failed to update payment method: " + (response.message || "Unknown error"), 'error');
       }
     } catch (err: any) {
       console.error("Error updating payment method:", err);
-      alert(
-        "Failed to update payment method: " +
-        (err.response?.data?.message || "Please try again.")
-      );
+      showPaymentMsg("Failed to update payment method: " + (err.response?.data?.message || "Please try again."), 'error');
     } finally {
       setUpdating(null);
     }
@@ -146,6 +137,12 @@ export default function AdminPaymentList() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Inline Message */}
+      {paymentMessage && (
+        <div className={`px-4 py-3 rounded-lg text-sm font-medium ${paymentMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          {paymentMessage.text}
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
         <h1 className="text-2xl font-semibold text-neutral-800">
@@ -285,7 +282,7 @@ export default function AdminPaymentList() {
 
       {/* Footer */}
       <div className="text-center text-sm text-neutral-500 py-4">
-        Copyright © 2025. Developed By{" "}
+        Copyright © 2026. Developed By{" "}
         <a href="#" className="text-teal-600 hover:text-teal-700">
           Inor fresh
         </a>

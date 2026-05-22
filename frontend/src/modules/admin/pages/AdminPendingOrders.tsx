@@ -922,7 +922,7 @@ export default function AdminPendingOrders() {
 
       {/* Footer */}
       <div className="text-center py-4 text-xs sm:text-sm text-neutral-600">
-        Copyright © 2025. Developed By{" "}
+        Copyright © 2026. Developed By{" "}
         <Link to="/" className="text-[#12b2a2] hover:text-[#0e8f82]">
           Inor fresh
         </Link>

@@ -13,6 +13,8 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
+  const [statusError, setStatusError] = useState('');
 
   const handleStatusUpdate = async (status: string) => {
     if (!notification) return;
@@ -26,7 +28,8 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Failed to update order status');
+      setStatusError('Failed to update order status. Please try again.');
+      setTimeout(() => setStatusError(''), 3000);
     } finally {
       setLoading(false);
     }
@@ -169,11 +172,7 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
                  {loading ? 'Please wait...' : 'Accept Order'}
                </button>
                <button
-                 onClick={() => {
-                   if (window.confirm('Are you sure you want to reject this order?')) {
-                     handleStatusUpdate('Rejected');
-                   }
-                 }}
+                 onClick={() => setShowRejectConfirm(true)}
                  disabled={loading}
                  className="flex-1 py-4 rounded-xl font-bold text-white shadow-lg bg-red-600 hover:bg-red-700 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                >
@@ -188,8 +187,43 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
               Acknowledge & Dismiss
             </button>
           )}
+
+          {statusError && (
+            <div className="mt-3 px-4 py-2.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 text-center font-medium">
+              {statusError}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Reject Confirmation */}
+      {showRejectConfirm && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10 rounded-xl p-4">
+          <div className="bg-white rounded-xl p-5 w-full max-w-xs shadow-xl text-center">
+            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+            </div>
+            <h4 className="font-bold text-neutral-800 mb-1">Reject Order?</h4>
+            <p className="text-sm text-neutral-500 mb-4">Are you sure you want to reject this order?</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowRejectConfirm(false)}
+                className="flex-1 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { setShowRejectConfirm(false); handleStatusUpdate('Rejected'); }}
+                className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

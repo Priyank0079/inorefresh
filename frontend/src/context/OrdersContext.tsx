@@ -22,6 +22,7 @@ interface ApiOrder {
   address: Order['address'];
   status: Order['status'];
   paymentMethod?: string;
+  paymentStatus?: string;
   createdAt: string;
   [key: string]: unknown; // Allow additional properties
 }
@@ -71,6 +72,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         const orders: Order[] = response.data.map((o: ApiOrder) => ({
           ...o,
           id: o.id || o._id || '',
+          paymentStatus: o.paymentStatus,
         } as Order));
         setOrders(orders);
       }
@@ -208,6 +210,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         const mappedOrder = {
           ...response.data,
           id: response.data._id || response.data.id,
+          paymentStatus: response.data.paymentStatus,
         };
         // Optionally update the orders list
         setOrders((prev) => {

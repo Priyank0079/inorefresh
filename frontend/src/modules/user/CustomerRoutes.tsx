@@ -35,6 +35,7 @@ const FashionStore = lazy(() => import("./FashionStore"));
 const ToyStore = lazy(() => import("./ToyStore"));
 const HobbyStore = lazy(() => import("./HobbyStore"));
 const StorePage = lazy(() => import("./StorePage"));
+const RetailerReturnSession = lazy(() => import("./RetailerReturnSession"));
 
 export default function CustomerRoutes() {
   return (
@@ -49,6 +50,7 @@ export default function CustomerRoutes() {
                 <Route path="/search" element={<Search />} />
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
+                <Route path="/orders/:id/inspection" element={<RetailerReturnSession />} />
                 <Route path="/order-again" element={<OrderAgain />} />
                 <Route path="/account" element={<Account />} />
                 <Route path="/about-us" element={<AboutUs />} />

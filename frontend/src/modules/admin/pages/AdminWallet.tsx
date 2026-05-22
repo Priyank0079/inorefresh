@@ -302,7 +302,7 @@ export default function AdminWallet() {
                     setTrxFilter({ ...trxFilter, userType: e.target.value })
                   }>
                   <option value="">All Users</option>
-                  <option value="SELLER">Sellers</option>
+                  <option value="Warehouse">Sellers</option>
                   <option value="DELIVERY_BOY">Delivery Partners</option>
                 </select>
                 <select

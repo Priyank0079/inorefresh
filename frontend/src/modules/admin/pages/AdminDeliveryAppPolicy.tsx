@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 export default function AdminDeliveryAppPolicy() {
+  const [policyMessage, setPolicyMessage] = useState('');
   const [policyContent, setPolicyContent] = useState(`Welcome to Inor fresh Delivery Partner Program!
 
 By using our delivery app, you agree to the following terms and conditions:
@@ -79,12 +80,18 @@ Last updated: January 2025`);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    alert('Delivery App Policy updated successfully!');
+    setPolicyMessage('Delivery App Policy updated successfully!');
+    setTimeout(() => setPolicyMessage(''), 3000);
   };
 
   return (
     <div className="flex flex-col h-full">
+      {/* Inline Message */}
+      {policyMessage && (
+        <div className="mx-4 sm:mx-6 mt-4 px-4 py-3 rounded-lg text-sm font-medium bg-green-50 border border-green-200 text-green-700">
+          {policyMessage}
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white px-4 sm:px-6 py-4 border-b border-neutral-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

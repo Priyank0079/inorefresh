@@ -18,7 +18,14 @@ export default function Account() {
   const [error, setError] = useState('');
   const [showGstModal, setShowGstModal] = useState(false);
   const [gstNumber, setGstNumber] = useState('');
+  const [gstError, setGstError] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editProfileError, setEditProfileError] = useState('');
+  const [editProfileSaving, setEditProfileSaving] = useState(false);
+  const [refCopied, setRefCopied] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -114,7 +121,51 @@ export default function Account() {
 
   const handleGstSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setGstError('');
+    const gstnRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    if (!gstnRegex.test(gstNumber.trim().toUpperCase())) {
+      setGstError('Please enter a valid 15-character GSTIN (e.g., 29ABCDE1234F1Z5).');
+      return;
+    }
     setShowGstModal(false);
+  };
+
+  const handleEditProfileOpen = () => {
+    setEditName(profile?.name || user?.name || '');
+    setEditPhone(profile?.phone || user?.phone || '');
+    setEditProfileError('');
+    setShowEditProfileModal(true);
+  };
+
+  const handleEditProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditProfileError('');
+    const trimmedName = editName.trim();
+    if (!trimmedName) {
+      setEditProfileError('Name cannot be blank.');
+      return;
+    }
+    if (!/^[a-zA-Z\s]+$/.test(trimmedName)) {
+      setEditProfileError('Name should only contain letters and spaces.');
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(editPhone)) {
+      setEditProfileError('Phone number must be exactly 10 digits.');
+      return;
+    }
+    setEditProfileSaving(true);
+    try {
+      const updateResponse = await updateProfile({ name: trimmedName, phone: editPhone });
+      if (updateResponse.success) {
+        setProfile(updateResponse.data);
+        if (user) updateUser({ ...user, name: trimmedName, phone: editPhone });
+        setShowEditProfileModal(false);
+      }
+    } catch (err: any) {
+      setEditProfileError(err.response?.data?.message || 'Failed to update profile.');
+    } finally {
+      setEditProfileSaving(false);
+    }
   };
 
   if (!user) {
@@ -290,6 +341,16 @@ export default function Account() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
               <span>{displayPhone}</span>
             </div>
+            <button
+              onClick={handleEditProfileOpen}
+              className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-teal-100 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full transition-all"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              Edit Profile
+            </button>
           </div>
         </div>
       </div>
@@ -352,15 +413,23 @@ export default function Account() {
                     const code = profile?.refCode || user?.refCode || '';
                     if (code) {
                       navigator.clipboard.writeText(code);
-                      alert('Referral code copied to clipboard!');
+                      setRefCopied(true);
+                      setTimeout(() => setRefCopied(false), 2000);
                     }
                   }}
-                  className="p-2.5 bg-white text-teal-600 rounded-xl hover:bg-teal-50 transition-colors shadow-sm border border-gray-100"
+                  className="p-2.5 bg-white text-teal-600 rounded-xl hover:bg-teal-50 transition-colors shadow-sm border border-gray-100 relative"
+                  title={refCopied ? 'Copied!' : 'Copy code'}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                  </svg>
+                  {refCopied ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                  )}
                 </button>
               </div>
             </div>
@@ -422,6 +491,90 @@ export default function Account() {
         </div>
       </div>
 
+      {/* Edit Profile Modal */}
+      {showEditProfileModal && (
+        <AnimatePresence>
+          <div className="fixed inset-0 z-[100] flex items-end justify-center">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              onClick={() => setShowEditProfileModal(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="bg-white rounded-t-[40px] w-full max-w-xl p-8 pt-12 relative z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]"
+            >
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-100 rounded-full" />
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-2xl bg-teal-50 flex items-center justify-center mx-auto mb-6">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Edit Profile</h3>
+                <p className="text-sm text-gray-500 mb-6 font-medium">Update your name and contact information.</p>
+                <form onSubmit={handleEditProfileSubmit} className="space-y-4 text-left">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Full Name</label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={e => setEditName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))}
+                      placeholder="Your full name"
+                      pattern="[a-zA-Z\s]+"
+                      title="Name should only contain letters and spaces"
+                      required
+                      className="w-full bg-gray-50 rounded-2xl border border-gray-100 px-5 py-4 text-gray-900 text-sm font-semibold placeholder:text-gray-300 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={editPhone}
+                      onChange={e => setEditPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="10-digit mobile number"
+                      pattern="[0-9]{10}"
+                      title="Phone must be exactly 10 digits"
+                      maxLength={10}
+                      required
+                      className="w-full bg-gray-50 rounded-2xl border border-gray-100 px-5 py-4 text-gray-900 text-sm font-semibold placeholder:text-gray-300 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 transition-all"
+                    />
+                  </div>
+                  {editProfileError && (
+                    <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">{editProfileError}</p>
+                  )}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowEditProfileModal(false)}
+                      className="flex-1 py-4 rounded-2xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      disabled={editProfileSaving}
+                      className="flex-1 rounded-2xl bg-teal-600 text-white font-bold py-4 text-sm shadow-lg shadow-teal-600/20 disabled:opacity-50 transition-all"
+                    >
+                      {editProfileSaving ? 'Saving...' : 'Save Changes'}
+                    </motion.button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        </AnimatePresence>
+      )}
+
       {showGstModal && (
         <AnimatePresence>
           <div className="fixed inset-0 z-[100] flex items-end justify-center">
@@ -450,10 +603,14 @@ export default function Account() {
                   <input
                     type="text"
                     value={gstNumber}
-                    onChange={(e) => setGstNumber(e.target.value)}
-                    placeholder="ENTER GSTIN"
+                    onChange={(e) => { setGstNumber(e.target.value.toUpperCase()); setGstError(''); }}
+                    placeholder="ENTER GSTIN (e.g. 29ABCDE1234F1Z5)"
+                    maxLength={15}
                     className="w-full bg-gray-50 rounded-2xl border border-gray-100 px-6 py-4 text-gray-900 text-sm font-bold tracking-widest placeholder:text-gray-300 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 transition-all uppercase"
                   />
+                  {gstError && (
+                    <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5 text-left">{gstError}</p>
+                  )}
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

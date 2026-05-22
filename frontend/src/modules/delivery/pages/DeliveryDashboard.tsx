@@ -14,6 +14,7 @@ export default function DeliveryDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [acceptMessage, setAcceptMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const fetchStats = async () => {
     try {
@@ -32,11 +33,13 @@ export default function DeliveryDashboard() {
     e.stopPropagation();
     try {
       setRefreshing(true);
-      await updateOrderStatus(orderId, 'Processed');
-      alert('Order accepted successfully!');
+      await updateOrderStatus(orderId, 'Assigned');
+      setAcceptMessage({ text: 'Order accepted successfully!', type: 'success' });
+      setTimeout(() => setAcceptMessage(null), 3000);
       fetchStats();
     } catch (err: any) {
-      alert(err.message || 'Failed to accept order');
+      setAcceptMessage({ text: err.message || 'Failed to accept order', type: 'error' });
+      setTimeout(() => setAcceptMessage(null), 3000);
     } finally {
       setRefreshing(false);
     }
@@ -299,6 +302,17 @@ export default function DeliveryDashboard() {
       <DeliveryHeader onRefresh={handleRefresh} isRefreshing={refreshing} />
 
       <div className="px-4 py-4 space-y-4">
+        {/* Order Accept Inline Feedback */}
+        {acceptMessage && (
+          <div className={`px-4 py-2.5 rounded-xl text-sm font-medium text-center transition-all ${
+            acceptMessage.type === 'success'
+              ? 'bg-green-50 text-green-700 border border-green-200'
+              : 'bg-red-50 text-red-700 border border-red-200'
+          }`}>
+            {acceptMessage.text}
+          </div>
+        )}
+
         {/* Account Status Banner */}
         {stats?.accountStatus === "Inactive" && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">

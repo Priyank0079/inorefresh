@@ -150,11 +150,11 @@ export default function AdminWithdrawals() {
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <h3 className="font-semibold text-lg">
-                                            {withdrawal.userType === 'SELLER' ? 'Seller' : 'Delivery Boy'} Withdrawal
+                                            {withdrawal.userType === 'Warehouse' || withdrawal.userType === 'SELLER' ? 'Seller' : 'Delivery Boy'} Withdrawal
                                         </h3>
-                                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${withdrawal.userType === 'SELLER' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+                                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${withdrawal.userType === 'Warehouse' || withdrawal.userType === 'SELLER' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
                                             }`}>
-                                            {withdrawal.userType}
+                                            {withdrawal.userType === 'Warehouse' ? 'Seller' : withdrawal.userType}
                                         </span>
                                     </div>
                                     <p className="text-sm text-gray-600 font-medium">

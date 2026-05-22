@@ -9,6 +9,7 @@ export default function AdminOrderDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [updating, setUpdating] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success'|'error' } | null>(null);
 
   // Fetch order detail from API
   useEffect(() => {
@@ -43,12 +44,15 @@ export default function AdminOrderDetail() {
       const response = await updateOrderStatus(order._id, { status: newStatus });
       if (response.success && response.data) {
         setOrder(response.data);
-        alert('Order status updated successfully');
+        setStatusMessage({ text: 'Order status updated successfully', type: 'success' });
+        setTimeout(() => setStatusMessage(null), 3000);
       } else {
-        alert('Failed to update order status');
+        setStatusMessage({ text: 'Failed to update order status', type: 'error' });
+        setTimeout(() => setStatusMessage(null), 3000);
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update order status');
+      setStatusMessage({ text: err.response?.data?.message || 'Failed to update order status', type: 'error' });
+      setTimeout(() => setStatusMessage(null), 3000);
     } finally {
       setUpdating(false);
     }
@@ -127,6 +131,11 @@ export default function AdminOrderDetail() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
+      {statusMessage && (
+        <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium ${statusMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          {statusMessage.text}
+        </div>
+      )}
       <div className="mb-6">
         <button
           onClick={() => navigate('/admin/orders/all')}
@@ -272,6 +281,12 @@ export default function AdminOrderDetail() {
                 <span className="text-neutral-600">Shipping:</span>
                 <span className="font-medium">₹{order.shipping?.toFixed(2) || '0.00'}</span>
               </div>
+              {order.platformFee != null && order.platformFee > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-neutral-600">Platform Fee:</span>
+                  <span className="font-medium">₹{order.platformFee.toFixed(2)}</span>
+                </div>
+              )}
               {order.discount > 0 && (
                 <div className="flex justify-between text-red-600">
                   <span>Discount:</span>

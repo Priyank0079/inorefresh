@@ -8,6 +8,7 @@ export default function Addresses() {
     const navigate = useNavigate();
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [loading, setLoading] = useState(true);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
     const fetchAddresses = async () => {
         try {
@@ -27,10 +28,15 @@ export default function Addresses() {
         fetchAddresses();
     }, []);
 
-    const handleDelete = async (id: string | undefined) => {
+    const handleDelete = (id: string | undefined) => {
         if (!id) return;
-        if (!window.confirm('Are you sure you want to delete this address?')) return;
+        setConfirmDeleteId(id);
+    };
 
+    const handleConfirmDelete = async () => {
+        if (!confirmDeleteId) return;
+        const id = confirmDeleteId;
+        setConfirmDeleteId(null);
         try {
             await deleteAddress(id);
             setAddresses(addresses.filter(a => a._id !== id));
@@ -117,6 +123,44 @@ export default function Addresses() {
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+                {confirmDeleteId && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    >
+                        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)} />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center"
+                        >
+                            <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🗑️</div>
+                            <h3 className="text-base font-bold text-neutral-800 mb-1">Delete Address?</h3>
+                            <p className="text-sm text-neutral-500 mb-6">Are you sure you want to delete this address?</p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setConfirmDeleteId(null)}
+                                    className="flex-1 py-3 rounded-xl font-semibold text-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleConfirmDelete}
+                                    className="flex-1 py-3 rounded-xl font-semibold text-sm bg-red-600 text-white hover:bg-red-700 transition-colors"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

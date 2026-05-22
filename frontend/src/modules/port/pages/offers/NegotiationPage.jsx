@@ -15,6 +15,7 @@ const NegotiationPage = () => {
   const [counterPrice, setCounterPrice] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [confirmAcceptId, setConfirmAcceptId] = useState(null);
 
   const fetchNegotiations = async () => {
     setLoading(true);
@@ -32,8 +33,14 @@ const NegotiationPage = () => {
   }, []);
 
   const handleAcceptCounter = async (offerId) => {
-    if (!window.confirm('Are you sure you want to accept this price? This will finalize the deal.')) return;
-    
+    setConfirmAcceptId(offerId);
+  };
+
+  const handleConfirmAccept = async () => {
+    const offerId = confirmAcceptId;
+    setConfirmAcceptId(null);
+    if (!offerId) return;
+
     setSubmitting(true);
     const response = await acceptCounter(offerId);
     if (response.success) {
@@ -280,6 +287,33 @@ const NegotiationPage = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+      {/* Accept Counter Confirmation Modal */}
+      {confirmAcceptId && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setConfirmAcceptId(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-14 h-14 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="material-icons-outlined text-3xl">verified</span>
+            </div>
+            <h3 className="text-base font-bold text-slate-800 mb-1">Accept Counter Price?</h3>
+            <p className="text-sm text-slate-500 mb-6">This will finalize the deal and confirm the order at the countered price.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmAcceptId(null)}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmAccept}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm bg-teal-600 text-white hover:bg-teal-700 transition-colors shadow-lg shadow-teal-600/20"
+              >
+                Yes, Deal Done
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

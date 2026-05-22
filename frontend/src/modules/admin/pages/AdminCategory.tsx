@@ -78,6 +78,15 @@ export default function AdminCategory() {
   const [error, setError] = useState<string | null>(null);
   const [listPage, setListPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [categoryMessage, setCategoryMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [confirmDeleteCategory, setConfirmDeleteCategory] = useState<Category | null>(null);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [cascadeConfirm, setCascadeConfirm] = useState<{ category: Category; newStatus: string } | null>(null);
+
+  const showCategoryMsg = (text: string, type: 'success' | 'error') => {
+    setCategoryMessage({ text, type });
+    setTimeout(() => setCategoryMessage(null), 4000);
+  };
 
   // Fetch categories
   useEffect(() => {
@@ -190,19 +199,18 @@ export default function AdminCategory() {
   };
 
   // Handle delete category
-  const handleDelete = async (category: Category) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete "${category.name}"? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+  const handleDelete = (category: Category) => {
+    setConfirmDeleteCategory(category);
+  };
 
+  const handleConfirmDeleteCategory = async () => {
+    if (!confirmDeleteCategory) return;
+    const category = confirmDeleteCategory;
+    setConfirmDeleteCategory(null);
     try {
       const response = await deleteCategory(category._id);
       if (response.success) {
-        alert("Category deleted successfully!");
+        showCategoryMsg("Category deleted successfully!", 'success');
         fetchCategories();
       }
     } catch (error: unknown) {
@@ -211,37 +219,31 @@ export default function AdminCategory() {
           ? (error as { response?: { data?: { message?: string } } }).response
               ?.data?.message
           : "Failed to delete category. Please try again.";
-      alert(errorMessage || "Failed to delete category. Please try again.");
+      showCategoryMsg(errorMessage || "Failed to delete category. Please try again.", 'error');
     }
   };
 
   // Handle bulk delete
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedIds.size === 0) {
-      alert("Please select at least one category to delete.");
+      showCategoryMsg("Please select at least one category to delete.", 'error');
       return;
     }
+    setConfirmBulkDelete(true);
+  };
 
-    if (
-      !window.confirm(
-        `Are you sure you want to delete ${selectedIds.size} selected category(ies)? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
-
+  const handleConfirmBulkDelete = async () => {
+    setConfirmBulkDelete(false);
     try {
       const response = await bulkDeleteCategories(Array.from(selectedIds));
       if (response.success) {
         const deletedCount = response.data.deleted.length;
         const failedCount = response.data.failed.length;
         if (failedCount > 0) {
-          alert(
-            `Deleted ${deletedCount} category(ies). ${failedCount} failed. Check console for details.`
-          );
+          showCategoryMsg(`Deleted ${deletedCount} category(ies). ${failedCount} failed.`, 'error');
           console.log("Failed deletions:", response.data.failed);
         } else {
-          alert(`Successfully deleted ${deletedCount} category(ies).`);
+          showCategoryMsg(`Successfully deleted ${deletedCount} category(ies).`, 'success');
         }
         setSelectedIds(new Set());
         fetchCategories();
@@ -252,30 +254,25 @@ export default function AdminCategory() {
           ? (error as { response?: { data?: { message?: string } } }).response
               ?.data?.message
           : "Failed to delete categories. Please try again.";
-      alert(errorMessage || "Failed to delete categories. Please try again.");
+      showCategoryMsg(errorMessage || "Failed to delete categories. Please try again.", 'error');
     }
   };
 
   // Handle toggle status
-  const handleToggleStatus = async (category: Category) => {
+  const handleToggleStatus = (category: Category) => {
     const newStatus = category.status === "Active" ? "Inactive" : "Active";
-    const cascade =
-      category.childrenCount && category.childrenCount > 0
-        ? window.confirm(
-            `This category has subcategories. Do you want to ${
-              newStatus === "Inactive" ? "deactivate" : "activate"
-            } all subcategories as well?`
-          )
-        : false;
+    if (category.childrenCount && category.childrenCount > 0) {
+      setCascadeConfirm({ category, newStatus });
+    } else {
+      executeToggleStatus(category, newStatus, false);
+    }
+  };
 
+  const executeToggleStatus = async (category: Category, newStatus: string, cascade: boolean) => {
     try {
-      const response = await toggleCategoryStatus(
-        category._id,
-        newStatus,
-        cascade
-      );
+      const response = await toggleCategoryStatus(category._id, newStatus, cascade);
       if (response.success) {
-        alert(`Category status updated to ${newStatus}`);
+        showCategoryMsg(`Category status updated to ${newStatus}`, 'success');
         fetchCategories();
       }
     } catch (error: unknown) {
@@ -284,9 +281,7 @@ export default function AdminCategory() {
           ? (error as { response?: { data?: { message?: string } } }).response
               ?.data?.message
           : "Failed to update category status. Please try again.";
-      alert(
-        errorMessage || "Failed to update category status. Please try again."
-      );
+      showCategoryMsg(errorMessage || "Failed to update category status. Please try again.", 'error');
     }
   };
 
@@ -297,13 +292,13 @@ export default function AdminCategory() {
     if (modalMode === "edit" && editingCategory) {
       const response = await updateCategory(editingCategory._id, data);
       if (response.success) {
-        alert("Category updated successfully!");
+        showCategoryMsg("Category updated successfully!", 'success');
         fetchCategories();
       }
     } else {
       const response = await createCategory(data as CreateCategoryData);
       if (response.success) {
-        alert("Category created successfully!");
+        showCategoryMsg("Category created successfully!", 'success');
 
         // If creating a subcategory, expand the parent category after refresh
         if (modalMode === "create-subcategory" && parentCategory) {
@@ -429,6 +424,13 @@ export default function AdminCategory() {
           </div>
         </div>
       </div>
+
+      {/* Inline Message */}
+      {categoryMessage && (
+        <div className={`mx-3 sm:mx-4 md:mx-6 px-4 py-3 rounded-lg text-sm font-medium ${categoryMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          {categoryMessage.text}
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="px-3 sm:px-4 md:px-6">
@@ -610,7 +612,7 @@ export default function AdminCategory() {
 
       {/* Footer */}
       <div className="text-center py-4 text-xs sm:text-sm text-neutral-600">
-        Copyright © 2025. Developed By{" "}
+        Copyright © 2026. Developed By{" "}
         <a href="#" className="text-blue-600 hover:text-blue-700">
           Inor fresh
         </a>
@@ -631,6 +633,58 @@ export default function AdminCategory() {
           mode={modalMode}
           allCategories={categories}
         />
+      )}
+
+      {/* Delete Category Confirmation */}
+      {confirmDeleteCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteCategory(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <h4 className="font-bold text-neutral-800 mb-1">Delete Category?</h4>
+            <p className="text-sm text-neutral-500 mb-4">Delete "<strong>{confirmDeleteCategory.name}</strong>"? This cannot be undone.</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDeleteCategory(null)} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors">Cancel</button>
+              <button onClick={handleConfirmDeleteCategory} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation */}
+      {confirmBulkDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmBulkDelete(false)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <h4 className="font-bold text-neutral-800 mb-1">Delete {selectedIds.size} Category(ies)?</h4>
+            <p className="text-sm text-neutral-500 mb-4">This action cannot be undone.</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmBulkDelete(false)} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors">Cancel</button>
+              <button onClick={handleConfirmBulkDelete} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">Delete All</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cascade Toggle Status Confirmation */}
+      {cascadeConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setCascadeConfirm(null)} />
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 text-center">
+            <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">⚡</div>
+            <h4 className="font-bold text-neutral-800 mb-1">{cascadeConfirm.newStatus === 'Inactive' ? 'Deactivate' : 'Activate'} Subcategories?</h4>
+            <p className="text-sm text-neutral-500 mb-4">This category has subcategories. Do you want to {cascadeConfirm.newStatus === 'Inactive' ? 'deactivate' : 'activate'} them as well?</p>
+            <div className="flex gap-2">
+              <button onClick={() => { const c = cascadeConfirm; setCascadeConfirm(null); executeToggleStatus(c.category, c.newStatus, false); }} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors">This Only</button>
+              <button onClick={() => { const c = cascadeConfirm; setCascadeConfirm(null); executeToggleStatus(c.category, c.newStatus, true); }} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors">All Including Sub</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

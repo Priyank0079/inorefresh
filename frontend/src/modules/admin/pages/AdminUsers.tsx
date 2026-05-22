@@ -33,6 +33,8 @@ export default function AdminUsers() {
     const [activeTab, setActiveTab] = useState<'Customer' | 'Retailer' | 'Horeca'>('Customer');
     const [retailers, setRetailers] = useState<any[]>([]);
     const [horecaUsers, setHorecaUsers] = useState<any[]>([]);
+    const [userMessage, setUserMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const showUserMsg = (text: string, type: 'success' | 'error') => { setUserMessage({ text, type }); setTimeout(() => setUserMessage(null), 3000); };
 
     // Fetch users on component mount
     useEffect(() => {
@@ -156,21 +158,16 @@ export default function AdminUsers() {
             const response = await updateUserStatus(userId, newStatus);
 
             if (response.success) {
-                // Update local state
                 setUsers(users.map(user =>
                     user._id === userId ? { ...user, status: newStatus } : user
                 ));
-                // Show success message (can be replaced with toast notification)
-                setError('');
-                setTimeout(() => {
-                    alert(`User status updated to ${newStatus} successfully!`);
-                }, 100);
+                showUserMsg(`User status updated to ${newStatus} successfully!`, 'success');
             } else {
-                alert('Failed to update user status: ' + (response.message || 'Unknown error'));
+                showUserMsg('Failed to update user status: ' + (response.message || 'Unknown error'), 'error');
             }
         } catch (err: any) {
             console.error('Error updating user status:', err);
-            alert('Failed to update user status: ' + (err.response?.data?.message || 'Please try again.'));
+            showUserMsg('Failed to update user status: ' + (err.response?.data?.message || 'Please try again.'), 'error');
         }
     };
 
@@ -199,6 +196,12 @@ export default function AdminUsers() {
 
     return (
         <div className="flex flex-col h-full bg-gray-50">
+            {/* Inline Message */}
+            {userMessage && (
+                <div className={`mx-6 mt-4 px-4 py-3 rounded-lg text-sm font-medium ${userMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+                    {userMessage.text}
+                </div>
+            )}
             {/* Page Header */}
             <div className="p-6 pb-0">
                 <div className="flex justify-between items-center mb-6">
@@ -533,7 +536,7 @@ export default function AdminUsers() {
 
             {/* Footer */}
             <footer className="text-center py-4 text-sm text-neutral-600 border-t border-neutral-200 bg-white">
-                Copyright © 2025. Developed By{' '}
+                Copyright © 2026. Developed By{' '}
                 <a href="#" className="text-blue-600 hover:underline">Inor fresh</a>
             </footer>
         </div>

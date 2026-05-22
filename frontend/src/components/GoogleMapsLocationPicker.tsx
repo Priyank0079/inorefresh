@@ -24,6 +24,7 @@ export default function GoogleMapsLocationPicker({
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
     const mapRef = useRef<google.maps.Map | null>(null);
     const [center, setCenter] = useState({ lat: initialLat, lng: initialLng });
+    const [geoError, setGeoError] = useState('');
     const isDragging = useRef(false);
 
     const { isLoaded, loadError } = useJsApiLoader({
@@ -231,12 +232,14 @@ export default function GoogleMapsLocationPicker({
                                 },
                                 (err) => {
                                     console.error("Geolocation error:", err);
-                                    alert("Could not get your current location. Please ensure location permissions are granted.");
+                                    setGeoError("Could not get your current location. Please ensure location permissions are granted.");
+                                    setTimeout(() => setGeoError(''), 4000);
                                 },
                                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                             );
                         } else {
-                            alert("Geolocation is not supported by your browser.");
+                            setGeoError("Geolocation is not supported by your browser.");
+                            setTimeout(() => setGeoError(''), 4000);
                         }
                     }}
                     className="bg-white p-3 rounded-full shadow-md text-neutral-700 hover:text-blue-600 transition-colors"
@@ -253,6 +256,11 @@ export default function GoogleMapsLocationPicker({
                     </p>
                 </div>
             </div>
+            {geoError && (
+                <div className="absolute bottom-16 left-2 right-2 z-20 bg-red-600 text-white text-xs px-3 py-2 rounded-lg shadow-lg text-center">
+                    {geoError}
+                </div>
+            )}
         </div>
     );
 }

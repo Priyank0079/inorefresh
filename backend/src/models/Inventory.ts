@@ -8,6 +8,9 @@ export interface IInventory extends Document {
   currentStock: number;
   reservedStock: number; // Stock reserved for pending orders
   availableStock: number; // currentStock - reservedStock
+  returnedStock: number;
+  damagedStock: number;
+  disposalStock: number;
 
   // Thresholds
   lowStockThreshold: number;
@@ -54,6 +57,21 @@ const InventorySchema = new Schema<IInventory>(
       type: Number,
       default: 0,
       min: [0, "Available stock cannot be negative"],
+    },
+    returnedStock: {
+      type: Number,
+      default: 0,
+      min: [0, "Returned stock cannot be negative"],
+    },
+    damagedStock: {
+      type: Number,
+      default: 0,
+      min: [0, "Damaged stock cannot be negative"],
+    },
+    disposalStock: {
+      type: Number,
+      default: 0,
+      min: [0, "Disposal stock cannot be negative"],
     },
 
     // Thresholds

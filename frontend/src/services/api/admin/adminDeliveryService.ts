@@ -251,3 +251,46 @@ export const getDeliveryBoyCashCollections = async (
   );
   return response.data;
 };
+
+export interface FundTransfer {
+  id: string;
+  name: string;
+  mobile: string;
+  openingBalance: number;
+  closingBalance: number;
+  amount: number;
+  type: string;
+  message: string;
+  date: string;
+}
+
+export interface GetFundTransferParams {
+  page?: number;
+  limit?: number;
+  deliveryBoyId?: string;
+  type?: string;
+  fromDate?: string;
+  toDate?: string;
+  search?: string;
+}
+
+export interface CreateFundTransferData {
+  deliveryBoyId: string;
+  amount: number;
+  type: 'Credit' | 'Debit';
+  message: string;
+}
+
+export const getFundTransfers = async (
+  params?: GetFundTransferParams
+): Promise<ApiResponse<FundTransfer[]> & { pagination?: any }> => {
+  const response = await api.get('/admin/delivery-fund-transfers', { params });
+  return response.data;
+};
+
+export const addFundTransfer = async (
+  data: CreateFundTransferData
+): Promise<ApiResponse<any>> => {
+  const response = await api.post('/admin/delivery-fund-transfers', data);
+  return response.data;
+};

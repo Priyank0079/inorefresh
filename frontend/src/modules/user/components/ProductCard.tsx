@@ -94,42 +94,42 @@ export default function ProductCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -5 }}
+      whileHover={{ y: -3 }}
       onClick={handleCardClick}
-      className="relative bg-white rounded-xl flex flex-col group transition-all duration-500 cursor-pointer overflow-hidden border border-neutral-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] w-full max-w-[280px] mx-auto"
+      className="relative bg-white rounded-2xl flex flex-col group transition-all duration-400 cursor-pointer overflow-hidden border border-neutral-100/60 shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.08)] w-full max-w-[200px] mx-auto"
     >
       {/* Product Image Area */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F9FBFC]">
-        {/* Badges Overlay */}
-        <div className="absolute top-2.5 left-2.5 z-20 flex flex-col gap-1.5">
+      <div className="relative aspect-[5/4] w-full overflow-hidden bg-[#F4F7F9]">
+        {/* Badges */}
+        <div className="absolute top-2 left-2 z-20 flex flex-col gap-1">
           {discount > 0 && (
             <motion.div 
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
-              className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-red-500 to-pink-600 text-white text-[10px] font-black uppercase tracking-wider shadow-lg shadow-red-500/20"
+              className="px-2 py-0.5 rounded-md bg-gradient-to-r from-red-500 to-pink-600 text-white text-[8px] font-black uppercase tracking-wider shadow-sm"
             >
               {discount}% OFF
             </motion.div>
           )}
           {isFish && (
-            <div className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-teal-500 to-emerald-600 text-white text-[10px] font-black uppercase tracking-wider shadow-lg shadow-teal-500/20">
+            <div className="px-2 py-0.5 rounded-md bg-gradient-to-r from-teal-500 to-emerald-600 text-white text-[8px] font-black uppercase tracking-wider shadow-sm">
               PREMIUM
             </div>
           )}
         </div>
 
-        {/* Wishlist Button - Visible on mobile, hover on desktop */}
-        <div className="absolute top-2.5 right-2.5 z-30 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 md:translate-y-[-10px] md:group-hover:translate-y-0">
+        {/* Wishlist */}
+        <div className="absolute top-1.5 right-1.5 z-30 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 md:translate-y-[-6px] md:group-hover:translate-y-0">
           <WishlistButton 
             productId={String((product as any).id || product._id)} 
             size="sm"
           />
         </div>
 
-        {/* Image with smooth zoom */}
-        <motion.div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-110">
+        {/* Image */}
+        <motion.div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-105">
           <img
             ref={imageRef}
             src={productImageSrc}
@@ -139,7 +139,7 @@ export default function ProductCard({
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               if (target.dataset.triedFallback === 'true') {
-                target.src = '/images/placeholder.png'; // Final fallback
+                target.src = '/images/placeholder.png';
                 return;
               }
               target.dataset.triedFallback = 'true';
@@ -156,7 +156,7 @@ export default function ProductCard({
         {/* Sold Out Overlay */}
         {(product.isAvailable === false || product.stock === 0) && (
           <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex items-center justify-center z-10">
-            <span className="px-4 py-1.5 bg-neutral-900/90 text-white text-[10px] font-black rounded-full shadow-2xl tracking-widest uppercase">
+            <span className="px-3 py-1 bg-neutral-900/90 text-white text-[9px] font-black rounded-full shadow-xl tracking-widest uppercase">
               {product.isAvailable === false ? 'Out of Range' : 'Sold Out'}
             </span>
           </div>
@@ -164,59 +164,59 @@ export default function ProductCard({
       </div>
 
       {/* Product Content */}
-      <div className="p-4 flex flex-col flex-1 bg-white">
-        <div className="flex-1 mb-3">
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <span className="text-[9px] font-black text-teal-600 uppercase tracking-[0.1em] px-1.5 py-0.5 bg-teal-50 rounded">
+      <div className="px-3 pt-2.5 pb-2.5 flex flex-col flex-1 bg-white">
+        <div className="flex-1 mb-1.5">
+          <div className="flex items-center gap-1 mb-1">
+            <span className="text-[8px] font-extrabold text-teal-600 uppercase tracking-[0.08em] px-1.5 py-[2px] bg-teal-50/80 rounded">
               {product.categoryData?.name || 'Fresh'}
             </span>
-            <span className="text-[10px] text-neutral-400 font-medium italic">
+            <span className="text-[9px] text-neutral-400 font-medium italic truncate">
               {product.pack || 'Standard'}
             </span>
           </div>
           
-          <h3 className="text-[15px] font-bold text-neutral-900 line-clamp-1 leading-none mb-1 group-hover:text-teal-600 transition-colors duration-300">
+          <h3 className="text-[13px] font-bold text-neutral-900 line-clamp-1 leading-tight group-hover:text-teal-600 transition-colors duration-300">
             {product.name || product.productName || ''}
           </h3>
-          <p className="text-[11px] text-neutral-400 line-clamp-1 font-medium italic">
+          <p className="text-[10px] text-neutral-400 line-clamp-1 font-medium italic leading-tight mt-0.5">
             {product.smallDescription || product.description || 'Premium quality fresh delivery.'}
           </p>
         </div>
 
-        {/* Pricing & Add Button Area */}
-        <div className="flex items-center justify-between pt-3 border-t border-neutral-50/80">
+        {/* Pricing & Add */}
+        <div className="flex items-center justify-between pt-2 border-t border-neutral-100/60">
           <div className="flex flex-col">
             {mrp && mrp > (resolvedDisplayPrice || 0) && (
-              <span className="text-[11px] text-neutral-300 line-through decoration-red-400/30 font-medium mb-0.5">
+              <span className="text-[9px] text-neutral-300 line-through decoration-red-400/30 font-medium leading-none">
                 ₹{mrp}
               </span>
             )}
-            <div className="flex items-baseline gap-0.5">
-              <span className="text-[11px] font-bold text-neutral-400">₹</span>
-              <span className="text-[19px] font-black text-neutral-900 tracking-tight">
+            <div className="flex items-baseline gap-px">
+              <span className="text-[10px] font-bold text-neutral-400">₹</span>
+              <span className="text-[17px] font-black text-neutral-900 tracking-tight leading-none">
                 {resolvedDisplayPrice?.toLocaleString('en-IN')}
               </span>
             </div>
           </div>
 
-          <div className="h-9">
+          <div className="h-8">
             {inCartQty > 0 ? (
               <motion.div 
                 layoutId={`cart-btn-${product._id}`}
-                className="flex items-center bg-neutral-900 rounded-xl p-1 shadow-lg shadow-black/10"
+                className="flex items-center bg-neutral-900 rounded-lg p-0.5 shadow-md"
               >
                 <button
                   onClick={(e) => handleUpdate(e, -1)}
-                  className="w-7 h-7 flex items-center justify-center text-white hover:text-teal-400 transition-colors"
+                  className="w-6 h-6 flex items-center justify-center text-white hover:text-teal-400 transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14" /></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14" /></svg>
                 </button>
-                <span className="w-6 text-center text-[13px] font-black text-white">{inCartQty}</span>
+                <span className="w-5 text-center text-[12px] font-black text-white">{inCartQty}</span>
                 <button
                   onClick={(e) => handleUpdate(e, 1)}
-                  className="w-7 h-7 flex items-center justify-center text-white hover:text-teal-400 transition-colors"
+                  className="w-6 h-6 flex items-center justify-center text-white hover:text-teal-400 transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 5v14M5 12h14" /></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 5v14M5 12h14" /></svg>
                 </button>
               </motion.div>
             ) : (
@@ -226,10 +226,10 @@ export default function ProductCard({
                 disabled={product.isAvailable === false || product.stock === 0}
                 onClick={handleAdd}
                 whileTap={{ scale: 0.95 }}
-                className="h-full px-5 rounded-xl bg-teal-600 text-white text-[12px] font-black uppercase tracking-wider hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20 disabled:grayscale disabled:opacity-50 disabled:shadow-none flex items-center gap-2"
+                className="h-full px-3.5 rounded-lg bg-teal-600 text-white text-[11px] font-black uppercase tracking-wider hover:bg-teal-700 transition-all shadow-md shadow-teal-600/15 disabled:grayscale disabled:opacity-50 disabled:shadow-none flex items-center gap-1.5"
               >
                 ADD
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5"><path d="M12 5v14M5 12h14" /></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5"><path d="M12 5v14M5 12h14" /></svg>
               </motion.button>
             )}
           </div>

@@ -13,6 +13,7 @@ export default function WarehouseAddInwardStock() {
     const { user } = useAuth();
 
     const [loading, setLoading] = useState(false);
+    const [submitMessage, setSubmitMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     
     const [formData, setFormData] = useState({
@@ -101,18 +102,17 @@ export default function WarehouseAddInwardStock() {
                 : await addInwardStock(dataToSubmit as any);
                 
             if (res.success) {
-                alert(id ? "Record updated successfully" : "Inward stock added successfully");
-                navigate('/warehouse/inward-stock/list');
+                setSubmitMessage({ text: id ? "Record updated successfully" : "Inward stock added successfully", type: 'success' });
+                setTimeout(() => navigate('/warehouse/inward-stock/list'), 1500);
             } else {
                 // If there are validation errors, show them
                 const errorMsg = res.message || "Something went wrong";
-                alert(`Error: ${errorMsg}`);
+                setSubmitMessage({ text: `Error: ${errorMsg}`, type: 'error' });
             }
         } catch (err: any) {
             const apiError = err.response?.data?.message || err.message || "Failed to save record";
-            alert(`Submission Error: ${apiError}`);
+            setSubmitMessage({ text: `Submission Error: ${apiError}`, type: 'error' });
         } finally {
-
             setLoading(false);
         }
     };
@@ -137,31 +137,31 @@ export default function WarehouseAddInwardStock() {
             <div className="max-w-6xl mx-auto w-full px-4 mb-8">
                 <div className="bg-white rounded-xl shadow-xl border border-neutral-200 overflow-hidden">
                     <form onSubmit={handleSubmit} className="p-0">
-                        {/* Table-like Header */}
-                        <div className="bg-slate-50 border-b border-neutral-200 px-8 py-4 grid grid-cols-7 gap-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                        {/* Table-like Header — hidden on mobile, visible md+ */}
+                        <div className="hidden md:grid bg-slate-50 border-b border-neutral-200 px-8 py-4 grid-cols-4 lg:grid-cols-7 gap-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                             <div>Requirement ID</div>
                             <div>Req. Date</div>
-                            <div className="col-span-2">Warehouse</div>
+                            <div className="lg:col-span-2">Warehouse</div>
                             <div>Fish Details</div>
-                            <div>Quantity</div>
+                            <div>Qty (KG)</div>
                             <div>Deadline</div>
                         </div>
 
-                        {/* Form Inputs styled as a row */}
-                        <div className="p-8 space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 items-start">
+                        {/* Form Inputs — Bug #135-139: responsive grid with min-w-0 to prevent overflow */}
+                        <div className="p-6 sm:p-8 space-y-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 items-start">
                                 {/* Requirement ID */}
-                                <div className="space-y-1">
-                                    <label className="md:hidden text-[10px] font-bold text-slate-400 uppercase">Req ID</label>
-                                    <div className="w-full px-3 py-2 text-sm border border-neutral-100 rounded-md bg-neutral-50 text-neutral-400 font-bold italic">
+                                <div className="space-y-1 min-w-0">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Req ID</label>
+                                    <div className="w-full px-3 py-2 text-sm border border-neutral-100 rounded-md bg-neutral-50 text-neutral-400 font-bold italic truncate">
                                         {id ? formData.requirementId : "AUTO-GEN"}
                                     </div>
                                 </div>
 
                                 {/* Req Date */}
-                                <div className="space-y-1">
-                                    <label className="md:hidden text-[10px] font-bold text-slate-400 uppercase">Req Date</label>
-                                    <input 
+                                <div className="space-y-1 min-w-0">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Req. Date</label>
+                                    <input
                                         type="date"
                                         required
                                         value={formData.requirementDate}
@@ -170,27 +170,25 @@ export default function WarehouseAddInwardStock() {
                                     />
                                 </div>
 
-                                {/* Warehouse */}
-                                <div className="col-span-2 space-y-1">
-                                    <label className="md:hidden text-[10px] font-bold text-slate-400 uppercase">Warehouse</label>
-                                    <div className="relative">
-                                        <input 
-                                            type="text"
-                                            value={formData.warehouseName}
-                                            onChange={(e) => setFormData({...formData, warehouseName: e.target.value})}
-                                            className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all font-bold text-slate-800"
-                                            placeholder="Warehouse Name"
-                                        />
-                                        <p className="text-[10px] text-slate-400 mt-0.5 ml-1">
-                                            {user?.address || user?.location?.address || (user?.city && user?.state ? `${user.city}, ${user.state}` : 'GUJARAT, INDIA')}
-                                        </p>
-                                    </div>
+                                {/* Warehouse — col-span-2 on lg only */}
+                                <div className="sm:col-span-2 md:col-span-2 lg:col-span-2 space-y-1 min-w-0">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Warehouse</label>
+                                    <input
+                                        type="text"
+                                        value={formData.warehouseName}
+                                        onChange={(e) => setFormData({...formData, warehouseName: e.target.value})}
+                                        className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all font-bold text-slate-800"
+                                        placeholder="Warehouse Name"
+                                    />
+                                    <p className="text-[10px] text-slate-400 mt-0.5 ml-1 truncate">
+                                        {user?.address || user?.location?.address || (user?.city && (user as any)?.state ? `${user.city}, ${(user as any).state}` : 'GUJARAT, INDIA')}
+                                    </p>
                                 </div>
 
                                 {/* Fish Details */}
-                                <div className="space-y-1">
-                                    <label className="md:hidden text-[10px] font-bold text-slate-400 uppercase">Fish Details</label>
-                                    <input 
+                                <div className="space-y-2 min-w-0">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Fish Details</label>
+                                    <input
                                         type="text"
                                         list="product-list"
                                         required
@@ -199,23 +197,23 @@ export default function WarehouseAddInwardStock() {
                                         className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all font-bold text-slate-800"
                                         placeholder="Fish Name"
                                     />
-                                    <div className="flex gap-1 mt-1">
-                                        <select 
+                                    <div className="grid grid-cols-2 gap-1">
+                                        <select
                                             value={formData.category}
                                             onChange={(e) => setFormData({...formData, category: e.target.value})}
-                                            className="px-2 py-1 text-[10px] border border-neutral-100 rounded bg-slate-50 text-slate-500 outline-none flex-1"
+                                            className="w-full px-2 py-1.5 text-xs border border-neutral-200 rounded bg-slate-50 text-slate-600 outline-none focus:border-teal-500"
                                         >
                                             <option value="Fresh">Fresh</option>
                                             <option value="Premium">Premium</option>
                                             <option value="Standard">Standard</option>
                                             <option value="Crustaceans">Crustaceans</option>
                                         </select>
-                                        <input 
+                                        <input
                                             type="text"
                                             required
                                             value={formData.variantGrade}
                                             onChange={(e) => setFormData({...formData, variantGrade: e.target.value})}
-                                            className="px-2 py-1 text-[10px] border border-neutral-100 rounded bg-slate-50 text-slate-500 outline-none flex-1"
+                                            className="w-full px-2 py-1.5 text-xs border border-neutral-200 rounded bg-slate-50 text-slate-600 outline-none focus:border-teal-500"
                                             placeholder="Grade A"
                                         />
                                     </div>
@@ -225,30 +223,30 @@ export default function WarehouseAddInwardStock() {
                                 </div>
 
                                 {/* Quantity */}
-                                <div className="space-y-1">
-                                    <label className="md:hidden text-[10px] font-bold text-slate-400 uppercase">Quantity</label>
+                                <div className="space-y-1 min-w-0">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Qty (KG)</label>
                                     <div className="flex items-center gap-1">
-                                        <input 
+                                        <input
                                             type="number"
                                             required
                                             min="1"
                                             value={formData.quantity}
                                             onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value) || 0})}
-                                            className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all font-bold text-slate-800 text-right"
+                                            className="w-full min-w-0 px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all font-bold text-slate-800 text-right"
                                         />
-                                        <span className="text-[10px] font-bold text-slate-400">KG</span>
+                                        <span className="text-[10px] font-bold text-slate-400 flex-shrink-0">KG</span>
                                     </div>
                                 </div>
 
                                 {/* Deadline */}
-                                <div className="space-y-1">
-                                    <label className="md:hidden text-[10px] font-bold text-slate-400 uppercase">Deadline</label>
-                                    <input 
+                                <div className="space-y-1 min-w-0">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Deadline</label>
+                                    <input
                                         type="date"
                                         required
                                         value={formData.deadline}
                                         onChange={(e) => setFormData({...formData, deadline: e.target.value})}
-                                        className="w-full px-2 py-2 text-[11px] border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all text-slate-500"
+                                        className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all text-slate-600"
                                     />
                                 </div>
                             </div>
@@ -275,21 +273,32 @@ export default function WarehouseAddInwardStock() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-4">
-                                    <button 
-                                        type="button"
-                                        onClick={() => navigate('/warehouse/inward-stock/list')}
-                                        className="px-8 py-3 rounded-xl font-bold text-sm text-slate-400 hover:text-slate-600 transition-all"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button 
-                                        type="submit"
-                                        disabled={loading}
-                                        className="bg-[#12b2a2] hover:bg-[#0f9689] text-white px-12 py-3.5 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-teal-500/20 disabled:opacity-50"
-                                    >
-                                        {loading ? "Processing..." : id ? "Update Requirement" : "Save Requirement"}
-                                    </button>
+                                <div className="flex flex-col items-end gap-3">
+                                    {submitMessage && (
+                                        <div className={`w-full px-4 py-2.5 rounded-lg text-sm font-medium text-center ${
+                                            submitMessage.type === 'success'
+                                                ? 'bg-green-50 text-green-700 border border-green-200'
+                                                : 'bg-red-50 text-red-700 border border-red-200'
+                                        }`}>
+                                            {submitMessage.text}
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate('/warehouse/inward-stock/list')}
+                                            className="px-8 py-3 rounded-xl font-bold text-sm text-slate-400 hover:text-slate-600 transition-all"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="bg-[#12b2a2] hover:bg-[#0f9689] text-white px-12 py-3.5 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-teal-500/20 disabled:opacity-50"
+                                        >
+                                            {loading ? "Processing..." : id ? "Update Requirement" : "Save Requirement"}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
