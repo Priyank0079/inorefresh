@@ -81,7 +81,7 @@ export default function AdminCategory() {
   const [categoryMessage, setCategoryMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [confirmDeleteCategory, setConfirmDeleteCategory] = useState<Category | null>(null);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
-  const [cascadeConfirm, setCascadeConfirm] = useState<{ category: Category; newStatus: string } | null>(null);
+  const [cascadeConfirm, setCascadeConfirm] = useState<{ category: Category; newStatus: "Active" | "Inactive" } | null>(null);
 
   const showCategoryMsg = (text: string, type: 'success' | 'error') => {
     setCategoryMessage({ text, type });
@@ -268,7 +268,7 @@ export default function AdminCategory() {
     }
   };
 
-  const executeToggleStatus = async (category: Category, newStatus: string, cascade: boolean) => {
+  const executeToggleStatus = async (category: Category, newStatus: "Active" | "Inactive", cascade: boolean) => {
     try {
       const response = await toggleCategoryStatus(category._id, newStatus, cascade);
       if (response.success) {

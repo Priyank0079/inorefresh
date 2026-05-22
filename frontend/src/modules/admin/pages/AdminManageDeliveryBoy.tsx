@@ -158,7 +158,7 @@ export default function AdminManageDeliveryBoy() {
             if (response.success) {
                 // Update local state
                 setDeliveryBoys(deliveryBoys.map(deliveryBoy =>
-                    deliveryBoy._id === deliveryBoyId ? { ...deliveryBoy, isOnline: newAvailability === 'Available' } : deliveryBoy
+                    deliveryBoy._id === deliveryBoyId ? { ...deliveryBoy, available: newAvailability } : deliveryBoy
                 ));
                 setSuccessMessage(`Delivery boy availability updated to ${newAvailability} successfully!`);
                 setError('');
@@ -255,7 +255,7 @@ export default function AdminManageDeliveryBoy() {
                 deliveryBoy.balance,
                 deliveryBoy.cashCollected,
                 deliveryBoy.status,
-                deliveryBoy.isOnline ? 'Available' : 'Not Available'
+                deliveryBoy.available === 'Available' ? 'Available' : 'Not Available'
             ].join(','))
         ].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -556,11 +556,11 @@ export default function AdminManageDeliveryBoy() {
                                                 </span>
                                             </td>
                                             <td className="p-4 align-middle">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${deliveryBoy.isOnline
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${deliveryBoy.available === 'Available'
                                                     ? 'bg-teal-50 text-[#12b2a2]'
                                                     : 'bg-red-100 text-red-800'
                                                     }`}>
-                                                    {deliveryBoy.isOnline ? 'Available' : 'Not Available'}
+                                                    {deliveryBoy.available === 'Available' ? 'Available' : 'Not Available'}
                                                 </span>
                                             </td>
                                             <td className="p-4 align-middle">
@@ -586,13 +586,13 @@ export default function AdminManageDeliveryBoy() {
                                                         )}
                                                     </button>
                                                     <button
-                                                        onClick={() => handleAvailabilityChange(deliveryBoy._id, deliveryBoy.isOnline ? 'Not Available' : 'Available')}
+                                                        onClick={() => handleAvailabilityChange(deliveryBoy._id, deliveryBoy.available === 'Available' ? 'Not Available' : 'Available')}
                                                         disabled={processing === deliveryBoy._id}
-                                                        className={`p-1.5 rounded transition-colors ${deliveryBoy.isOnline
+                                                        className={`p-1.5 rounded transition-colors ${deliveryBoy.available === 'Available'
                                                             ? 'text-yellow-600 hover:bg-yellow-50'
                                                             : 'text-[#12b2a2] hover:bg-green-50'
                                                             }`}
-                                                        title={deliveryBoy.isOnline ? 'Mark as Not Available' : 'Mark as Available'}
+                                                        title={deliveryBoy.available === 'Available' ? 'Mark as Not Available' : 'Mark as Available'}
                                                     >
                                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                             <circle cx="12" cy="12" r="10"></circle>

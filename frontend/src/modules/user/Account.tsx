@@ -149,16 +149,12 @@ export default function Account() {
       setEditProfileError('Name should only contain letters and spaces.');
       return;
     }
-    if (!/^[0-9]{10}$/.test(editPhone)) {
-      setEditProfileError('Phone number must be exactly 10 digits.');
-      return;
-    }
     setEditProfileSaving(true);
     try {
-      const updateResponse = await updateProfile({ name: trimmedName, phone: editPhone });
+      const updateResponse = await updateProfile({ name: trimmedName });
       if (updateResponse.success) {
         setProfile(updateResponse.data);
-        if (user) updateUser({ ...user, name: trimmedName, phone: editPhone });
+        if (user) updateUser({ ...user, name: trimmedName });
         setShowEditProfileModal(false);
       }
     } catch (err: any) {
@@ -538,14 +534,12 @@ export default function Account() {
                     <input
                       type="tel"
                       value={editPhone}
-                      onChange={e => setEditPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       placeholder="10-digit mobile number"
-                      pattern="[0-9]{10}"
-                      title="Phone must be exactly 10 digits"
-                      maxLength={10}
-                      required
-                      className="w-full bg-gray-50 rounded-2xl border border-gray-100 px-5 py-4 text-gray-900 text-sm font-semibold placeholder:text-gray-300 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 transition-all"
+                      readOnly
+                      title="Phone number is managed from your account record."
+                      className="w-full bg-gray-100 rounded-2xl border border-gray-100 px-5 py-4 text-gray-500 text-sm font-semibold placeholder:text-gray-300 cursor-not-allowed focus:outline-none transition-all"
                     />
+                    <p className="mt-1 text-[11px] text-gray-400">Phone number is read-only here.</p>
                   </div>
                   {editProfileError && (
                     <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">{editProfileError}</p>

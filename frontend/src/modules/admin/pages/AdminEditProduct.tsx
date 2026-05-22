@@ -187,7 +187,7 @@ export default function AdminEditProduct() {
 
     // Bug #95: prevent duplicate variant titles
     const titleLower = variationForm.title.trim().toLowerCase();
-    const isDuplicate = variations.some((v, i) => v.title.toLowerCase() === titleLower && i !== editingVariationIndex);
+    const isDuplicate = variations.some((v, i) => (v.title || v.name || "").toLowerCase() === titleLower && i !== editingVariationIndex);
     if (isDuplicate) {
       setUploadError(`Variant "${variationForm.title.trim()}" already exists. Use a different label.`);
       return;
@@ -214,7 +214,7 @@ export default function AdminEditProduct() {
   const startEditVariation = (index: number) => {
     const v = variations[index];
     setVariationForm({
-      title: v.title,
+      title: v.title || v.name || v.value || "",
       price: String(v.price),
       discPrice: String(v.discPrice || 0),
       stock: String(v.stock || 0),
