@@ -1,9 +1,11 @@
-import { ReactNode, useState, useCallback } from 'react';
+import { ReactNode, useState, useCallback, useEffect } from 'react';
 import WarehouseHeader from './WarehouseHeader';
 import WarehouseSidebar from './WarehouseSidebar';
 import { useWarehouseSocket, WarehouseNotification } from '../hooks/useWarehouseSocket';
 import WarehouseNotificationAlert from './WarehouseNotificationAlert';
 import GlobalBackButton from '../../../components/GlobalBackButton';
+import { useAuth } from '../../../context/AuthContext';
+import { registerFCMToken } from '../../../services/pushNotificationService';
 
 interface WarehouseLayoutProps {
   children: ReactNode;
@@ -12,12 +14,32 @@ interface WarehouseLayoutProps {
 export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeNotification, setActiveNotification] = useState<WarehouseNotification | null>(null);
+  const { isAuthenticated, user } = useAuth();
 
   const handleNotificationReceived = useCallback((notification: WarehouseNotification) => {
     setActiveNotification(notification);
   }, []);
 
   useWarehouseSocket(handleNotificationReceived);
+
+  // ── Register FCM push-notification token for this warehouse ────────────
+  useEffect(() => {
+    if (!isAuthenticated || user?.userType !== 'Warehouse' || !user?.id) return;
+
+    const userId = String(user.id);
+    const savedUserId = localStorage.getItem('fcm_token_user_id');
+    const forceUpdate = savedUserId !== userId;
+
+    registerFCMToken(forceUpdate)
+      .then((token) => {
+        if (token) {
+          localStorage.setItem('fcm_token_user_id', userId);
+          console.log('📲 FCM token registered for warehouse:', userId);
+        }
+      })
+      .catch((err) => console.warn('⚠️ Warehouse FCM token registration failed:', err));
+  }, [isAuthenticated, user?.id, user?.userType]);
+  // ────────────────────────────────────────────────────────────────────────
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);

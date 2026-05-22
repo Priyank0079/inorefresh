@@ -12,9 +12,6 @@ interface NotificationState {
     error: string | null;
 }
 
-const MAX_RECONNECT_ATTEMPTS = 5;
-const INITIAL_RECONNECT_DELAY = 2000;
-
 export const useDeliveryOrderNotifications = () => {
     const { isAuthenticated, user } = useAuth();
     const [state, setState] = useState<NotificationState>({
@@ -25,54 +22,62 @@ export const useDeliveryOrderNotifications = () => {
     });
 
     const socketRef = useRef<Socket | null>(null);
-    const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const reconnectAttemptsRef = useRef(0);
 
     const connectSocket = useCallback(() => {
         if (!isAuthenticated || user?.userType !== 'Delivery' || !user?.id) {
-            return;
+            return null;
         }
 
-        // Clear any existing reconnect timeout
-        if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
-            reconnectTimeoutRef.current = null;
+        // If already connected, don't create a new socket
+        if (socketRef.current?.connected) {
+            return socketRef.current;
+        }
+
+        // Clean up any existing disconnected socket
+        if (socketRef.current) {
+            socketRef.current.removeAllListeners();
+            socketRef.current.disconnect();
+            socketRef.current = null;
         }
 
         const token = localStorage.getItem('authToken');
         const socket = io(getSocketBaseURL(), {
-            auth: {
-                token,
-            },
+            auth: { token },
+            // Allow both websocket and polling — polling is the fallback for
+            // environments where websocket upgrades are blocked (e.g., some nginx configs)
             transports: ['websocket', 'polling'],
+            // Let socket.io-client handle reconnection automatically
             reconnection: true,
-            reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
-            reconnectionDelay: INITIAL_RECONNECT_DELAY,
-            reconnectionDelayMax: 10000,
+            reconnectionAttempts: 10,
+            reconnectionDelay: 2000,
+            reconnectionDelayMax: 15000,
             timeout: 20000,
+            // Force new connection each time (avoids sharing with other socket instances)
+            forceNew: false,
         });
 
         socketRef.current = socket;
 
+        // ---- Connection lifecycle ----
         socket.on('connect', () => {
-            console.log('🔌 Delivery notification socket connected');
-            reconnectAttemptsRef.current = 0;
-            setState(prev => ({
-                ...prev,
-                isConnected: true,
-                error: null,
-            }));
-
-            // Join delivery notification room
+            console.log('🔌 Delivery socket connected:', socket.id);
+            setState(prev => ({ ...prev, isConnected: true, error: null }));
+            // Join notification rooms immediately on (re)connect
             socket.emit('join-delivery-notifications', user.id);
         });
 
         socket.on('joined-notifications-room', (data: any) => {
-            console.log('✅ Successfully joined notifications room:', data);
+            console.log('✅ Joined delivery notifications room:', data.deliveryBoyId);
         });
 
-        socket.on('connect_error', (error) => {
-            console.error('❌ Socket connection error:', error.message);
+        socket.on('disconnect', (reason: string) => {
+            console.warn('⚠️ Delivery socket disconnected:', reason);
+            setState(prev => ({ ...prev, isConnected: false }));
+            // socket.io-client auto-reconnects unless we explicitly called disconnect()
+        });
+
+        socket.on('connect_error', (error: Error) => {
+            console.error('❌ Delivery socket connection error:', error.message);
             setState(prev => ({
                 ...prev,
                 isConnected: false,
@@ -80,159 +85,99 @@ export const useDeliveryOrderNotifications = () => {
             }));
         });
 
-        socket.on('disconnect', (reason) => {
-            console.warn('⚠️ Socket disconnected:', reason);
+        socket.on('reconnect', (attempt: number) => {
+            console.log(`🔄 Delivery socket reconnected after ${attempt} attempt(s)`);
+            setState(prev => ({ ...prev, error: null }));
+        });
+
+        socket.on('reconnect_failed', () => {
+            console.error('❌ Delivery socket max reconnection attempts reached');
             setState(prev => ({
                 ...prev,
-                isConnected: false,
+                error: 'Unable to connect to notification server. Please refresh the page.',
             }));
         });
 
+        // ---- Order notification events ----
         socket.on('new-order', (orderData: OrderNotificationData) => {
-            console.log('📦 New order notification received:', orderData);
+            console.log('📦 New order notification received:', orderData.orderNumber, orderData.orderId);
 
             setState(prev => {
-                // Deduplicate: check if this order is already being shown or in the queue
-                const isDuplicate = prev.currentNotification?.orderId === orderData.orderId || 
-                                  prev.notificationQueue.some(notif => notif.orderId === orderData.orderId);
-                
+                // Deduplicate: ignore if the same order is already shown or queued
+                const isDuplicate =
+                    prev.currentNotification?.orderId === orderData.orderId ||
+                    prev.notificationQueue.some(n => n.orderId === orderData.orderId);
+
                 if (isDuplicate) {
-                    console.log('⚠️ Ignoring duplicate order notification:', orderData.orderId);
+                    console.log('⚠️ Duplicate order notification ignored:', orderData.orderId);
                     return prev;
                 }
 
-                // If there's already a current notification, queue this one
                 if (prev.currentNotification) {
-                    return {
-                        ...prev,
-                        notificationQueue: [...prev.notificationQueue, orderData],
-                    };
+                    // Queue the new notification
+                    return { ...prev, notificationQueue: [...prev.notificationQueue, orderData] };
                 }
-                // Otherwise, show it immediately
-                return {
-                    ...prev,
-                    currentNotification: orderData,
-                };
+                // Show immediately
+                return { ...prev, currentNotification: orderData };
             });
         });
 
         socket.on('order-accepted', (data: { orderId: string; acceptedBy: string }) => {
-            console.log('✅ Order accepted by another delivery boy:', data);
-
+            console.log('✅ Order taken by another delivery boy:', data.orderId);
             setState(prev => {
-                // If this is the current notification, clear it
                 if (prev.currentNotification?.orderId === data.orderId) {
-                    // Show next notification from queue if available
-                    const nextNotification = prev.notificationQueue[0] || null;
-                    return {
-                        ...prev,
-                        currentNotification: nextNotification,
-                        notificationQueue: prev.notificationQueue.slice(1),
-                    };
+                    const next = prev.notificationQueue[0] || null;
+                    return { ...prev, currentNotification: next, notificationQueue: prev.notificationQueue.slice(1) };
                 }
-                // Remove from queue if it's there
-                return {
-                    ...prev,
-                    notificationQueue: prev.notificationQueue.filter(
-                        notif => notif.orderId !== data.orderId
-                    ),
-                };
+                return { ...prev, notificationQueue: prev.notificationQueue.filter(n => n.orderId !== data.orderId) };
             });
         });
 
         socket.on('order-rejected-by-all', (data: { orderId: string }) => {
-            console.log('❌ All delivery boys rejected order:', data);
-
+            console.log('❌ Order rejected by all, clearing notification:', data.orderId);
             setState(prev => {
-                // If this is the current notification, clear it
                 if (prev.currentNotification?.orderId === data.orderId) {
-                    // Show next notification from queue if available
-                    const nextNotification = prev.notificationQueue[0] || null;
-                    return {
-                        ...prev,
-                        currentNotification: nextNotification,
-                        notificationQueue: prev.notificationQueue.slice(1),
-                    };
+                    const next = prev.notificationQueue[0] || null;
+                    return { ...prev, currentNotification: next, notificationQueue: prev.notificationQueue.slice(1) };
                 }
-                // Remove from queue if it's there
-                return {
-                    ...prev,
-                    notificationQueue: prev.notificationQueue.filter(
-                        notif => notif.orderId !== data.orderId
-                    ),
-                };
+                return { ...prev, notificationQueue: prev.notificationQueue.filter(n => n.orderId !== data.orderId) };
             });
         });
 
-        socket.on('disconnect', (reason: any) => {
-            console.log('❌ Delivery notification socket disconnected:', reason);
-            setState(prev => ({ ...prev, isConnected: false }));
-
-            // Attempt reconnection
-            if (reason === 'io server disconnect' || reason === 'io client disconnect') {
-                return; // Don't auto-reconnect if intentionally disconnected
-            }
-
-            attemptReconnect();
-        });
-
-        socket.on('connect_error', (error: any) => {
-            console.error('Socket connection error:', error);
-            setState(prev => ({
-                ...prev,
-                isConnected: false,
-                error: 'Failed to connect to notification server',
-            }));
-
-            attemptReconnect();
-        });
-
-        socket.on('error', (error: any) => {
-            console.error('Socket error:', error);
-            setState(prev => ({
-                ...prev,
-                error: 'Notification service error',
-            }));
+        socket.on('error', (err: any) => {
+            console.error('Socket error:', err);
         });
 
         return socket;
     }, [isAuthenticated, user]);
 
-    const attemptReconnect = useCallback(() => {
-        reconnectAttemptsRef.current += 1;
-
-        if (reconnectAttemptsRef.current > MAX_RECONNECT_ATTEMPTS) {
-            console.log('❌ Max reconnection attempts reached');
-            setState(prev => ({
-                ...prev,
-                error: 'Unable to connect. Please refresh the page.',
-            }));
-            return;
-        }
-
-        const delay = INITIAL_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current - 1);
-        console.log(`🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current})`);
-
-        reconnectTimeoutRef.current = setTimeout(() => {
-            disconnectSocket();
-            connectSocket();
-        }, delay);
-    }, [connectSocket]);
-
     const disconnectSocket = useCallback(() => {
-        if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
-            reconnectTimeoutRef.current = null;
-        }
-
         if (socketRef.current) {
+            socketRef.current.removeAllListeners();
             socketRef.current.disconnect();
             socketRef.current = null;
         }
+        setState(prev => ({ ...prev, isConnected: false }));
     }, []);
 
+    // ---- Lifecycle management ----
+    useEffect(() => {
+        if (!isAuthenticated || user?.userType !== 'Delivery' || !user?.id) {
+            disconnectSocket();
+            return;
+        }
+
+        connectSocket();
+
+        return () => {
+            disconnectSocket();
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, user?.id, user?.userType]);
+
+    // ---- Order action handlers ----
     const handleAccept = useCallback(async (orderId: string, navigate?: (path: string) => void) => {
-        if (!socketRef.current || !user?.id) {
+        if (!socketRef.current?.connected || !user?.id) {
             return { success: false, message: 'Not connected or user not found' };
         }
 
@@ -240,30 +185,18 @@ export const useDeliveryOrderNotifications = () => {
             const result = await acceptOrder(socketRef.current, orderId, user.id);
 
             if (result.success) {
-                // Clear current notification and show next from queue
+                // Remove from UI immediately on successful acceptance
                 setState(prev => {
-                    const nextNotification = prev.notificationQueue[0] || null;
-                    return {
-                        ...prev,
-                        currentNotification: nextNotification,
-                        notificationQueue: prev.notificationQueue.slice(1),
-                    };
+                    const next = prev.notificationQueue[0] || null;
+                    return { ...prev, currentNotification: next, notificationQueue: prev.notificationQueue.slice(1) };
                 });
-
-                // Navigate to order detail page
-                if (navigate) {
-                    navigate(`/delivery/orders/${orderId}`);
-                }
+                if (navigate) navigate(`/delivery/orders/${orderId}`);
             } else if (result.message === 'Order notification not found') {
-                // If notification is not found on server (stale), clear it from UI too
-                console.warn('⚠️ clearing stale notification:', orderId);
+                // Stale notification — clear it from UI
+                console.warn('⚠️ Stale notification cleared:', orderId);
                 setState(prev => {
-                    const nextNotification = prev.notificationQueue[0] || null;
-                    return {
-                        ...prev,
-                        currentNotification: nextNotification,
-                        notificationQueue: prev.notificationQueue.slice(1),
-                    };
+                    const next = prev.notificationQueue[0] || null;
+                    return { ...prev, currentNotification: next, notificationQueue: prev.notificationQueue.slice(1) };
                 });
             }
 
@@ -274,56 +207,31 @@ export const useDeliveryOrderNotifications = () => {
     }, [user]);
 
     const handleReject = useCallback(async (orderId: string) => {
-        if (!socketRef.current || !user?.id) {
+        if (!socketRef.current?.connected || !user?.id) {
             return { success: false, message: 'Not connected or user not found', allRejected: false };
         }
 
-        // Immediately clear the notification from UI
+        // Optimistically remove from UI right away for a snappy feel
         setState(prev => {
-            const nextNotification = prev.notificationQueue[0] || null;
-            return {
-                ...prev,
-                currentNotification: nextNotification,
-                notificationQueue: prev.notificationQueue.slice(1),
-            };
+            const next = prev.notificationQueue[0] || null;
+            return { ...prev, currentNotification: next, notificationQueue: prev.notificationQueue.slice(1) };
         });
 
         try {
-            // Perform the actual rejection in the background
             const result = await rejectOrder(socketRef.current, orderId, user.id);
             return result;
         } catch (error: any) {
-            console.error('Failed to reject order in background:', error);
+            console.error('Failed to reject order:', error);
             return { success: false, message: error.message || 'Failed to reject order', allRejected: false };
         }
     }, [user]);
 
     const clearCurrentNotification = useCallback(() => {
         setState(prev => {
-            const nextNotification = prev.notificationQueue[0] || null;
-            return {
-                ...prev,
-                currentNotification: nextNotification,
-                notificationQueue: prev.notificationQueue.slice(1),
-            };
+            const next = prev.notificationQueue[0] || null;
+            return { ...prev, currentNotification: next, notificationQueue: prev.notificationQueue.slice(1) };
         });
     }, []);
-
-    useEffect(() => {
-        if (!isAuthenticated || user?.userType !== 'Delivery' || !user?.id) {
-            disconnectSocket();
-            return;
-        }
-
-        const socket = connectSocket();
-
-        return () => {
-            if (reconnectTimeoutRef.current) {
-                clearTimeout(reconnectTimeoutRef.current);
-            }
-            disconnectSocket();
-        };
-    }, [isAuthenticated, user, connectSocket, disconnectSocket]);
 
     return {
         currentNotification: state.currentNotification,
@@ -336,4 +244,3 @@ export const useDeliveryOrderNotifications = () => {
         socket: socketRef.current,
     };
 };
-

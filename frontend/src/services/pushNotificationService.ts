@@ -113,11 +113,16 @@ async function getFCMToken(): Promise<string | null> {
  */
 export async function registerFCMToken(forceUpdate: boolean = false): Promise<string | null> {
     try {
-        // Check if already registered
+        // Check if already registered (skip only when NOT forcing an update)
         const savedToken = localStorage.getItem('fcm_token_web');
         if (savedToken && !forceUpdate) {
-            console.log('ℹ️ FCM token already registered');
+            console.log('ℹ️ FCM token already registered (cached)');
             return savedToken;
+        }
+
+        // Clear cached token when force-updating so we always fetch a fresh one
+        if (forceUpdate && savedToken) {
+            localStorage.removeItem('fcm_token_web');
         }
 
         // Request permission

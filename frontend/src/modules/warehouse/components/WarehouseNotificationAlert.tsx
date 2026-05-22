@@ -63,7 +63,7 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
 
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-300">
         {/* Header */}
-        <div className={`px-6 py-4 flex items-center justify-between ${notification.type === 'NEW_ORDER' ? 'bg-teal-600' : 'bg-blue-600'} text-white`}>
+        <div className={`px-6 py-4 flex items-center justify-between ${notification.type === 'NEW_ORDER' ? 'bg-teal-600' : notification.type === 'ORDER_CANCELLED' ? 'bg-red-600' : 'bg-blue-600'} text-white`}>
           <div className="flex items-center gap-3">
             <div className="bg-white bg-opacity-20 p-2 rounded-full">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -73,7 +73,7 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-bold">
-                {notification.type === 'NEW_ORDER' ? 'New Order Received!' : 'Order Status Updated'}
+                {notification.type === 'NEW_ORDER' ? 'New Order Received!' : notification.type === 'ORDER_CANCELLED' ? 'Order Cancelled by Customer' : 'Order Status Updated'}
               </h2>
               <p className="text-sm opacity-90">#{notification.orderNumber}</p>
             </div>

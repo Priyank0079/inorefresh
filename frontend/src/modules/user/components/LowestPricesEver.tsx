@@ -237,19 +237,22 @@ export default function LowestPricesEver({ activeTab = 'all', products: adminPro
       {/* Horizontal Scrollable Product Cards */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-hide px-4 md:px-6 pb-4"
+        className="flex gap-2.5 md:gap-3 overflow-x-auto scrollbar-hide px-4 md:px-6 pb-3"
         style={{ scrollSnapType: 'x mandatory' }}
       >
-        {discountedProducts.map((product) => {
-          return (
-            <div key={product.id} className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[200px] snap-start">
-              <ProductCard
-                product={product}
-                badgeText={product.mrp && product.mrp > product.price ? `${Math.round(((product.mrp - product.price) / product.mrp) * 100)}% OFF` : undefined}
-              />
-            </div>
-          );
-        })}
+        {discountedProducts.map((product) => (
+          <div
+            key={product.id}
+            /* Fixed card width so all cards are uniform regardless of content length */
+            className="flex-shrink-0 snap-start"
+            style={{ width: 'clamp(136px, 40vw, 168px)' }}
+          >
+            <ProductCard
+              product={product}
+              badgeText={product.mrp && product.mrp > product.price ? `${Math.round(((product.mrp - product.price) / product.mrp) * 100)}% OFF` : undefined}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
