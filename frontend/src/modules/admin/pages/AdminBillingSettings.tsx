@@ -14,6 +14,9 @@ export default function AdminBillingSettings() {
     const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number>(0);
     const [deliveryCharges, setDeliveryCharges] = useState<number>(0);
 
+    // SLAs
+    const [inspectionDurationMinutes, setInspectionDurationMinutes] = useState<number>(10);
+
     // Distance Based Config
     const [isDistanceBased, setIsDistanceBased] = useState(false);
     const [baseCharge, setBaseCharge] = useState<number>(0);
@@ -38,6 +41,7 @@ export default function AdminBillingSettings() {
                 setPlatformFee(data.platformFee || 0);
                 setFreeDeliveryThreshold(data.freeDeliveryThreshold || 0);
                 setDeliveryCharges(data.deliveryCharges || 0);
+                setInspectionDurationMinutes(data.inspectionDurationMinutes ?? 10);
 
                 if (data.deliveryConfig) {
                     setIsDistanceBased(data.deliveryConfig.isDistanceBased || false);
@@ -67,6 +71,7 @@ export default function AdminBillingSettings() {
                 platformFee,
                 freeDeliveryThreshold,
                 deliveryCharges,
+                inspectionDurationMinutes,
                 deliveryConfig: {
                     isDistanceBased,
                     baseCharge,
@@ -166,6 +171,29 @@ export default function AdminBillingSettings() {
                                 />
                             </div>
                             <p className="mt-1 text-xs text-gray-500">Orders above this amount will have free delivery.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Logistics & Verification SLA Section */}
+                <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">Logistics & SLAs</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Customer Verification Timer (minutes)
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={inspectionDurationMinutes}
+                                    onChange={(e) => setInspectionDurationMinutes(Number(e.target.value))}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-[#12b2a2] focus:border-[#12b2a2]"
+                                    placeholder="e.g. 10"
+                                />
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500">Time given to customer to check items while rider waits.</p>
                         </div>
                     </div>
                 </div>

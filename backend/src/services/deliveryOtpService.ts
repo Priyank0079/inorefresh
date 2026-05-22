@@ -4,9 +4,8 @@ import HorecaUser from '../models/HorecaUser';
 import RetailerUser from '../models/RetailerUser';
 
 /**
- * Generate delivery OTP is no longer needed for regular orders.
- * Customer has a permanent deliveryOtp that is generated on account creation.
- * This function is kept for backward compatibility but does nothing meaningful now.
+ * Generate a dynamic delivery OTP for a specific order.
+ * This is triggered when the rider clicks "Get OTP" at the customer's location.
  */
 export async function generateDeliveryOtp(orderId: string): Promise<{ success: boolean; message: string }> {
   try {
@@ -20,17 +19,24 @@ export async function generateDeliveryOtp(orderId: string): Promise<{ success: b
       throw new Error('Order is already delivered');
     }
 
-    // Check if the user has an OTP, if not generate it using shared helper
-    const userId = order.customer.toString();
-    const customerOtp = await getOrCreateDeliveryOtp(userId);
+    // Generate dynamic 4-digit OTP
+    const dynamicOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    order.deliveryOtp = dynamicOtp;
+    await order.save();
 
-    if (!customerOtp) {
-      throw new Error('Customer not found for this order');
-    }
+    // Send notification to customer with the OTP
+    const { sendNotification } = require('./notificationService');
+    await sendNotification(
+      "Customer",
+      order.customer.toString(),
+      "Delivery Verification OTP",
+      `Your delivery OTP for Order #${order.orderNumber} is ${dynamicOtp}. Please share this with the delivery partner to begin the quality check.`,
+      { type: "Order", priority: "High" }
+    );
 
     return {
       success: true,
-      message: 'Customer has a permanent delivery OTP. Share it with the delivery partner.',
+      message: 'OTP generated and sent to customer successfully.',
     };
   } catch (error: any) {
     console.error('Error in generateDeliveryOtp:', error);
@@ -74,21 +80,12 @@ export async function verifyDeliveryOtp(orderId: string, otp: string): Promise<{
       throw new Error(`Delivery verification is only allowed when order is Out for Delivery. Current status: ${order.status}`);
     }
 
-    // Use global ID normalization
-    const userId = order.customer.toString();
-
     // 2. Determine the valid OTP
-    // Priority 1: OTP stored on the order (matches what the customer sees)
-    // Priority 2: Customer's permanent profile OTP (fallback for legacy orders)
+    // Valid OTP must be generated dynamically and stored on the order
     let validOtp = order.deliveryOtp;
     
     if (!validOtp || !validOtp.trim()) {
-      console.log(`[Delivery OTP] Order ${orderId} missing specific OTP, falling back to customer ${userId} permanent OTP`);
-      validOtp = (await getOrCreateDeliveryOtp(userId)) ?? undefined;
-    }
-
-    if (!validOtp) {
-      throw new Error('Delivery OTP not found for this order. Please ask the customer to refresh their order page.');
+      throw new Error('Delivery OTP not generated for this order yet. Please tap "Get OTP".');
     }
 
     // Fetch dynamic duration settings

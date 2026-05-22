@@ -711,7 +711,9 @@ export const getOrderById = async (req: Request, res: Response) => {
 
         // Transform order to match frontend Order type
         const orderObj = order.toObject();
-        const deliveryOtp = await ensureOrderDeliveryOtp(order);
+        // Only expose OTP to customer if the rider has sent it
+        const deliveryOtpToExpose = orderObj.deliveryOtpSentAt ? orderObj.deliveryOtp : undefined;
+
         const transformedOrder = {
             ...orderObj,
             id: orderObj._id.toString(),
@@ -726,8 +728,8 @@ export const getOrderById = async (req: Request, res: Response) => {
             address: orderObj.deliveryAddress,
             // Include invoice enabled flag
             invoiceEnabled: orderObj.invoiceEnabled || false,
-            // Include customer's permanent delivery OTP
-            deliveryOtp,
+            // Include dynamic delivery OTP (only if sent)
+            deliveryOtp: deliveryOtpToExpose,
             // Map deliveryBoy to deliveryPartner for frontend
             deliveryPartner: orderObj.deliveryBoy
         };

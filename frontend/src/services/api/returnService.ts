@@ -23,6 +23,27 @@ export interface ReturnRequest {
   customerName?: string;
   customerPhone?: string;
   orderId?: string;
+  returnReason?: string;
+  description?: string;
+  images?: string[];
+  proofOfPickupEvidence?: string[];
+  riderRemarks?: string;
+  // Warehouse destination info (for rider delivery)
+  warehouseVerificationOtp?: string | null;
+  warehouseVerificationOtpVerified?: boolean;
+  reverseLogisticsCode?: string | null;
+  warehouse?: {
+    _id?: string;
+    warehouseName?: string;
+    managerName?: string;
+    mobile?: string;
+    address?: string;
+    location?: {
+      type: string;
+      coordinates: [number, number]; // [lng, lat]
+    };
+  };
+  refundAmount?: number; // Set when status === 'REFUNDED', amount credited to retailer wallet
 }
 
 export interface ReturnRequestDetail {

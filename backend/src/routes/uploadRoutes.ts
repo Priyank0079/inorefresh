@@ -26,7 +26,7 @@ const router = Router();
 router.post(
   "/image",
   authenticate,
-  requireUserType("Admin", "Warehouse", "Port", "Customer", "horeca", "retailer"),
+  requireUserType("Admin", "Warehouse", "Port", "Customer", "horeca", "retailer", "Delivery"),
   uploadSingleImage.single("image"),
   handleUploadError,
   asyncHandler(async (req: Request, res: Response) => {

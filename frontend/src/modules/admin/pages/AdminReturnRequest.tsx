@@ -24,6 +24,7 @@ export default function AdminReturnRequest() {
   const [returnReqMessage, setReturnReqMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [rejectModalId, setRejectModalId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [viewingRequest, setViewingRequest] = useState<ReturnRequest | null>(null);
   const showReturnReqMsg = (text: string, type: 'success' | 'error') => { setReturnReqMessage({ text, type }); setTimeout(() => setReturnReqMessage(null), 3000); };
 
   // Fetch return requests on component mount
@@ -109,6 +110,9 @@ export default function AdminReturnRequest() {
             req._id === requestId ? { ...req, status: "Approved" } : req
           )
         );
+        if (viewingRequest && viewingRequest._id === requestId) {
+          setViewingRequest({ ...viewingRequest, status: "Approved" });
+        }
         showReturnReqMsg("Return request approved successfully!", 'success');
       } else {
         showReturnReqMsg("Failed to approve return request: " + (response.message || "Unknown error"), 'error');
@@ -147,6 +151,9 @@ export default function AdminReturnRequest() {
             req._id === requestId ? { ...req, status: "Rejected" } : req
           )
         );
+        if (viewingRequest && viewingRequest._id === requestId) {
+          setViewingRequest({ ...viewingRequest, status: "Rejected", adminNotes: rejectReason.trim() });
+        }
         showReturnReqMsg("Return request rejected successfully!", 'success');
       } else {
         showReturnReqMsg("Failed to reject return request: " + (response.message || "Unknown error"), 'error');
@@ -693,7 +700,13 @@ export default function AdminReturnRequest() {
                     </td>
                     <td className="px-4 sm:px-6 py-3">
                       <div className="flex items-center gap-2">
-                        {request.status === "Pending" ? (
+                        <button
+                          onClick={() => setViewingRequest(request)}
+                          className="text-[#12b2a2] hover:text-[#0e7490] text-xs font-medium transition-colors mr-2"
+                        >
+                          View
+                        </button>
+                        {(request.status === "Pending" || request.status === "REQUESTED") ? (
                           <>
                             <button
                               onClick={() => handleApproveReturn(request._id)}
@@ -733,9 +746,7 @@ export default function AdminReturnRequest() {
                           </>
                         ) : (
                           <span className="text-sm text-neutral-400">
-                            {request.status === "Approved"
-                              ? "Approved"
-                              : "Rejected"}
+                            {request.status}
                           </span>
                         )}
                       </div>
@@ -842,6 +853,127 @@ export default function AdminReturnRequest() {
               >
                 Reject
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Return Request Details Modal */}
+      {viewingRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setViewingRequest(null)} />
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-teal-600 text-white px-5 py-4 flex items-center justify-between shrink-0">
+              <h3 className="font-bold text-base">Return Request Details</h3>
+              <button onClick={() => setViewingRequest(null)} className="text-white hover:bg-white/10 p-1 rounded-full transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-5 space-y-3 overflow-y-auto">
+              {[
+                { label: 'Order Item ID', value: viewingRequest.orderItemId },
+                { label: 'Customer Name', value: viewingRequest.userName },
+                { label: 'Product', value: viewingRequest.productName },
+                { label: 'Variant', value: viewingRequest.variant || 'N/A' },
+                { label: 'Price', value: `₹${viewingRequest.price.toFixed(2)}` },
+                { label: 'Quantity', value: String(viewingRequest.quantity) },
+                { label: 'Total', value: `₹${viewingRequest.total.toFixed(2)}` },
+                { label: 'Status', value: viewingRequest.status },
+                { label: 'Date', value: new Date(viewingRequest.requestedAt).toLocaleDateString() },
+                { label: 'Return Reason', value: viewingRequest.reason || 'N/A' },
+                { label: 'Description', value: viewingRequest.description || 'N/A' },
+                { label: 'Admin Notes', value: viewingRequest.adminNotes || 'N/A' },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex flex-col sm:flex-row sm:justify-between items-start py-2 border-b border-neutral-100 last:border-0">
+                  <span className="text-sm font-medium text-neutral-500 w-40 flex-shrink-0">{label}</span>
+                  <span className="text-sm text-neutral-800 font-semibold sm:text-right mt-1 sm:mt-0">{value}</span>
+                </div>
+              ))}
+
+              {/* Images Section */}
+              {viewingRequest.images && viewingRequest.images.length > 0 && (
+                <div className="pt-2 border-t border-neutral-100">
+                  <span className="text-sm font-medium text-neutral-500 block mb-2">Attached Images</span>
+                  <div className="flex flex-wrap gap-3">
+                    {viewingRequest.images.map((img, idx) => (
+                      <a key={idx} href={img} target="_blank" rel="noopener noreferrer" className="block">
+                        <img 
+                          src={img} 
+                          alt={`Return item ${idx + 1}`} 
+                          className="w-20 h-20 object-cover rounded-lg border border-neutral-200 hover:opacity-80 transition-opacity"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Rider Collection Evidence Section */}
+              {((viewingRequest.proofOfPickupEvidence && viewingRequest.proofOfPickupEvidence.length > 0) || viewingRequest.riderRemarks) && (
+                <div className="pt-4 border-t border-neutral-200 mt-2 bg-amber-50/50 p-3 rounded-xl border border-amber-100">
+                  <span className="text-sm font-bold text-amber-800 block mb-2 flex items-center gap-1.5">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    Rider Pickup Verification
+                  </span>
+                  
+                  {viewingRequest.riderRemarks && (
+                    <div className="mb-3">
+                      <span className="text-xs font-semibold text-neutral-500 block">Rider Remarks:</span>
+                      <p className="text-xs text-neutral-700 italic bg-white p-2 rounded border border-neutral-100 mt-1 font-medium">{viewingRequest.riderRemarks}</p>
+                    </div>
+                  )}
+
+                  {viewingRequest.proofOfPickupEvidence && viewingRequest.proofOfPickupEvidence.length > 0 && (
+                    <div>
+                      <span className="text-xs font-semibold text-neutral-500 block mb-1.5">Rider Proof Photos:</span>
+                      <div className="flex flex-wrap gap-3">
+                        {viewingRequest.proofOfPickupEvidence.map((img, idx) => (
+                          <a key={idx} href={img} target="_blank" rel="noopener noreferrer" className="block relative group">
+                            <img 
+                              src={img} 
+                              alt={`Rider pickup proof ${idx + 1}`} 
+                              className="w-20 h-20 object-cover rounded-lg border border-amber-200 shadow-sm hover:ring-2 hover:ring-amber-500 hover:opacity-90 transition-all"
+                            />
+                            <span className="absolute bottom-1 right-1 bg-black/60 text-[9px] text-white px-1.5 py-0.5 rounded font-bold">#{idx + 1}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="px-5 pb-5 pt-3 border-t border-neutral-100 shrink-0">
+              {(viewingRequest.status === 'Pending' || viewingRequest.status === 'REQUESTED') ? (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleRejectReturn(viewingRequest._id)}
+                    disabled={updating === viewingRequest._id}
+                    className="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 transition-colors"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => handleApproveReturn(viewingRequest._id)}
+                    disabled={updating === viewingRequest._id}
+                    className="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50 transition-colors"
+                  >
+                    {updating === viewingRequest._id ? 'Processing...' : 'Approve'}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setViewingRequest(null)}
+                  className="w-full py-2.5 rounded-xl font-semibold text-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors"
+                >
+                  Close
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -1,21 +1,26 @@
 import { Router } from "express";
 import {
-  startInspection,
   submitReturnRequest,
   reviewReturnRequest,
   collectReturn,
   verifyWarehouseReceipt,
   approveRefund,
   getOrderReturns,
-  acceptAllItems
+  acceptAllItems,
+  timeoutAcceptDelivery,
+  sendWarehouseOtp,
+  riderVerifyWarehouseOtp,
+  getRefundExceptions,
 } from "../controllers/returnWorkflowController";
 import { authenticate, requireUserType } from "../middleware/auth";
 
 const router = Router();
 
 // Rider Routes
-router.post("/rider/start-inspection", authenticate, requireUserType("Delivery", "DELIVERY_BOY" as any), startInspection);
 router.post("/rider/collect/:returnId", authenticate, requireUserType("Delivery", "DELIVERY_BOY" as any), collectReturn);
+router.post("/rider/timeout-accept/:id", authenticate, requireUserType("Delivery", "DELIVERY_BOY" as any), timeoutAcceptDelivery);
+router.post("/rider/send-otp/:returnId", authenticate, requireUserType("Delivery", "DELIVERY_BOY" as any), sendWarehouseOtp);
+router.post("/rider/verify-otp/:returnId", authenticate, requireUserType("Delivery", "DELIVERY_BOY" as any), riderVerifyWarehouseOtp);
 
 // Retailer Routes
 router.post("/retailer/submit", authenticate, requireUserType("Customer", "horeca", "retailer"), submitReturnRequest);
@@ -30,6 +35,6 @@ router.post("/warehouse/verify/:returnId", authenticate, requireUserType("Wareho
 
 // Admin Routes
 router.post("/admin/refund/:returnId", authenticate, requireUserType("Admin"), approveRefund);
-
+router.get("/admin/refund-exceptions", authenticate, requireUserType("Admin"), getRefundExceptions);
 
 export default router;

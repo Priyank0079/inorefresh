@@ -88,7 +88,13 @@ export default function DeliveryPendingOrders() {
               <div
                 key={order.id}
                 className="bg-white rounded-xl p-4 shadow-sm border border-neutral-200 cursor-pointer"
-                onClick={() => navigate(`/delivery/orders/${order.id}`)}
+                onClick={() => {
+                  if (['Returned', 'Partially Returned', 'Fully Returned'].includes(order.status)) {
+                    navigate(`/delivery/orders/${order.id}/inspection`);
+                  } else {
+                    navigate(`/delivery/orders/${order.id}`);
+                  }
+                }}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">

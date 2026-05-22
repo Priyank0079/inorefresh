@@ -7,6 +7,8 @@ import DeliveryAssignment from "../../../models/DeliveryAssignment";
 import Return from "../../../models/Return";
 import { notifyWarehousesOfOrderUpdate } from "../../../services/warehouseNotificationService";
 import { Server as SocketIOServer } from "socket.io";
+import { sendNotification } from "../../../services/notificationService";
+import { getIO } from "../../../socket/socketService";
 
 /**
  * Get all orders with filters
@@ -422,9 +424,13 @@ export const getReturnRequests = asyncHandler(
       quantity: req.quantity,
       total: req.quantity * (req.orderItem?.unitPrice || 0),
       reason: req.reason,
+      description: req.description,
+      images: req.images || [],
       status: req.status,
       requestedAt: req.createdAt,
       processedAt: req.processedAt,
+      proofOfPickupEvidence: req.proofOfPickupEvidence || [],
+      riderRemarks: req.riderRemarks || "",
     }));
 
     return res.status(200).json({
@@ -491,13 +497,15 @@ export const processReturnRequest = asyncHandler(
       });
     }
 
-    const returnRequest = await Return.findById(id);
+    const returnRequest = await Return.findById(id).populate("order");
     if (!returnRequest) {
       return res.status(404).json({
         success: false,
         message: "Return request not found",
       });
     }
+
+    const order = returnRequest.order as any;
 
     const updateData: any = {
       processedBy: req.user?.userId,
@@ -506,10 +514,25 @@ export const processReturnRequest = asyncHandler(
 
     if (status) updateData.status = status;
 
-    // Handle rejection reason (frontend sends 'adminNotes' for rejection reason)
-    if (status === "Rejected") {
-      if (rejectionReason) updateData.rejectionReason = rejectionReason;
-      else if (adminNotes) updateData.rejectionReason = adminNotes;
+    if (status === 'Approved') {
+      updateData.status = 'Approved';
+      updateData.wholesalerStatus = 'Approved';
+      updateData.reverseLogisticsCode = `RET-${Date.now()}`;
+      updateData.warehouseVerificationOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      
+      if (order && order.status === 'Return Under Review') {
+        order.status = 'Partially Returned';
+        await order.save();
+      }
+    } else if (status === 'Rejected') {
+      updateData.status = 'Rejected';
+      updateData.wholesalerStatus = 'Rejected';
+      updateData.rejectionReason = rejectionReason || adminNotes || 'Rejected by Admin';
+
+      if (order && (order.status === 'Return Under Review' || order.status === 'Fully Returned')) {
+        order.status = 'Delivered';
+        await order.save();
+      }
     }
 
     if (status === "Approved" && refundAmount) {
@@ -524,10 +547,49 @@ export const processReturnRequest = asyncHandler(
       .populate("orderItem")
       .populate("customer", "name email phone");
 
+    // Notify Rider and Customer
+    if (order && updatedReturn) {
+      if (updatedReturn.deliveryBoy) {
+        try {
+          await sendNotification(
+            "Delivery",
+            updatedReturn.deliveryBoy.toString(),
+            "Return Request Update",
+            `Return request for Order #${order.orderNumber} has been ${status}d.`,
+            { type: "Order", priority: "High" }
+          );
+        } catch (err) {
+          console.error("Failed to send notification to rider:", err);
+        }
+
+        try {
+          const io = getIO();
+          io.to(`delivery-${updatedReturn.deliveryBoy.toString()}`).emit("delivery-update", {
+            orderId: order._id,
+            status: order.status,
+            isVerifiedByCustomer: order.isVerifiedByCustomer,
+            riderStatusDuringInspection: "IDLE"
+          });
+        } catch (err) {
+          console.error("Failed to emit socket to rider:", err);
+        }
+      }
+
+      try {
+        const io = getIO();
+        io.to(`customer-${order.customer.toString()}`).emit("order-update", {
+          orderId: order._id,
+          status: order.status,
+          isVerifiedByCustomer: order.isVerifiedByCustomer
+        });
+      } catch (err) {
+        console.error("Failed to emit socket to customer:", err);
+      }
+    }
+
     return res.status(200).json({
       success: true,
-      message: `Return request ${status ? status.toLowerCase() : "updated"
-        } successfully`,
+      message: `Return request ${status ? status.toLowerCase() : "updated"} successfully`,
       data: updatedReturn,
     });
   }

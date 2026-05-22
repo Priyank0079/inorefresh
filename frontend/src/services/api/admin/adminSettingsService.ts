@@ -106,6 +106,7 @@ export interface AppSettings {
   };
   maintenanceMode: boolean;
   maintenanceMessage?: string;
+  inspectionDurationMinutes?: number;
   updatedBy?: string;
   createdAt?: string;
   updatedAt?: string;

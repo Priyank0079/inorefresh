@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import Return from "../../../models/Return";
-// import Order from "../../../models/Order";
 import OrderItem from "../../../models/OrderItem";
+import { sendNotification } from "../../../services/notificationService";
+import { getIO } from "../../../socket/socketService";
 
 export const getReturnRequests = asyncHandler(
   async (req: Request, res: Response) => {
@@ -25,7 +26,7 @@ export const getReturnRequests = asyncHandler(
     const returns = await Return.find(query)
       .populate({
         path: 'orderItem',
-        select: 'productName productImage quantity unitPrice total sku'
+        select: 'productName productImage quantity unitPrice total sku variation variantTitle'
       })
       .populate({
         path: 'order',
@@ -56,7 +57,17 @@ export const getReturnRequests = asyncHandler(
         status: ret.status,
         date: ret.createdAt.toISOString().split('T')[0],
         returnReason: ret.reason,
-        image: item?.productImage
+        description: ret.description,
+        images: ret.images || [],
+        image: item?.productImage,
+        variant: item?.variantTitle || item?.variation || '',
+        total: (item?.unitPrice || 0) * ret.quantity,
+        product: item?.productName || 'Unknown Product',
+        proofOfPickupEvidence: ret.proofOfPickupEvidence || [],
+        riderRemarks: ret.riderRemarks || "",
+        warehouseVerificationOtp: ret.warehouseVerificationOtp || null,
+        warehouseVerificationOtpVerified: ret.warehouseVerificationOtpVerified || false,
+        reverseLogisticsCode: ret.reverseLogisticsCode || null,
       };
     });
 
@@ -79,7 +90,7 @@ export const getReturnRequestById = asyncHandler(
     const returnRequest = await Return.findById(id)
       .populate({
         path: 'orderItem',
-        select: 'productName productImage quantity unitPrice total sku'
+        select: 'productName productImage quantity unitPrice total sku variation variantTitle'
       })
       .populate({
         path: 'order',
@@ -115,14 +126,17 @@ export const getReturnRequestById = asyncHandler(
           price: item?.unitPrice || 0,
           quantity: returnRequest.quantity, // Return quantity might differ from order item quantity? Using return quantity.
           total: (item?.unitPrice || 0) * returnRequest.quantity,
-          image: item?.productImage
+          image: item?.productImage,
+          variant: item?.variantTitle || item?.variation || ''
         }
       ],
       subtotal: (item?.unitPrice || 0) * returnRequest.quantity,
       tax: 0, // Mock for now
       total: (item?.unitPrice || 0) * returnRequest.quantity,
       reason: returnRequest.reason,
-      reasonDescription: returnRequest.description
+      reasonDescription: returnRequest.description,
+      proofOfPickupEvidence: returnRequest.proofOfPickupEvidence || [],
+      riderRemarks: returnRequest.riderRemarks || "",
     };
 
 
@@ -138,12 +152,7 @@ export const updateReturnStatus = asyncHandler(
     const { id } = req.params;
     const { status } = req.body;
 
-    const returnRequest = await Return.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    );
-
+    const returnRequest = await Return.findById(id).populate("order");
     if (!returnRequest) {
       return res.status(404).json({
         success: false,
@@ -151,9 +160,76 @@ export const updateReturnStatus = asyncHandler(
       });
     }
 
+    const order = returnRequest.order as any;
+
+    if (status === 'Approved') {
+      returnRequest.status = 'Approved';
+      returnRequest.wholesalerStatus = 'Approved';
+      returnRequest.reverseLogisticsCode = `RET-${Date.now()}`;
+      returnRequest.warehouseVerificationOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      
+      if (order && order.status === 'Return Under Review') {
+        order.status = 'Partially Returned';
+        await order.save();
+      }
+    } else if (status === 'Rejected') {
+      returnRequest.status = 'Rejected';
+      returnRequest.wholesalerStatus = 'Rejected';
+      returnRequest.rejectionReason = req.body.rejectionReason || req.body.adminNotes || 'Rejected by Wholesaler';
+
+      if (order && (order.status === 'Return Under Review' || order.status === 'Fully Returned')) {
+        order.status = 'Delivered';
+        await order.save();
+      }
+    } else {
+      returnRequest.status = status;
+    }
+
+    await returnRequest.save();
+
+    // Notify Rider and Customer
+    if (order) {
+      if (returnRequest.deliveryBoy) {
+        try {
+          await sendNotification(
+            "Delivery",
+            returnRequest.deliveryBoy.toString(),
+            "Return Request Update",
+            `Return request for Order #${order.orderNumber} has been ${status}d.`,
+            { type: "Order", priority: "High" }
+          );
+        } catch (err) {
+          console.error("Failed to send notification to rider:", err);
+        }
+
+        try {
+          const io = getIO();
+          io.to(`delivery-${returnRequest.deliveryBoy.toString()}`).emit("delivery-update", {
+            orderId: order._id,
+            status: order.status,
+            isVerifiedByCustomer: order.isVerifiedByCustomer,
+            riderStatusDuringInspection: "IDLE"
+          });
+        } catch (err) {
+          console.error("Failed to emit socket to rider:", err);
+        }
+      }
+
+      try {
+        const io = getIO();
+        io.to(`customer-${order.customer.toString()}`).emit("order-update", {
+          orderId: order._id,
+          status: order.status,
+          isVerifiedByCustomer: order.isVerifiedByCustomer
+        });
+      } catch (err) {
+        console.error("Failed to emit socket to customer:", err);
+      }
+    }
+
     return res.status(200).json({
       success: true,
-      message: "Return status updated successfully",
+      message: `Return status updated to ${status} successfully`,
       data: returnRequest
     });
   }

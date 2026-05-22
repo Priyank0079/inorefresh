@@ -328,7 +328,7 @@ const OrderSchema = new Schema<IOrder>(
     },
     riderStatusDuringInspection: {
       type: String,
-      enum: ["WAITING_FOR_RETURN_APPROVAL", "NORMAL_DELIVERY", "IDLE"],
+      enum: ["WAITING_FOR_RETURN_APPROVAL", "NORMAL_DELIVERY", "IDLE", "WAITING_FOR_CUSTOMER_VERIFICATION"],
       default: "IDLE",
     },
     isVerifiedByCustomer: {

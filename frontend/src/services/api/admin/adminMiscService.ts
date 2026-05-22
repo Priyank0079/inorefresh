@@ -35,11 +35,15 @@ export interface MiscReturnRequest {
   quantity: number;
   total: number;
   reason: string;
-  status: "Pending" | "Approved" | "Rejected" | "Refunded";
+  description?: string;
+  images?: string[];
+  status: "Pending" | "Approved" | "Rejected" | "Refunded" | "REQUESTED";
   requestedAt: string;
   processedAt?: string;
   refundAmount?: number;
   adminNotes?: string;
+  proofOfPickupEvidence?: string[];
+  riderRemarks?: string;
 }
 
 export interface HeaderCategory {

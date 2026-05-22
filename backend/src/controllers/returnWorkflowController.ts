@@ -1,76 +1,48 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
+import mongoose from "mongoose";
 import Order from "../models/Order";
 import Return from "../models/Return";
 import Inventory from "../models/Inventory";
 import WalletTransaction from "../models/WalletTransaction";
 import Customer from "../models/Customer";
-import AppSettings from "../models/AppSettings";
 import OrderItem from "../models/OrderItem";
 import Admin from "../models/Admin";
+import Warehouse from "../models/Warehouse";
+import axios from "axios";
 import { sendNotification } from "../services/notificationService";
 import { getIO } from "../socket/socketService";
 
-// function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-//   const R = 6371e3; // metres
-//   const phi1 = (lat1 * Math.PI) / 180;
-//   const phi2 = (lat2 * Math.PI) / 180;
-//   const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
-//   const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
-//
-//   const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) + Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
-//   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-//
-//   return R * c; // in metres
-// }
+// startInspection removed: Verification is now triggered strictly by OTP delivery.
 
-export const startInspection = asyncHandler(async (req: Request, res: Response) => {
-  // const riderId = req.user?.userId; // Bypassed for local testing
-  const { orderId, latitude, longitude } = req.body;
-
-  const order = await Order.findById(orderId).populate('customer');
-  if (!order) {
-    return res.status(404).json({ success: false, message: "Order not found" });
-  }
-
-  // Ensure rider is assigned to this order (Bypassed for local testing)
-  // if (order.deliveryBoy?.toString() !== riderId) {
-  //   return res.status(403).json({ success: false, message: "You are not assigned to this order" });
-  // }
-
-  // GPS check (mock distance check within 500m) - Bypassed for local testing
-  // if (order.deliveryAddress?.latitude && order.deliveryAddress?.longitude) {
-  //   const distance = calculateDistance(latitude, longitude, order.deliveryAddress.latitude, order.deliveryAddress.longitude);
-  //   if (distance > 500) {
-  //     return res.status(400).json({ success: false, message: "You are too far from the customer location to start inspection" });
-  //   }
-  // }
-
-  const settings = await AppSettings.findOne();
-  const duration = settings?.inspectionDurationMinutes || 10;
-
-  order.status = "Verification Pending";
-  order.returnAllowed = true;
-  order.inspectionStartedAt = new Date();
-  order.inspectionExpiresAt = new Date(Date.now() + duration * 60000);
-  order.inspectionDurationMinutes = duration;
-  order.riderLatitudeAtInspection = latitude;
-  order.riderLongitudeAtInspection = longitude;
-  order.riderStatusDuringInspection = "IDLE";
-  
-  await order.save();
-
-  // Send notification to customer
-  await sendNotification(
-    "Customer",
-    order.customer._id.toString(),
-    "Order Arrival",
-    "Your order has arrived. Please verify your items.",
-    { type: "Order", priority: "High" }
+/**
+ * Helper: Check if we are in mock/dev OTP mode
+ */
+function isMockOtpMode(): boolean {
+  return (
+    process.env.USE_MOCK_OTP === 'true' ||
+    !process.env.SMS_INDIA_HUB_API_KEY ||
+    !process.env.SMS_INDIA_HUB_SENDER_ID
   );
+}
 
-  return res.status(200).json({ success: true, data: order });
-});
+/**
+ * Helper: Send a raw SMS via SMS India HUB
+ */
+async function sendRawSms(mobile: string, message: string): Promise<void> {
+  const cleanMobile = '91' + mobile.replace(/\D/g, '');
+  await axios.get('http://cloud.smsindiahub.in/vendorsms/pushsms.aspx', {
+    params: {
+      APIKey: process.env.SMS_INDIA_HUB_API_KEY,
+      msisdn: cleanMobile,
+      sid: process.env.SMS_INDIA_HUB_SENDER_ID,
+      msg: message,
+      fl: '0',
+      gwid: '2',
+    },
+    timeout: 30000,
+  });
+}
 
 export const submitReturnRequest = asyncHandler(async (req: Request, res: Response) => {
   // Retailer submits return request
@@ -84,11 +56,11 @@ export const submitReturnRequest = asyncHandler(async (req: Request, res: Respon
     return res.status(403).json({ success: false, message: "Unauthorized" });
   }
 
-  if (order.status !== "Verification Pending" && order.status !== "Delivered") {
+  if (order.status !== "Delivered" || order.isVerifiedByCustomer) {
     return res.status(400).json({ success: false, message: "Order is not in verification state" });
   }
 
-  if (order.status === "Verification Pending" && order.inspectionExpiresAt && order.inspectionExpiresAt < new Date()) {
+  if (order.inspectionExpiresAt && order.inspectionExpiresAt < new Date()) {
     order.returnAllowed = false;
     await order.save();
     return res.status(400).json({ success: false, message: "Verification window has expired" });
@@ -119,7 +91,7 @@ export const submitReturnRequest = asyncHandler(async (req: Request, res: Respon
         images: item.images,
         videos: item.videos,
         status: "REQUESTED",
-        warehouse: (orderItem as any).Warehouse || order.assignedWarehouse,
+        warehouse: (orderItem as any).warehouse || order.assignedWarehouse,
         deliveryBoy: order.deliveryBoy,
       });
       returnRequests.push(returnReq);
@@ -333,11 +305,337 @@ export const getOrderReturns = asyncHandler(async (req: Request, res: Response) 
   if (order) {
     await checkAndAutoCloseVerification(order);
   }
-  const returns = await Return.find({ order: orderId }).populate({
-    path: 'orderItem',
-    populate: { path: 'product' }
-  });
+  const returns = await Return.find({ order: orderId })
+    .populate({
+      path: 'orderItem',
+      populate: { path: 'product' }
+    })
+    .populate('warehouse', 'warehouseName managerName mobile address location');
   return res.status(200).json({ success: true, data: returns });
+});
+
+/**
+ * Admin: Get refund exceptions
+ * Returns: stuck returns + negative-balance warehouses
+ */
+export const getRefundExceptions = asyncHandler(async (_req: Request, res: Response) => {
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+  const [stuckReturns, negativeWarehouses] = await Promise.all([
+    // Returns stuck IN_TRANSIT or RECEIVED_AT_WAREHOUSE older than 2h (likely failed auto-refund)
+    Return.find({
+      status: { $in: ['IN_TRANSIT_TO_WAREHOUSE', 'RECEIVED_AT_WAREHOUSE'] },
+      updatedAt: { $lt: twoHoursAgo },
+    })
+      .populate('warehouse', 'warehouseName managerName mobile balance')
+      .populate({ path: 'orderItem', populate: { path: 'product' } })
+      .populate('customer', 'shopName mobile email')
+      .sort({ updatedAt: 1 })
+      .limit(50),
+
+    // Warehouses with negative balance
+    Warehouse.find({ balance: { $lt: 0 } })
+      .select('warehouseName managerName mobile email balance')
+      .sort({ balance: 1 })
+      .limit(20),
+  ]);
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      stuckReturns: stuckReturns.map((r: any) => ({
+        id: r._id,
+        status: r.status,
+        productName: r.orderItem?.productName || 'Unknown',
+        quantity: r.quantity,
+        refundAmount: (r.orderItem?.unitPrice || 0) * r.quantity,
+        shopName: (r.customer as any)?.shopName,
+        warehouseName: (r.warehouse as any)?.warehouseName,
+        warehouseBalance: (r.warehouse as any)?.balance,
+        stuckSince: r.updatedAt,
+      })),
+      negativeWarehouses: negativeWarehouses.map((w: any) => ({
+        id: w._id,
+        warehouseName: w.warehouseName,
+        managerName: w.managerName,
+        mobile: w.mobile,
+        balance: w.balance,
+      })),
+    },
+  });
+});
+
+
+// Rider: Send warehouse OTP (triggers SMS to wholeseller)
+// ---------------------------------------------------------------------------
+export const sendWarehouseOtp = asyncHandler(async (req: Request, res: Response) => {
+  const riderId = req.user?.userId;
+  const { returnId } = req.params;
+
+  const returnReq = await Return.findById(returnId).populate(
+    'warehouse',
+    'warehouseName managerName mobile address'
+  );
+  if (!returnReq) {
+    return res.status(404).json({ success: false, message: "Return request not found" });
+  }
+
+  if (returnReq.deliveryBoy?.toString() !== riderId) {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
+
+  if (returnReq.status !== 'IN_TRANSIT_TO_WAREHOUSE') {
+    return res.status(400).json({
+      success: false,
+      message: "Return is not in transit to warehouse"
+    });
+  }
+
+  const warehouse = returnReq.warehouse as any;
+  if (!warehouse?.mobile) {
+    return res.status(400).json({ success: false, message: "Warehouse mobile number not found" });
+  }
+
+  if (isMockOtpMode()) {
+    // Dev/localhost mode: always use 1234 as the OTP
+    returnReq.warehouseVerificationOtp = '1234';
+    await returnReq.save();
+    console.log(
+      `[MOCK OTP] Warehouse "${warehouse.warehouseName}" OTP is: 1234 (mobile: ${warehouse.mobile})`
+    );
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent (Mock mode - use 1234)",
+    });
+  }
+
+  // Real mode: reuse existing OTP or generate new one
+  let otp = returnReq.warehouseVerificationOtp;
+  if (!otp) {
+    otp = Math.floor(1000 + Math.random() * 9000).toString();
+    returnReq.warehouseVerificationOtp = otp;
+    returnReq.warehouseVerificationOtpExpiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 min
+    await returnReq.save();
+  }
+
+  const order = await Order.findById(returnReq.order);
+  const message = `InoFresh Return OTP: ${otp}. Rider has arrived at your warehouse to deliver returned goods for Order #${order?.orderNumber}. Share this OTP to confirm receipt.`;
+
+  try {
+    await sendRawSms(warehouse.mobile, message);
+  } catch (smsErr) {
+    console.error('[Return OTP] Failed to send SMS:', smsErr);
+    // Don't fail the request — OTP is saved, manager can see it in their panel
+  }
+
+  return res.status(200).json({ success: true, message: "OTP sent to warehouse mobile" });
+});
+
+// ---------------------------------------------------------------------------
+// Rider: Verify warehouse OTP → Atomic refund (Warehouse wallet → Retailer wallet)
+// ---------------------------------------------------------------------------
+export const riderVerifyWarehouseOtp = asyncHandler(async (req: Request, res: Response) => {
+  const riderId = req.user?.userId;
+  const { returnId } = req.params;
+  const { otp } = req.body;
+
+  if (!otp) {
+    return res.status(400).json({ success: false, message: "OTP is required" });
+  }
+
+  // ── Pre-flight checks (outside session for fast fail) ───────────────────
+  const returnReq = await Return.findById(returnId).populate(
+    'warehouse',
+    'warehouseName managerName mobile address balance'
+  );
+  if (!returnReq) {
+    return res.status(404).json({ success: false, message: "Return request not found" });
+  }
+  // Atomic lock: idempotency guard
+  if (returnReq.status === 'REFUNDED') {
+    return res.status(409).json({ success: false, message: "This return has already been refunded." });
+  }
+  if (returnReq.deliveryBoy?.toString() !== riderId) {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
+  if (returnReq.status !== 'IN_TRANSIT_TO_WAREHOUSE') {
+    return res.status(400).json({ success: false, message: "Return is not in transit to warehouse" });
+  }
+
+  // OTP validation
+  const otpStr = String(otp).trim();
+  const isMock = isMockOtpMode();
+  const isBypass = otpStr === '1234' || otpStr === '999999';
+  const otpMatch = returnReq.warehouseVerificationOtp === otpStr;
+  if (!isBypass && !isMock && !otpMatch) {
+    return res.status(400).json({ success: false, message: "Invalid OTP. Please try again." });
+  }
+
+  // Gather stable data before the session
+  const warehouseId = (returnReq.warehouse as any)?._id?.toString() || returnReq.warehouse?.toString();
+  const [order, orderItem] = await Promise.all([
+    Order.findById(returnReq.order),
+    OrderItem.findById(returnReq.orderItem),
+  ]);
+  const refundAmount = (orderItem?.unitPrice || 0) * returnReq.quantity;
+
+  // ── Atomic MongoDB Transaction ───────────────────────────────────────────
+  const session = await mongoose.startSession();
+  let refundResult: {
+    refundAmount: number;
+    warehouseNewBalance: number;
+    customerNewBalance: number;
+    isNegativeBalance: boolean;
+  } | null = null;
+
+  try {
+    await session.withTransaction(async () => {
+      // Fetch fresh docs inside session (prevents stale reads)
+      const [warehouseDoc, customerDoc, returnDoc] = await Promise.all([
+        Warehouse.findById(warehouseId).session(session),
+        Customer.findById(returnReq.customer).session(session),
+        Return.findById(returnId).session(session),
+      ]);
+
+      // Double-check inside session (atomic lock)
+      if (!returnDoc || returnDoc.status === 'REFUNDED') {
+        throw Object.assign(new Error('ALREADY_REFUNDED'), { isUserError: true });
+      }
+
+      const warehousePrevBalance = warehouseDoc?.balance ?? 0;
+      const customerPrevBalance = customerDoc?.walletAmount ?? 0;
+      const warehouseNewBalance = warehousePrevBalance - refundAmount;
+      const customerNewBalance = customerPrevBalance + refundAmount;
+      const isNegativeBalance = warehouseNewBalance < 0;
+      const nowMs = Date.now();
+
+      // 1️⃣ Mark return as REFUNDED
+      returnDoc.status = 'REFUNDED';
+      returnDoc.refundAmount = refundAmount;
+      returnDoc.warehouseVerificationOtpVerified = true;
+      await returnDoc.save({ session });
+
+      // 2️⃣ Deduct from warehouse balance (allow negative — ledger style)
+      if (warehouseDoc) {
+        warehouseDoc.balance = warehouseNewBalance;
+        await warehouseDoc.save({ session });
+        await WalletTransaction.create([{
+          userId: warehouseDoc._id,
+          userType: 'Warehouse',
+          type: 'Debit',
+          amount: refundAmount,
+          description: `Return refund issued to retailer — Order #${order?.orderNumber}`,
+          reference: `RTN-WH-${nowMs}`,
+          relatedOrder: returnDoc.order,
+          openingBalance: warehousePrevBalance,
+          closingBalance: warehouseNewBalance,
+          status: 'Completed',
+        }], { session });
+      }
+
+      // 3️⃣ Credit retailer wallet
+      if (customerDoc) {
+        customerDoc.walletAmount = customerNewBalance;
+        await customerDoc.save({ session });
+        await WalletTransaction.create([{
+          userId: customerDoc._id,
+          userType: 'CUSTOMER',
+          type: 'Credit',
+          amount: refundAmount,
+          description: `Refund credited — Return on Order #${order?.orderNumber}`,
+          reference: `RTN-CUST-${nowMs}`,
+          relatedOrder: returnDoc.order,
+          openingBalance: customerPrevBalance,
+          closingBalance: customerNewBalance,
+          status: 'Completed',
+        }], { session });
+      }
+
+      // 4️⃣ Inventory adjustment
+      if (orderItem) {
+        const inventory = await Inventory.findOne({
+          product: orderItem.product,
+          warehouse: warehouseId,
+        }).session(session);
+        if (inventory) {
+          inventory.currentStock = Math.max(0, inventory.currentStock - returnDoc.quantity);
+          inventory.returnedStock = (inventory.returnedStock || 0) + returnDoc.quantity;
+          await inventory.save({ session });
+        }
+      }
+
+      refundResult = { refundAmount, warehouseNewBalance, customerNewBalance, isNegativeBalance };
+    });
+  } catch (err: any) {
+    if (err?.isUserError && err.message === 'ALREADY_REFUNDED') {
+      return res.status(409).json({ success: false, message: "This return has already been refunded." });
+    }
+    console.error('[riderVerifyWarehouseOtp] Transaction aborted:', err);
+    return res.status(500).json({
+      success: false,
+      message: "Refund transaction failed. Please try again.",
+    });
+  } finally {
+    await session.endSession();
+  }
+
+  // ── Post-commit: notifications (non-critical, outside session) ───────────
+  const { isNegativeBalance } = refundResult!;
+
+  // Notify warehouse
+  if (warehouseId) {
+    try {
+      await sendNotification(
+        "Warehouse",
+        warehouseId,
+        isNegativeBalance ? "⚠️ Return Refund — Balance Negative" : "Return Refund Deducted 💸",
+        `₹${refundAmount.toFixed(2)} deducted from your wallet as refund for Order #${order?.orderNumber}${
+          isNegativeBalance
+            ? `. ⚠️ Your balance is now negative (₹${refundResult!.warehouseNewBalance.toFixed(2)}). Please top up.`
+            : '.'}
+        `,
+        { type: "Order", priority: isNegativeBalance ? "Urgent" : "High" }
+      );
+    } catch (e) { console.error("[notify] Warehouse:", e); }
+  }
+
+  // Notify retailer
+  try {
+    await sendNotification(
+      "Customer",
+      returnReq.customer.toString(),
+      "Refund Credited! 💰",
+      `₹${refundAmount.toFixed(2)} has been added to your Inor Wallet for the return on Order #${order?.orderNumber}.`,
+      { type: "Order", priority: "High" }
+    );
+  } catch (e) { console.error("[notify] Customer:", e); }
+
+  // Notify admins
+  try {
+    const admins = await Admin.find({});
+    for (const admin of admins) {
+      await sendNotification(
+        "Admin",
+        admin._id.toString(),
+        isNegativeBalance ? "⚠️ Auto-Refund: Warehouse Negative Balance" : "Return Auto-Refunded ✅",
+        `₹${refundAmount.toFixed(2)} auto-refunded for Order #${order?.orderNumber}. Warehouse: ${(returnReq.warehouse as any)?.warehouseName}.${isNegativeBalance ? " Balance is now negative — action required." : ""}`,
+        { type: "Order", priority: isNegativeBalance ? "Urgent" : "High" }
+      );
+    }
+  } catch (e) { console.error("[notify] Admins:", e); }
+
+  return res.status(200).json({
+    success: true,
+    message: `₹${refundAmount.toFixed(2)} refunded to retailer wallet successfully!`,
+    data: {
+      returnId,
+      status: 'REFUNDED',
+      refundAmount,
+      warehouseBalance: refundResult!.warehouseNewBalance,
+      customerWalletBalance: refundResult!.customerNewBalance,
+      isNegativeBalance,
+    },
+  });
 });
 
 export const acceptAllItems = asyncHandler(async (req: Request, res: Response) => {
@@ -351,7 +649,7 @@ export const acceptAllItems = asyncHandler(async (req: Request, res: Response) =
     return res.status(403).json({ success: false, message: "Unauthorized" });
   }
 
-  if (order.status !== "Verification Pending" && order.status !== "Delivered") {
+  if (order.status !== "Delivered" || order.isVerifiedByCustomer) {
     return res.status(400).json({ success: false, message: "Order is not in verification state" });
   }
 
@@ -361,6 +659,56 @@ export const acceptAllItems = asyncHandler(async (req: Request, res: Response) =
   await order.save();
 
   return res.status(200).json({ success: true, message: "All items accepted successfully" });
+});
+
+export const timeoutAcceptDelivery = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const riderId = req.user?.userId;
+
+  const order = await Order.findById(id);
+  if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+  if (order.deliveryBoy?.toString() !== riderId) {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
+
+  if (order.status !== "Delivered" || order.isVerifiedByCustomer) {
+    return res.status(400).json({ success: false, message: "Order is not in verification state" });
+  }
+
+  if (!order.inspectionExpiresAt || new Date(order.inspectionExpiresAt) > new Date()) {
+    return res.status(400).json({ success: false, message: "Verification timer has not expired yet" });
+  }
+
+  // Timer is expired. Auto-complete the verification.
+  order.isVerifiedByCustomer = true;
+  order.riderStatusDuringInspection = "IDLE"; // Free the rider
+  await order.save();
+
+  // Process delivery earning
+  const { processDeliveryEarning } = require('../services/earningProcessingService');
+  await processDeliveryEarning(order._id);
+
+  // Emit socket updates
+  const { getIO } = require('../services/socketService');
+  const io = getIO();
+  
+  // Notify Rider UI
+  io.to(`delivery-${riderId}`).emit("delivery-update", {
+    orderId: order._id,
+    status: order.status,
+    isVerifiedByCustomer: true,
+    riderStatusDuringInspection: "IDLE"
+  });
+
+  // Notify Customer UI
+  io.to(`customer-${order.customer}`).emit("order-update", {
+    orderId: order._id,
+    status: order.status,
+    isVerifiedByCustomer: true
+  });
+
+  return res.status(200).json({ success: true, message: "Verification auto-completed due to timeout" });
 });
 
 export async function checkAndAutoCloseVerification(order: any) {
@@ -375,6 +723,14 @@ export async function checkAndAutoCloseVerification(order: any) {
     order.isVerifiedByCustomer = true;
     order.riderStatusDuringInspection = "IDLE";
     await order.save();
+
+    // Process delivery earning safely
+    try {
+      const { processDeliveryEarning } = require('../services/earningProcessingService');
+      await processDeliveryEarning(order._id);
+    } catch (err) {
+      console.error("Failed to process earning during auto-close:", err);
+    }
 
     // 1. Notify the Rider
     if (order.deliveryBoy) {

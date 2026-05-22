@@ -72,7 +72,13 @@ export default function DeliveryOrders() {
             {orders.map((order) => (
               <div
                 key={order.id}
-                onClick={() => navigate(`/delivery/orders/${order.id}`)}
+                onClick={() => {
+                  if (['Returned', 'Partially Returned', 'Fully Returned'].includes(order.status)) {
+                    navigate(`/delivery/orders/${order.id}/inspection`);
+                  } else {
+                    navigate(`/delivery/orders/${order.id}`);
+                  }
+                }}
                 className="bg-white rounded-xl p-4 shadow-sm border border-neutral-200 cursor-pointer active:scale-[0.99] transition-all hover:shadow-md"
               >
                 <div className="flex items-start justify-between mb-3">

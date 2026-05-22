@@ -128,6 +128,12 @@ export default function DeliveryOrderDetail() {
             if (isOtpSent) {
                 setShowOtpInput(true);
             }
+
+            // Automatic redirection for returned orders
+            if (['Returned', 'Partially Returned', 'Fully Returned'].includes(data.status)) {
+                navigate(`/delivery/orders/${id}/inspection`, { replace: true });
+                return;
+            }
         } catch (err: any) {
             setError(err.message || 'Failed to load order details');
         } finally {
@@ -1041,8 +1047,7 @@ export default function DeliveryOrderDetail() {
             )}
 
             {/* Start Order Verification Button */}
-            {((order.status === 'Out for Delivery' || order.status === 'On the way') || 
-              (order.status === 'Delivered' && !order.isVerifiedByCustomer) || 
+            {((order.status === 'Delivered' && !order.isVerifiedByCustomer) || 
               (order.status === 'Partially Returned' || order.status === 'Fully Returned')) && order.deliveryBoy && (
                 <div
                     className="fixed left-6 right-6 z-40"

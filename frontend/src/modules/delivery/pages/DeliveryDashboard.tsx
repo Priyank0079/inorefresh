@@ -507,7 +507,13 @@ export default function DeliveryDashboard() {
                 <div
                   key={order.id}
                   className="bg-white rounded-xl p-4 shadow-md border-2 border-teal-100 cursor-pointer active:scale-[0.98] transition-all"
-                  onClick={() => navigate(`/delivery/orders/${order.id}`)}>
+                  onClick={() => {
+                    if (['Returned', 'Partially Returned', 'Fully Returned'].includes(order.status)) {
+                      navigate(`/delivery/orders/${order.id}/inspection`);
+                    } else {
+                      navigate(`/delivery/orders/${order.id}`);
+                    }
+                  }}>
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <p className="text-neutral-900 font-bold text-sm">
@@ -563,7 +569,13 @@ export default function DeliveryDashboard() {
                 <div
                   key={order.id}
                   className="bg-white rounded-xl p-4 shadow-sm border border-neutral-200 cursor-pointer"
-                  onClick={() => navigate(`/delivery/orders/${order.id}`)}>
+                  onClick={() => {
+                    if (['Returned', 'Partially Returned', 'Fully Returned'].includes(order.status)) {
+                      navigate(`/delivery/orders/${order.id}/inspection`);
+                    } else {
+                      navigate(`/delivery/orders/${order.id}`);
+                    }
+                  }}>
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <p className="text-neutral-900 font-semibold text-sm">

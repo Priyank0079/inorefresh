@@ -343,71 +343,7 @@ const PromoCarousel = () => {
   );
 };
 
-// Tip selection component
-const TipSection = () => {
-  const [selectedTip, setSelectedTip] = useState<number | "other" | null>(null);
-  const [customTip, setCustomTip] = useState("");
-  const tips = [20, 30, 50];
 
-  return (
-    <motion.div
-      className="bg-white rounded-xl p-4 shadow-sm"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5 }}>
-      <p className="text-gray-700 text-sm mb-3">
-        Make their day by leaving a tip. 100% of the amount will go to them
-        after delivery
-      </p>
-      <div className="flex gap-3">
-        {tips.map((tip) => (
-          <motion.button
-            key={tip}
-            onClick={() => {
-              setSelectedTip(tip);
-              setCustomTip("");
-            }}
-            className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-all ${selectedTip === tip
-              ? "border-green-600 bg-green-50 text-green-700"
-              : "border-gray-200 text-gray-700 hover:border-gray-300"
-              }`}
-            whileTap={{ scale: 0.95 }}>
-            ₹{tip}
-          </motion.button>
-        ))}
-        <motion.button
-          onClick={() => {
-            setSelectedTip("other");
-          }}
-          className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-all ${selectedTip === "other"
-            ? "border-green-600 bg-green-50 text-green-700"
-            : "border-gray-200 text-gray-700 hover:border-gray-300"
-            }`}
-          whileTap={{ scale: 0.95 }}>
-          Other
-        </motion.button>
-      </div>
-
-      <AnimatePresence>
-        {selectedTip === "other" && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden">
-            <input
-              type="number"
-              placeholder="Enter custom amount"
-              value={customTip}
-              onChange={(e) => setCustomTip(e.target.value)}
-              className="mt-3 w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-};
 
 // Section item component
 const SectionItem = ({
@@ -494,6 +430,8 @@ export default function OrderDetail() {
   // Seller locations for the order
   const [sellerLocations, setSellerLocations] = useState<any[]>([]);
   const [loadingSellerLocations, setLoadingSellerLocations] = useState(false);
+  const [returns, setReturns] = useState<any[]>([]);
+  const [loadingReturns, setLoadingReturns] = useState(false);
   const [acceptingAll, setAcceptingAll] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [showAcceptAllConfirm, setShowAcceptAllConfirm] = useState(false);
@@ -647,6 +585,28 @@ export default function OrderDetail() {
     }
   }, [socketOrderStatus, orderStatus, id, fetchOrderById]);
 
+  // Fetch returns when order is in a return status
+  useEffect(() => {
+    const fetchOrderReturns = async () => {
+      if (!id) return;
+      if (['Partially Returned', 'Fully Returned', 'Return Under Review', 'Returned'].includes(orderStatus)) {
+        try {
+          setLoadingReturns(true);
+          const res = await api.get(`/returns/workflow/order/${id}`);
+          if (res.data.success) {
+            setReturns(res.data.data || []);
+          }
+        } catch (error) {
+          console.error("Failed to load return requests:", error);
+        } finally {
+          setLoadingReturns(false);
+        }
+      }
+    };
+
+    fetchOrderReturns();
+  }, [id, orderStatus]);
+
   // Simulate order status progression
   useEffect(() => {
     if (confirmed && order) {
@@ -676,6 +636,16 @@ export default function OrderDetail() {
     if (fetchedOrder) {
       setOrder(fetchedOrder);
       setOrderStatus(fetchedOrder.status);
+    }
+    if (['Partially Returned', 'Fully Returned', 'Return Under Review', 'Returned'].includes(fetchedOrder?.status || orderStatus)) {
+      try {
+        const res = await api.get(`/returns/workflow/order/${id}`);
+        if (res.data.success) {
+          setReturns(res.data.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to refresh returns:", err);
+      }
     }
     // Add a small delay for the animation
     setTimeout(() => setIsRefreshing(false), 500);
@@ -965,49 +935,62 @@ export default function OrderDetail() {
       </motion.div>
 
       {/* Verification Pending Banner — urgent CTA for retailer */}
-      {((orderStatus === "Verification Pending") || (orderStatus === "Delivered" && !order?.isVerifiedByCustomer)) && (
+      {(orderStatus === "Delivered" && !order?.isVerifiedByCustomer) && (
         <div className="mx-4 my-4 bg-gradient-to-br from-orange-500 via-red-500 to-rose-600 text-white p-5 rounded-2xl shadow-lg border border-orange-400/20 relative z-30">
           <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xl">🚨</span>
-                <p className="font-bold text-lg md:text-xl">Rider is present at your location!</p>
-                {timeLeft > 0 && (
+                <p className="font-bold text-lg md:text-xl">
+                  {!order?.inspectionExpiresAt 
+                    ? "Rider has arrived!" 
+                    : (timeLeft > 0 ? "Rider is present at your location!" : "Verification Time Expired!")}
+                </p>
+                {order?.inspectionExpiresAt && timeLeft > 0 && (
                   <span className="ml-2 px-3 py-1 bg-white/20 text-white font-mono text-sm font-bold rounded-full animate-pulse flex items-center gap-1.5 border border-white/10">
                     ⏱️ {formatTime(timeLeft)}
                   </span>
                 )}
               </div>
-              <p className="text-sm opacity-95 font-medium">Please verify your items before the rider leaves.</p>
-              <p className="text-xs opacity-80">Note: Returns cannot be requested after completing verification.</p>
+              <p className="text-sm opacity-95 font-medium">
+                {!order?.inspectionExpiresAt 
+                  ? "Waiting for the rider to start the verification process."
+                  : (timeLeft > 0 
+                    ? "Please verify your items before the rider leaves." 
+                    : "The verification window has closed. The order is automatically being accepted.")}
+              </p>
+              {order?.inspectionExpiresAt && timeLeft > 0 && <p className="text-xs opacity-80">Note: Returns cannot be requested after completing verification.</p>}
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mt-2 md:mt-0">
-              <button
-                onClick={handleAcceptAll}
-                disabled={acceptingAll}
-                className="w-full sm:w-auto px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 border border-emerald-500/30"
-              >
-                {acceptingAll ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <span>✅</span> Accept All (No Returns)
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => navigate(`/orders/${id}/inspection`)}
-                className="w-full sm:w-auto px-5 py-3 bg-white text-orange-700 font-bold rounded-xl text-sm shadow-md hover:bg-orange-50 hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5"
-              >
-                <span>🔍</span> Return / Verify Items →
-              </button>
-            </div>
+            
+            {order?.inspectionExpiresAt && timeLeft > 0 && (
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mt-2 md:mt-0">
+                <button
+                  onClick={handleAcceptAll}
+                  disabled={acceptingAll}
+                  className="w-full sm:w-auto px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 border border-emerald-500/30"
+                >
+                  {acceptingAll ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <span>✅</span> Accept All (No Returns)
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => navigate(`/orders/${id}/inspection`)}
+                  className="w-full sm:w-auto px-5 py-3 bg-white text-orange-700 font-bold rounded-xl text-sm shadow-md hover:bg-orange-50 hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <span>🔍</span> Return / Verify Items →
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1027,7 +1010,7 @@ export default function OrderDetail() {
       )}
 
       {/* Map Section */}
-      {!showConfirmation && !['Delivered', 'Cancelled', 'Returned'].includes(order?.status) && (
+      {!showConfirmation && !['Delivered', 'Cancelled', 'Returned', 'Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
         <GoogleMapsTracking
           sellerLocations={sellerLocations.map(s => ({
             lat: s.latitude,
@@ -1043,9 +1026,7 @@ export default function OrderDetail() {
           showRoute={
             isConnected &&
             !!deliveryLocation &&
-            order?.status !== 'Delivered' &&
-            order?.status !== 'Cancelled' &&
-            order?.status !== 'Returned'
+            !['Delivered', 'Cancelled', 'Returned', 'Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus)
           }
           routeOrigin={deliveryLocation || undefined}
           routeDestination={{
@@ -1053,7 +1034,7 @@ export default function OrderDetail() {
             lng: order?.deliveryAddress?.longitude || order?.address?.longitude || 0,
           }}
           routeWaypoints={
-            order?.status === 'Picked up' || order?.status === 'Out for Delivery'
+            orderStatus === 'Picked up' || orderStatus === 'Out for Delivery'
               ? []
               : sellerLocations.map(s => ({
                 lat: s.latitude,
@@ -1061,7 +1042,7 @@ export default function OrderDetail() {
               }))
           }
           destinationName={
-            order?.status === 'Picked up' || order?.status === 'Out for Delivery'
+            orderStatus === 'Picked up' || orderStatus === 'Out for Delivery'
               ? order?.deliveryAddress?.address?.split(',')[0] || order?.address?.split(',')[0] || "Delivery Address"
               : sellerLocations.length > 0
                 ? "Sellers & Delivery Address"
@@ -1081,7 +1062,7 @@ export default function OrderDetail() {
       )}
 
       {/* Delivery Partner Card */}
-      {(order?.deliveryPartner || order?.deliveryOtp) && (
+      {(order?.deliveryPartner || order?.deliveryOtp) && !['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
         <DeliveryPartnerCard
           partner={{
             name: order?.deliveryPartner?.name || "Delivery Partner",
@@ -1093,7 +1074,7 @@ export default function OrderDetail() {
           distance={routeInfo ? routeInfo.distanceValue : distance}
           isTracking={isConnected && !!deliveryLocation}
           deliveryOtp={
-            !['Delivered', 'Cancelled', 'Returned', 'Rejected', 'Partially Returned', 'Fully Returned', 'Return Under Review'].includes(order?.status || '')
+            !['Delivered', 'Cancelled', 'Returned', 'Rejected', 'Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus)
               ? order?.deliveryOtp
               : undefined
           }
@@ -1106,32 +1087,291 @@ export default function OrderDetail() {
 
       {/* Scrollable Content */}
       <div className="px-4 py-4 space-y-4 pb-24">
-        {/* Payment Pending */}
-        <motion.div
-          className="bg-white rounded-xl p-4 shadow-sm"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-gray-900">
-                Payment of ₹{order.totalAmount?.toFixed(0) || "0"} pending
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                Pay now, or pay to the delivery partner using Cash/UPI
-              </p>
+        {/* Return Status Dashboard */}
+        {['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
+          <motion.div
+            className="space-y-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            {/* Main Status Card */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-2xl flex-shrink-0 animate-pulse">
+                  🔄
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-bold text-gray-900 leading-tight">
+                    {orderStatus === 'Return Under Review' ? 'Return Under Wholesaler Review' : 'Return Request Processed'}
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {orderStatus === 'Return Under Review' 
+                      ? 'Our wholesaler is reviewing your verification & return details. Please keep items ready.'
+                      : 'Wholesaler has processed the return details. See status breakdown below.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Steps Indicator / Stepper */}
+              <div className="mt-6 pt-5 border-t border-dashed border-gray-100">
+                <div className="grid grid-cols-4 gap-2 relative">
+                  {/* Progress Line */}
+                  <div className="absolute top-4 left-[12%] right-[12%] h-0.5 bg-gray-100 -z-10" />
+                  
+                  {/* Step 1 */}
+                  <div className="text-center flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shadow-md shadow-emerald-100">
+                      ✓
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-600 mt-2">Submitted</span>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="text-center flex flex-col items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${
+                      orderStatus === 'Return Under Review'
+                        ? 'bg-blue-600 text-white animate-pulse'
+                        : 'bg-emerald-600 text-white'
+                    }`}>
+                      {orderStatus === 'Return Under Review' ? '2' : '✓'}
+                    </div>
+                    <span className={`text-[10px] font-bold mt-2 ${
+                      orderStatus === 'Return Under Review' ? 'text-blue-600' : 'text-emerald-600'
+                    }`}>Review</span>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="text-center flex flex-col items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${
+                      orderStatus === 'Return Under Review'
+                        ? 'bg-gray-100 text-gray-400'
+                        : (returns.some(r => ['COLLECTED_BY_RIDER', 'IN_TRANSIT_TO_WAREHOUSE', 'RECEIVED_AT_WAREHOUSE'].includes(r.status)) ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white animate-pulse')
+                    }`}>
+                      {returns.some(r => ['COLLECTED_BY_RIDER', 'IN_TRANSIT_TO_WAREHOUSE', 'RECEIVED_AT_WAREHOUSE', 'REFUNDED'].includes(r.status)) ? '✓' : '3'}
+                    </div>
+                    <span className={`text-[10px] font-bold mt-2 ${
+                      returns.some(r => ['COLLECTED_BY_RIDER', 'IN_TRANSIT_TO_WAREHOUSE', 'RECEIVED_AT_WAREHOUSE', 'REFUNDED'].includes(r.status)) ? 'text-emerald-600' : 'text-gray-400'
+                    }`}>Pickup</span>
+                  </div>
+
+                  {/* Step 4 */}
+                  <div className="text-center flex flex-col items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${
+                      returns.length > 0 && returns.every(r => r.status === 'REFUNDED')
+                        ? 'bg-emerald-600 text-white shadow-emerald-100 shadow-md'
+                        : 'bg-gray-100 text-gray-400'
+                    }`}>
+                      {returns.length > 0 && returns.every(r => r.status === 'REFUNDED') ? '✓' : '4'}
+                    </div>
+                    <span className={`text-[10px] font-bold mt-2 ${
+                      returns.length > 0 && returns.every(r => r.status === 'REFUNDED') ? 'text-emerald-600' : 'text-gray-400'
+                    }`}>Refunded</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <Button className="bg-gray-900 hover:bg-gray-800 text-white rounded-full px-6">
-              Pay now <ChevronRightIcon className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-        </motion.div>
+
+            {/* Critical Rules Notice Card */}
+            <div className="bg-gradient-to-br from-[#1FA9C6] to-[#128aa2] text-white rounded-2xl p-5 shadow-lg border border-[#48c9e5]/30 space-y-4">
+              <div className="flex items-center gap-2 border-b border-white/20 pb-3">
+                <span className="text-xl">⚠️</span>
+                <h4 className="font-extrabold text-sm uppercase tracking-wider text-amber-200">Important Return Guidelines</h4>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-3">
+                {/* Rule 1: Approved */}
+                <div className="bg-white/10 rounded-xl p-3.5 border border-white/20 hover:border-emerald-300/40 transition-colors">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
+                    <p className="font-bold text-emerald-200 text-xs uppercase tracking-wide">If Approved (Warehouse Approve)</p>
+                  </div>
+                  <p className="text-xs text-white/90 leading-relaxed font-medium">
+                    If the warehouse <strong className="text-white font-bold">approves</strong> the return request, please <strong className="text-emerald-200 font-bold">hand over the item immediately</strong> to the waiting rider.
+                  </p>
+                </div>
+
+                {/* Rule 2: Rejected */}
+                <div className="bg-white/10 rounded-xl p-3.5 border border-white/20 hover:border-rose-300/40 transition-colors">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.6)]" />
+                    <p className="font-bold text-rose-200 text-xs uppercase tracking-wide">If Rejected (Rejected Request)</p>
+                  </div>
+                  <p className="text-xs text-white/90 leading-relaxed font-medium">
+                    If the warehouse <strong className="text-white font-bold">rejects</strong> the return request, <strong className="text-rose-200 font-bold">no refund amount</strong> will be credited to your wallet for that item.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Returning Items Checklist */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Return Items & Review Status</h4>
+              
+              {loadingReturns ? (
+                <div className="bg-white rounded-2xl p-8 border border-gray-100 text-center text-sm text-gray-500">
+                  <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2" />
+                  Loading item review status...
+                </div>
+              ) : returns.length === 0 ? (
+                <div className="bg-white rounded-2xl p-6 border border-gray-100 text-center text-sm text-gray-500">
+                  No return items details found.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {returns.map((ret: any) => {
+                    const statusConfig: Record<string, { label: string; color: string; icon: string }> = {
+                      REQUESTED: { label: "Awaiting Wholesaler Approval", color: "bg-amber-50 text-amber-700 border-amber-200", icon: "⏳" },
+                      UNDER_REVIEW: { label: "Under Verification Review", color: "bg-blue-50 text-blue-700 border-blue-200", icon: "🔍" },
+                      Approved: { label: "Approved - Handover to Rider", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: "✅" },
+                      Rejected: { label: "Rejected - No Refund Issued", color: "bg-rose-50 text-rose-700 border-rose-200", icon: "❌" },
+                      COLLECTED_BY_RIDER: { label: "Collected by Rider", color: "bg-teal-50 text-teal-700 border-teal-200", icon: "🏍️" },
+                      IN_TRANSIT_TO_WAREHOUSE: { label: "In Transit to Warehouse", color: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: "🚚" },
+                      RECEIVED_AT_WAREHOUSE: { label: "Received at Warehouse", color: "bg-cyan-50 text-cyan-700 border-cyan-200", icon: "🏢" },
+                      REFUNDED: { label: "Refunded to Wallet", color: "bg-emerald-500 text-white border-emerald-600 shadow-sm", icon: "💰" }
+                    };
+
+                    const currentItemStatus = statusConfig[ret.status] || { label: ret.status, color: "bg-gray-50 text-gray-700 border-gray-200", icon: "📦" };
+
+                    return (
+                      <div key={ret._id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs space-y-4">
+                        {/* Item Info Header */}
+                        <div className="flex gap-3 items-start border-b border-gray-50 pb-3">
+                          <div className="w-14 h-14 bg-gray-50 border rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0">
+                            {ret.orderItem?.product?.mainImage ? (
+                              <img src={ret.orderItem.product.mainImage} alt="product" className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-xl">🐟</span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h5 className="font-semibold text-gray-900 text-sm truncate">
+                              {ret.orderItem?.product?.productName || ret.orderItem?.productName || "Product"}
+                            </h5>
+                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 flex-wrap">
+                              <span>Ordered: <strong>{ret.orderedQuantity} qty</strong></span>
+                              <span>Accepted: <strong className="text-green-600">{ret.acceptedQuantity} qty</strong></span>
+                              <span>Returning: <strong className="text-red-500">{ret.quantity} qty</strong></span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Reason / Description Details */}
+                        <div className="text-xs space-y-1.5 bg-gray-50/50 p-2.5 rounded-xl border border-gray-100">
+                          <p className="font-semibold text-gray-700">Reason for Return:</p>
+                          <p className="text-gray-600 font-medium">
+                            {ret.reason} {ret.description ? `— "${ret.description}"` : ""}
+                          </p>
+                        </div>
+
+                        {/* Retailer Photo Proofs */}
+                        {ret.images && ret.images.length > 0 && (
+                          <div className="space-y-1.5">
+                            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Uploaded Proof Photos:</p>
+                            <div className="flex gap-2 flex-wrap">
+                              {ret.images.map((img: string, idx: number) => (
+                                <a
+                                  key={idx}
+                                  href={img}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="w-12 h-12 rounded-lg border overflow-hidden hover:opacity-90 transition-opacity flex-shrink-0"
+                                >
+                                  <img src={img} alt="proof-thumbnail" className="w-full h-full object-cover" />
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Item Approval/Rejection Action Status Badge */}
+                        <div className="pt-2 border-t border-gray-50 flex flex-col gap-2">
+                          <div className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold ${currentItemStatus.color}`}>
+                            <span className="text-base">{currentItemStatus.icon}</span>
+                            <span className="flex-1">{currentItemStatus.label}</span>
+                          </div>
+
+                          {/* Approved Instructions */}
+                          {ret.status === 'Approved' && (
+                            <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3 text-[11px] text-emerald-800 leading-relaxed font-semibold">
+                              👉 <strong>Handover to Rider</strong>: Warehouse has approved this item return request. Please handover the item to the rider immediately. Rider will scan and verify collection.
+                            </div>
+                          )}
+
+                          {/* Rejection Details */}
+                          {ret.status === 'Rejected' && (
+                            <div className="bg-rose-50/50 border border-rose-100 rounded-xl p-3 text-[11px] text-rose-800 leading-relaxed font-semibold space-y-1">
+                              <div>❌ <strong>Return request was rejected.</strong></div>
+                              {ret.rejectionReason && (
+                                <div className="text-rose-700 bg-white/60 p-2 rounded-lg mt-1 font-medium border border-rose-100/50">
+                                  <strong>Wholesaler Remarks</strong>: "{ret.rejectionReason}"
+                                </div>
+                              )}
+                              <div className="mt-1 font-bold text-rose-900 bg-rose-100/30 px-2 py-0.5 rounded inline-block">
+                                Note: No refund amount will be credited to your wallet for this item.
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Refund Confirmation Card */}
+                          {ret.status === 'REFUNDED' && (
+                            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-3.5 space-y-2">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                                  <span className="text-lg">💰</span>
+                                </div>
+                                <div>
+                                  <p className="text-[11px] font-bold text-emerald-900 uppercase tracking-wide">Refund Credited to Wallet!</p>
+                                  <p className="text-xl font-black text-emerald-600 leading-tight">
+                                    ₹{(ret.refundAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                  </p>
+                                </div>
+                              </div>
+                              <p className="text-[11px] text-emerald-700 font-medium leading-relaxed pl-0.5">
+                                This amount has been added to your <strong>Inor Wallet</strong>. You can use it on your next order above ₹10,000.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Payment Pending */}
+        {orderStatus !== 'Cancelled' && !['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
+          <motion.div
+            className="bg-white rounded-xl p-4 shadow-sm"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-gray-900">
+                  Payment of ₹{order.totalAmount?.toFixed(0) || "0"} pending
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Pay now, or pay to the delivery partner using Cash/UPI
+                </p>
+              </div>
+              <Button className="bg-gray-900 hover:bg-gray-800 text-white rounded-full px-6">
+                Pay now <ChevronRightIcon className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Promo Carousel */}
-        <PromoCarousel />
+        {orderStatus !== 'Cancelled' && !['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && <PromoCarousel />}
 
         {/* Delivery Partner Assignment - Only show if no partner assigned yet */}
-        {!order?.deliveryPartner && (
+        {orderStatus !== 'Cancelled' && !order?.deliveryPartner && !['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
           <motion.div
             className="bg-white rounded-xl p-4 shadow-sm"
             initial={{ opacity: 0, y: 20 }}
@@ -1150,62 +1390,69 @@ export default function OrderDetail() {
           </motion.div>
         )}
 
-        {/* Tip Section */}
-        <TipSection />
+
 
         {/* Delivery Partner Safety */}
-        <motion.button
-          className="w-full bg-white rounded-xl p-4 shadow-sm flex items-center gap-3"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          whileTap={{ scale: 0.99 }}>
-          <ShieldIcon className="w-6 h-6 text-gray-600" />
-          <span className="flex-1 text-left font-medium text-gray-900">
-            Learn about delivery partner safety
-          </span>
-          <ChevronRightIcon className="w-5 h-5 text-gray-400" />
-        </motion.button>
+        {orderStatus !== 'Cancelled' && !['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
+          <motion.button
+            className="w-full bg-white rounded-xl p-4 shadow-sm flex items-center gap-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            whileTap={{ scale: 0.99 }}>
+            <ShieldIcon className="w-6 h-6 text-gray-600" />
+            <span className="flex-1 text-left font-medium text-gray-900">
+              Learn about delivery partner safety
+            </span>
+            <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+          </motion.button>
+        )}
 
         {/* Delivery Details Banner */}
-        <motion.div
-          className="bg-yellow-50 rounded-xl p-4 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.65 }}>
-          <p className="text-yellow-800 font-medium">
-            All your delivery details in one place 👇
-          </p>
-        </motion.div>
+        {orderStatus !== 'Cancelled' && !['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
+          <motion.div
+            className="bg-yellow-50 rounded-xl p-4 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65 }}>
+            <p className="text-yellow-800 font-medium">
+              All your delivery details in one place 👇
+            </p>
+          </motion.div>
+        )}
 
         {/* Contact & Address Section */}
-        <motion.div
-          className="bg-white rounded-xl shadow-sm overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}>
-          <SectionItem
-            icon={PhoneIcon}
-            title={`${order.address?.name || "Customer"}, ${order.address?.phone || "9XXXXXXXX"
-              }`}
-            subtitle="Delivery partner may call this number"
-          />
-          <SectionItem
-            icon={HomeIcon}
-            title="Delivery at Home"
-            subtitle={
-              order.address
-                ? `${order.address.address}, ${order.address.city}`
-                : "Add delivery address"
-            }
-          />
-          <SectionItem
-            icon={MessageSquareIcon}
-            title="Add delivery instructions"
-            subtitle=""
-            onClick={() => setShowInstructionsModal(true)}
-          />
-        </motion.div>
+        {orderStatus !== 'Cancelled' && (
+          <motion.div
+            className="bg-white rounded-xl shadow-sm overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}>
+            <SectionItem
+              icon={PhoneIcon}
+              title={`${order.address?.name || "Customer"}, ${order.address?.phone || "9XXXXXXXX"
+                }`}
+              subtitle="Delivery partner may call this number"
+            />
+            <SectionItem
+              icon={HomeIcon}
+              title="Delivery at Home"
+              subtitle={
+                order.address
+                  ? `${order.address.address}, ${order.address.city}`
+                  : "Add delivery address"
+              }
+            />
+            {!['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
+              <SectionItem
+                icon={MessageSquareIcon}
+                title="Add delivery instructions"
+                subtitle=""
+                onClick={() => setShowInstructionsModal(true)}
+              />
+            )}
+          </motion.div>
+        )}
 
         {/* Store Section */}
         <motion.div
@@ -1262,42 +1509,48 @@ export default function OrderDetail() {
             </div>
           </div>
 
-          <SectionItem
-            icon={ChefHatIcon}
-            title="Add special requests"
-            subtitle=""
-            onClick={() => setShowSpecialRequestsModal(true)}
-          />
+          {orderStatus !== 'Cancelled' && !['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
+            <SectionItem
+              icon={ChefHatIcon}
+              title="Add special requests"
+              subtitle=""
+              onClick={() => setShowSpecialRequestsModal(true)}
+            />
+          )}
         </motion.div>
 
         {/* Help Section */}
-        <motion.div
-          className="bg-white rounded-xl shadow-sm overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}>
-          <div
-            className="flex items-center gap-3 p-4 border-b border-dashed border-gray-200"
-            onClick={() => window.open('/help', '_blank')}
-            style={{ cursor: "pointer" }}>
-            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-              <HelpCircleIcon className="w-5 h-5 text-red-600" />
+        {orderStatus !== 'Cancelled' && !['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
+          <motion.div
+            className="bg-white rounded-xl shadow-sm overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}>
+            <div
+              className="flex items-center gap-3 p-4 border-b border-dashed border-gray-200"
+              onClick={() => window.open('/help', '_blank')}
+              style={{ cursor: "pointer" }}>
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <HelpCircleIcon className="w-5 h-5 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900">
+                  Need help with your order?
+                </p>
+                <p className="text-sm text-gray-500">Get help & support</p>
+              </div>
+              <ChevronRightIcon className="w-5 h-5 text-gray-400" />
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                Need help with your order?
-              </p>
-              <p className="text-sm text-gray-500">Get help & support</p>
-            </div>
-            <ChevronRightIcon className="w-5 h-5 text-gray-400" />
-          </div>
-          <SectionItem
-            icon={CircleSlashIcon}
-            title="Cancel order"
-            subtitle=""
-            onClick={() => setShowCancelModal(true)}
-          />
-        </motion.div>
+            {(orderStatus as string) !== 'Cancelled' && (
+              <SectionItem
+                icon={CircleSlashIcon}
+                title="Cancel order"
+                subtitle=""
+                onClick={() => setShowCancelModal(true)}
+              />
+            )}
+          </motion.div>
+        )}
 
         {/* Quick Actions */}
         <motion.div
