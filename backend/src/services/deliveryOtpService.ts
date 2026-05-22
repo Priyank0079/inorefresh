@@ -31,7 +31,7 @@ export async function generateDeliveryOtp(orderId: string): Promise<{ success: b
       order.customer.toString(),
       "Delivery Verification OTP",
       `Your delivery OTP for Order #${order.orderNumber} is ${dynamicOtp}. Please share this with the delivery partner to begin the quality check.`,
-      { type: "Order", priority: "High" }
+      { type: "Order", priority: "High", link: `/orders/${order._id}` }
     );
 
     return {
