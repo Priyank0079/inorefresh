@@ -566,7 +566,16 @@ export const createOrder = async (req: Request, res: Response) => {
                 const savedOrder = await Order.findById(newOrder._id).lean();
                 if (savedOrder) {
                     // notifyDeliveryBoysOfNewOrder removed: will be triggered when seller accepts the order
-                    await notifyWarehousesOfOrderUpdate(io, savedOrder, 'NEW_ORDER');
+                    // For COD orders: notify warehouse immediately (no payment step).
+                    // For online payments (Razorpay etc.): warehouse is notified ONLY after payment
+                    // is verified in paymentRoutes.ts, so we skip the notification here.
+                    const isCOD = !savedOrder.paymentMethod || (savedOrder as any).paymentMethod === 'COD';
+                    const alreadyPaid = (savedOrder as any).paymentStatus === 'Paid';
+                    if (isCOD || alreadyPaid) {
+                        await notifyWarehousesOfOrderUpdate(io, savedOrder, 'NEW_ORDER');
+                    } else {
+                        console.log(`🕐 Online payment order ${(savedOrder as any).orderNumber} — warehouse notification deferred until payment verified`);
+                    }
                 }
             }
         } catch (notificationError) {

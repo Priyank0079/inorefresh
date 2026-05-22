@@ -3,6 +3,8 @@ import { authenticate, requireUserType } from '../middleware/auth';
 import { Request, Response } from 'express';
 import { createRazorpayOrder, capturePayment, handleWebhook } from '../services/paymentService';
 import Order from '../models/Order';
+import { notifyWarehousesOfOrderUpdate } from '../services/warehouseNotificationService';
+import { sendNotification } from '../services/notificationService';
 
 const router = Router();
 
@@ -92,6 +94,57 @@ router.post('/verify', authenticate, requireUserType('Customer', 'horeca', 'reta
         if (!result.success) {
             return res.status(400).json(result);
         }
+
+        // ── Post-payment notifications ──────────────────────────────────────
+        // Fire-and-forget: errors here must never fail the payment response
+        setImmediate(async () => {
+            try {
+                const updatedOrder = await Order.findById(orderId)
+                    .populate({ path: 'items', populate: { path: 'warehouse' } })
+                    .lean();
+
+                if (!updatedOrder) return;
+
+                const io = req.app.get('io');
+
+                // 1. Notify warehouses — this is their FIRST notification (order was held until payment confirmed)
+                if (io) {
+                    await notifyWarehousesOfOrderUpdate(io, updatedOrder, 'NEW_ORDER');
+                    console.log(`✅ Warehouses notified of new paid order ${(updatedOrder as any).orderNumber}`);
+                }
+
+                // 2. Notify admin about the newly paid order
+                if (io) {
+                    io.to('admin-notifications').emit('new-paid-order', {
+                        orderId,
+                        orderNumber: (updatedOrder as any).orderNumber,
+                        total: (updatedOrder as any).total,
+                        customerName: (updatedOrder as any).customerName,
+                        paymentStatus: 'Paid',
+                        timestamp: new Date(),
+                    });
+                }
+
+                // 3. Send in-app notification to customer confirming payment
+                const customerId = (updatedOrder as any).customer?.toString();
+                if (customerId) {
+                    await sendNotification(
+                        'Customer',
+                        customerId,
+                        '✅ Payment Confirmed',
+                        `Your payment for order #${(updatedOrder as any).orderNumber} has been received. Your order is now being processed.`,
+                        {
+                            type: 'Payment',
+                            link: `/orders/${orderId}`,
+                            priority: 'High',
+                        }
+                    );
+                }
+            } catch (notifyErr) {
+                console.error('❌ Post-payment notification error (non-fatal):', notifyErr);
+            }
+        });
+        // ────────────────────────────────────────────────────────────────────
 
         return res.status(200).json(result);
     } catch (error: any) {

@@ -7,8 +7,9 @@ import DeliveryAssignment from "../../../models/DeliveryAssignment";
 import Return from "../../../models/Return";
 import { notifyWarehousesOfOrderUpdate } from "../../../services/warehouseNotificationService";
 import { Server as SocketIOServer } from "socket.io";
-import { sendNotification } from "../../../services/notificationService";
+import { sendNotification, sendOrderStatusNotification } from "../../../services/notificationService";
 import { getIO } from "../../../socket/socketService";
+import { notifyDeliveryBoysOfNewOrder } from "../../../services/orderNotificationService";
 
 /**
  * Get all orders with filters
@@ -179,6 +180,53 @@ export const updateOrderStatus = asyncHandler(
         notifyWarehousesOfOrderUpdate(io, order, "STATUS_UPDATE");
       }
     }
+
+    // Notify delivery boys when admin manually sets order to Processed (ready for pickup)
+    if (status === "Processed") {
+      setImmediate(async () => {
+        try {
+          const io: SocketIOServer = req.app.get("io");
+          if (!io) return;
+          const fullOrder = await Order.findById(id)
+            .populate({ path: 'items', populate: { path: 'warehouse' } })
+            .lean();
+          if (fullOrder) {
+            await notifyDeliveryBoysOfNewOrder(io, fullOrder);
+            console.log(`🚚 Admin set order ${(fullOrder as any).orderNumber} to Processed — notified delivery boys`);
+          }
+        } catch (err) {
+          console.error("❌ Error notifying delivery boys on admin Processed:", err);
+        }
+      });
+    }
+
+    // ── Notify customer of every significant status change ───────────────
+    const customerId = (order.customer as any)?._id?.toString() || (order.customer as any)?.toString();
+    const customerNotifyStatuses = ['Processed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
+    if (customerId && customerNotifyStatuses.includes(status)) {
+      setImmediate(async () => {
+        try {
+          await sendOrderStatusNotification(id, customerId, status);
+        } catch (err) {
+          console.error("❌ Customer notification error (non-fatal):", err);
+        }
+      });
+    }
+
+    // Emit real-time socket event to the customer's order tracking room
+    setImmediate(async () => {
+      try {
+        const io: SocketIOServer = req.app.get("io");
+        if (io) {
+          io.to(`order-${id}`).emit('order-status-update', {
+            orderId: id,
+            status,
+            timestamp: new Date(),
+          });
+        }
+      } catch {}
+    });
+    // ────────────────────────────────────────────────────────────────────────
 
     // Distribute commissions if order is delivered
     if (status === "Delivered") {

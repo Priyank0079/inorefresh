@@ -6,6 +6,7 @@ import Warehouse from "../../../models/Warehouse";
 import WalletTransaction from "../../../models/WalletTransaction";
 import { notifyDeliveryBoysOfNewOrder } from "../../../services/orderNotificationService";
 import { Server as SocketIOServer } from "socket.io";
+import { sendOrderStatusNotification, sendNotification } from "../../../services/notificationService";
 
 /**
  * Get Warehouse's orders with filters, sorting, and pagination
@@ -288,13 +289,17 @@ export const updateOrderStatus = asyncHandler(
 
     // Trigger delivery notification if Warehouse accepts the order
     if (status === 'Accepted' && previousStatus !== 'Accepted') {
-      try {
-        const io: SocketIOServer = (req.app.get("io") as SocketIOServer);
-        if (io) {
-          // Need to fetch full order with details for the notification service
-          // Using lean() to get a plain JS object which is what the service expects mostly,
-          // but checking the service implementation, it uses .items mainly for Warehouse location.
-          // We should ensure the passed order object has populated items with Warehouses.
+      // Fire-and-forget: notify delivery boys asynchronously so it never delays the HTTP response
+      setImmediate(async () => {
+        try {
+          const io: SocketIOServer = (req.app.get("io") as SocketIOServer);
+          if (!io) {
+            console.error('❌ Socket.io instance not available on app — delivery notification skipped');
+            return;
+          }
+
+          // Re-fetch with fully populated items → warehouses so the notification
+          // service can locate nearby delivery boys by warehouse GPS coordinates
           const fullOrder = await Order.findById(order._id)
             .populate({
               path: 'items',
@@ -303,15 +308,65 @@ export const updateOrderStatus = asyncHandler(
             .lean();
 
           if (fullOrder) {
+            console.log(`🔔 Triggering delivery boy notification for accepted order ${order.orderNumber}`);
             await notifyDeliveryBoysOfNewOrder(io, fullOrder);
-            console.log(`Delivery notification triggered for Accepted order ${order.orderNumber}`);
+            console.log(`✅ Delivery notification complete for order ${order.orderNumber}`);
+          } else {
+            console.error(`❌ Could not re-fetch order ${order._id} for delivery notification`);
           }
+        } catch (notifyError) {
+          console.error('❌ Error notifying delivery boys on Warehouse acceptance:', notifyError);
         }
-      } catch (notifyError) {
-        console.error('Error notifying delivery boys on Warehouse acceptance:', notifyError);
-        // Don't fail the request, just log
+      });
+    }
+
+    // ── Notify customer of status change ────────────────────────────────────
+    // Map warehouse statuses → customer-friendly notification triggers
+    const customerNotifyStatusMap: Record<string, string> = {
+      'On the way':  'Out for Delivery',
+      'Delivered':   'Delivered',
+      'Cancelled':   'Cancelled',
+      'Rejected':    'Cancelled', // treat rejected as cancelled for customer
+    };
+    const notifyStatus = customerNotifyStatusMap[status];
+    if (notifyStatus) {
+      const customerId = order.customer?.toString();
+      if (customerId) {
+        setImmediate(async () => {
+          try {
+            if (notifyStatus === 'Cancelled' && status === 'Rejected') {
+              // Rejection-specific message
+              await sendNotification(
+                'Customer',
+                customerId,
+                '❌ Order Could Not Be Fulfilled',
+                `We're sorry — order #${order.orderNumber} could not be processed by the seller. A refund will be initiated if applicable.`,
+                { type: 'Order', link: `/orders/${order._id}`, priority: 'High' }
+              );
+            } else {
+              await sendOrderStatusNotification(order._id.toString(), customerId, notifyStatus);
+            }
+          } catch (err) {
+            console.error('❌ Customer notification error (non-fatal):', err);
+          }
+        });
       }
     }
+    // Also emit real-time socket update to customer tracking room
+    setImmediate(async () => {
+      try {
+        const io: SocketIOServer = (req.app.get('io') as SocketIOServer);
+        if (io) {
+          io.to(`order-${id}`).emit('order-status-update', {
+            orderId: id,
+            status,
+            previousStatus,
+            timestamp: new Date(),
+          });
+        }
+      } catch {}
+    });
+    // ────────────────────────────────────────────────────────────────────────
 
     // If order is delivered, credit Warehouse's balance
     if (status === 'Delivered' && previousStatus !== 'Delivered') {

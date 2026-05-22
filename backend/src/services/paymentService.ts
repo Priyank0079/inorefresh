@@ -3,6 +3,8 @@ import crypto from 'crypto';
 import Payment from '../models/Payment';
 import Order from '../models/Order';
 import mongoose from 'mongoose';
+import { notifyWarehousesOfOrderUpdate } from './warehouseNotificationService';
+import { sendNotification } from './notificationService';
 
 // Initialize Razorpay instance
 const getRazorpayInstance = () => {
@@ -309,10 +311,50 @@ const handlePaymentCaptured = async (payload: any) => {
             await payment.save();
 
             // Update order
-            await Order.findByIdAndUpdate(payment.order, {
-                paymentStatus: 'Paid',
-                paymentId: razorpayPaymentId,
-            });
+            const updatedOrder = await Order.findByIdAndUpdate(
+                payment.order,
+                { paymentStatus: 'Paid', paymentId: razorpayPaymentId },
+                { new: true }
+            ).populate({ path: 'items', populate: { path: 'warehouse' } }).lean();
+
+            // Notify warehouses + customer via socket (webhook path)
+            if (updatedOrder) {
+                setImmediate(async () => {
+                    try {
+                        const { getIO } = await import('../socket/socketService');
+                        const io = getIO();
+
+                        // Notify warehouses that payment is confirmed
+                        await notifyWarehousesOfOrderUpdate(io, updatedOrder, 'STATUS_UPDATE');
+
+                        // Notify admin
+                        io.to('admin-notifications').emit('new-paid-order', {
+                            orderId: updatedOrder._id?.toString(),
+                            orderNumber: (updatedOrder as any).orderNumber,
+                            total: (updatedOrder as any).total,
+                            customerName: (updatedOrder as any).customerName,
+                            paymentStatus: 'Paid',
+                            timestamp: new Date(),
+                        });
+
+                        // Notify customer
+                        const customerId = (updatedOrder as any).customer?.toString();
+                        if (customerId) {
+                            await sendNotification(
+                                'Customer',
+                                customerId,
+                                '✅ Payment Confirmed',
+                                `Your payment for order #${(updatedOrder as any).orderNumber} has been confirmed.`,
+                                { type: 'Payment', link: `/orders/${updatedOrder._id}`, priority: 'High' }
+                            );
+                        }
+
+                        console.log(`✅ Webhook: notified all parties for paid order ${(updatedOrder as any).orderNumber}`);
+                    } catch (notifyErr) {
+                        console.error('❌ Webhook post-payment notification error (non-fatal):', notifyErr);
+                    }
+                });
+            }
         }
     } catch (error) {
         console.error('Error handling payment captured:', error);
