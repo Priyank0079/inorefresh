@@ -380,16 +380,17 @@ export default function WarehouseProductList() {
         </div>
 
         {/* Filters and Controls */}
-        <div className="p-4 flex flex-col sm:flex-row flex-wrap gap-4 items-start sm:items-center justify-between border-b border-neutral-100">
-          <div className="flex flex-wrap gap-3">
-            <div>
+        <div className="p-4 flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between border-b border-neutral-100">
+          {/* Filters Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full xl:w-auto">
+            <div className="w-full">
               <label className="block text-xs text-neutral-600 mb-1">
                 Filter By Category
               </label>
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer">
+                className="w-full bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer">
                 <option value="">All Category</option>
                 {allCategories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -398,33 +399,33 @@ export default function WarehouseProductList() {
                 ))}
               </select>
             </div>
-            <div>
+            <div className="w-full">
               <label className="block text-xs text-neutral-600 mb-1">
                 Filter by Status
               </label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer">
+                className="w-full bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer">
                 <option value="All Products">All Products</option>
                 <option value="Published">Published</option>
                 <option value="Unpublished">Unpublished</option>
               </select>
             </div>
-            <div>
+            <div className="w-full">
               <label className="block text-xs text-neutral-600 mb-1">
                 Filter by Stock
               </label>
               <select
                 value={stockFilter}
                 onChange={(e) => setStockFilter(e.target.value)}
-                className="bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer">
+                className="w-full bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer">
                 <option value="All Products">All Products</option>
                 <option value="In Stock">In Stock</option>
                 <option value="Out of Stock">Out of Stock</option>
               </select>
             </div>
-            <div>
+            <div className="w-full">
               <label className="block text-xs text-neutral-600 mb-1">
                 Filter by Date
               </label>
@@ -433,18 +434,18 @@ export default function WarehouseProductList() {
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer"
+                  className="w-full bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer"
                 />
                 <button 
                   onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                  className="px-3 py-1.5 bg-teal-600 text-white rounded text-xs font-bold hover:bg-teal-700 transition-colors"
+                  className="px-3 py-1.5 bg-teal-600 text-white rounded text-xs font-bold hover:bg-teal-700 transition-colors shrink-0"
                 >
                   Today
                 </button>
                 {selectedDate && (
                   <button 
                     onClick={() => setSelectedDate("")}
-                    className="text-xs text-red-500 hover:underline"
+                    className="text-xs text-red-500 hover:underline shrink-0"
                   >
                     Clear
                   </button>
@@ -452,13 +453,15 @@ export default function WarehouseProductList() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-neutral-600">Show</span>
+          
+          {/* Actions & Search */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full xl:w-auto">
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-sm text-neutral-600 hidden sm:inline">Show</span>
               <select
                 value={rowsPerPage}
                 onChange={(e) => setRowsPerPage(Number(e.target.value))}
-                className="bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer">
+                className="bg-white border border-neutral-300 rounded py-1.5 px-2 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer">
                 <option value={10}>10</option>
                 <option value={20}>20</option>
                 <option value={50}>50</option>
@@ -509,7 +512,7 @@ export default function WarehouseProductList() {
                 link.click();
                 document.body.removeChild(link);
               }}
-              className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 transition-colors">
+              className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center justify-center gap-1 transition-colors shrink-0">
               <svg
                 width="16"
                 height="16"
@@ -523,30 +526,18 @@ export default function WarehouseProductList() {
                 <polyline points="7 10 12 15 17 10"></polyline>
                 <line x1="12" y1="15" x2="12" y2="3"></line>
               </svg>
-              Export
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="ml-1">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
+              <span className="hidden sm:inline">Export</span>
             </button>
-            <div className="relative">
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 text-xs">
-                Search:
+            <div className="relative w-full sm:w-auto flex-grow">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               </span>
               <input
                 type="text"
-                className="pl-14 pr-3 py-1.5 bg-neutral-100 border-none rounded text-sm focus:ring-1 focus:ring-teal-500 w-48"
+                className="pl-8 pr-3 py-1.5 bg-neutral-100 border border-neutral-200 rounded text-sm focus:ring-1 focus:ring-teal-500 w-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder=""
+                placeholder="Search products..."
               />
             </div>
           </div>
