@@ -54,7 +54,7 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
   const handleConfirmLogout = () => {
     setShowLogoutModal(false);
     logout();
-    navigate('/Warehouse/login');
+    navigate('/warehouse/login');
   };
 
   const handleSettingsClick = () => {
@@ -148,7 +148,7 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
           </button>
           
           <button
-            onClick={() => navigate('/Warehouse')}
+            onClick={() => navigate('/warehouse')}
             className="hover:opacity-80 transition-opacity"
           >
             <img
@@ -162,22 +162,22 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
         {/* Navigation Tabs */}
         <div className="hidden xl:flex items-center gap-4 lg:gap-6">
           <button
-            onClick={() => navigate('/Warehouse/orders')}
-            className={`relative px-3 lg:px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${isActive('/Warehouse/orders') ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900'
+            onClick={() => navigate('/warehouse/orders')}
+            className={`relative px-3 lg:px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${isActive('/warehouse/orders') ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900'
               }`}
           >
             Orders
           </button>
           <button
-            onClick={() => navigate('/Warehouse/return-order')}
-            className={`px-3 lg:px-4 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${isActive('/Warehouse/return-order') ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900'
+            onClick={() => navigate('/warehouse/return-order')}
+            className={`px-3 lg:px-4 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${isActive('/warehouse/return-order') ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900'
               }`}
           >
             Return Order
           </button>
           <button
-            onClick={() => navigate('/Warehouse/wallet')}
-            className={`px-3 lg:px-4 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${isActive('/Warehouse/wallet') ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900'
+            onClick={() => navigate('/warehouse/wallet')}
+            className={`px-3 lg:px-4 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${isActive('/warehouse/wallet') ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900'
               }`}
           >
             Wallet
@@ -277,7 +277,7 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
                 <button
                   onClick={() => {
                     setShowSettingsDropdown(false);
-                    navigate('/Warehouse/account-settings');
+                    navigate('/warehouse/account-settings');
                   }}
                   className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
                 >

@@ -16,7 +16,7 @@ export default function WarehouseSignUp() {
 
         <div className="mt-6 flex flex-wrap gap-3">
           <button
-            onClick={() => navigate("/Warehouse/login")}
+            onClick={() => navigate("/warehouse/login")}
             className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
           >
             Go To Warehouse Login

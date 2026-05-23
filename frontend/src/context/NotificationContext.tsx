@@ -137,7 +137,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // Initialize Socket with shared config
       const socketUrl = getSocketBaseURL();
       const newSocket = io(socketUrl, {
-        auth: { token }
+        auth: { token },
+        // Prevent infinite reconnect loops that hang the browser on a slow server
+        reconnectionAttempts: 5,
+        reconnectionDelay: 2000,
+        reconnectionDelayMax: 10000,
+        timeout: 10000,
+        transports: ['websocket', 'polling'],
       });
       
       newSocket.on('connect', () => {

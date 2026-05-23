@@ -60,6 +60,25 @@ export default function AdminCreateWarehouse() {
     setError("");
     setSuccessMessage("");
 
+    // ── Client-side validation ───────────────────────────────────────────────
+    if (formData.warehouseName.trim().length < 2) {
+      setError("Warehouse name must be at least 2 characters");
+      return;
+    }
+    if (formData.managerName.trim().length < 2) {
+      setError("Manager name must be at least 2 characters");
+      return;
+    }
+    if (!/^[a-zA-Z\s]+$/.test(formData.managerName.trim())) {
+      setError("Manager name must contain letters and spaces only");
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(formData.mobile.trim())) {
+      setError("Mobile number must be exactly 10 digits");
+      return;
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     // Backend still requires coordinates. If user does not pick current location,
     // use India center coordinates as fallback.
     let latitude = 20.5937;
@@ -121,6 +140,7 @@ export default function AdminCreateWarehouse() {
           <div className="grid gap-4 md:grid-cols-2">
             <input
               required
+              minLength={2}
               className="rounded border border-neutral-300 px-3 py-2 text-sm"
               placeholder="Warehouse Name"
               value={formData.warehouseName}
@@ -128,10 +148,13 @@ export default function AdminCreateWarehouse() {
             />
             <input
               required
+              minLength={2}
+              pattern="[a-zA-Z\s]+"
+              title="Manager name should contain letters and spaces only"
               className="rounded border border-neutral-300 px-3 py-2 text-sm"
               placeholder="Manager Name"
               value={formData.managerName}
-              onChange={(e) => setFormData((prev) => ({ ...prev, managerName: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, managerName: e.target.value.replace(/[^a-zA-Z\s]/g, '') }))}
             />
             <input
               required

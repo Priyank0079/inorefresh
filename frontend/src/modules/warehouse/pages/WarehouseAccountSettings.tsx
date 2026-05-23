@@ -94,9 +94,13 @@ const WarehouseAccountSettings = () => {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
+        let sanitized = value;
+        if (name === 'mobile') {
+            sanitized = value.replace(/\D/g, '').slice(0, 10);
+        }
         setWarehouseData(prev => ({
             ...prev,
-            [name]: value
+            [name]: sanitized
         }));
     };
 
@@ -105,6 +109,20 @@ const WarehouseAccountSettings = () => {
         try {
             setSaveLoading(true);
             setError('');
+
+            // Validate email format
+            if (WarehouseData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(WarehouseData.email.trim())) {
+                setError('Please enter a valid email address');
+                setSaveLoading(false);
+                return;
+            }
+
+            // Validate mobile format
+            if (WarehouseData.mobile && !/^[0-9]{10}$/.test(WarehouseData.mobile.trim())) {
+                setError('Mobile number must be exactly 10 digits');
+                setSaveLoading(false);
+                return;
+            }
 
             // Validate location if address is being updated
             if (WarehouseData.searchLocation && (!WarehouseData.latitude || !WarehouseData.longitude)) {

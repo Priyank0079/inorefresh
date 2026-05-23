@@ -66,6 +66,34 @@ export default function DeliveryProfile() {
 
   const handleSave = async () => {
     setSaveError('');
+
+    // ── Validation ──────────────────────────────────────────────────────────
+    if (!profileData.name.trim()) {
+      setSaveError('Name is required');
+      return;
+    }
+    if (!/^[a-zA-Z\s]+$/.test(profileData.name.trim())) {
+      setSaveError('Name must contain letters and spaces only');
+      return;
+    }
+    if (profileData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email.trim())) {
+      setSaveError('Please enter a valid email address');
+      return;
+    }
+    if (profileData.phone && !/^[0-9]{10}$/.test(profileData.phone.trim())) {
+      setSaveError('Phone number must be exactly 10 digits');
+      return;
+    }
+    if (profileData.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(profileData.ifscCode.trim())) {
+      setSaveError('IFSC code format is invalid (e.g. HDFC0001234)');
+      return;
+    }
+    if (profileData.accountNumber && !/^\d{9,18}$/.test(profileData.accountNumber.trim())) {
+      setSaveError('Account number must be 9–18 digits');
+      return;
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     try {
       await updateProfile({
         name: profileData.name,
@@ -134,7 +162,9 @@ export default function DeliveryProfile() {
                 <input
                   type="tel"
                   value={profileData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  maxLength={10}
+                  placeholder="10-digit mobile"
                   className="w-full text-center text-neutral-600 text-sm px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
@@ -263,9 +293,10 @@ export default function DeliveryProfile() {
                 <input
                   type="text"
                   value={profileData.accountNumber}
-                  onChange={(e) => handleInputChange('accountNumber', e.target.value)}
+                  onChange={(e) => handleInputChange('accountNumber', e.target.value.replace(/\D/g, '').slice(0, 18))}
+                  maxLength={18}
                   className="w-full text-neutral-900 text-sm px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="Enter account number"
+                  placeholder="Enter account number (digits only)"
                 />
               ) : (
                 <p className="text-neutral-900 text-sm">{profileData.accountNumber ? `XXXX${profileData.accountNumber.slice(-4)}` : 'Not Set'}</p>
@@ -277,7 +308,8 @@ export default function DeliveryProfile() {
                 <input
                   type="text"
                   value={profileData.ifscCode}
-                  onChange={(e) => handleInputChange('ifscCode', e.target.value)}
+                  onChange={(e) => handleInputChange('ifscCode', e.target.value.toUpperCase())}
+                  maxLength={11}
                   className="w-full text-neutral-900 text-sm px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="e.g. HDFC0001234"
                 />

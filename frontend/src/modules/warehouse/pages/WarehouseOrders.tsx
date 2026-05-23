@@ -155,7 +155,7 @@ export default function WarehouseOrders() {
       <div className="bg-[#12b2a2] text-white p-6 rounded-lg shadow-sm mb-6 flex justify-between items-center transition-all">
         <h1 className="text-2xl font-bold">Orders List</h1>
         <div className="flex items-center gap-2 text-sm">
-          <Link to="/Warehouse" className="text-teal-50 hover:text-white font-medium transition-colors">
+          <Link to="/warehouse" className="text-teal-50 hover:text-white font-medium transition-colors">
             Home
           </Link>
           <span className="text-teal-200">/</span>
@@ -626,7 +626,7 @@ export default function WarehouseOrders() {
       <footer className="px-3 sm:px-4 md:px-6 text-center py-4 sm:py-6">
         <p className="text-xs sm:text-sm text-neutral-600">
           Copyright © 2026. Developed By{' '}
-          <Link to="/Warehouse" className="text-[#12b2a2] hover:text-[#0e8f82]">
+          <Link to="/warehouse" className="text-[#12b2a2] hover:text-[#0e8f82]">
             Inor fresh
           </Link>
         </p>

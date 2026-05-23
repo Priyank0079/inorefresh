@@ -2,7 +2,6 @@ import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:7000/api/v1";
-console.log("[CONFIG DEBUG] API_BASE_URL:", API_BASE_URL);
 
 // Socket.io base URL - extract from API_BASE_URL by removing /api/v1
 // Socket connections need the base server URL without the API path
@@ -24,6 +23,7 @@ export const getSocketBaseURL = (): string => {
 // Create axios instance
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000, // 15 s — prevent requests from hanging forever on slow server
   headers: {
     "Content-Type": "application/json",
   },

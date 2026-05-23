@@ -206,8 +206,23 @@ export default function DeliverySignUp() {
       return;
     }
 
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
     if (formData.password.length < 6) {
       setError("Password must be at least 6 characters");
+      return;
+    }
+
+    if (formData.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(formData.ifscCode.trim())) {
+      setError("IFSC code format is invalid (e.g. HDFC0001234)");
+      return;
+    }
+
+    if (formData.accountNumber && !/^\d{9,18}$/.test(formData.accountNumber.trim())) {
+      setError("Account number must be 9–18 digits");
       return;
     }
 
@@ -411,7 +426,7 @@ export default function DeliverySignUp() {
                     onChange={handleInputChange}
                     placeholder="Enter password (min 6 characters)"
                     required
-                    minLength={4}
+                    minLength={6}
                     className="w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
                     disabled={loading}
                   />
@@ -595,10 +610,13 @@ export default function DeliverySignUp() {
                     type="text"
                     name="accountNumber"
                     value={formData.accountNumber}
-                    onChange={handleInputChange}
-                    placeholder="Account number"
+                    placeholder="Account number (digits only)"
+                    maxLength={18}
+                    pattern="\d{9,18}"
+                    title="Account number must be 9–18 digits"
                     className="w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
                     disabled={loading}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, accountNumber: e.target.value.replace(/\D/g, '').slice(0, 18) }))}
                   />
                 </div>
 
@@ -610,10 +628,13 @@ export default function DeliverySignUp() {
                     type="text"
                     name="ifscCode"
                     value={formData.ifscCode}
-                    onChange={handleInputChange}
-                    placeholder="IFSC code"
+                    placeholder="IFSC code (e.g. HDFC0001234)"
+                    maxLength={11}
+                    pattern="[A-Za-z]{4}0[A-Za-z0-9]{6}"
+                    title="IFSC format: 4 letters, 0, then 6 alphanumeric (e.g. HDFC0001234)"
                     className="w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
                     disabled={loading}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, ifscCode: e.target.value.toUpperCase() }))}
                   />
                 </div>
 

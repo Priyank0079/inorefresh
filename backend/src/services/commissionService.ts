@@ -766,10 +766,17 @@ export const reverseCommissions = async (orderId: string) => {
 
         if (userId) {
           const { debitWallet } = await import("./walletManagementService");
+          // Warehouse was credited netEarning = orderAmount - commissionAmount (the admin's cut)
+          // Delivery boy was credited commissionAmount (their earnings)
+          // Reversal must debit the same amount that was originally credited
+          const amountToReverse =
+            commission.type === "WAREHOUSE"
+              ? commission.orderAmount - commission.commissionAmount  // net earning (BUG FIX: was commissionAmount)
+              : commission.commissionAmount;                          // delivery boy's earning
           await debitWallet(
             userId.toString(),
             userType,
-            commission.commissionAmount,
+            amountToReverse,
             `Commission reversal for cancelled order`,
             orderId,
             session,
@@ -1055,10 +1062,13 @@ export const processCODOrderDelivery = async (
         order: orderId,
         deliveryBoy: order.deliveryBoy,
         type: "DELIVERY_BOY",
-        orderAmount: breakdown.deliveryDistanceKm || breakdown.totalDeliveryCharge,
+        orderAmount: breakdown.deliveryDistanceKm || breakdown.totalDeliveryCharge || breakdown.productCost,
         commissionRate: breakdown.deliveryDistanceKm
           ? breakdown.deliveryBoyCommission / breakdown.deliveryDistanceKm
-          : (breakdown.deliveryBoyCommission / breakdown.totalDeliveryCharge) * 100,
+          // BUG FIX: guard against division by zero when delivery is free (totalDeliveryCharge = 0)
+          : breakdown.totalDeliveryCharge > 0
+            ? (breakdown.deliveryBoyCommission / breakdown.totalDeliveryCharge) * 100
+            : 5, // fallback to default 5% rate
         commissionAmount: breakdown.deliveryBoyCommission,
         status: "Paid", // Delivery boy gets paid immediately
         paidAt: new Date(),
@@ -1082,7 +1092,7 @@ export const processCODOrderDelivery = async (
             order: orderId,
             orderItem: item._id,
             warehouse: warehouseId,
-            type: "warehouse",
+            type: "WAREHOUSE",   // must be uppercase to match enum — was "warehouse" (BUG FIX)
             orderAmount: item.total,
             commissionRate: commRate,
             commissionAmount: itemCommission,

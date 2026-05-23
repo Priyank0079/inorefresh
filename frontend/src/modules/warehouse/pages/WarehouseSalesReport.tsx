@@ -97,7 +97,7 @@ export default function WarehouseSalesReport() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h1 className="text-2xl font-bold">Sales Report</h1>
                     <div className="flex items-center gap-2 text-sm">
-                        <Link to="/Warehouse" className="text-teal-50 hover:text-white font-medium transition-colors">
+                        <Link to="/warehouse" className="text-teal-50 hover:text-white font-medium transition-colors">
                             Home
                         </Link>
                         <span className="text-teal-200">/</span>

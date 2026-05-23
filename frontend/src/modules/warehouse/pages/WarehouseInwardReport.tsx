@@ -113,7 +113,7 @@ export default function WarehouseInwardReport() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h1 className="text-2xl font-bold font-display">Inward Report</h1>
                     <div className="flex items-center gap-2 text-sm">
-                        <Link to="/Warehouse" className="text-teal-50 hover:text-white font-medium transition-colors">Home</Link>
+                        <Link to="/warehouse" className="text-teal-50 hover:text-white font-medium transition-colors">Home</Link>
                         <span className="text-teal-200">/</span>
                         <span className="text-white font-medium">Reports</span>
                         <span className="text-teal-200">/</span>

@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getOrderById, updateOrderStatus, OrderDetail } from '../../../services/api/orderService';
-import jsPDF from 'jspdf';
+// jsPDF is lazy-loaded inside handleExportPDF to avoid adding 384 kB to the initial bundle
 
 export default function WarehouseOrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -79,7 +79,7 @@ export default function WarehouseOrderDetail() {
           <h2 className="text-xl font-bold text-neutral-900 mb-4">Error</h2>
           <p className="text-red-600 mb-4">{error}</p>
           <button
-            onClick={() => navigate('/Warehouse/orders')}
+            onClick={() => navigate('/warehouse/orders')}
             className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg transition-colors"
           >
             Back to Orders
@@ -95,7 +95,7 @@ export default function WarehouseOrderDetail() {
         <div className="text-center">
           <h2 className="text-xl font-bold text-neutral-900 mb-4">Order Not Found</h2>
           <button
-            onClick={() => navigate('/Warehouse/orders')}
+            onClick={() => navigate('/warehouse/orders')}
             className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg transition-colors"
           >
             Back to Orders
@@ -118,9 +118,10 @@ export default function WarehouseOrderDetail() {
     return `${day}${suffix} ${month}, ${year}`;
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!orderDetail) return;
 
+    const { default: jsPDF } = await import('jspdf');
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();

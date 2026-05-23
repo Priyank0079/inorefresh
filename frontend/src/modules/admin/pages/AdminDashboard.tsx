@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardCard from "../components/DashboardCard";
-import OrderChart from "../components/OrderChart";
-import SalesLineChart from "../components/SalesLineChart";
-import GaugeChart from "../components/GaugeChart";
+// Lazy-load ApexCharts components — they pull in the entire apexcharts library (600 kB+)
+// Splitting them out lets the dashboard stats/cards render immediately
+const OrderChart = lazy(() => import("../components/OrderChart"));
+const SalesLineChart = lazy(() => import("../components/SalesLineChart"));
+const GaugeChart = lazy(() => import("../components/GaugeChart"));
 import ErrorBoundary from "../../../components/ErrorBoundary";
 import { useAuth } from "../../../context/AuthContext";
 import {
@@ -553,11 +555,13 @@ export default function AdminDashboard() {
               </p>
             )}
           </div>
-          <SalesLineChart
-            thisMonthData={salesThisMonth}
-            lastMonthData={salesLastMonth}
-            height={200}
-          />
+          <Suspense fallback={<div className="h-48 flex items-center justify-center text-xs text-neutral-400">Loading chart…</div>}>
+            <SalesLineChart
+              thisMonthData={salesThisMonth}
+              lastMonthData={salesLastMonth}
+              height={200}
+            />
+          </Suspense>
         </div>
 
         {/* Sales by Location & Gauge */}
@@ -594,11 +598,13 @@ export default function AdminDashboard() {
             <h3 className="text-lg font-semibold text-neutral-900 mb-4">
               Avg. Completed Order Value
             </h3>
-            <GaugeChart
-              value={stats.avgCompletedOrderValue}
-              maxValue={521}
-              label="Average Order Value"
-            />
+            <Suspense fallback={<div className="h-32 flex items-center justify-center text-xs text-neutral-400">Loading…</div>}>
+              <GaugeChart
+                value={stats.avgCompletedOrderValue}
+                maxValue={521}
+                label="Average Order Value"
+              />
+            </Suspense>
           </div>
         </div>
       </div>
@@ -606,20 +612,24 @@ export default function AdminDashboard() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <ErrorBoundary fallback={<div className="text-sm text-red-600 p-4">Chart failed to load</div>}>
-          <OrderChart
-            title={`Daily Orders - ${currentMonthName} ${currentYear}`}
-            data={orderDataDec2025}
-            maxValue={3}
-            height={400}
-          />
+          <Suspense fallback={<div className="h-96 flex items-center justify-center text-xs text-neutral-400">Loading chart…</div>}>
+            <OrderChart
+              title={`Daily Orders - ${currentMonthName} ${currentYear}`}
+              data={orderDataDec2025}
+              maxValue={3}
+              height={400}
+            />
+          </Suspense>
         </ErrorBoundary>
         <ErrorBoundary fallback={<div className="text-sm text-red-600 p-4">Chart failed to load</div>}>
-          <OrderChart
-            title={`Monthly Orders - ${currentYear}`}
-            data={orderData2025}
-            maxValue={80}
-            height={400}
-          />
+          <Suspense fallback={<div className="h-96 flex items-center justify-center text-xs text-neutral-400">Loading chart…</div>}>
+            <OrderChart
+              title={`Monthly Orders - ${currentYear}`}
+              data={orderData2025}
+              maxValue={80}
+              height={400}
+            />
+          </Suspense>
         </ErrorBoundary>
       </div>
 

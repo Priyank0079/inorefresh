@@ -33,6 +33,7 @@ export async function uploadImage(
     headers: {
       "Content-Type": "multipart/form-data",
     },
+    timeout: 120000, // 2 min — override global 15 s; Cloudinary uploads on VPS can be slow
   });
 
   if (response.data.success && response.data.data) {
@@ -63,6 +64,7 @@ export async function uploadImages(
     headers: {
       "Content-Type": "multipart/form-data",
     },
+    timeout: 120000, // 2 min — override global 15 s
   });
 
   if (response.data.success && response.data.data) {
@@ -94,6 +96,7 @@ export async function uploadDocument(
       headers: {
         "Content-Type": "multipart/form-data",
       },
+      timeout: 120000, // 2 min — override global 15 s
     }
   );
 
@@ -128,6 +131,7 @@ export async function uploadDocuments(
       headers: {
         "Content-Type": "multipart/form-data",
       },
+      timeout: 120000, // 2 min — override global 15 s
     }
   );
 

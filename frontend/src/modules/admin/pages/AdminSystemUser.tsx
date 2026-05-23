@@ -81,7 +81,13 @@ export default function AdminSystemUser() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let sanitized = value;
+    if (name === 'firstName' || name === 'lastName') {
+      sanitized = value.replace(/[^a-zA-Z\s]/g, '');
+    } else if (name === 'mobile') {
+      sanitized = value.replace(/\D/g, '').slice(0, 10);
+    }
+    setFormData((prev) => ({ ...prev, [name]: sanitized }));
   };
 
   const resetForm = () => {
@@ -110,8 +116,16 @@ export default function AdminSystemUser() {
       setError('Please enter first name');
       return;
     }
+    if (!/^[a-zA-Z\s]+$/.test(formData.firstName.trim())) {
+      setError('First name must contain letters only');
+      return;
+    }
     if (!formData.lastName.trim()) {
       setError('Please enter last name');
+      return;
+    }
+    if (!/^[a-zA-Z\s]+$/.test(formData.lastName.trim())) {
+      setError('Last name must contain letters only');
       return;
     }
     if (!formData.mobile.trim()) {
@@ -386,6 +400,8 @@ export default function AdminSystemUser() {
                       value={formData.firstName}
                       onChange={handleInputChange}
                       placeholder="Enter First Name"
+                      pattern="[a-zA-Z\s]+"
+                      title="First name should contain letters only"
                       disabled={loading}
                       className="w-full px-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                     />
@@ -401,6 +417,8 @@ export default function AdminSystemUser() {
                       value={formData.lastName}
                       onChange={handleInputChange}
                       placeholder="Enter Last Name"
+                      pattern="[a-zA-Z\s]+"
+                      title="Last name should contain letters only"
                       disabled={loading}
                       className="w-full px-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                     />

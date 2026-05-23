@@ -115,7 +115,7 @@ export const getFinancialDashboard = asyncHandler(
 
     // A. Warehouse Commissions (The 10% part)
     const WarehouseCommResult = await Commission.aggregate([
-      { $match: { type: "Warehouse", status: { $ne: "Cancelled" } } },
+      { $match: { type: "WAREHOUSE", status: { $ne: "Cancelled" } } }, // BUG FIX: was "Warehouse" (wrong case)
       { $group: { _id: null, total: { $sum: "$commissionAmount" } } },
     ]);
     const WarehouseCommissions =

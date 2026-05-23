@@ -1,8 +1,7 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+// html2canvas (201 kB) and jsPDF (384 kB) are lazy-loaded only when the user clicks Download
 import Button from "../../components/ui/button";
 import { useOrders } from "../../hooks/useOrders";
 
@@ -95,6 +94,11 @@ export default function Invoice() {
 
     try {
       setIsGenerating(true);
+      // Lazy-load heavy PDF libs only on first download click
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,

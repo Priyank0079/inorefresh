@@ -37,6 +37,7 @@ const WarehouseCategory = lazy(() => import("./modules/warehouse/pages/Warehouse
 
 // Common pages
 const Terms = lazy(() => import("./components/Terms.jsx"));
+const PrivacyPolicy = lazy(() => import("./components/PrivacyPolicy.jsx"));
 
 function App() {
   // Initialize push notifications on app load
@@ -155,6 +156,14 @@ function App() {
                           element={
                             <Suspense fallback={<IconLoader forceShow />}>
                               <Terms />
+                            </Suspense>
+                          }
+                        />
+                        <Route
+                          path="/privacy-policy"
+                          element={
+                            <Suspense fallback={<IconLoader forceShow />}>
+                              <PrivacyPolicy />
                             </Suspense>
                           }
                         />
