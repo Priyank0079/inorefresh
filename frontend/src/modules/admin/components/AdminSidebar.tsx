@@ -35,33 +35,6 @@ const menuSections: MenuSection[] = [
       {
         label: "Category",
         path: "/admin/category",
-        hasSubmenu: true,
-        submenuItems: [
-          {
-            label: "Header Category",
-            path: "/admin/category/header",
-            icon: (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <rect
-                  x="3"
-                  y="3"
-                  width="18"
-                  height="18"
-                  rx="2"
-                  strokeDasharray="4 2"></rect>
-                <path d="M8 6H21M8 12H21M8 18H21M3 6H3.01M3 12H3.01M3 18H3.01"></path>
-              </svg>
-            ),
-          },
-        ],
         icon: (
           <svg
             width="18"

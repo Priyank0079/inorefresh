@@ -50,25 +50,18 @@ export default function Categories() {
             if (id) mergedById.set(id, c);
           });
 
-          const categoryList = Array.from(mergedById.values()).filter((c: any) => {
-            const name = (c.name || "").toLowerCase();
-            return name.includes("aqua") || name.includes("marine") || name.includes("marin") || name.includes("bangali") || name.includes("bengali") || name.includes("bengoli") || name.includes("freshwater") || name.includes("ocean") || name.includes("traditional");
-          });
+          const categoryList = Array.from(mergedById.values());
 
           if (categoryList.length === 0) {
             setError("No categories available right now.");
           }
 
           data.categories = categoryList;
-          // Only show fish categories in sections as well
           data.homeSections = (data.homeSections || [])
             .filter((s: any) => s.displayType !== 'products')
             .map((section: any) => ({
               ...section,
-              data: (section.data || []).filter((c: any) => {
-                const name = (c.name || c.title || "").toLowerCase();
-                return name.includes("aqua") || name.includes("marine") || name.includes("marin") || name.includes("bangali") || name.includes("bengali") || name.includes("bengoli") || name.includes("freshwater") || name.includes("ocean") || name.includes("traditional");
-              })
+              data: section.data || []
             })).filter((s: any) => s.data.length > 0);
 
           setHomeData(data);
@@ -116,28 +109,10 @@ export default function Categories() {
     );
   }
 
-  const mapCategoryToCard = (c: any, index: number, compact = false) => {
-    const nameLower = (c.name || c.title || "").toLowerCase();
+    const mapCategoryToCard = (c: any, index: number, compact = false) => {
     let displayName = c.name || c.title;
-    let link = "";
-    let image = c.image || c.imageUrl;
-
-    // Smart mapping for special fish categories with high-quality assets
-    if (nameLower.includes('aqua') || nameLower.includes('freshwater') || nameLower.includes('river')) {
-      displayName = "Aqua Fish";
-      link = '/?tab=aqua-fish';
-      if (!image || image.includes('placeholder')) image = '/images/top_list_aqua_fish_trans.png';
-    } else if (nameLower.includes('marin') || nameLower.includes('ocean') || nameLower.includes('sea')) {
-      displayName = "Marine Fish";
-      link = '/?tab=marine-fish';
-      if (!image || image.includes('placeholder')) image = '/images/top_list_marin_fish_trans.png';
-    } else if (nameLower.includes('bangali') || nameLower.includes('bengali') || nameLower.includes('bengoli') || nameLower.includes('traditional') || nameLower.includes('favorite')) {
-      displayName = "Bengali Fish";
-      link = '/?tab=bangali-fish';
-      if (!image || image.includes('placeholder')) image = '/images/top_list_bengali_fish_trans.png';
-    } else {
-      link = `/category/${c.slug || c._id || c.id}`;
-    }
+    let link = `/?tab=${c.slug || c._id || c.id}`;
+    let image = c.image || c.imageUrl || '/images/top_list_aqua_fish_trans.png';
 
     return (
       <ExploreCard

@@ -321,11 +321,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
 
         {/* Desktop Layout - Step 8 */}
         <div className="max-w-[1280px] mx-auto hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-[32px]">
-          {[
-            { id: "aqua-fish", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality and taste.", imageUrl: "/images/aqua_fish_banner.png", slug: "aqua-fish", bgColor: "transparent" },
-            { id: "marine-fish", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea catch. Captured using sustainable methods for premium freshness.", imageUrl: "/images/marine_fish_banner.png", slug: "marine-fish", bgColor: "transparent" },
-            { id: "bengali-fish", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites. The heartbeat of every traditional kitchen.", imageUrl: "/images/bengali_fish_banner.png", slug: "bengali-fish", bgColor: "transparent" }
-          ].map((category: any, idx) => (
+          {(categoryCards.length > 0 ? categoryCards.slice(0, 3) : []).map((category: any, idx) => (
             <motion.div
               key={category.id}
               initial={{ opacity: 0, y: 30 }}
@@ -377,11 +373,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
 
         {/* Mobile Layout (Sliding Cards) - Step 9 & 10 */}
         <div className="flex md:hidden overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-0 pb-[30px] px-0 scroll-smooth">
-          {[
-            { id: "aqua-fish", title: "Aqua Fish", badge: "UP TO 55% OFF", description: "Natural pond Rohu & Catla. Responsibly bred for pristine quality.", imageUrl: "/images/aqua_fish_banner.png", slug: "aqua-fish" },
-            { id: "marine-fish", title: "Marine Fish", badge: "UP TO 45% OFF", description: "Deep sea catch. Captured using sustainable methods.", imageUrl: "/images/marine_fish_banner.png", slug: "marine-fish" },
-            { id: "bengali-fish", title: "Bengali Fish", badge: "UP TO 35% OFF", description: "Premium Hilsa & Market favorites. Heart of kitchen.", imageUrl: "/images/bengali_fish_banner.png", slug: "bengali-fish" }
-          ].map((category: any) => (
+          {(categoryCards.length > 0 ? categoryCards.slice(0, 3) : []).map((category: any) => (
             <div key={category.id} className="flex-shrink-0 w-full px-5 snap-center">
               <motion.div
                 onClick={() => navigate(category.slug ? `/?tab=${category.slug}` : `/category/${category.categoryId || category.id}`)}

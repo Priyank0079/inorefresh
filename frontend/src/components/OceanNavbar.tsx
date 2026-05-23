@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useThemeContext } from '../context/ThemeContext';
-import { getHeaderCategoriesPublic } from '../services/api/headerCategoryService';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 import { useLocation as useLocationContext } from '../hooks/useLocation';
@@ -15,7 +14,6 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
     const internalNavigate = useNavigate();
     const [isVisible, setIsVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
-    const [categories, setCategories] = useState<any[]>([]);
     const { activeCategory, setActiveCategory, dateFilter, setDateFilter } = useThemeContext();
     const routerLocation = useLocation();
     const isHome = routerLocation.pathname === '/' || routerLocation.pathname === '/user/home';
@@ -23,21 +21,6 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
     const { unreadCount } = useNotifications();
     const { logout, isAuthenticated } = useAuth();
     const { isLocationEnabled } = useLocationContext();
-
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const data = await getHeaderCategoriesPublic();
-                if (data && Array.isArray(data)) {
-                    const published = data.filter((cat: any) => cat.status === 'Published');
-                    setCategories(published);
-                }
-            } catch (error) {
-                console.error("Error fetching header categories:", error);
-            }
-        };
-        fetchCategories();
-    }, []);
 
     useEffect(() => {
         const controlNavbar = () => {
@@ -66,21 +49,7 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
         ? 'text-white/80 hover:text-white hover:bg-white/10'
         : 'text-[#072F4A]/70 hover:text-[#072F4A] hover:bg-[#072F4A]/8';
 
-    const handleNavClick = (id: string) => {
-        let effectiveId = id;
-        const name = id.toLowerCase();
-        if (name.includes('aqua') || name.includes('auqa')) effectiveId = 'aqua-fish';
-        else if (name.includes('marin') || name.includes('marine')) effectiveId = 'marine-fish';
-        else if (name.includes('bengali') || name.includes('bengoli')) effectiveId = 'bangali-fish';
 
-        setActiveCategory(effectiveId);
-
-        if (effectiveId === 'all') {
-            internalNavigate('/user/home');
-        } else {
-            internalNavigate(`/?tab=${effectiveId}`);
-        }
-    };
 
     const handleLogout = () => {
         logout();

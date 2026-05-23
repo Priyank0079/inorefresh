@@ -6,7 +6,7 @@ import Brand from "../../../models/Brand";
 import Product from "../../../models/Product";
 import Inventory from "../../../models/Inventory";
 import Warehouse from "../../../models/Warehouse";
-import HeaderCategory from "../../../models/HeaderCategory";
+
 import { cache } from "../../../utils/cache";
 
 // ==================== Category Controllers ====================
@@ -36,6 +36,14 @@ export const createCategory = asyncHandler(
     }
 
     let finalHeaderCategoryId = headerCategoryId;
+    if (finalHeaderCategoryId === "" || finalHeaderCategoryId === "null") {
+      finalHeaderCategoryId = null;
+    }
+    
+    let finalParentId = parentId;
+    if (finalParentId === "" || finalParentId === "null") {
+      finalParentId = null;
+    }
 
     // Validate parent if provided
     if (parentId) {
@@ -62,48 +70,9 @@ export const createCategory = asyncHandler(
         });
       }
 
-      // Inherit headerCategoryId from parent if not explicitly provided
-      if (!finalHeaderCategoryId && parent.headerCategoryId) {
-        finalHeaderCategoryId = parent.headerCategoryId.toString();
-      }
+    } // Close if (parentId)
 
-      // If parent doesn't have headerCategoryId, subcategory cannot be created
-      if (!finalHeaderCategoryId) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Parent category does not have a header category assigned. Please assign a header category to the parent category first.",
-        });
-      }
-    }
-
-    // Validate headerCategoryId (required for root categories)
-    if (!finalHeaderCategoryId && !parentId) {
-      return res.status(400).json({
-        success: false,
-        message: "Header category is required for root categories",
-      });
-    }
-
-    // Validate headerCategory exists and is Published
-    if (finalHeaderCategoryId) {
-      const headerCategory = await HeaderCategory.findById(
-        finalHeaderCategoryId
-      );
-      if (!headerCategory) {
-        return res.status(400).json({
-          success: false,
-          message: "Header category not found",
-        });
-      }
-
-      if (headerCategory.status !== "Published") {
-        return res.status(400).json({
-          success: false,
-          message: "Header category must be Published",
-        });
-      }
-    }
+    // Removed header category validation as per user request
 
     // Auto-calculate order if not provided
     let finalOrder = order;
@@ -123,7 +92,7 @@ export const createCategory = asyncHandler(
       isBestseller: isBestseller || false,
       hasWarning: hasWarning || false,
       groupCategory,
-      parentId: parentId || null,
+      parentId: finalParentId || null,
       headerCategoryId: finalHeaderCategoryId || null,
       commissionRate: req.body.commissionRate || 0,
       status,
@@ -171,7 +140,7 @@ export const getCategories = asyncHandler(
     if (status) {
       query.status = status;
     }
-    if (headerCategoryId) {
+    if (headerCategoryId && headerCategoryId !== "null" && headerCategoryId !== "") {
       query.headerCategoryId = headerCategoryId;
     }
 
@@ -243,6 +212,13 @@ export const updateCategory = asyncHandler(
     const { id } = req.params;
     const updateData = req.body;
 
+    if (updateData.headerCategoryId === "" || updateData.headerCategoryId === "null") {
+      updateData.headerCategoryId = null;
+    }
+    if (updateData.parentId === "" || updateData.parentId === "null") {
+      updateData.parentId = null;
+    }
+
     const category = await Category.findById(id);
     if (!category) {
       return res.status(404).json({
@@ -263,52 +239,9 @@ export const updateCategory = asyncHandler(
           message: validation.error,
         });
       }
+    } // Close if (updateData.parentId !== undefined)
 
-      // If parent is being set, inherit headerCategoryId from parent if not explicitly provided
-      if (updateData.parentId && !updateData.headerCategoryId) {
-        const parent = await Category.findById(updateData.parentId);
-        if (parent && parent.headerCategoryId) {
-          updateData.headerCategoryId = parent.headerCategoryId;
-        }
-      }
-    }
-
-    // Validate headerCategoryId if being updated
-    if (updateData.headerCategoryId !== undefined) {
-      // If category has children, they should inherit the same header category
-      // But we allow the change - children will keep their current headerCategoryId
-      // unless explicitly updated
-
-      // Validate headerCategory exists and is Published
-      if (updateData.headerCategoryId) {
-        const headerCategory = await HeaderCategory.findById(
-          updateData.headerCategoryId
-        );
-        if (!headerCategory) {
-          return res.status(400).json({
-            success: false,
-            message: "Header category not found",
-          });
-        }
-
-        if (headerCategory.status !== "Published") {
-          return res.status(400).json({
-            success: false,
-            message: "Header category must be Published",
-          });
-        }
-      } else {
-        // If headerCategoryId is being set to null/empty, check if category has children
-        const childrenCount = await Category.countDocuments({ parentId: id });
-        if (childrenCount > 0) {
-          return res.status(400).json({
-            success: false,
-            message:
-              "Cannot remove header category from a category that has subcategories",
-          });
-        }
-      }
-    }
+    // Removed header category validation as per user request
 
     // Update category
     const updatedCategory = await Category.findByIdAndUpdate(

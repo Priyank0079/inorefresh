@@ -16,7 +16,7 @@ export function validateImageFile(file: File): {
   valid: boolean;
   error?: string;
 } {
-  const maxSize = 5 * 1024 * 1024; // 5MB
+  const maxSize = 40 * 1024 * 1024; // 40MB
   const allowedTypes = [
     "image/jpeg",
     "image/jpg",
@@ -35,7 +35,7 @@ export function validateImageFile(file: File): {
   if (file.size > maxSize) {
     return {
       valid: false,
-      error: `File size exceeds 5MB limit. Current size: ${(
+      error: `File size exceeds 40MB limit. Current size: ${(
         file.size /
         1024 /
         1024

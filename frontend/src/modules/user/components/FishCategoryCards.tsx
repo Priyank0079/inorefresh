@@ -1,26 +1,23 @@
+import { useState, useEffect } from 'react';
 import ExploreCard from './ExploreCard';
+import { getCategories } from '../../../services/api/categoryService';
 
 export default function FishCategoryCards() {
-    const categories = [
-        {
-            id: 'marine-fish',
-            name: 'Marine Fish',
-            image: '/images/marine_fish_banner.png',
-            link: '/?tab=marine-fish'
-        },
-        {
-            id: 'aqua-fish',
-            name: 'Aqua Fish',
-            image: '/images/aqua_fish_banner.png',
-            link: '/?tab=aqua-fish'
-        },
-        {
-            id: 'bangali-fish',
-            name: 'Bengali Fish',
-            image: '/images/bengali_fish_banner.png',
-            link: '/?tab=bangali-fish'
-        }
-    ];
+    const [categories, setCategories] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchCats = async () => {
+            try {
+                const res = await getCategories();
+                if (res.success && res.data) {
+                    setCategories(res.data);
+                }
+            } catch (err) {
+                console.error("Error fetching categories for Explore:", err);
+            }
+        };
+        fetchCats();
+    }, []);
 
     return (
         <div className="px-4 md:px-8 max-w-[1280px] mx-auto pt-2 pb-0">
@@ -33,12 +30,12 @@ export default function FishCategoryCards() {
 
             <div className="flex overflow-x-auto gap-3 md:gap-5 pb-6 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide no-scrollbar snap-x snap-mandatory">
                 {categories.map((cat, idx) => (
-                    <div key={cat.id} className="flex-shrink-0 w-[140px] md:w-[180px] snap-start">
+                    <div key={cat._id} className="flex-shrink-0 w-[140px] md:w-[180px] snap-start">
                         <ExploreCard
-                            id={cat.id}
+                            id={cat._id}
                             name={cat.name}
-                            image={cat.image}
-                            link={cat.link}
+                            image={cat.image || '/images/aqua_fish_banner.png'}
+                            link={`/?tab=${cat.slug || cat._id}`}
                             index={idx}
                             compact={true}
                         />

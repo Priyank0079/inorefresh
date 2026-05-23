@@ -67,11 +67,10 @@ export const getCategories = asyncHandler(
   async (req: Request, res: Response) => {
     const { includeSubcategories, search } = req.query;
 
-    // Build query - only Active categories that belong to a header category
+    // Build query - only Active categories
     const query: any = {
       parentId: null,
       status: "Active",
-      headerCategoryId: { $ne: null, $exists: true },
     };
 
     // If includeSubcategories is true, get all (but still filter by status/header)

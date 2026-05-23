@@ -384,7 +384,7 @@ export default function AdminEditProduct() {
             </div>
 
             {/* Category */}
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Category <span className="text-red-500">*</span>
               </label>
@@ -402,24 +402,7 @@ export default function AdminEditProduct() {
               </select>
             </div>
 
-            {/* Subcategory */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Subcategory <span className="text-neutral-400 text-xs">(optional)</span>
-              </label>
-              <select
-                name="subcategory"
-                value={formData.subcategory}
-                onChange={handleChange}
-                disabled={!formData.category || subcategories.length === 0}
-                className={`w-full px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 ${!formData.category || subcategories.length === 0 ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed' : 'bg-white'}`}
-              >
-                <option value="">{subcategories.length === 0 ? (formData.category ? 'No subcategories' : 'Select category first') : 'Select Subcategory'}</option>
-                {subcategories.map(sub => (
-                  <option key={sub._id} value={sub._id}>{sub.subcategoryName}</option>
-                ))}
-              </select>
-            </div>
+            {/* Subcategory field removed per requirements */}
 
             {/* Short Description */}
             <div className="md:col-span-2">

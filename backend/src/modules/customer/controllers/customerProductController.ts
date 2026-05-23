@@ -321,7 +321,7 @@ export const getProducts = async (req: Request, res: Response) => {
       // Group by product name to consolidate warehouses
       {
         $group: {
-          _id: "$productName",
+          _id: "$_id",
           firstDoc: { $first: "$$ROOT" },
           totalStock: { $sum: "$stock" },
           allWarehouses: {

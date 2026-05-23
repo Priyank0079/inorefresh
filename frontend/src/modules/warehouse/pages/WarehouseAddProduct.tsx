@@ -72,35 +72,7 @@ export default function WarehouseAddProduct() {
         const res = await api.get('/categories', { params: { status: 'Active' } });
         if (res.data.success) {
           const allCategories = res.data.data || [];
-          // User requested only three main fish categories
-          const allowedCategories = allCategories.filter((cat: any) => {
-            const name = (cat.name || "").toLowerCase();
-            return (
-              name.includes("aqua") ||
-              name.includes("marine") ||
-              name.includes("marin") ||
-              name.includes("bangali") ||
-              name.includes("bengali") ||
-              name.includes("bengoli") ||
-              name.includes("freshwater") ||
-              name.includes("ocean") ||
-              name.includes("traditional")
-            );
-          }).map((cat: any) => {
-            const name = (cat.name || "").toLowerCase();
-            // Force user-requested labels for the dropdown
-            if (name.includes("aqua") || name.includes("freshwater") || name.includes("river")) {
-              return { ...cat, name: "Aqua Fish" };
-            }
-            if (name.includes("marine") || name.includes("marin") || name.includes("ocean") || name.includes("sea")) {
-              return { ...cat, name: "Marine Fish" };
-            }
-            if (name.includes("bangali") || name.includes("bengali") || name.includes("bengoli") || name.includes("traditional")) {
-              return { ...cat, name: "Bengali Fish" };
-            }
-            return cat;
-          });
-          setCategories(allowedCategories);
+          setCategories(allCategories);
         }
       } catch (err) {
         console.error("Failed to fetch categories:", err);
@@ -339,7 +311,7 @@ export default function WarehouseAddProduct() {
             </div>
 
             {/* Category */}
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Category <span className="text-red-500">*</span>
               </label>
@@ -357,24 +329,7 @@ export default function WarehouseAddProduct() {
               </select>
             </div>
 
-            {/* Subcategory */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Subcategory <span className="text-neutral-400 text-xs">(optional)</span>
-              </label>
-              <select
-                name="subcategory"
-                value={formData.subcategory}
-                onChange={handleChange}
-                disabled={!formData.category || subcategories.length === 0}
-                className={`w-full px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 ${!formData.category || subcategories.length === 0 ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed' : 'bg-white'}`}
-              >
-                <option value="">{subcategories.length === 0 ? (formData.category ? 'No subcategories' : 'Select category first') : 'Select Subcategory'}</option>
-                {subcategories.map(sub => (
-                  <option key={sub._id} value={sub._id}>{sub.subcategoryName}</option>
-                ))}
-              </select>
-            </div>
+            {/* Subcategory field removed per requirements */}
 
             {/* Short Description */}
             <div className="md:col-span-2">
@@ -504,7 +459,7 @@ export default function WarehouseAddProduct() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Sale Price (₹)</label>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Discount Price (₹)</label>
                     <input type="number" placeholder="0.00"
                       value={variationForm.discPrice}
                       onChange={e => setVariationForm(p => ({ ...p, discPrice: e.target.value }))}
@@ -539,7 +494,7 @@ export default function WarehouseAddProduct() {
                         <tr className="bg-neutral-50 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
                           <th className="px-4 py-3 text-left border-b border-neutral-200">Label</th>
                           <th className="px-4 py-3 text-left border-b border-neutral-200">Price</th>
-                          <th className="px-4 py-3 text-left border-b border-neutral-200">Sale Price</th>
+                          <th className="px-4 py-3 text-left border-b border-neutral-200">Discount Price</th>
                           <th className="px-4 py-3 text-left border-b border-neutral-200">Stock</th>
                           <th className="px-4 py-3 text-right border-b border-neutral-200">Action</th>
                         </tr>

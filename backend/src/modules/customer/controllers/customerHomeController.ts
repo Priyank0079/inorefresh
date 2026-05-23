@@ -277,7 +277,6 @@ export const getHomeContent = async (req: Request, res: Response) => {
       // 3. Categories for Tiles
       Category.find({
         status: "Active",
-        headerCategoryId: { $exists: true, $ne: null },
       })
         .select("name image icon color slug headerCategoryId")
         .sort({ order: 1 }),
@@ -291,7 +290,6 @@ export const getHomeContent = async (req: Request, res: Response) => {
       // 5. Trending Items
       Category.find({
         status: "Active",
-        headerCategoryId: { $exists: true, $ne: null },
       })
         .limit(5)
         .select("name image slug"),
@@ -410,7 +408,6 @@ export const getHomeContent = async (req: Request, res: Response) => {
 
     // Build query for categories
     const categoryQuery: any = {
-      headerCategoryId: { $exists: true, $ne: null },
       status: "Active",
       parentId: null, // Only root categories (not subcategories themselves)
     };
@@ -462,6 +459,8 @@ export const getHomeContent = async (req: Request, res: Response) => {
           title: category.name,
           categoryId: category._id.toString(),
           slug: category.slug || category._id.toString(),
+          imageUrl: category.image || null,
+          __test_field: "hello",
           bgColor: "bg-yellow-50",
           subcategoryImages: subcategoryImages.slice(0, 4), // Max 4 images
         };
