@@ -10,7 +10,8 @@ import Warehouse from "../../../models/Warehouse";
 import mongoose from "mongoose";
 import { calculateDistance } from "../../../utils/locationHelper";
 import { notifyWarehousesOfOrderUpdate } from "../../../services/warehouseNotificationService";
-import { getOrCreateDeliveryOtp } from "../../../services/deliveryOtpService";
+// getOrCreateDeliveryOtp intentionally removed — delivery OTP is generated dynamically
+// by the delivery boy via generateDeliveryOtp() and is NOT pre-stored on the order.
 import AppSettings from "../../../models/AppSettings";
 import { getRoadDistances } from "../../../services/mapService";
 import { Server as SocketIOServer } from "socket.io";
@@ -19,27 +20,6 @@ import WalletTransaction from "../../../models/WalletTransaction";
 import { findNearestWarehouseWithStock } from "../../../services/warehouseFulfillmentService";
 import { calculateItemPrice } from "../../../utils/priceUtils";
 import { checkAndAutoCloseVerification } from "../../../controllers/returnWorkflowController";
-
-/**
- * Ensure an order has a stable delivery OTP stored on the order itself.
- * This keeps older orders compatible and prevents any refresh-time fallback churn.
- */
-async function ensureOrderDeliveryOtp(order: any): Promise<string | null> {
-    if (!order) return null;
-
-    if (order.deliveryOtp && String(order.deliveryOtp).trim()) {
-        return String(order.deliveryOtp).trim();
-    }
-
-    const customerOtp = await getOrCreateDeliveryOtp(order.customer.toString());
-    if (!customerOtp) return null;
-
-    order.deliveryOtp = customerOtp;
-    await order.save();
-
-    return customerOtp;
-}
-
 
 // Create a new order
 export const createOrder = async (req: Request, res: Response) => {
@@ -129,9 +109,6 @@ export const createOrder = async (req: Request, res: Response) => {
             });
         }
 
-        // Capture the customer's permanent OTP once so this order always shows the same code.
-        // This prevents the OTP from changing on page refresh or later profile updates.
-        const customerDeliveryOtp = await getOrCreateDeliveryOtp(userId);
         // Handle both string and number types, and check for null/undefined (not truthy, since 0 is valid)
         const deliveryLat = address.latitude != null
             ? (typeof address.latitude === 'number' ? address.latitude : parseFloat(address.latitude))
@@ -169,7 +146,11 @@ export const createOrder = async (req: Request, res: Response) => {
             customerName: buyer.name || buyer.shopName || buyer.ownerName,
             customerEmail: buyer.email || "",
             customerPhone: buyer.phone || buyer.shopPhone || buyer.ownerPhone,
-            deliveryOtp: customerDeliveryOtp || undefined,
+            // deliveryOtp is NOT pre-stored at order creation.
+            // It is generated fresh by generateDeliveryOtp() when the delivery boy
+            // requests it. This ensures the customer always receives the correct,
+            // up-to-date OTP and there is no mismatch between creation-time OTP and
+            // the dynamically generated one.
             deliveryAddress: {
                 address: address.address || address.street || 'N/A',
                 city: address.city || 'N/A',
@@ -773,10 +754,18 @@ export const refreshDeliveryOtp = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: "Order is already delivered" });
         }
 
-        const customerOtp = await ensureOrderDeliveryOtp(order);
-        if (!customerOtp) {
-            return res.status(400).json({ success: false, message: "Customer delivery OTP not found" });
+        // Only return the OTP after the delivery boy has sent it.
+        // Do NOT fall back to the permanent customer OTP — that would cause a mismatch
+        // when the delivery boy later generates a fresh dynamic OTP and overwrites it.
+        if (!order.deliveryOtpSentAt || !order.deliveryOtp) {
+            return res.status(200).json({
+                success: true,
+                message: "OTP not yet sent by delivery partner",
+                data: { deliveryOtp: null }
+            });
         }
+
+        const customerOtp = String(order.deliveryOtp).trim();
 
         // Emit socket event if needed (customer room)
         const io = (req.app as any).get("io");

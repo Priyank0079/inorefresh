@@ -122,8 +122,7 @@ export async function verifyDeliveryOtp(orderId: string, otp: string): Promise<{
 
     // Verify OTP against valid OTP (robust string comparison)
     if (String(validOtp).trim() !== String(otp).trim()) {
-      // DEBUG: Temporarily including the expected OTP in the error message to diagnose mismatches
-      throw new Error(`Invalid OTP. Please check the code provided by the customer. (Expected: ${validOtp}, Provided: ${otp})`);
+      throw new Error('Invalid OTP. Please check the code provided by the customer.');
     }
 
     // Mark order as delivered

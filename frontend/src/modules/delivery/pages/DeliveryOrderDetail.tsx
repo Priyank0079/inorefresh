@@ -197,11 +197,10 @@ export default function DeliveryOrderDetail() {
             setOtpAlreadySent(true);
             setResendCooldown(60); // 60 seconds cooldown after successful send
 
-            if (response?.alreadySent) {
-                alert('Delivery OTP has already been sent. You can now enter the code.');
-            } else {
+            if (!response?.alreadySent) {
                 alert('OTP sent to customer successfully');
             }
+            // If already sent, silently open the input — no alert needed
         } catch (err: any) {
             // Handle backend cooldown message
             if (err.message && err.message.includes('wait')) {
