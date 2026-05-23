@@ -176,7 +176,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const showBackButton = !showLocationRequest && !showLocationChangeModal && !isAccountPage && !isHomePage && !isCheckoutPage;
   const showHeader = isSearchPage && !isCheckoutPage && !isCartPage;
   const showSearchBar = isSearchPage && !isCheckoutPage && !isCartPage;
-  const showFooter = !isCheckoutPage;
+  // Hide bottom nav on product detail — the page has its own sticky "Add to Cart / Buy Now" footer
+  const showFooter = !isCheckoutPage && !isProductDetailPage;
 
   return (
     <>

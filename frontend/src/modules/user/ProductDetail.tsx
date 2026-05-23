@@ -292,7 +292,7 @@ export default function ProductDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-white pb-32">
       {/* Header with back button and action icons */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-transparent">
         <div className="flex items-center justify-between px-4 md:px-6 lg:px-8 py-3 md:py-4">
@@ -983,7 +983,7 @@ export default function ProductDetail() {
 
         {/* Top products in this category */}
         {similarProducts.length > 0 && (
-          <div className="mt-6 mb-24">
+          <div className="mt-6 mb-4">
             <div className="bg-neutral-100/50 border-t border-b border-neutral-200/50 py-4 px-3">
               <h3 className="text-lg font-semibold text-neutral-900 mb-4 px-1">
                 Top products in this category
