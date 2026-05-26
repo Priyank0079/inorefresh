@@ -92,12 +92,14 @@ export const requireUserType = (...userTypes: AuthUserType[]) => {
 
     let currentUserType = req.user.userType;
 
-    // Fallback for legacy tokens that might not have userType
-    if (!currentUserType && userTypes.includes('Customer')) {
+    // Fallback for legacy tokens that might not have userType.
+    // Default to 'Customer' since all customer-facing routes use this middleware
+    // and older tokens (issued before userType was added) belong to customers.
+    if (!currentUserType) {
       currentUserType = 'Customer' as any;
     }
 
-    if (!currentUserType || !userTypes.includes(currentUserType as any)) {
+    if (!userTypes.includes(currentUserType as any)) {
       res.status(403).json({
         success: false,
         message: 'Access denied. Required user type: ' + userTypes.join(' or '),
