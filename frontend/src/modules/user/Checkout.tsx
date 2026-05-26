@@ -2656,10 +2656,14 @@ export default function Checkout() {
           onFailure={(error) => {
             setShowRazorpayCheckout(false);
             setPendingOrderId(null);
-            showGlobalToast(
-              error || "Payment failed. Please try again.",
-              "error",
-            );
+            // Map server-side auth/tech errors to user-friendly messages
+            let userMsg = error || "Payment failed. Please try again.";
+            if (error?.toLowerCase().includes("access denied") || error?.toLowerCase().includes("user type")) {
+              userMsg = "Session expired. Please log out and log in again, then retry.";
+            } else if (error?.toLowerCase().includes("cancelled") || error?.toLowerCase().includes("dismissed")) {
+              userMsg = "Payment was cancelled. You can try again.";
+            }
+            showGlobalToast(userMsg, "error");
           }}
         />
       )}
