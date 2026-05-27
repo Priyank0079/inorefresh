@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useRef, useState, useMemo } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+// framer-motion removed from AppLayout — replaced with CSS animation to
+// prevent AnimatePresence key changes from causing full content remount (CLS fix)
 import FloatingCartPill from './FloatingCartPill';
 import { useLocation as useLocationContext } from '../hooks/useLocation';
 import LocationPermissionRequest from './LocationPermissionRequest';
@@ -211,27 +212,22 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 <UnderwaterEffect />
               </div>
 
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={isLocationEnabled && userLocation ? 'content' : 'location-check'}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="w-full max-w-full"
-                  style={{ minHeight: '100%' }}
-                >
-                  {/* Service Availability Check */}
-                  {
-                    (() => {
-                      if (isLocationEnabled && userLocation && !isServiceAvailable && !showLocationRequest) {
-                        return <ServiceNotAvailable onChangeLocation={() => setShowLocationChangeModal(true)} />;
-                      }
-                      return children;
-                    })()
-                  }
-                </motion.div>
-              </AnimatePresence>
+              {/*
+                Key was previously tied to location state, causing the entire
+                content tree to unmount + remount when location loaded → CLS.
+                Replaced with a stable wrapper that uses a simple CSS opacity
+                fade-in only on first mount (no re-mount on location changes).
+              */}
+              <div
+                className="w-full max-w-full animate-fadeIn"
+                style={{ minHeight: '100%' }}
+              >
+                {/* Service Availability Check */}
+                {isLocationEnabled && userLocation && !isServiceAvailable && !showLocationRequest
+                  ? <ServiceNotAvailable onChangeLocation={() => setShowLocationChangeModal(true)} />
+                  : children
+                }
+              </div>
             </main>
 
             {/* Floating Cart Pill */}

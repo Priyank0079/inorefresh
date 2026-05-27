@@ -35,11 +35,16 @@ export default defineConfig({
     exclude: [],
   },
   build: {
+    // Target modern browsers only — smaller output, no legacy polyfills
+    target: 'esnext',
+
     commonjsOptions: {
-      // Ensure proper CommonJS handling
       include: [/node_modules/],
       transformMixedEsModules: true,
     },
+
+    // Split CSS per chunk so each lazy route only loads its own styles
+    cssCodeSplit: true,
 
     chunkSizeWarningLimit: 1000,
     sourcemap: false,
@@ -47,6 +52,11 @@ export default defineConfig({
 
     rollupOptions: {
       output: {
+        // Use content-hashed filenames for long-lived caching
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+
         manualChunks(id) {
           // React core — smallest possible first-load chunk
           if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
@@ -79,6 +89,14 @@ export default defineConfig({
           // Google Maps
           if (id.includes('node_modules/@googlemaps') || id.includes('node_modules/@vis.gl')) {
             return 'vendor-maps';
+          }
+          // Lottie — only loaded on specific pages
+          if (id.includes('node_modules/lottie-react') || id.includes('node_modules/lottie-web')) {
+            return 'vendor-lottie';
+          }
+          // Recharts — only used in reports
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) {
+            return 'vendor-recharts';
           }
         },
       },

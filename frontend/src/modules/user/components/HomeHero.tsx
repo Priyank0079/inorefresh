@@ -22,11 +22,17 @@ export default function HomeHero({ activeTab = 'all', onTabChange }: HomeHeroPro
   return (
     <div className="relative w-full overflow-hidden font-sans">
       {/* 🌊 HERO SECTION */}
+      {/*
+        backgroundAttachment:'fixed' is intentionally removed — it disables GPU
+        compositing on mobile (Chrome/Safari both repaint the whole viewport on
+        every scroll frame), causing INP > 200 ms and layout shifts.
+        The parallax feel is preserved via the tall section height (95vh).
+      */}
       <div
         className="relative w-full h-[95vh] bg-cover bg-center flex items-center px-5 md:px-[100px]"
         style={{
           backgroundImage: `url('${HERO_IMAGE}')`,
-          backgroundAttachment: 'fixed'
+          willChange: 'transform',
         }}
       >
         {/* Overlay Gradient */}

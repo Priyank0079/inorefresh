@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 // Minimal, elegant SVGs for different fish varieties
@@ -118,10 +118,14 @@ const FishAnimation = ({ svgIndex, layer, startX, endX, startY, duration, delay,
 };
 
 export default function AmbientFishBackground() {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    // useMemo: computed once on mount — avoids re-render churn and window access in render
+    const isMobile = useMemo(
+        () => typeof window !== 'undefined' && window.innerWidth < 768,
+        []
+    );
 
     // Reduce fish count on mobile for performance (UX Rule: Keep performance optimized)
-    const fishData = isMobile ? [
+    const fishData = useMemo(() => isMobile ? [
         // LAYER 1: Deep background (Slow, faint)
         { id: 1, svg: 0, layer: 1 as const, startX: '-20%', endX: '120vw', startY: '15%', duration: 40, delay: 0, scale: 2.5 },
         { id: 2, svg: 2, layer: 1 as const, startX: '120%', endX: '-120vw', startY: '60%', duration: 45, delay: 5, scale: 2.2, flip: true },
@@ -150,10 +154,11 @@ export default function AmbientFishBackground() {
         { id: 9, svg: 4, layer: 3 as const, startX: '-5%', endX: '120vw', startY: '17%', duration: 25, delay: 1.1, scale: 0.85 },
 
         { id: 10, svg: 4, layer: 3 as const, startX: '105%', endX: '-120vw', startY: '50%', duration: 30, delay: 12, scale: 1, flip: true },
-    ];
+    ], [isMobile]);
 
     return (
-        <div className="fixed inset-0 pointer-events-none z-[5] overflow-hidden" aria-hidden="true">
+        // contain:strict isolates this layer so browser skips layout+style recalc for it
+        <div className="fixed inset-0 pointer-events-none z-[5] overflow-hidden" aria-hidden="true" style={{ contain: 'strict' }}>
             {fishData.map((fish) => (
                 <FishAnimation
                     key={fish.id}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useThemeContext } from '../context/ThemeContext';
@@ -13,7 +13,9 @@ interface OceanNavbarProps {
 export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
     const internalNavigate = useNavigate();
     const [isVisible, setIsVisible] = useState(true);
-    const [lastScrollY, setLastScrollY] = useState(0);
+    // Use a ref instead of state so the scroll handler never needs to re-register
+    // (previously [lastScrollY] dep caused removeEventListener + addEventListener on every scroll)
+    const lastScrollYRef = useRef(0);
     const { activeCategory, setActiveCategory, dateFilter, setDateFilter } = useThemeContext();
     const routerLocation = useLocation();
     const isHome = routerLocation.pathname === '/' || routerLocation.pathname === '/user/home';
@@ -24,19 +26,19 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
 
     useEffect(() => {
         const controlNavbar = () => {
-            if (typeof window !== 'undefined') {
-                if (window.scrollY > lastScrollY && window.scrollY > 100) {
-                    setIsVisible(false);
-                } else {
-                    setIsVisible(true);
-                }
-                setLastScrollY(window.scrollY);
+            const current = window.scrollY;
+            if (current > lastScrollYRef.current && current > 100) {
+                setIsVisible(false);
+            } else {
+                setIsVisible(true);
             }
+            lastScrollYRef.current = current;
         };
 
-        window.addEventListener('scroll', controlNavbar);
+        // passive: true lets the browser skip waiting for preventDefault → smoother scroll
+        window.addEventListener('scroll', controlNavbar, { passive: true });
         return () => window.removeEventListener('scroll', controlNavbar);
-    }, [lastScrollY]);
+    }, []); // Empty deps — listener registered once, reads via ref
 
     const navSurfaceClass = isHome
         ? 'bg-gradient-to-b from-[#0C4A69]/95 via-[#0E5D82]/92 to-[#0B4F71]/88 border-b border-white/20 shadow-[0_12px_32px_rgba(5,30,45,0.35)]'
