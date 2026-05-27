@@ -11,11 +11,15 @@ import { seedHeaderCategories } from "./utils/seedHeaderCategories";
 import { initializeSocket } from "./socket/socketService";
 import { initializeFirebaseAdmin } from "./services/firebaseAdmin";
 
+import compression from "compression";
+
 // Load environment variables - trigger admin notifications reload
 dotenv.config();
 
 // Application initialization
 const app: Application = express();
+// Enable gzip compression for all HTTP responses
+app.use(compression());
 const httpServer = createServer(app);
 
 // Simple CORS configuration - Standard and reliable

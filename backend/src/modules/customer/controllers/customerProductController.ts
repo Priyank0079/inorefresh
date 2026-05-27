@@ -418,7 +418,8 @@ export const getProductById = async (req: Request, res: Response) => {
       .populate("category", "name")
       .populate("subcategory", "name")
       .populate("brand", "name")
-      .populate("warehouse", "warehouseName address location");
+      .populate("warehouse", "warehouseName address location")
+      .lean();
 
     if (!product) {
       return res.status(404).json({
@@ -518,12 +519,13 @@ export const getProductById = async (req: Request, res: Response) => {
       .limit(6)
       .select(
         "productName price mrp variations mainImage pack discount _id rating reviewsCount"
-      );
+      )
+      .lean();
 
     return res.status(200).json({
       success: true,
       data: {
-        ...product.toObject(),
+        ...product,
         similarProducts,
         isAvailableAtLocation, // Add availability flag to response
       },

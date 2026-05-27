@@ -50,6 +50,7 @@
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.8.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "csv-parser": "^3.2.0",
     "dotenv": "^16.6.1",
@@ -63,5 +64,8 @@
     "socket.io": "^4.8.1",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.8.1"
   }
 }

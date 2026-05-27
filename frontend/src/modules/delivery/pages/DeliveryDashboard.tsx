@@ -35,8 +35,11 @@ export default function DeliveryDashboard() {
       setRefreshing(true);
       await updateOrderStatus(orderId, 'Processed');
       setAcceptMessage({ text: 'Order accepted successfully!', type: 'success' });
-      setTimeout(() => setAcceptMessage(null), 3000);
       fetchStats();
+      setTimeout(() => {
+        setAcceptMessage(null);
+        navigate(`/delivery/orders/${orderId}`);
+      }, 500);
     } catch (err: any) {
       setAcceptMessage({ text: err.message || 'Failed to accept order', type: 'error' });
       setTimeout(() => setAcceptMessage(null), 3000);
