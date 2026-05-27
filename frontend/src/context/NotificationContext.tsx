@@ -155,15 +155,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           const userId = user.userId || user.id || user._id;
           
           if (user.userType === 'Admin') {
-            newSocket.emit('join-admin-room');
+            newSocket?.emit('join-admin-room');
           } else if (user.userType === 'Warehouse') {
-            newSocket.emit('join-warehouse-room', userId);
+            newSocket?.emit('join-warehouse-room', userId);
           } else if (user.userType === 'Port') {
-            newSocket.emit('join-port-room', userId);
+            newSocket?.emit('join-port-room', userId);
           } else if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') {
-            newSocket.emit('join-customer-room', userId);
+            newSocket?.emit('join-customer-room', userId);
           } else if (user.userType === 'Delivery') {
-            newSocket.emit('join-delivery-notifications', userId);
+            newSocket?.emit('join-delivery-notifications', userId);
           }
         });
 
