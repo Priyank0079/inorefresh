@@ -33,7 +33,7 @@ export default function DeliveryDashboard() {
     e.stopPropagation();
     try {
       setRefreshing(true);
-      await updateOrderStatus(orderId, 'Assigned');
+      await updateOrderStatus(orderId, 'Processed');
       setAcceptMessage({ text: 'Order accepted successfully!', type: 'success' });
       setTimeout(() => setAcceptMessage(null), 3000);
       fetchStats();

@@ -565,75 +565,78 @@ export const verifyDeliveryOtpController = asyncHandler(
       // Reload order to get updated status
       const updatedOrder = await Order.findById(id);
 
-      // Process order status transition for financial transactions
-      if (
-        updatedOrder &&
-        updatedOrder.status === "Delivered" &&
-        previousStatus !== "Delivered"
-      ) {
-        try {
-          await processOrderStatusTransition(id, "Delivered", previousStatus);
-        } catch (transitionError: any) {
-          console.error(
-            "Error processing order status transition:",
-            transitionError,
-          );
-          // Continue even if transition fails - order is already marked as delivered
-        }
-      }
-
-      // Update delivery boy balance and cash collected (if COD)
-      if (updatedOrder && updatedOrder.status === "Delivered") {
-        if (updatedOrder.paymentMethod === "COD") {
-          // Use new COD processing function
-          const { processCODOrderDelivery } =
-            await import("../../../services/commissionService");
-          try {
-            await processCODOrderDelivery(id);
-            console.log(`[COD] Order ${updatedOrder.orderNumber} delivery processed via OTP verification`);
-          } catch (codError: any) {
-            console.error("Error processing COD order delivery:", codError);
-            // Continue - order is already marked as delivered
-          }
-        } else {
-          // For non-COD orders, use existing distribution logic
-          const { distributeCommissions } =
-            await import("../../../services/commissionService");
-          try {
-            await distributeCommissions(id);
-          } catch (commError: any) {
-            console.error("Error distributing commissions:", commError);
-            // Continue even if commission distribution fails
-          }
-        }
-
-        // Emit socket events for real-time status update
-        const io = (req.app as any).get("io");
-        if (io && previousStatus !== "Delivered") {
-          // Emit order-delivered event to customer
-          io.to(`order-${id}`).emit("order-delivered", {
-            orderId: id,
-            orderNumber: updatedOrder.orderNumber,
-            message: "Order has been delivered successfully",
-          });
-
-          // Also emit to delivery boy room
-          io.to(`delivery-${deliveryId}`).emit("order-delivered", {
-            orderId: id,
-            orderNumber: updatedOrder.orderNumber,
-            message: "Order delivered successfully",
-          });
-
-          // Notify Warehouses of status update
-          notifyWarehousesOfOrderUpdate(io, updatedOrder, "STATUS_UPDATE");
-        }
-      }
-
-      return res.status(200).json({
+      // Return the response immediately to the frontend to speed up UI
+      res.status(200).json({
         success: true,
         message: result.message,
         data: updatedOrder,
       });
+
+      // Background task: Process financial transactions, COD, and webhooks asynchronously
+      (async () => {
+        // Process order status transition for financial transactions
+        if (
+          updatedOrder &&
+          updatedOrder.status === "Delivered" &&
+          previousStatus !== "Delivered"
+        ) {
+          try {
+            await processOrderStatusTransition(id, "Delivered", previousStatus);
+          } catch (transitionError: any) {
+            console.error(
+              "Error processing order status transition:",
+              transitionError,
+            );
+          }
+        }
+
+        // Update delivery boy balance and cash collected (if COD)
+        if (updatedOrder && updatedOrder.status === "Delivered") {
+          if (updatedOrder.paymentMethod === "COD") {
+            // Use new COD processing function
+            const { processCODOrderDelivery } =
+              await import("../../../services/commissionService");
+            try {
+              await processCODOrderDelivery(id);
+              console.log(`[COD] Order ${updatedOrder.orderNumber} delivery processed via OTP verification`);
+            } catch (codError: any) {
+              console.error("Error processing COD order delivery:", codError);
+            }
+          } else {
+            // For non-COD orders, use existing distribution logic
+            const { distributeCommissions } =
+              await import("../../../services/commissionService");
+            try {
+              await distributeCommissions(id);
+            } catch (commError: any) {
+              console.error("Error distributing commissions:", commError);
+            }
+          }
+
+          // Emit socket events for real-time status update
+          const io = (req.app as any).get("io");
+          if (io && previousStatus !== "Delivered") {
+            // Emit order-delivered event to customer
+            io.to(`order-${id}`).emit("order-delivered", {
+              orderId: id,
+              orderNumber: updatedOrder.orderNumber,
+              message: "Order has been delivered successfully",
+            });
+
+            // Also emit to delivery boy room
+            io.to(`delivery-${deliveryId}`).emit("order-delivered", {
+              orderId: id,
+              orderNumber: updatedOrder.orderNumber,
+              message: "Order delivered successfully",
+            });
+
+            // Notify Warehouses of status update
+            notifyWarehousesOfOrderUpdate(io, updatedOrder, "STATUS_UPDATE");
+          }
+        }
+      })().catch(err => console.error("Background task error in verifyDeliveryOtpController:", err));
+      
+      return;
     } catch (error: any) {
       return res.status(400).json({
         success: false,

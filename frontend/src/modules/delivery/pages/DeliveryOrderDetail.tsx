@@ -150,7 +150,7 @@ export default function DeliveryOrderDetail() {
         const fetchSellerLocations = async () => {
             if (!id || !order) return;
             // Only fetch if order has delivery boy assigned and status is before "Picked up"
-            if (order.status && order.status !== 'Picked up' && order.status !== 'Delivered') {
+            if (order.status && order.deliveryBoy && order.status !== 'Picked up' && order.status !== 'Delivered') {
                 try {
                     const locations = await getSellerLocationsForOrder(id);
                     setSellerLocations(locations || []);
@@ -160,7 +160,7 @@ export default function DeliveryOrderDetail() {
             }
         };
         fetchSellerLocations();
-    }, [id, order?.status]);
+    }, [id, order?.status, order?.deliveryBoy]);
 
     // Clean up when component unmounts
     useEffect(() => {
@@ -186,7 +186,7 @@ export default function DeliveryOrderDetail() {
         if (!id) return;
         // Cooldown check on frontend to avoid unnecessary API calls
         if (resendCooldown > 0) {
-            alert(`Please wait ${resendCooldown} seconds before resending OTP.`);
+            showDeliveryMsg(`Please wait ${resendCooldown} seconds before resending OTP.`, 'error');
             return;
         }
         try {
@@ -198,16 +198,16 @@ export default function DeliveryOrderDetail() {
             setResendCooldown(60); // 60 seconds cooldown after successful send
 
             if (!response?.alreadySent) {
-                alert('OTP sent to customer successfully');
+                showDeliveryMsg('OTP sent to customer successfully', 'success');
             }
             // If already sent, silently open the input — no alert needed
         } catch (err: any) {
             // Handle backend cooldown message
             if (err.message && err.message.includes('wait')) {
-                alert(err.message);
+                showDeliveryMsg(err.message, 'error');
                 setResendCooldown(30); 
             } else {
-                alert(err.message || 'Failed to send OTP');
+                showDeliveryMsg(err.message || 'Failed to send OTP', 'error');
             }
         } finally {
             setOtpSending(false);
@@ -216,18 +216,18 @@ export default function DeliveryOrderDetail() {
 
     const handleVerifyOtp = async () => {
         if (!id || !otpValue) {
-            alert('Please enter OTP');
+            showDeliveryMsg('Please enter OTP', 'error');
             return;
         }
         try {
             setOtpVerifying(true);
             const result = await verifyDeliveryOtp(id, otpValue);
-            alert(result.message || 'OTP verified successfully. Order marked as delivered.');
+            showDeliveryMsg(result.message || 'OTP verified successfully. Order marked as delivered.', 'success');
             await fetchOrder(); // Refresh order data
             setShowOtpInput(false);
             setOtpValue('');
         } catch (err: any) {
-            alert(err.message || 'Failed to verify OTP');
+            showDeliveryMsg(err.message || 'Failed to verify OTP', 'error');
         } finally {
             setOtpVerifying(false);
         }
@@ -867,7 +867,7 @@ export default function DeliveryOrderDetail() {
                 </div>
 
                 {/* Delivery Earning Card - Show only if delivered or has earning */}
-                {(order.status === 'Delivered' || (order.deliveryEarning && order.deliveryEarning > 0)) && (
+                {(order.status === 'Delivered' || (order.deliveryEarning ? order.deliveryEarning > 0 : false)) && (
                     <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-2xl p-5 shadow-sm text-white mb-4">
                         <div className="flex justify-between items-center">
                             <div>
@@ -1023,7 +1023,7 @@ export default function DeliveryOrderDetail() {
             )}
             {/* Floating Action Button for Status Updates */}
             {((!order.deliveryBoy) || (order.status === 'Picked up')) && (
-                <div className="fixed bottom-6 left-6 right-6 z-40">
+                <div className="fixed bottom-24 left-6 right-6 z-40">
                     <button
                         onClick={() => handleStatusChange(order.deliveryBoy ? 'Out for Delivery' : 'Processed')}
                         className={`w-full py-4 rounded-2xl font-bold text-lg shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${

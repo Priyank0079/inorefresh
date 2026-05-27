@@ -341,29 +341,30 @@ export default function WarehouseOrderDetail() {
     }
   };
 
-  const formatUnit = (unit: string, qty: number) => {
+  const formatUnit = (unit: string, qty: number) => { // qty is kept for signature compatibility, but we shouldn't multiply base unit by qty in the 'Unit' column!
     if (!unit || unit === 'N/A') return 'N/A';
 
-    // Handle fish or items with units like '1.5kg' or '500g'
-    // improved regex to handle decimals and various spacing
-    const match = unit.match(/^(\d+(?:\.\d+)?)\s*([a-zA-Z]+)$/);
+    // Check if the unit is purely numeric (e.g. '200') or has letters (e.g. '200g')
+    const match = unit.match(/^(\d+(?:\.\d+)?)\s*([a-zA-Z]*)$/);
     if (match) {
       const val = parseFloat(match[1]);
-      const u = match[2];
-      // check if val is a valid number
+      let u = match[2];
+      
       if (!isNaN(val)) {
-        const total = val * qty;
-        // Format to remove trailing zeros if integer (e.g. 1.0 -> 1)
-        return `${parseFloat(total.toFixed(2))}${u}`;
+        // Just format the base unit nicely, do NOT multiply by qty!
+        // If the database sends '200' and it means grams, it will just show '200'
+        // If it sends '200g', it will show '200g'
+        const unitString = u ? (u.length > 2 && u.toLowerCase() !== 'pcs' ? ` ${u}` : u) : '';
+        return `${parseFloat(val.toFixed(2))}${unitString}`;
       }
     }
 
     // Special case for fish if it somehow still says "fish"
     if (unit.toLowerCase().includes('fish')) {
-      return `${1 * qty}kg`;
+      return `1kg`; // Base unit for fish
     }
 
-    return `${unit} x ${qty}`;
+    return unit; // Just return the unit string as is
   };
 
   return (

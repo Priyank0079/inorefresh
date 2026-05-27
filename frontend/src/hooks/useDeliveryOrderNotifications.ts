@@ -167,9 +167,13 @@ export const useDeliveryOrderNotifications = () => {
             return;
         }
 
-        connectSocket();
+        // Delay connection slightly to avoid React 18 Strict Mode double-invoke WebSocket errors
+        const timeoutId = setTimeout(() => {
+            connectSocket();
+        }, 100);
 
         return () => {
+            clearTimeout(timeoutId);
             disconnectSocket();
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps

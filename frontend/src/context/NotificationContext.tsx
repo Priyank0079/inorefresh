@@ -134,85 +134,90 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (token && user) {
       fetchNotifications();
       
-      // Initialize Socket with shared config
-      const socketUrl = getSocketBaseURL();
-      const newSocket = io(socketUrl, {
-        auth: { token },
-        // Prevent infinite reconnect loops that hang the browser on a slow server
-        reconnectionAttempts: 5,
-        reconnectionDelay: 2000,
-        reconnectionDelayMax: 10000,
-        timeout: 10000,
-        transports: ['websocket', 'polling'],
-      });
+      let newSocket: Socket | null = null;
       
-      newSocket.on('connect', () => {
-        console.log('Connected to notification socket');
-        // Join specific room based on user type and ID
-        const userId = user.userId || user.id || user._id;
+      // Delay connection slightly to avoid React 18 Strict Mode double-invoke WebSocket errors
+      const timeoutId = setTimeout(() => {
+        const socketUrl = getSocketBaseURL();
+        newSocket = io(socketUrl, {
+          auth: { token },
+          // Prevent infinite reconnect loops that hang the browser on a slow server
+          reconnectionAttempts: 5,
+          reconnectionDelay: 2000,
+          reconnectionDelayMax: 10000,
+          timeout: 10000,
+          transports: ['websocket', 'polling'],
+        });
         
-        if (user.userType === 'Admin') {
-          newSocket.emit('join-admin-room');
-        } else if (user.userType === 'Warehouse') {
-          newSocket.emit('join-warehouse-room', userId);
-        } else if (user.userType === 'Port') {
-          newSocket.emit('join-port-room', userId);
-        } else if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') {
-          newSocket.emit('join-customer-room', userId);
-        } else if (user.userType === 'Delivery') {
-          newSocket.emit('join-delivery-notifications', userId);
-        }
-      });
-
-      newSocket.on('new-notification', (notification: Notification) => {
-        console.log('New real-time notification received:', notification);
-        setNotifications(prev => [notification, ...prev]);
-        setUnreadCount(prev => prev + 1);
-        
-        // Show a toast when a new notification is received
-        showToast(notification.title, 'info');
-
-        // Play notification beep sound using Web Audio API
-        try {
-          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-          if (AudioContextClass) {
-            const audioCtx = new AudioContextClass();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
-            
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.18);
+        newSocket.on('connect', () => {
+          console.log('Connected to notification socket');
+          // Join specific room based on user type and ID
+          const userId = user.userId || user.id || user._id;
+          
+          if (user.userType === 'Admin') {
+            newSocket.emit('join-admin-room');
+          } else if (user.userType === 'Warehouse') {
+            newSocket.emit('join-warehouse-room', userId);
+          } else if (user.userType === 'Port') {
+            newSocket.emit('join-port-room', userId);
+          } else if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') {
+            newSocket.emit('join-customer-room', userId);
+          } else if (user.userType === 'Delivery') {
+            newSocket.emit('join-delivery-notifications', userId);
           }
-        } catch (audioErr) {
-          console.error("Audio beep failed:", audioErr);
-        }
+        });
 
-        // Text-to-speech voice alert
-        try {
-          if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // Cancel any ongoing speech
-            const textToSpeak = `${notification.title}. ${notification.message}`;
-            const utterance = new SpeechSynthesisUtterance(textToSpeak);
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
-            window.speechSynthesis.speak(utterance);
+        newSocket.on('new-notification', (notification: Notification) => {
+          console.log('New real-time notification received:', notification);
+          setNotifications(prev => [notification, ...prev]);
+          setUnreadCount(prev => prev + 1);
+          
+          // Show a toast when a new notification is received
+          showToast(notification.title, 'info');
+
+          // Play notification beep sound using Web Audio API
+          try {
+            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioContextClass) {
+              const audioCtx = new AudioContextClass();
+              const oscillator = audioCtx.createOscillator();
+              const gainNode = audioCtx.createGain();
+              
+              oscillator.connect(gainNode);
+              gainNode.connect(audioCtx.destination);
+              
+              oscillator.type = 'sine';
+              oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+              gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+              
+              oscillator.start();
+              oscillator.stop(audioCtx.currentTime + 0.18);
+            }
+          } catch (audioErr) {
+            console.error("Audio beep failed:", audioErr);
           }
-        } catch (speechError) {
-          console.error("Speech Synthesis failed:", speechError);
-        }
-      });
 
-      setSocket(newSocket);
+          // Text-to-speech voice alert
+          try {
+            if ('speechSynthesis' in window) {
+              window.speechSynthesis.cancel(); // Cancel any ongoing speech
+              const textToSpeak = `${notification.title}. ${notification.message}`;
+              const utterance = new SpeechSynthesisUtterance(textToSpeak);
+              utterance.rate = 1.0;
+              utterance.pitch = 1.0;
+              window.speechSynthesis.speak(utterance);
+            }
+          } catch (speechError) {
+            console.error("Speech Synthesis failed:", speechError);
+          }
+        });
+
+        setSocket(newSocket);
+      }, 100);
       
       return () => {
-        newSocket.disconnect();
+        clearTimeout(timeoutId);
+        if (newSocket) newSocket.disconnect();
       };
     }
   }, [token, user, fetchNotifications]);
