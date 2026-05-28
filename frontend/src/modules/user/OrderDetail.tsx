@@ -351,6 +351,8 @@ const SectionItem = ({
   title,
   subtitle,
   onClick,
+  href,
+  target,
   showArrow = true,
   rightContent,
 }: {
@@ -358,24 +360,50 @@ const SectionItem = ({
   title: string;
   subtitle?: string;
   onClick?: () => void;
+  href?: string;
+  target?: string;
   showArrow?: boolean;
   rightContent?: React.ReactNode;
-}) => (
-  <motion.button
-    onClick={onClick}
-    className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors text-left border-b border-dashed border-gray-200 last:border-0"
-    whileTap={{ scale: 0.99 }}>
-    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-      <Icon className="w-5 h-5 text-gray-600" />
-    </div>
-    <div className="flex-1 min-w-0">
-      <p className="font-medium text-gray-900 truncate">{title}</p>
-      {subtitle && <p className="text-sm text-gray-500 truncate">{subtitle}</p>}
-    </div>
-    {rightContent ||
-      (showArrow && <ChevronRightIcon className="w-5 h-5 text-gray-400" />)}
-  </motion.button>
-);
+}) => {
+  const content = (
+    <>
+      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-5 h-5 text-gray-600" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-gray-900 truncate">{title}</p>
+        {subtitle && <p className="text-sm text-gray-500 truncate">{subtitle}</p>}
+      </div>
+      {rightContent ||
+        (showArrow && <ChevronRightIcon className="w-5 h-5 text-gray-400" />)}
+    </>
+  );
+
+  const className = "w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors text-left border-b border-dashed border-gray-200 last:border-0";
+
+  if (href) {
+    return (
+      <motion.a
+        href={href}
+        target={target}
+        rel={target === "_blank" ? "noopener noreferrer" : undefined}
+        className={className}
+        whileTap={{ scale: 0.99 }}
+      >
+        {content}
+      </motion.a>
+    );
+  }
+
+  return (
+    <motion.button
+      onClick={onClick}
+      className={className}
+      whileTap={{ scale: 0.99 }}>
+      {content}
+    </motion.button>
+  );
+};
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -1433,12 +1461,7 @@ export default function OrderDetail() {
               title={`${order.customerName || "Customer"}, ${order.customerPhone || "9XXXXXXXX"
                 }`}
               subtitle="Delivery partner may call this number"
-              onClick={() => {
-                const phone = order.customerPhone || "9XXXXXXXX";
-                if (phone && phone !== "9XXXXXXXX") {
-                  window.location.href = `tel:${phone}`;
-                }
-              }}
+              href={order.customerPhone && order.customerPhone !== "9XXXXXXXX" ? `tel:${order.customerPhone}` : undefined}
             />
             <SectionItem
               icon={HomeIcon}
@@ -1448,12 +1471,8 @@ export default function OrderDetail() {
                   ? `${order.address.address}, ${order.address.city}`
                   : "Add delivery address"
               }
-              onClick={() => {
-                const query = order.address ? `${order.address.address}, ${order.address.city}` : '';
-                if (query) {
-                  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
-                }
-              }}
+              href={order.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${order.address.address}, ${order.address.city}`)}` : undefined}
+              target="_blank"
             />
             {!['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
               <SectionItem
