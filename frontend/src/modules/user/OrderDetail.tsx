@@ -402,6 +402,7 @@ export default function OrderDetail() {
   // Modal states
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [showItemsModal, setShowItemsModal] = useState(false);
   const [showSpecialRequestsModal, setShowSpecialRequestsModal] =
     useState(false);
@@ -1397,7 +1398,8 @@ export default function OrderDetail() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            whileTap={{ scale: 0.99 }}>
+            whileTap={{ scale: 0.99 }}
+            onClick={() => setShowSafetyModal(true)}>
             <ShieldIcon className="w-6 h-6 text-gray-600" />
             <span className="flex-1 text-left font-medium text-gray-900">
               Learn about delivery partner safety
@@ -1431,6 +1433,12 @@ export default function OrderDetail() {
               title={`${order.customerName || "Customer"}, ${order.customerPhone || "9XXXXXXXX"
                 }`}
               subtitle="Delivery partner may call this number"
+              onClick={() => {
+                const phone = order.customerPhone || "9XXXXXXXX";
+                if (phone && phone !== "9XXXXXXXX") {
+                  window.location.href = `tel:${phone}`;
+                }
+              }}
             />
             <SectionItem
               icon={HomeIcon}
@@ -1440,6 +1448,12 @@ export default function OrderDetail() {
                   ? `${order.address.address}, ${order.address.city}`
                   : "Add delivery address"
               }
+              onClick={() => {
+                const query = order.address ? `${order.address.address}, ${order.address.city}` : '';
+                if (query) {
+                  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
+                }
+              }}
             />
             {!['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
               <SectionItem
@@ -1636,6 +1650,57 @@ export default function OrderDetail() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Safety Modal */}
+      <AnimatePresence>
+        {showSafetyModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            onClick={() => setShowSafetyModal(false)}>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl p-6 max-w-md w-full">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <ShieldIcon className="w-5 h-5 text-blue-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Partner Safety
+                </h2>
+              </div>
+              <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                At Inor Fresh, safety is our priority. All our delivery partners are verified and trained to ensure secure and contactless deliveries when requested. Your contact information is masked for privacy.
+              </p>
+              <div className="space-y-3 mb-6">
+                <div className="flex gap-3 text-sm text-gray-700 items-start">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>Temperature checks and hygiene protocols followed</span>
+                </div>
+                <div className="flex gap-3 text-sm text-gray-700 items-start">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>Number masking during calls for your privacy</span>
+                </div>
+                <div className="flex gap-3 text-sm text-gray-700 items-start">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>GPS tracking of all deliveries</span>
+                </div>
+              </div>
+              <Button
+                className="w-full bg-gray-900 hover:bg-gray-800 text-white"
+                onClick={() => setShowSafetyModal(false)}>
+                Got it
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
 
       {/* Delivery Instructions Modal */}
       <AnimatePresence>
