@@ -49,7 +49,14 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
     if (notification.link) {
       navigate(notification.link);
     } else {
-      navigate('/admin/notification');
+      const title = (notification.title || '').toLowerCase();
+      if (title.includes('return')) {
+        navigate('/admin/return');
+      } else if (title.includes('order')) {
+        navigate('/admin/orders');
+      } else {
+        navigate('/admin/notification');
+      }
     }
     setShowNotificationsDropdown(false);
   };

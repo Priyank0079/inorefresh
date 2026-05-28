@@ -32,7 +32,12 @@ const PortNavbar = ({ onMenuClick, title }) => {
     if (n.link) {
       navigate(n.link);
     } else {
-      navigate('/port/notifications');
+      const title = (n.title || '').toLowerCase();
+      if (title.includes('shipment') || title.includes('offer')) {
+        navigate('/port/dashboard');
+      } else {
+        navigate('/port/notifications');
+      }
     }
     setShowNotifications(false);
   };

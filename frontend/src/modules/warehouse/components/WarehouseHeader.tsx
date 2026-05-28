@@ -73,6 +73,18 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
     markAsRead(notification._id);
     if (notification.link) {
       navigate(notification.link);
+    } else {
+      // Fallback navigation based on notification title or type
+      const title = (notification.title || '').toLowerCase();
+      if (title.includes('return')) {
+        navigate('/warehouse/return-order');
+      } else if (title.includes('order')) {
+        navigate('/warehouse/orders');
+      } else if (title.includes('shipment')) {
+        navigate('/warehouse/port-shipments');
+      } else if (title.includes('wallet') || title.includes('refund') || title.includes('balance')) {
+        navigate('/warehouse/wallet');
+      }
     }
     setShowNotificationsDropdown(false);
   };
