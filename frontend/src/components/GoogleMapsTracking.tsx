@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect, useState } from 'react'
+import React, { useCallback, useRef, useEffect, useState } from 'react'
 // @ts-ignore - @react-google-maps/api types may not be available
 import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api'
 import { motion } from 'framer-motion'
@@ -37,7 +37,7 @@ const mapContainerStyle = {
     height: '22rem'
 }
 
-export default function GoogleMapsTracking({
+const GoogleMapsTracking = ({
     storeLocation,
     sellerLocations = [],
     customerLocation,
@@ -50,7 +50,7 @@ export default function GoogleMapsTracking({
     destinationName,
     onRouteInfoUpdate,
     lastUpdate
-}: GoogleMapsTrackingProps) {
+}: GoogleMapsTrackingProps) => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
     const mapRef = useRef<any>(null)
     const directionsServiceRef = useRef<any>(null)
@@ -443,11 +443,11 @@ export default function GoogleMapsTracking({
 
     const containerClasses = isFullScreen
         ? "fixed inset-0 z-[100] bg-white w-screen h-screen flex flex-col"
-        : "relative mx-4 mt-4 rounded-lg overflow-hidden shadow-sm";
+        : "relative mx-4 mt-4 rounded-lg overflow-hidden shadow-sm h-[22rem]";
 
     if (loadError) {
         return (
-            <div className={containerClasses + " bg-red-50 border border-red-200 p-4 text-center"}>
+            <div className={containerClasses + " bg-red-50 border border-red-200 flex flex-col items-center justify-center p-4 text-center"}>
                 <p className="text-red-800 text-sm">❌ Failed to load Google Maps</p>
             </div>
         )
@@ -455,7 +455,7 @@ export default function GoogleMapsTracking({
 
     if (!isLoaded) {
         return (
-            <div className={containerClasses + " bg-gray-100 p-8 text-center"}>
+            <div className={containerClasses + " bg-gray-100 flex flex-col items-center justify-center p-8 text-center"}>
                 <div className="animate-spin text-2xl">🗺️</div>
                 <p className="text-gray-600 text-sm mt-2">Loading map...</p>
             </div>
@@ -637,4 +637,21 @@ export default function GoogleMapsTracking({
         </div>
     )
 }
+
+export default React.memo(GoogleMapsTracking, (prevProps, nextProps) => {
+    // Only re-render if tracking status changes or locations significantly update
+    if (prevProps.isTracking !== nextProps.isTracking) return false;
+    if (prevProps.showRoute !== nextProps.showRoute) return false;
+    if (prevProps.lastUpdate !== nextProps.lastUpdate) return false;
+    
+    // Compare delivery location deeply
+    if (prevProps.deliveryLocation?.lat !== nextProps.deliveryLocation?.lat) return false;
+    if (prevProps.deliveryLocation?.lng !== nextProps.deliveryLocation?.lng) return false;
+    
+    // Compare customer location deeply
+    if (prevProps.customerLocation.lat !== nextProps.customerLocation.lat) return false;
+    if (prevProps.customerLocation.lng !== nextProps.customerLocation.lng) return false;
+    
+    return true; // Props are functionally equal
+});
 

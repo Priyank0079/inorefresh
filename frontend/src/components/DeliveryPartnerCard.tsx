@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 
 interface DeliveryPartner {
     name?: string
@@ -18,7 +18,7 @@ interface DeliveryPartnerCardProps {
     onMessage?: () => void
 }
 
-export default function DeliveryPartnerCard({
+export default React.memo(function DeliveryPartnerCard({
     partner,
     eta,
     distance,
@@ -77,7 +77,7 @@ export default function DeliveryPartnerCard({
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <span className="text-2xl text-white">🛵</span>
+                            <span className="text-2xl text-white">ðŸ›µ</span>
                         )}
                     </div>
 
@@ -88,7 +88,7 @@ export default function DeliveryPartnerCard({
                         </h3>
                         {partner?.vehicleNumber && (
                             <p className="text-sm text-gray-500">
-                                🏍️ {partner.vehicleNumber}
+                                ðŸï¸ {partner.vehicleNumber}
                             </p>
                         )}
                         {isTracking && (
@@ -225,5 +225,5 @@ export default function DeliveryPartnerCard({
             )}
         </motion.div>
     )
-}
+})
 

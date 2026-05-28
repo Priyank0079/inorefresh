@@ -218,10 +218,37 @@ export const addToCart = async (req: Request, res: Response) => {
             cart = await Cart.create({ customer: customerId, items: [], total: 0 });
         }
 
-        // Upsert cart item
         const existingItem = await CartItem.findOne({ cart: cart._id, product: productId, variation: variation || null });
+        const newQuantity = (existingItem?.quantity || 0) + Number(quantity);
+
+        // Check stock limit
+        let maxStock = product.stock || 0;
+        if (variation && product.variations && product.variations.length > 0) {
+            // Find specific variation stock
+            const matchedVar = product.variations.find((v: any) => 
+                v.value === variation || 
+                v.title === variation || 
+                v.pack === variation || 
+                (mongoose.isValidObjectId(variation) && v._id?.toString() === variation)
+            );
+            if (matchedVar) {
+                maxStock = matchedVar.stock || 0;
+            } else {
+                // If it's a valid ID but couldn't be matched by find (unlikely since we checked _id), fallback to 0
+                maxStock = 0;
+            }
+        }
+
+        if (newQuantity > maxStock) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Cannot add more than available stock (${maxStock})` 
+            });
+        }
+
+        // Upsert cart item
         if (existingItem) {
-            existingItem.quantity += Number(quantity);
+            existingItem.quantity = newQuantity;
             await existingItem.save();
         } else {
             const newItem = await CartItem.create({
@@ -308,8 +335,35 @@ export const updateCartItem = async (req: Request, res: Response) => {
             return res.status(404).json({ success: false, message: 'Item not found in cart' });
         }
 
+        const product = cartItem.product as any;
+        
+        // Check stock limit
+        let maxStock = product.stock || 0;
+        const variation = cartItem.variation;
+        
+        if (variation && product.variations && product.variations.length > 0) {
+            // Find specific variation stock
+            const matchedVar = product.variations.find((v: any) => 
+                v.value === variation || 
+                v.title === variation || 
+                v.pack === variation || 
+                (mongoose.isValidObjectId(variation) && v._id?.toString() === variation)
+            );
+            if (matchedVar) {
+                maxStock = matchedVar.stock || 0;
+            } else {
+                maxStock = 0;
+            }
+        }
+
+        if (quantity > maxStock) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Cannot increase quantity beyond available stock (${maxStock})` 
+            });
+        }
+
         // Verify item is still available at location
-        // const product = cartItem.product as any;
         // Location is no longer a hard blocker for cart quantity updates.
 
         cartItem.quantity = quantity;

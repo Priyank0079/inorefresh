@@ -1,5 +1,5 @@
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "../../components/ui/button";
 import { useOrders } from "../../hooks/useOrders";
@@ -254,7 +254,7 @@ const AnimatedCheckmark = ({ delay = 0 }) => (
 );
 
 // Promotional banner carousel
-const PromoCarousel = () => {
+const PromoCarousel = React.memo(() => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const promos = [
     {
@@ -296,7 +296,7 @@ const PromoCarousel = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4 }}>
-      <div className="overflow-hidden relative">
+      <div className="overflow-hidden relative min-h-[104px]">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
@@ -341,7 +341,7 @@ const PromoCarousel = () => {
       </div>
     </motion.div>
   );
-};
+});
 
 
 
@@ -1072,7 +1072,7 @@ export default function OrderDetail() {
           }}
           eta={routeInfo ? Math.ceil(routeInfo.durationValue / 60) : eta}
           distance={routeInfo ? routeInfo.distanceValue : distance}
-          isTracking={isConnected && !!deliveryLocation}
+          isTracking={isConnected && !!deliveryLocation && !['Delivered', 'Cancelled', 'Returned', 'Rejected', 'Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus)}
           deliveryOtp={
             !['Delivered', 'Cancelled', 'Returned', 'Rejected', 'Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus)
               ? order?.deliveryOtp
@@ -1345,7 +1345,7 @@ export default function OrderDetail() {
         )}
 
         {/* Payment Pending */}
-        {orderStatus !== 'Cancelled' && !['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
+        {orderStatus !== 'Cancelled' && !['Delivered', 'Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && order?.paymentStatus !== 'Paid' && (
           <motion.div
             className="bg-white rounded-xl p-4 shadow-sm"
             initial={{ opacity: 0, y: 20 }}
@@ -1367,11 +1367,9 @@ export default function OrderDetail() {
           </motion.div>
         )}
 
-        {/* Promo Carousel */}
-        {orderStatus !== 'Cancelled' && !['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && <PromoCarousel />}
-
+        {/* Promo Carousel removed as per request */}
         {/* Delivery Partner Assignment - Only show if no partner assigned yet */}
-        {orderStatus !== 'Cancelled' && !order?.deliveryPartner && !['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
+        {orderStatus !== 'Cancelled' && !order?.deliveryPartner && !['Delivered', 'Partially Returned', 'Fully Returned', 'Return Under Review'].includes(orderStatus) && (
           <motion.div
             className="bg-white rounded-xl p-4 shadow-sm"
             initial={{ opacity: 0, y: 20 }}

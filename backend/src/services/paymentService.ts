@@ -311,11 +311,17 @@ const handlePaymentCaptured = async (payload: any) => {
             await payment.save();
 
             // Update order
-            const updatedOrder = await Order.findByIdAndUpdate(
-                payment.order,
-                { paymentStatus: 'Paid', paymentId: razorpayPaymentId },
-                { new: true }
-            ).populate({ path: 'items', populate: { path: 'warehouse' } }).lean();
+            const orderToUpdate = await Order.findById(payment.order);
+            let updatedOrder;
+            if (orderToUpdate) {
+                orderToUpdate.paymentStatus = 'Paid';
+                orderToUpdate.paymentId = razorpayPaymentId;
+                if (orderToUpdate.status === 'Pending') {
+                    orderToUpdate.status = 'Received';
+                }
+                await orderToUpdate.save();
+                updatedOrder = await Order.findById(payment.order).populate({ path: 'items', populate: { path: 'warehouse' } }).lean();
+            }
 
             // Notify warehouses + customer via socket (webhook path)
             if (updatedOrder) {

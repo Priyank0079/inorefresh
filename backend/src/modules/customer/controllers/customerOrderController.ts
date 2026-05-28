@@ -162,7 +162,7 @@ export const createOrder = async (req: Request, res: Response) => {
             },
             paymentMethod: paymentMethod || 'COD',
             paymentStatus: 'Pending',
-            status: 'Received',
+            status: (!paymentMethod || paymentMethod === 'COD') ? 'Received' : 'Pending',
             subtotal: 0,
             tax: 0,
             shipping: fees?.deliveryFee || 0,
@@ -194,36 +194,32 @@ export const createOrder = async (req: Request, res: Response) => {
 
             if (variationValue) {
                 // Try to decrement stock for the specific variation first
-                // We check variations._id, variations.value, variations.title, or variations.pack
+                // Use $elemMatch to ensure the same variation matches both the identifier and the stock requirement
+                const variationConditions: any[] = [
+                    { value: variationValue },
+                    { title: variationValue },
+                    { pack: variationValue }
+                ];
+                
+                if (mongoose.isValidObjectId(variationValue)) {
+                    variationConditions.push({ _id: new mongoose.Types.ObjectId(variationValue) });
+                }
+
+                const query = {
+                    _id: item.product.id,
+                    variations: {
+                        $elemMatch: {
+                            $or: variationConditions,
+                            stock: { $gte: qty }
+                        }
+                    }
+                };
+
+                const update = { $inc: { "variations.$.stock": -qty, stock: -qty } };
+
                 product = session
-                    ? await Product.findOneAndUpdate(
-                        {
-                            _id: item.product.id,
-                            $or: [
-                                { "variations._id": mongoose.isValidObjectId(variationValue) ? variationValue : new mongoose.Types.ObjectId() },
-                                { "variations.value": variationValue },
-                                { "variations.title": variationValue },
-                                { "variations.pack": variationValue }
-                            ],
-                            "variations.stock": { $gte: qty }
-                        },
-                        { $inc: { "variations.$.stock": -qty, stock: -qty } },
-                        { session, new: true }
-                    )
-                    : await Product.findOneAndUpdate(
-                        {
-                            _id: item.product.id,
-                            $or: [
-                                { "variations._id": mongoose.isValidObjectId(variationValue) ? variationValue : new mongoose.Types.ObjectId() },
-                                { "variations.value": variationValue },
-                                { "variations.title": variationValue },
-                                { "variations.pack": variationValue }
-                            ],
-                            "variations.stock": { $gte: qty }
-                        },
-                        { $inc: { "variations.$.stock": -qty, stock: -qty } },
-                        { new: true }
-                    );
+                    ? await Product.findOneAndUpdate(query, update, { session, new: true })
+                    : await Product.findOneAndUpdate(query, update, { new: true });
             }
 
             if (!product) {
@@ -498,6 +494,7 @@ export const createOrder = async (req: Request, res: Response) => {
                     if (payableAmount === 0) {
                         newOrder.paymentStatus = 'Paid';
                         newOrder.paymentMethod = 'Wallet';
+                        newOrder.status = 'Received';
                     }
                 }
             }
@@ -847,7 +844,12 @@ export const cancelOrder = async (req: Request, res: Response) => {
                     // Check if it was a variation
                     if (orderItem.variation) {
                         // Try to find matching variation
-                        const variationIndex = product.variations?.findIndex((v: any) => v.value === orderItem.variation || v.title === orderItem.variation || v.pack === orderItem.variation);
+                        const variationIndex = product.variations?.findIndex((v: any) => 
+                            v.value === orderItem.variation || 
+                            v.title === orderItem.variation || 
+                            v.pack === orderItem.variation || 
+                            (mongoose.isValidObjectId(orderItem.variation) && v._id?.toString() === orderItem.variation)
+                        );
 
                         if (variationIndex !== undefined && variationIndex !== -1 && product.variations && product.variations[variationIndex]) {
                             const currentStock = product.variations[variationIndex].stock || 0;
