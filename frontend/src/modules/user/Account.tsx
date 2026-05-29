@@ -792,9 +792,19 @@ export default function Account() {
 
               {/* Full Message */}
               <div className="bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl p-4 mb-6 border border-teal-100">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words text-sm">
                   {selectedNotification.message}
                 </p>
+
+                {/* Extract and Highlight Order ID if present */}
+                {selectedNotification.message?.match(/#ORD[\dA-Z]+/i) && (
+                  <div className="mt-4 pt-4 border-t border-teal-200">
+                    <p className="text-xs text-gray-600 mb-2">Order ID:</p>
+                    <div className="bg-white rounded-lg p-2 font-mono text-sm font-bold text-teal-600 break-all">
+                      {selectedNotification.message.match(/#ORD[\dA-Z]+/i)?.[0]}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Notification Details */}
@@ -840,9 +850,18 @@ export default function Account() {
                     }}
                     className="w-full py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white font-bold rounded-xl hover:shadow-lg transition-all active:scale-95 min-h-[44px]"
                   >
-                    View Details →
+                    View Order Details →
                   </button>
                 )}
+
+                {!selectedNotification.link && selectedNotification.message?.includes('#ORD') && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-xs text-blue-600 text-center">
+                      💡 Check your Orders section to view the full order details
+                    </p>
+                  </div>
+                )}
+
                 <button
                   onClick={() => setSelectedNotification(null)}
                   className="w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-95 min-h-[44px]"
