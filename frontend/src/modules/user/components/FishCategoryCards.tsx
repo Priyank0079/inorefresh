@@ -35,7 +35,7 @@ export default function FishCategoryCards() {
                             id={cat._id}
                             name={cat.name}
                             image={cat.image || '/images/aqua_fish_banner.webp'}
-                            link={`/category/${cat._id}`}
+                            link={`/?tab=${cat.slug || cat._id}`}
                             index={idx}
                             compact={true}
                         />

@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { getIconByName } from "../../../utils/iconLibrary";
 
 interface ExploreCardProps {
@@ -14,6 +14,14 @@ interface ExploreCardProps {
 }
 
 const ExploreCard: React.FC<ExploreCardProps> = ({ id, name, image, iconName, link, index, compact = false }) => {
+    const navigate = useNavigate();
+
+    const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigate(link);
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -23,9 +31,16 @@ const ExploreCard: React.FC<ExploreCardProps> = ({ id, name, image, iconName, li
                 y: compact ? -4 : -8,
                 transition: { duration: 0.2 }
             }}
-            className="relative h-full"
+            onClick={handleClick}
+            className="relative h-full cursor-pointer group"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    handleClick(e as any);
+                }
+            }}
         >
-            <Link to={link} className="block group h-full">
                 <div className={`relative overflow-hidden ${compact ? 'rounded-[20px]' : 'rounded-[24px]'} bg-white backdrop-blur-md border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all duration-500 h-full`}>
                     {/* Decorative Gradient Background */}
                     <div className="absolute inset-0 bg-gradient-to-br from-[#1CA7C7]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -85,7 +100,6 @@ const ExploreCard: React.FC<ExploreCardProps> = ({ id, name, image, iconName, li
                         )}
                     </div>
                 </div>
-            </Link>
         </motion.div>
     );
 };

@@ -222,15 +222,16 @@ export default function Home() {
     if (tabParam) {
       const normalizedTab = normalizeTabId(tabParam);
       setActiveTab(normalizedTab);
+      scrollHandledRef.current = false; // Reset scroll handler so it scrolls when products load
 
-      // Simple auto-scroll to products if a category is selected via URL
+      // Auto-scroll to products if a category is selected via URL
       if (normalizedTab !== 'all') {
         const timer = setTimeout(() => {
           const section = document.getElementById('fish-products-section');
           if (section) {
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
-        }, 150);
+        }, 100);
         return () => clearTimeout(timer);
       }
     }
@@ -471,6 +472,20 @@ export default function Home() {
 
   // Client-side filtering for the 3 professional tabs
   const filteredProducts = tabProducts;
+
+  // Auto-scroll to products when they load for a specific category
+  useEffect(() => {
+    if (!isTabLoading && tabProducts.length > 0 && normalizedActiveTab !== 'all' && !scrollHandledRef.current) {
+      scrollHandledRef.current = true;
+      const timer = setTimeout(() => {
+        const section = document.getElementById('fish-products-section');
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isTabLoading, tabProducts, normalizedActiveTab]);
 
   useEffect(() => {
     const fetchData = async () => {
