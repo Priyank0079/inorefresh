@@ -729,8 +729,30 @@ export default function Home() {
       {activeTab === "all" ? (
         <HomeHero activeTab={activeTab} onTabChange={setActiveTab} />
       ) : (
-        // Keep space for fixed top navbar when hero is hidden
-        <div className="h-[70px] md:h-[70px]" aria-hidden="true" />
+        // Category header with back button for mobile
+        <div className="sticky top-0 z-40 bg-white border-b border-neutral-200 shadow-sm md:hidden">
+          <div className="px-4 py-4 flex items-center gap-3">
+            <button
+              onClick={() => setActiveTab('all')}
+              className="w-11 h-11 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 rounded-full transition-colors min-h-[44px] min-w-[44px]"
+              aria-label="Go back to all products"
+              title="Go back"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M15 18L9 12L15 6"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <h1 className="text-lg font-bold text-neutral-900 flex-1 truncate capitalize">
+              {activeTab}
+            </h1>
+          </div>
+        </div>
       )}
 
       {activeTab === 'all' && (

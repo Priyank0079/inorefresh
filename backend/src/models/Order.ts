@@ -30,6 +30,12 @@ export interface IOrder extends Document {
   // Pricing
   subtotal: number;
   tax: number;
+  taxBreakdown?: Array<{
+    itemId: string;
+    itemName: string;
+    taxRate: number;
+    amount: number;
+  }>;
   shipping: number;
   platformFee: number;
   discount: number;
@@ -220,6 +226,14 @@ const OrderSchema = new Schema<IOrder>(
       default: 0,
       min: [0, "Tax cannot be negative"],
     },
+    taxBreakdown: [
+      {
+        itemId: String,
+        itemName: String,
+        taxRate: Number,
+        amount: Number,
+      },
+    ],
     shipping: {
       type: Number,
       default: 0,

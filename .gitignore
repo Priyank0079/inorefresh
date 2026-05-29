@@ -3,3 +3,28 @@
 branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
+
+# Temporary documentation & reports (session artifacts)
+BUG_FIXES_COMPLETED.md
+BUGS_FIX_STATUS_FINAL.md
+COMPREHENSIVE_BEFORE*.md
+COMPREHENSIVE_UI_AUDIT*.md
+CURRENT_PERFORMANCE*.md
+DETAILED_BUG_REPORT*.md
+EXECUTIVE_SUMMARY*.md
+IMPLEMENTATION_COMPLETE*.md
+METRICS_SUMMARY.md
+MOBILE_UI_FIX_GUIDE*.md
+PERFORMANCE_REPORT*.md
+README_PERFORMANCE*.md
+README_UI_AUDIT*.md
+UI_AUDIT_SUMMARY.md
+GEMINI.md
+AGENTS.md
+QCODER.md
+
+# Temporary files
+test_notifs.js
+.windsurfrules
+.mcp.json
+.opencodecsejson

@@ -112,6 +112,9 @@ export interface IAppSettings extends Document {
   // Updated By
   updatedBy?: mongoose.Types.ObjectId;
 
+  // Wallet Settings
+  walletMinimumPurchase?: number;
+
   // Withdrawal Settings
   minimumWithdrawalAmount?: number;
 
@@ -131,6 +134,13 @@ interface IAppSettingsModel extends mongoose.Model<IAppSettings> {
 const AppSettingsSchema = new Schema<IAppSettings>(
   {
     // ... (rest of schema is fine, just adding new field)
+
+    // Wallet Settings
+    walletMinimumPurchase: {
+      type: Number,
+      default: 10000,
+      description: "Minimum order value to use wallet for payment"
+    },
 
     // Withdrawal Settings
     minimumWithdrawalAmount: {

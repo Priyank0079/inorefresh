@@ -35,7 +35,7 @@ export const createOrder = async (req: Request, res: Response) => {
             session = null;
         }
 
-        const { items, address, paymentMethod, fees, useWallet } = req.body;
+        const { items, address, paymentMethod, fees, useWallet, couponCode, discountAmount } = req.body;
         const userId = req.user!.userId;
 
         // Log incoming request for debugging
@@ -440,19 +440,87 @@ export const createOrder = async (req: Request, res: Response) => {
             // Fallback to provided fee or 0
         }
 
-        const finalTotal = calculatedSubtotal + platformFee + deliveryFee;
+        // ═══════════════════════════════════════════════════════════════
+        // TAX CALCULATION (18% GST default, can be configured per product)
+        // ═══════════════════════════════════════════════════════════════
+        let calculatedTax = 0;
+        const taxBreakdown: any = [];
+
+        for (const item of items) {
+            const product = await Product.findById(item.product.id);
+            if (product) {
+                const taxRate = product.taxRate || 18; // Default 18% GST
+                const itemTax = (item.quantity * calculateItemPrice(product, item.variant || item.variation) * taxRate) / 100;
+                calculatedTax += itemTax;
+                taxBreakdown.push({
+                    itemId: item.product.id,
+                    itemName: product.productName,
+                    taxRate: taxRate,
+                    amount: Number(itemTax.toFixed(2))
+                });
+            }
+        }
+        calculatedTax = Number(calculatedTax.toFixed(2));
+
+        // ═══════════════════════════════════════════════════════════════
+        // DISCOUNT APPLICATION (Coupon validation and application)
+        // ═══════════════════════════════════════════════════════════════
+        let appliedDiscount = 0;
+        let appliedCouponCode = '';
+
+        if (couponCode && discountAmount && discountAmount > 0) {
+            const Coupon = require("../../../models/Coupon").default;
+            const coupon = await Coupon.findOne({
+                code: couponCode.toUpperCase(),
+                isActive: true
+            });
+
+            if (coupon) {
+                const currentDate = new Date();
+                // Validate coupon is not expired
+                if (currentDate >= coupon.startDate && currentDate <= coupon.endDate) {
+                    // Validate usage limit
+                    if (!coupon.usageLimit || coupon.usageCount < coupon.usageLimit) {
+                        // Validate minimum purchase
+                        if (!coupon.minimumPurchase || calculatedSubtotal >= coupon.minimumPurchase) {
+                            appliedDiscount = Number(discountAmount.toFixed(2));
+                            appliedCouponCode = couponCode.toUpperCase();
+
+                            // Increment usage count
+                            coupon.usageCount = (coupon.usageCount || 0) + 1;
+                            if (session) {
+                                await coupon.save({ session });
+                            } else {
+                                await coupon.save();
+                            }
+
+                            console.log(`✓ Coupon applied: ${couponCode} | Discount: ₹${appliedDiscount}`);
+                        }
+                    }
+                }
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FINAL TOTAL CALCULATION
+        // Formula: Subtotal + Tax + Delivery Fee + Platform Fee - Discount
+        // ═══════════════════════════════════════════════════════════════
+        const finalTotal = calculatedSubtotal + calculatedTax + platformFee + deliveryFee - appliedDiscount;
 
         // --- Wallet Logic ---
         let walletAmountUsed = 0;
         let payableAmount = finalTotal;
 
         if (useWallet) {
-            // Check threshold: Shopping above ₹10,000
-            if (calculatedSubtotal < 10000) {
+            // Check threshold: Get from AppSettings (default 10000 if not configured)
+            const settings = await AppSettings.getSettings();
+            const walletMinimumPurchase = settings?.walletMinimumPurchase || 10000;
+
+            if (calculatedSubtotal < walletMinimumPurchase) {
                 if (session) await session.abortTransaction();
                 return res.status(400).json({
                     success: false,
-                    message: "Wallet/Coins can only be used for shopping above ₹10,000.",
+                    message: `Wallet can only be used for shopping above ₹${walletMinimumPurchase}.`,
                 });
             }
 
@@ -515,6 +583,10 @@ export const createOrder = async (req: Request, res: Response) => {
 
         // Update Order with calculated values and items
         newOrder.subtotal = Number(calculatedSubtotal.toFixed(2));
+        newOrder.tax = calculatedTax; // ✅ NOW APPLIED
+        newOrder.taxBreakdown = taxBreakdown; // Store tax detail
+        newOrder.discount = appliedDiscount; // ✅ NOW APPLIED
+        newOrder.couponCode = appliedCouponCode; // Store which coupon was used
         newOrder.total = Number(finalTotal.toFixed(2));
         newOrder.items = orderItemIds;
         newOrder.shipping = deliveryFee; // Update with calculated fee
