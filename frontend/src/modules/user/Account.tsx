@@ -240,44 +240,6 @@ export default function Account() {
                 )}
               </button>
 
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 max-w-[85vw] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
-                  <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                    <p className="text-sm font-bold text-gray-900">Notifications</p>
-                    {unreadCount > 0 && (
-                      <button onClick={markAllAsRead} className="text-[10px] font-bold text-teal-600 hover:underline">
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-                  <div className="max-h-80 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="p-6 text-center text-gray-400 text-sm">
-                        No notifications
-                      </div>
-                    ) : (
-                      notifications.map((notification: any) => (
-                        <button
-                          key={notification._id}
-                          onClick={() => handleNotificationClick(notification)}
-                          className={`w-full text-left px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 flex gap-3 ${!notification.isRead ? 'bg-teal-50/30' : ''}`}
-                        >
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notification.type === 'Success' ? 'bg-emerald-100 text-emerald-600' : notification.type === 'Error' ? 'bg-rose-100 text-rose-600' : 'bg-teal-100 text-teal-600'}`}>
-                            <span className="material-icons-outlined text-sm">
-                              {notification.type === 'Order' ? 'shopping_bag' : 'notifications'}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-xs truncate ${!notification.isRead ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'}`}>{notification.title}</p>
-                            <p className="text-[10px] text-gray-500 line-clamp-2">{notification.message}</p>
-                          </div>
-                          {!notification.isRead && <div className="w-2 h-2 mt-2 rounded-full bg-teal-500" />}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -618,6 +580,123 @@ export default function Account() {
               </div>
             </motion.div>
           </div>
+        </AnimatePresence>
+      )}
+
+      {/* Full Page Notifications Modal */}
+      {showNotifications && (
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150] bg-white overflow-hidden"
+          >
+            {/* Header */}
+            <div className="sticky top-0 z-40 bg-gradient-to-b from-teal-600 to-teal-700 pb-6 pt-6 px-4 md:px-6 shadow-lg">
+              <div className="max-w-2xl mx-auto flex items-center justify-between">
+                <button
+                  onClick={() => setShowNotifications(false)}
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-all min-h-[44px] min-w-[44px]"
+                  aria-label="Close notifications"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 18L9 12L15 6" />
+                  </svg>
+                </button>
+
+                <div className="text-center flex-1">
+                  <h1 className="text-2xl font-bold text-white">Notifications</h1>
+                  <p className="text-teal-100 text-sm mt-1">{notifications.length} notification{notifications.length !== 1 ? 's' : ''}</p>
+                </div>
+
+                {unreadCount > 0 && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={markAllAsRead}
+                    className="px-4 py-2 bg-white/20 text-white rounded-full text-xs font-bold hover:bg-white/30 transition-all min-h-[44px]"
+                  >
+                    Mark All Read
+                  </motion.button>
+                )}
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto h-[calc(100vh-100px)] pb-24 md:pb-8">
+              <div className="max-w-2xl mx-auto px-4 md:px-6 py-6">
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-400 font-medium">No notifications yet</p>
+                    <p className="text-gray-300 text-sm mt-1">Your notifications will appear here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {notifications.map((notification: any) => (
+                      <motion.button
+                        key={notification._id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onClick={() => handleNotificationClick(notification)}
+                        className={`w-full text-left p-4 rounded-2xl border-2 transition-all hover:border-teal-300 ${
+                          !notification.isRead
+                            ? 'bg-teal-50 border-teal-200 hover:bg-teal-100'
+                            : 'bg-white border-gray-100 hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex gap-4">
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-lg ${
+                            notification.type === 'Success'
+                              ? 'bg-emerald-100 text-emerald-600'
+                              : notification.type === 'Error'
+                              ? 'bg-rose-100 text-rose-600'
+                              : 'bg-teal-100 text-teal-600'
+                          }`}>
+                            <span>
+                              {notification.type === 'Order' || notification.type === 'Payment Confirmed' ? '🛒' : '🔔'}
+                            </span>
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <p className={`text-sm font-bold ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+                                  {notification.title}
+                                </p>
+                                <p className="text-gray-600 text-sm mt-1 leading-relaxed">
+                                  {notification.message}
+                                </p>
+                                {notification.timestamp && (
+                                  <p className="text-gray-400 text-xs mt-2">
+                                    {new Date(notification.timestamp).toLocaleDateString('en-IN', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                )}
+                              </div>
+                              {!notification.isRead && (
+                                <div className="w-3 h-3 rounded-full bg-teal-500 flex-shrink-0 mt-1.5" />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
         </AnimatePresence>
       )}
     </div>

@@ -111,25 +111,26 @@ export default function CategoryPage() {
 
   return (
     <div className="flex flex-col bg-white h-screen overflow-hidden">
-      <div className="sticky top-0 z-40 bg-white border-b border-neutral-200 flex-shrink-0">
-        <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4">
+      <div className="sticky top-0 z-40 bg-white border-b border-neutral-200 flex-shrink-0 shadow-sm">
+        <div className="px-4 md:px-6 lg:px-8 py-4 md:py-5">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
-              className="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 rounded-full transition-colors min-h-[44px] min-w-[44px]"
+              className="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 rounded-full transition-colors min-h-[44px] min-w-[44px] md:hidden"
               aria-label="Go back"
+              title="Go back"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                   d="M15 18L9 12L15 6"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
             </button>
-            <h1 className="text-base md:text-xl font-bold text-neutral-900">
+            <h1 className="text-lg md:text-2xl font-bold text-neutral-900 flex-1 truncate">
               {category?.name || "Category"}
             </h1>
           </div>

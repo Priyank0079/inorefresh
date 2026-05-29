@@ -17,18 +17,21 @@ export default function BottomNavigation() {
     };
 
     const handleHomeClick = (e: React.MouseEvent) => {
+        e.preventDefault();
         // Reset category filter to 'all' when clicking home
         setActiveCategory('all');
-        
-        if (location.pathname === '/' || location.pathname === '/user/home') {
-            e.preventDefault();
-            // Scroll to top if already on home
+
+        // Always navigate to clear query parameters
+        navigate('/', { replace: true });
+
+        // Scroll to top after navigation
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             const mainElement = document.querySelector('main');
             if (mainElement) {
                 mainElement.scrollTo({ top: 0, behavior: 'smooth' });
             }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        }, 50);
     };
 
     const navItems = [
@@ -78,11 +81,16 @@ export default function BottomNavigation() {
             {navItems.map((item) => {
                 const active = isActive(item.path);
                 return (
-                    <Link
+                    <button
                         key={item.name}
-                        to={item.path}
-                        onClick={item.onClick}
-                        className="flex flex-col items-center justify-center h-full relative px-4"
+                        onClick={(e) => {
+                            if (item.name === 'Home') {
+                                handleHomeClick(e);
+                            } else {
+                                navigate(item.path);
+                            }
+                        }}
+                        className="flex flex-col items-center justify-center h-full relative px-4 bg-transparent border-none cursor-pointer"
                     >
                         <div className={`
                             relative z-10 transition-all duration-300 flex flex-col items-center
@@ -112,7 +120,7 @@ export default function BottomNavigation() {
                                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                             />
                         )}
-                    </Link>
+                    </button>
                 );
             })}
         </nav>
