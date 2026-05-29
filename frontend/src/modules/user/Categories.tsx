@@ -112,7 +112,7 @@ export default function Categories() {
     const mapCategoryToCard = (c: any, index: number, compact = false) => {
     let displayName = c.name || c.title;
     let link = `/?tab=${c.slug || c._id || c.id}`;
-    let image = c.image || c.imageUrl || '/images/top_list_aqua_fish_trans.png';
+    let image = c.image || c.imageUrl || '/images/top_list_aqua_fish_trans.webp';
 
     return (
       <ExploreCard

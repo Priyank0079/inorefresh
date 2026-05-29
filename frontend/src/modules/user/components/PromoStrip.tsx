@@ -226,16 +226,16 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
           const validatedCards = fetchedCards.map(card => {
             const lowerTitle = (card.title || "").toLowerCase();
             let fallbackImage = "";
-            if (lowerTitle.includes('marin')) fallbackImage = '/images/marine_fish_banner.png';
-            else if (lowerTitle.includes('aqua')) fallbackImage = '/images/aqua_fish_banner.png';
-            else if (lowerTitle.includes('bengali') || lowerTitle.includes('bangali')) fallbackImage = '/images/bengali_fish_banner.png';
+            if (lowerTitle.includes('marin')) fallbackImage = '/images/marine_fish_banner.webp';
+            else if (lowerTitle.includes('aqua')) fallbackImage = '/images/aqua_fish_banner.webp';
+            else if (lowerTitle.includes('bengali') || lowerTitle.includes('bangali')) fallbackImage = '/images/bengali_fish_banner.webp';
 
-            const hdImageUrl = card.imageUrl || fallbackImage || '/images/marine_fish_banner.png';
+            const hdImageUrl = card.imageUrl || fallbackImage || '/images/marine_fish_banner.webp';
 
             return {
               ...card,
               imageUrl: hdImageUrl,
-              fallbackImageUrl: fallbackImage || '/images/top_list_marin_fish_trans.png'
+              fallbackImageUrl: fallbackImage || '/images/top_list_marin_fish_trans.webp'
             };
           });
           setCategoryCards(validatedCards);
@@ -339,9 +339,11 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                   src={category.imageUrl}
                   alt={category.title}
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                  loading="lazy"
+                  decoding="async"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = '/images/top_list_marin_fish_trans.png';
+                    target.src = '/images/top_list_marin_fish_trans.webp';
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent opacity-60 pointer-events-none" />
@@ -386,9 +388,11 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                     src={category.imageUrl}
                     alt={category.title}
                     className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = '/images/top_list_marin_fish_trans.png';
+                      target.src = '/images/top_list_marin_fish_trans.webp';
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent opacity-40 pointer-events-none" />

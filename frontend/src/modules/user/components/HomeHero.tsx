@@ -9,7 +9,7 @@ interface HomeHeroProps {
 export default function HomeHero({ activeTab = 'all', onTabChange }: HomeHeroProps) {
   const navigate = useNavigate();
 
-  const HERO_IMAGE = "/images/ocean_hero_background.png";
+  const HERO_IMAGE = "/images/ocean_hero_background.webp";
 
   const handleShopNow = () => {
     onTabChange?.('all');

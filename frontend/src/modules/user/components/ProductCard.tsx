@@ -22,9 +22,9 @@ interface ProductCardProps {
 }
 
 const FISH_CATEGORY_FALLBACK: Record<string, string> = {
-  aqua: '/images/aqua_fish.png',
-  marine: '/images/fish/marine-fish.jpg',
-  bengali: '/images/bengali_fish.png',
+  aqua: '/images/aqua_fish.webp',
+  marine: '/images/marin_fish.webp',
+  bengali: '/images/bengali_fish.webp',
 };
 
 export default function ProductCard({ product, badgeText = '' }: ProductCardProps) {
@@ -120,10 +120,10 @@ export default function ProductCard({ product, badgeText = '' }: ProductCardProp
           loading="lazy"
           onError={(e) => {
             const t = e.target as HTMLImageElement;
-            if (t.dataset.tried) { t.src = '/images/placeholder.png'; return; }
+            if (t.dataset.tried) { t.src = '/images/aqua_fish.webp'; return; }
             t.dataset.tried = 'true';
             const catImg = (product as any).category?.image || product.categoryData?.imageUrl;
-            t.src = catImg || (catKey ? FISH_CATEGORY_FALLBACK[catKey] : '/images/placeholder.png');
+            t.src = catImg || (catKey ? FISH_CATEGORY_FALLBACK[catKey] : '/images/aqua_fish.webp');
           }}
         />
 

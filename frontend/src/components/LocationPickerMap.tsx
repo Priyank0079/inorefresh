@@ -106,9 +106,11 @@ export default function LocationPickerMap({
         style={{ transform: 'translate(-50%, -100%)' }}
       >
         <img
-          src="https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png" // Google Maps standard red pin
+          src="https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png"
           alt="Center Location"
           className="w-[27px] h-[43px]"
+          loading="lazy"
+          decoding="async"
           style={{ filter: 'drop-shadow(2px 4px 6px rgba(0,0,0,0.3))' }}
         />
       </div>

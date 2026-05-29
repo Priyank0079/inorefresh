@@ -121,9 +121,43 @@ export default function WarehouseAddProduct() {
     }
   }, [id]);
 
+  // ── Validation Helpers ──────────────────────────────────────
+  // Only letters, numbers, spaces, hyphens, parentheses - MUST contain at least one letter
+  const validateProductName = (value: string): boolean => {
+    const nameRegex = /^[a-zA-Z0-9\s\-()\.&,]*$/;
+    const hasAtLeastOneLetter = /[a-zA-Z]/.test(value);
+    return nameRegex.test(value) && hasAtLeastOneLetter && value.length > 0 && value.length <= 100;
+  };
+
+  const validateNumber = (value: string): boolean => {
+    const num = parseFloat(value);
+    return !isNaN(num) && num >= 0;
+  };
+
+  const validatePositiveInteger = (value: string): boolean => {
+    const num = parseInt(value, 10);
+    return !isNaN(num) && num > 0 && num <= 100;
+  };
+
   // ── Helpers ──────────────────────────────────────────────────
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
+    // Apply validation for specific fields
+    if (name === 'productName') {
+      if (value.length > 0 && !validateProductName(value)) {
+        return; // Don't update if invalid
+      }
+    }
+    if (name === 'totalAllowedQuantity') {
+      if (value && !validatePositiveInteger(value)) {
+        return; // Don't update if invalid
+      }
+    }
+    if (name === 'smallDescription' && value.length > 500) {
+      return; // Limit description to 500 chars
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -141,18 +175,42 @@ export default function WarehouseAddProduct() {
   };
 
   const addVariation = () => {
+    // Validate variant label
     if (!variationForm.title.trim()) {
       setUploadError("Please enter a variant label (e.g. 500g, 1kg)");
       return;
     }
-    if (!variationForm.price) {
-      setUploadError("Please enter a price for this variant");
+    if (!validateProductName(variationForm.title)) {
+      if (!/[a-zA-Z]/.test(variationForm.title)) {
+        setUploadError("Variant label must contain at least one letter (e.g. 500g, 1kg, Standard)");
+      } else {
+        setUploadError("Variant label can only contain letters, numbers, spaces, hyphens, and parentheses");
+      }
       return;
     }
+
+    // Validate price
+    if (!variationForm.price || !validateNumber(variationForm.price)) {
+      setUploadError("Please enter a valid price for this variant");
+      return;
+    }
+
     const price = parseFloat(variationForm.price);
     const discPrice = parseFloat(variationForm.discPrice || "0");
     const stock = parseInt(variationForm.stock || "0");
-    if (discPrice > price) { setUploadError("Discounted price cannot exceed original price"); return; }
+
+    // Validate sell price vs price
+    if (discPrice > price) {
+      setUploadError("Sell price cannot exceed original price");
+      return;
+    }
+
+    // Validate stock
+    if (stock < 0) {
+      setUploadError("Stock cannot be negative");
+      return;
+    }
+
     setVariations(prev => [...prev, {
       title: variationForm.title, price, discPrice, stock, status: variationForm.status
     }]);
@@ -167,19 +225,73 @@ export default function WarehouseAddProduct() {
     e.preventDefault();
     setUploadError("");
 
-    if (!formData.productName.trim()) { setUploadError("Product name is required"); return; }
-    if (!formData.category) { setUploadError("Please select a category"); return; }
+    // Product Name validation
+    if (!formData.productName.trim()) {
+      setUploadError("Product name is required");
+      return;
+    }
+    if (!validateProductName(formData.productName)) {
+      if (!/[a-zA-Z]/.test(formData.productName)) {
+        setUploadError("Product name must contain at least one letter");
+      } else {
+        setUploadError("Product name can only contain letters, numbers, spaces, hyphens, parentheses, dots, and ampersands");
+      }
+      return;
+    }
+    if (formData.productName.trim().length < 3) {
+      setUploadError("Product name must be at least 3 characters");
+      return;
+    }
 
+    // Category validation
+    if (!formData.category) {
+      setUploadError("Please select a category");
+      return;
+    }
+
+    // Description validation (optional, but if provided, check length)
+    if (formData.smallDescription && formData.smallDescription.length > 500) {
+      setUploadError("Short description cannot exceed 500 characters");
+      return;
+    }
+
+    // Max quantity validation
+    if (!validatePositiveInteger(formData.totalAllowedQuantity)) {
+      setUploadError("Max quantity per order must be between 1 and 100");
+      return;
+    }
+
+    // Image validation
     if (!id && !mainImageFile) {
       setUploadError("Product image is required. Please choose a high-quality image.");
       return;
     }
 
-    // Build final variations list:
-    // User requested to make variants mandatory
+    // Variants validation
     if (variations.length === 0) {
       setUploadError("Please add at least one product variant (e.g. 500g, 1kg) in the variants section below.");
       return;
+    }
+
+    // Validate all variations have valid data
+    for (let i = 0; i < variations.length; i++) {
+      const v = variations[i];
+      if (!v.title || v.title.trim().length === 0) {
+        setUploadError(`Variant ${i + 1}: Label is required`);
+        return;
+      }
+      if (!validateNumber(v.price.toString()) || v.price <= 0) {
+        setUploadError(`Variant ${i + 1}: Price must be greater than 0`);
+        return;
+      }
+      if (v.discPrice > v.price) {
+        setUploadError(`Variant ${i + 1}: Sell price cannot exceed original price`);
+        return;
+      }
+      if (v.stock < 0) {
+        setUploadError(`Variant ${i + 1}: Stock cannot be negative`);
+        return;
+      }
     }
 
     const finalVariations = variations;
@@ -305,9 +417,33 @@ export default function WarehouseAddProduct() {
                 value={formData.productName}
                 onChange={handleChange}
                 placeholder="e.g. Fresh Rohu Fish – 1kg pack"
-                className="w-full px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                required
+                maxLength={100}
+                className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 ${
+                  formData.productName && !validateProductName(formData.productName)
+                    ? 'border-red-300 focus:ring-red-500 bg-red-50'
+                    : 'border-neutral-300 focus:ring-teal-500'
+                }`}
               />
+              {formData.productName && !validateProductName(formData.productName) && (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                  <svg className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <p className="text-sm text-red-700 font-medium">
+                    {!/[a-zA-Z]/.test(formData.productName)
+                      ? '⚠️ Product name must contain at least one letter'
+                      : '⚠️ Only letters, numbers, spaces, hyphens, parentheses, dots and & are allowed'}
+                  </p>
+                </div>
+              )}
+              {formData.productName && formData.productName.length < 3 && validateProductName(formData.productName) && (
+                <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-2">
+                  <svg className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <p className="text-sm text-orange-700 font-medium">Name must be at least 3 characters</p>
+                </div>
+              )}
             </div>
 
             {/* Category */}
@@ -320,7 +456,6 @@ export default function WarehouseAddProduct() {
                 value={formData.category}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
-                required
               >
                 <option value="">Select Category</option>
                 {categories.map(cat => (
@@ -362,17 +497,42 @@ export default function WarehouseAddProduct() {
 
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Max Quantity Per Order
+                Max Quantity Per Order <span className="text-red-500">*</span>
               </label>
               <input
-                type="number"
+                type="text"
                 name="totalAllowedQuantity"
                 value={formData.totalAllowedQuantity}
-                onChange={handleChange}
-                min="1"
-                max="100"
-                className="w-full px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                onChange={(e) => {
+                  let val = e.target.value;
+                  // Only allow digits
+                  val = val.replace(/[^0-9]/g, '');
+                  // Limit to 100
+                  if (val && parseInt(val, 10) > 100) {
+                    val = '100';
+                  }
+                  // Prevent leading zeros
+                  if (val.length > 1 && val[0] === '0') {
+                    val = val.substring(1);
+                  }
+                  setFormData(prev => ({ ...prev, totalAllowedQuantity: val }));
+                }}
+                placeholder="Enter 1-100"
+                maxLength={3}
+                className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 ${
+                  formData.totalAllowedQuantity && (parseInt(formData.totalAllowedQuantity, 10) < 1 || parseInt(formData.totalAllowedQuantity, 10) > 100)
+                    ? 'border-red-300 focus:ring-red-500 bg-red-50'
+                    : 'border-neutral-300 focus:ring-teal-500'
+                }`}
               />
+              {formData.totalAllowedQuantity && (parseInt(formData.totalAllowedQuantity, 10) < 1 || parseInt(formData.totalAllowedQuantity, 10) > 100) && (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                  <svg className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <p className="text-sm text-red-700 font-medium">⚠️ Quantity must be between 1 and 100</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -447,33 +607,152 @@ export default function WarehouseAddProduct() {
                     <input type="text" placeholder="e.g. 500g"
                       value={variationForm.title}
                       onChange={e => setVariationForm(p => ({ ...p, title: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                      maxLength={50}
+                      className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 bg-white ${
+                        variationForm.title && !validateProductName(variationForm.title)
+                          ? 'border-red-300 focus:ring-red-500'
+                          : 'border-neutral-300 focus:ring-teal-500'
+                      }`}
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Price (₹)</label>
-                    <input type="number" placeholder="0.00"
+                    <input type="text"
+                      inputMode="decimal"
+                      placeholder="0.00"
                       value={variationForm.price}
-                      onChange={e => setVariationForm(p => ({ ...p, price: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white" min="0"
+                      onChange={e => {
+                        let val = e.target.value;
+                        // Only allow digits and decimal point
+                        val = val.replace(/[^0-9.]/g, '');
+                        // Remove leading zeros (but keep 0. pattern)
+                        if (val && val[0] === '0' && val.length > 1 && val[1] !== '.') {
+                          val = val.replace(/^0+/, '') || '0';
+                        }
+                        // Only allow one decimal point
+                        const parts = val.split('.');
+                        if (parts.length > 2) {
+                          val = parts[0] + '.' + parts.slice(1).join('');
+                        }
+                        setVariationForm(p => ({ ...p, price: val }));
+                      }}
+                      className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 bg-white ${
+                        variationForm.price && (parseFloat(variationForm.price) <= 0 || !validateNumber(variationForm.price))
+                          ? 'border-red-300 focus:ring-red-500'
+                          : 'border-neutral-300 focus:ring-teal-500'
+                      }`}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Discount Price (₹)</label>
-                    <input type="number" placeholder="0.00"
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Sell Price (₹)</label>
+                    <input type="text"
+                      inputMode="decimal"
+                      placeholder="0.00"
                       value={variationForm.discPrice}
-                      onChange={e => setVariationForm(p => ({ ...p, discPrice: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white" min="0"
+                      onChange={e => {
+                        let val = e.target.value;
+                        // Only allow digits and decimal point
+                        val = val.replace(/[^0-9.]/g, '');
+                        // Remove leading zeros (but keep 0. pattern)
+                        if (val && val[0] === '0' && val.length > 1 && val[1] !== '.') {
+                          val = val.replace(/^0+/, '') || '0';
+                        }
+                        // Only allow one decimal point
+                        const parts = val.split('.');
+                        if (parts.length > 2) {
+                          val = parts[0] + '.' + parts.slice(1).join('');
+                        }
+                        setVariationForm(p => ({ ...p, discPrice: val }));
+                      }}
+                      className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 bg-white ${
+                        variationForm.discPrice && (
+                          (variationForm.price && parseFloat(variationForm.discPrice) > parseFloat(variationForm.price)) ||
+                          !validateNumber(variationForm.discPrice)
+                        )
+                          ? 'border-red-300 focus:ring-red-500'
+                          : 'border-neutral-300 focus:ring-teal-500'
+                      }`}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Stock</label>
-                    <input type="number" placeholder="0"
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Stock <span className="text-red-500">*</span></label>
+                    <input type="text"
+                      inputMode="numeric"
+                      placeholder="0"
                       value={variationForm.stock}
-                      onChange={e => setVariationForm(p => ({ ...p, stock: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white" min="0"
+                      onChange={e => {
+                        let val = e.target.value;
+                        // Only allow digits
+                        val = val.replace(/[^0-9]/g, '');
+                        // Remove leading zeros (but keep single 0)
+                        if (val && val[0] === '0' && val.length > 1) {
+                          val = val.replace(/^0+/, '');
+                        }
+                        setVariationForm(p => ({ ...p, stock: val }));
+                      }}
+                      className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 bg-white ${
+                        variationForm.stock && (parseInt(variationForm.stock, 10) <= 0 || isNaN(parseInt(variationForm.stock, 10)))
+                          ? 'border-red-300 focus:ring-red-500'
+                          : 'border-neutral-300 focus:ring-teal-500'
+                      }`}
                     />
                   </div>
+                  {/* Validation Error Messages */}
+                  <div className="col-span-2 sm:col-span-4 space-y-2">
+                    {variationForm.title && !validateProductName(variationForm.title) && (
+                      <div className="p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                        <svg className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs text-red-700">
+                          {!/[a-zA-Z]/.test(variationForm.title)
+                            ? 'Variant label must contain at least one letter'
+                            : 'Only letters, numbers, spaces, hyphens, parentheses allowed'}
+                        </p>
+                      </div>
+                    )}
+                    {variationForm.price && !validateNumber(variationForm.price) && (
+                      <div className="p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                        <svg className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs text-red-700">Price must be a valid number</p>
+                      </div>
+                    )}
+                    {variationForm.price && parseFloat(variationForm.price) <= 0 && (
+                      <div className="p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                        <svg className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs text-red-700">Price must be greater than 0</p>
+                      </div>
+                    )}
+                    {variationForm.discPrice && parseFloat(variationForm.discPrice) <= 0 && (
+                      <div className="p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                        <svg className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs text-red-700">Sell price must be greater than 0 (or leave blank)</p>
+                      </div>
+                    )}
+                    {variationForm.discPrice && variationForm.price && parseFloat(variationForm.discPrice) > parseFloat(variationForm.price) && (
+                      <div className="p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                        <svg className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs text-red-700">Sell price cannot exceed original price</p>
+                      </div>
+                    )}
+                    {variationForm.stock && parseInt(variationForm.stock, 10) <= 0 && (
+                      <div className="p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                        <svg className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs text-red-700">Stock must be greater than 0</p>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="col-span-2 sm:col-span-4">
                     <button type="button" onClick={addVariation}
                       className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-sm hover:shadow-md active:scale-95"
@@ -494,7 +773,7 @@ export default function WarehouseAddProduct() {
                         <tr className="bg-neutral-50 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
                           <th className="px-4 py-3 text-left border-b border-neutral-200">Label</th>
                           <th className="px-4 py-3 text-left border-b border-neutral-200">Price</th>
-                          <th className="px-4 py-3 text-left border-b border-neutral-200">Discount Price</th>
+                          <th className="px-4 py-3 text-left border-b border-neutral-200">Sell Price</th>
                           <th className="px-4 py-3 text-left border-b border-neutral-200">Stock</th>
                           <th className="px-4 py-3 text-right border-b border-neutral-200">Action</th>
                         </tr>

@@ -6,19 +6,19 @@ const slides = [
     id: 'aqua',
     title: 'AQUA FISH',
     desc: 'Bright silver-blue tone and clean marine look',
-    image: '/images/aqua_fish.png',
+    image: '/images/aqua_fish.webp',
   },
   {
     id: 'marin',
     title: 'MARIN FISH',
     desc: 'Deeper ocean tone with premium sea profile',
-    image: '/images/fish/marine-fish.jpg',
+    image: '/images/marin_fish.webp',
   },
   {
     id: 'bengali',
     title: 'BENGALI FISH',
     desc: 'Traditional freshwater selection with rich texture',
-    image: '/images/bengali_fish.png',
+    image: '/images/bengali_fish.webp',
   },
 ];
 
@@ -136,6 +136,9 @@ export default function FishCarouselBanner() {
                 src={slides[currentIndex].image}
                 alt={slides[currentIndex].title}
                 className="absolute inset-0 w-full h-full object-cover"
+                loading="eager"
+                decoding="async"
+                fetchPriority="low"
                 animate={{ scale: [1.01, 1.08, 1.01] }}
                 transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
               />
