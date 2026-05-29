@@ -93,7 +93,7 @@ const HomeSectionSchema = new Schema<IHomeSection>(
 // Indexes for better query performance
 HomeSectionSchema.index({ order: 1, isActive: 1 });
 HomeSectionSchema.index({ slug: 1 });
-HomeSectionSchema.index({ category: 1 });
+HomeSectionSchema.index({ isActive: 1, pageLocation: 1, targetHeaderCategory: 1 });
 
 const HomeSection = (mongoose.models.HomeSection as mongoose.Model<IHomeSection>) || mongoose.model<IHomeSection>("HomeSection", HomeSectionSchema);
 

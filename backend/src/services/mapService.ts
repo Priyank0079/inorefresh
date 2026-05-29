@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { calculateDistance as haversineDistance } from '../utils/locationHelper';
+import { cache } from '../utils/cache';
 
 interface LatLng {
     lat: number;
@@ -20,26 +21,37 @@ export const getRoadDistance = async (
         return haversineDistance(origin.lat, origin.lng, destination.lat, destination.lng);
     }
 
+    // Create cache key from origin and destination
+    const cacheKey = `distance_${Math.round(origin.lat * 1000)}_${Math.round(origin.lng * 1000)}_${Math.round(destination.lat * 1000)}_${Math.round(destination.lng * 1000)}`;
+
+    // Check cache first (30-min TTL)
+    const cachedDistance = cache.get(cacheKey);
+    if (cachedDistance !== undefined) {
+        return cachedDistance as number;
+    }
+
     try {
         const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin.lat},${origin.lng}&destinations=${destination.lat},${destination.lng}&key=${apiKey}`;
 
-        const response = await axios.get(url);
+        const response = await axios.get(url, { timeout: 3000 });
 
         if (response.data.status === 'OK') {
             const element = response.data.rows[0].elements[0];
             if (element.status === 'OK') {
                 // Distance in meters, convert to km
                 const distanceInKm = element.distance.value / 1000;
+                // Cache for 30 minutes
+                cache.set(cacheKey, distanceInKm, 30 * 60 * 1000);
                 return distanceInKm;
             }
         }
 
-        console.warn('Google Maps API Error or No Route Found:', response.data);
         // Fallback to Haversine on API specific error (e.g. ZERO_RESULTS)
-        return haversineDistance(origin.lat, origin.lng, destination.lat, destination.lng);
+        const fallbackDistance = haversineDistance(origin.lat, origin.lng, destination.lat, destination.lng);
+        return fallbackDistance;
 
     } catch (error: any) {
-        console.error('Google Maps API Request Failed:', error.message);
+        // Timeout or network error - fallback to Haversine
         return haversineDistance(origin.lat, origin.lng, destination.lat, destination.lng);
     }
 };
@@ -64,7 +76,7 @@ export const getRoadDistances = async (
         const destinationsStr = `${destination.lat},${destination.lng}`;
         const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originsStr}&destinations=${destinationsStr}&key=${apiKey}`;
 
-        const response = await axios.get(url);
+        const response = await axios.get(url, { timeout: 3000 });
 
         if (response.data.status === 'OK') {
             return response.data.rows.map((row: any, index: number) => {

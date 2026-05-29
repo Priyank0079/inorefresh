@@ -29,6 +29,11 @@
     background: white;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    scroll-behavior: smooth;
+  }
+
+  html.lenis {
+    scroll-behavior: auto;
   }
 
   html::-webkit-scrollbar {

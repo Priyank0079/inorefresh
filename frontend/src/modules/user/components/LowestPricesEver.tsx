@@ -103,7 +103,7 @@ export default function LowestPricesEver({ activeTab = 'all', products: adminPro
       // Fallback: fetch products if admin hasn't configured any
       const fetchDiscountedProducts = async () => {
         try {
-          const response = await getProducts({ limit: 50 });
+          const response = await getProducts({ limit: 6 });
           if (response.success && response.data) {
             const mappedProducts = (response.data as any[]).map(p => {
               let productName = p.productName || p.name || '';

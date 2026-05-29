@@ -84,6 +84,10 @@ ShopSchema.pre('save', function (next) {
   next();
 });
 
+// Indexes for query performance
+ShopSchema.index({ isActive: 1, order: 1 });
+ShopSchema.index({ storeId: 1 });
+
 const Shop = (mongoose.models.Shop as mongoose.Model<IShop>) || mongoose.model<IShop>('Shop', ShopSchema);
 
 export default Shop;

@@ -449,15 +449,14 @@ export const getProductById = async (req: Request, res: Response) => {
     };
     const ownerId = resolveOwnerId(seller) || resolveOwnerId(warehouse);
 
+    // Fetch nearby sellers once (replaces duplicate calls at lines 460 and 504)
+    let nearbySellerIds: mongoose.Types.ObjectId[] = [];
+    if (userLat && userLng && !isNaN(userLat) && !isNaN(userLng)) {
+      nearbySellerIds = await findSellersWithinRange(userLat, userLng);
+    }
+
     // Check location availability if coordinates are provided
-    if (
-      userLat &&
-      userLng &&
-      !isNaN(userLat) &&
-      !isNaN(userLng) &&
-      ownerId
-    ) {
-      const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
+    if (nearbySellerIds.length > 0 && ownerId) {
       isAvailableAtLocation = nearbySellerIds.some(
         (id) => id.toString() === ownerId.toString()
       );
@@ -499,20 +498,17 @@ export const getProductById = async (req: Request, res: Response) => {
       similarProductsQuery.category = categoryId;
     }
 
-    // Filter similar products by location
-    if (userLat && userLng && !isNaN(userLat) && !isNaN(userLng)) {
-      const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
-      if (nearbySellerIds.length > 0) {
-        similarProductsQuery.$and = [
-          ...(similarProductsQuery.$and || []),
-          {
-            $or: [
-              { seller: { $in: nearbySellerIds } },
-              { warehouse: { $in: nearbySellerIds } },
-            ],
-          },
-        ];
-      }
+    // Filter similar products by location using cached nearbySellerIds
+    if (nearbySellerIds.length > 0) {
+      similarProductsQuery.$and = [
+        ...(similarProductsQuery.$and || []),
+        {
+          $or: [
+            { seller: { $in: nearbySellerIds } },
+            { warehouse: { $in: nearbySellerIds } },
+          ],
+        },
+      ];
     }
 
     const similarProducts = await Product.find(similarProductsQuery)

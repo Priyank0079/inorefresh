@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
+import { memo } from 'react';
 import { Product } from '../../../types/domain';
 import { useCart } from '../../../context/CartContext';
 import { calculateProductPrice } from '../../../utils/priceUtils';
@@ -27,17 +28,20 @@ const FISH_CATEGORY_FALLBACK: Record<string, string> = {
   bengali: '/images/bengali_fish.webp',
 };
 
-export default function ProductCard({ product, badgeText = '' }: ProductCardProps) {
+function ProductCard({ product, badgeText = '' }: ProductCardProps) {
   const navigate = useNavigate();
   const { cart, addToCart, updateQuantity } = useCart();
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const pendingRef = useRef(false);
 
-  // Cart state
-  const cartItem = cart.items.find((item) => {
-    if (!item?.product) return false;
-    return String(item.product.id || item.product._id) === String((product as any).id || product._id);
-  });
+  // Cart state - memoized to prevent O(n*m) recalculation on every render
+  const cartItem = useMemo(() =>
+    cart.items.find((item) => {
+      if (!item?.product) return false;
+      return String(item.product.id || item.product._id) === String((product as any).id || product._id);
+    }),
+    [cart.items, product._id, product.id]
+  );
   const inCartQty = cartItem?.quantity || 0;
 
   const { displayPrice, mrp, discount } = calculateProductPrice(product);
@@ -211,3 +215,5 @@ export default function ProductCard({ product, badgeText = '' }: ProductCardProp
     </motion.div>
   );
 }
+
+export default memo(ProductCard);

@@ -62,12 +62,6 @@ router.get("/health", (_req, res) => {
   });
 });
 
-// Debug logging
-router.use((req, _res, next) => {
-  const hasToken = !!req.headers.authorization;
-  console.log(`[API DEBUG] ${req.method} ${req.path} - Has Token: ${hasToken}`);
-  next();
-});
 
 // Authentication routes
 router.use("/auth/admin", adminAuthRoutes);

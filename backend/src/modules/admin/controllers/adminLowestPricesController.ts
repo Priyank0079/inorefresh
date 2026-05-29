@@ -11,9 +11,14 @@ export const getLowestPricesProducts = async (_req: Request, res: Response) => {
             .sort({ order: 1 })
             .lean();
 
+        // Filter out products that have been deleted or are inactive/unpublished
+        const validProducts = products.filter((item: any) => {
+            return item.product && item.product.status === "Active" && item.product.publish === true;
+        });
+
         return res.status(200).json({
             success: true,
-            data: products,
+            data: validProducts,
         });
     } catch (error: any) {
         return res.status(500).json({
@@ -40,10 +45,18 @@ export const getLowestPricesProductById = async (req: Request, res: Response) =>
             .populate("product", "productName mainImage price mrp discount status publish")
             .lean();
 
-        if (!lowestPricesProduct) {
+        if (!lowestPricesProduct || !lowestPricesProduct.product) {
             return res.status(404).json({
                 success: false,
                 message: "Lowest prices product not found",
+            });
+        }
+
+        // Check if product is active and published
+        if (lowestPricesProduct.product.status !== "Active" || !lowestPricesProduct.product.publish) {
+            return res.status(404).json({
+                success: false,
+                message: "Lowest prices product not found or unavailable",
             });
         }
 

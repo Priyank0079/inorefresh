@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Seller from "../models/Seller";
 import Warehouse from "../models/Warehouse";
+import { cache } from "./cache";
 
 /**
  * Helper function to calculate distance between two coordinates (Haversine formula)
@@ -63,6 +64,17 @@ export async function findSellersWithinRange(
   // Validate coordinates
   if (userLat < -90 || userLat > 90 || userLng < -180 || userLng > 180) {
     return [];
+  }
+
+  // Round coordinates to 3 decimal places (≈111m precision) for cache key
+  const roundedLat = Math.round(userLat * 1000) / 1000;
+  const roundedLng = Math.round(userLng * 1000) / 1000;
+  const cacheKey = `sellers_${roundedLat}_${roundedLng}`;
+
+  // Check cache first
+  const cachedResult = cache.get(cacheKey);
+  if (cachedResult) {
+    return cachedResult as mongoose.Types.ObjectId[];
   }
 
   try {
@@ -153,6 +165,9 @@ export async function findSellersWithinRange(
         nearbySellerIds.push(warehouse._id as mongoose.Types.ObjectId);
       }
     }
+
+    // Cache the result for 2 minutes (120,000 ms)
+    cache.set(cacheKey, nearbySellerIds, 2 * 60 * 1000);
 
     return nearbySellerIds;
   } catch (error) {

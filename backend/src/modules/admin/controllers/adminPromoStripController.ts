@@ -97,7 +97,15 @@ export const createPromoStrip = asyncHandler(async (req: Request, res: Response)
 
   const populated = await PromoStrip.findById(promoStrip._id)
     .populate("categoryCards.categoryId", "name slug image")
-    .populate("featuredProducts", "productName mainImage price mrp");
+    .populate("featuredProducts", "productName mainImage price mrp status publish");
+
+  // Filter out deleted or inactive featured products
+  const filteredPopulated = {
+    ...populated.toObject ? populated.toObject() : populated,
+    featuredProducts: (populated.featuredProducts || []).filter((p: any) =>
+      p && p.status === "Active" && p.publish === true
+    ),
+  };
 
   // Invalidate cache for this header category slug
   cache.delete(`promoStrip-${headerCategorySlug.toLowerCase()}`);
@@ -105,7 +113,7 @@ export const createPromoStrip = asyncHandler(async (req: Request, res: Response)
   return res.status(201).json({
     success: true,
     message: "PromoStrip created successfully",
-    data: populated,
+    data: filteredPopulated,
   });
 });
 
@@ -135,13 +143,23 @@ export const getAllPromoStrips = asyncHandler(async (req: Request, res: Response
 
   const promoStrips = await PromoStrip.find(query)
     .populate("categoryCards.categoryId", "name slug image")
-    .populate("featuredProducts", "productName mainImage price mrp")
+    .populate("featuredProducts", "productName mainImage price mrp status publish")
     .sort(sort);
+
+  // Filter out deleted or inactive featured products
+  const validPromoStrips = promoStrips.map((strip: any) => {
+    return {
+      ...strip.toObject ? strip.toObject() : strip,
+      featuredProducts: (strip.featuredProducts || []).filter((p: any) =>
+        p && p.status === "Active" && p.publish === true
+      ),
+    };
+  });
 
   return res.status(200).json({
     success: true,
     message: "PromoStrips fetched successfully",
-    data: promoStrips,
+    data: validPromoStrips,
   });
 });
 
@@ -153,7 +171,7 @@ export const getPromoStripById = asyncHandler(async (req: Request, res: Response
 
   const promoStrip = await PromoStrip.findById(id)
     .populate("categoryCards.categoryId", "name slug image")
-    .populate("featuredProducts", "productName mainImage price mrp");
+    .populate("featuredProducts", "productName mainImage price mrp status publish");
 
   if (!promoStrip) {
     return res.status(404).json({
@@ -162,10 +180,18 @@ export const getPromoStripById = asyncHandler(async (req: Request, res: Response
     });
   }
 
+  // Filter out deleted or inactive featured products
+  const validPromoStrip = {
+    ...promoStrip.toObject ? promoStrip.toObject() : promoStrip,
+    featuredProducts: (promoStrip.featuredProducts || []).filter((p: any) =>
+      p && p.status === "Active" && p.publish === true
+    ),
+  };
+
   return res.status(200).json({
     success: true,
     message: "PromoStrip fetched successfully",
-    data: promoStrip,
+    data: validPromoStrip,
   });
 });
 
@@ -261,7 +287,15 @@ export const updatePromoStrip = asyncHandler(async (req: Request, res: Response)
 
   const populated = await PromoStrip.findById(promoStrip._id)
     .populate("categoryCards.categoryId", "name slug image")
-    .populate("featuredProducts", "productName mainImage price mrp");
+    .populate("featuredProducts", "productName mainImage price mrp status publish");
+
+  // Filter out deleted or inactive featured products
+  const validPopulated = {
+    ...populated.toObject ? populated.toObject() : populated,
+    featuredProducts: (populated.featuredProducts || []).filter((p: any) =>
+      p && p.status === "Active" && p.publish === true
+    ),
+  };
 
   // Invalidate cache for this header category slug
   cache.delete(`promoStrip-${promoStrip.headerCategorySlug.toLowerCase()}`);
@@ -269,7 +303,7 @@ export const updatePromoStrip = asyncHandler(async (req: Request, res: Response)
   return res.status(200).json({
     success: true,
     message: "PromoStrip updated successfully",
-    data: populated,
+    data: validPopulated,
   });
 });
 

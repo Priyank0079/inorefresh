@@ -151,6 +151,8 @@ WarehouseSchema.methods.comparePassword = async function (
 
 // 2dsphere index for location queries
 WarehouseSchema.index({ location: '2dsphere' });
+// Index for status filtering (used in findSellersWithinRange)
+WarehouseSchema.index({ status: 1 });
 
 const Warehouse = (mongoose.models.Warehouse as mongoose.Model<IWarehouse>) || mongoose.model<IWarehouse>('Warehouse', WarehouseSchema);
 

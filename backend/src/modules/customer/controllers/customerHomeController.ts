@@ -643,8 +643,6 @@ export const getStoreProducts = async (req: Request, res: Response) => {
       isShopByStoreOnly: true,
     };
 
-    console.log(`[getStoreProducts] Looking for shop with storeId: ${storeId}`);
-
     // Build shop query - only include _id if storeId is a valid ObjectId
     const shopQuery: any = { isActive: true };
     if (mongoose.Types.ObjectId.isValid(storeId)) {
@@ -661,8 +659,6 @@ export const getStoreProducts = async (req: Request, res: Response) => {
       .populate("category", "_id name slug image")
       .populate("subCategory", "_id name")
       .lean();
-
-    console.log(`[getStoreProducts] Shop found:`, shop ? { name: shop.name, productsCount: shop.products?.length || 0, category: shop.category, image: shop.image } : 'NOT FOUND');
 
     let shopData: any = null;
 
@@ -687,8 +683,6 @@ export const getStoreProducts = async (req: Request, res: Response) => {
         }).filter(Boolean);
       }
 
-      console.log(`[getStoreProducts] Shop has ${productIds.length} products assigned`);
-
       // Get shop ID for filtering
       const shopId = (shop as any)._id;
 
@@ -697,18 +691,15 @@ export const getStoreProducts = async (req: Request, res: Response) => {
         query._id = { $in: productIds };
         // Also filter by shopId to ensure products belong to this shop
         query.shopId = shopId;
-        console.log(`[getStoreProducts] Filtering by product IDs: ${productIds.length} products and shopId: ${shopId}`);
       }
       // Otherwise, filter by shopId and category/subcategory
       else {
         // Filter by shopId to show only products assigned to this shop
         query.shopId = shopId;
-        console.log(`[getStoreProducts] Filtering by shopId: ${shopId}`);
 
         if (shop.category) {
           const categoryId = (shop.category as any)._id || (shop.category as any);
           query.category = categoryId;
-          console.log(`[getStoreProducts] Also filtering by category: ${categoryId}`);
 
           // If subcategory is also specified, filter by both
           if (shop.subCategory) {
@@ -717,7 +708,6 @@ export const getStoreProducts = async (req: Request, res: Response) => {
               { category: categoryId, shopId: shopId },
               { subcategory: subCategoryId, shopId: shopId },
             ];
-            console.log(`[getStoreProducts] Also filtering by subcategory: ${subCategoryId}`);
           }
         }
       }
@@ -751,15 +741,11 @@ export const getStoreProducts = async (req: Request, res: Response) => {
     const userLat = latitude ? parseFloat(latitude as string) : null;
     const userLng = longitude ? parseFloat(longitude as string) : null;
 
-    console.log(`[getStoreProducts] User location: lat=${userLat}, lng=${userLng}`);
-
     if (userLat && userLng && !isNaN(userLat) && !isNaN(userLng)) {
       const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
-      console.log(`[getStoreProducts] Found ${nearbySellerIds.length} sellers within range`);
 
       if (nearbySellerIds.length === 0) {
         // No sellers within range, return shop data but empty products
-        console.log(`[getStoreProducts] No sellers in range, returning empty products`);
         return res.status(200).json({
           success: true,
           data: [],
@@ -784,10 +770,8 @@ export const getStoreProducts = async (req: Request, res: Response) => {
           ],
         },
       ];
-      console.log(`[getStoreProducts] Added seller filter to query`);
     } else {
       // If no location provided, return empty (require location for marketplace)
-      console.log(`[getStoreProducts] No location provided, returning empty products`);
       return res.status(200).json({
         success: true,
         data: [],
@@ -802,8 +786,6 @@ export const getStoreProducts = async (req: Request, res: Response) => {
       });
     }
 
-    console.log(`[getStoreProducts] Final query:`, JSON.stringify(query, null, 2));
-
     const products = await Product.find(query)
       .populate("category", "name icon image")
       .populate("subcategory", "name")
@@ -814,8 +796,6 @@ export const getStoreProducts = async (req: Request, res: Response) => {
       .lean({ virtuals: true });
 
     const total = await Product.countDocuments(query);
-
-    console.log(`[getStoreProducts] Found ${total} products matching query, returning ${products.length}`);
 
     return res.status(200).json({
       success: true,
