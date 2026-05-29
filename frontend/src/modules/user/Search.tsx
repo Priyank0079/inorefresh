@@ -9,7 +9,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Search() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { location } = useLocation();
   const { currentTheme } = useThemeContext();
   const searchQuery = searchParams.get('q') || '';
@@ -18,6 +18,7 @@ export default function Search() {
   const [cookingIdeas, setCookingIdeas] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [contentLoading, setContentLoading] = useState(true);
+  const [inputValue, setInputValue] = useState(searchQuery);
 
   // Fetch products based on search query
   useEffect(() => {
@@ -73,8 +74,64 @@ export default function Search() {
     }
   }, [searchQuery, location?.latitude, location?.longitude]);
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputValue.trim()) {
+      setSearchParams({ q: inputValue });
+    }
+  };
+
+  const handleClearSearch = () => {
+    setInputValue('');
+    setSearchParams({});
+    navigate('/search');
+  };
+
   return (
     <div className="pb-24 md:pb-8 bg-white min-h-screen">
+      {/* Search Input */}
+      <div className="sticky top-[70px] z-40 bg-white px-4 md:px-6 lg:px-8 py-4 md:py-5 border-b border-neutral-100">
+        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              inputMode="search"
+              value={inputValue}
+              onChange={handleSearchChange}
+              placeholder="Search for atta, dal, coke and more..."
+              className="w-full px-4 py-3 text-base border-2 border-neutral-200 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-colors min-h-[44px] pr-10"
+              autoFocus
+            />
+            {inputValue && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Clear search"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
+          </div>
+          <button
+            type="submit"
+            className="px-4 py-3 bg-teal-500 text-white rounded-xl font-medium text-sm md:text-base hover:bg-teal-600 transition-colors min-h-[44px] min-w-[44px]"
+            aria-label="Search"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+          </button>
+        </form>
+      </div>
 
       {/* Search Results */}
       {searchQuery.trim() && (

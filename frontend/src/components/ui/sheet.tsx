@@ -41,15 +41,18 @@ interface SheetCloseProps {
 }
 
 export function Sheet({ open, onOpenChange, children }: SheetProps) {
-  // Prevent body scroll when sheet is open
+  // Prevent body scroll when sheet is open (and prevent layout shift)
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '15px'; // Prevent layout shift from scrollbar
     } else {
       document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '0';
     }
     return () => {
       document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '0';
     };
   }, [open]);
 
@@ -119,7 +122,16 @@ export function SheetContent({ side = 'bottom', children, className }: SheetCont
           }),
         }}
       >
-        {children}
+        {/* Drag indicator for bottom sheet */}
+        {side === 'bottom' && (
+          <div className="flex justify-center py-3 px-4 border-b border-neutral-200">
+            <div className="w-12 h-1 bg-neutral-300 rounded-full" aria-hidden="true" />
+          </div>
+        )}
+
+        <div className="overflow-y-auto flex-1">
+          {children}
+        </div>
       </motion.div>
     </>
   );

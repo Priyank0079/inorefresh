@@ -405,16 +405,20 @@ export default function Login() {
                 </div>
                 <input
                   type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={mobileNumber}
                   onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  className="block w-full pl-14 pr-4 py-4 bg-neutral-50 border border-neutral-200 rounded-xl text-lg font-medium text-neutral-900 placeholder-neutral-400 focus:outline-none transition-all"
+                  className="block w-full pl-14 pr-4 py-4 bg-neutral-50 border border-neutral-200 rounded-xl text-lg font-medium text-neutral-900 placeholder-neutral-400 focus:outline-none transition-all min-h-[44px]"
                   style={{
                     boxShadow: `0 0 0 2px ${currentTheme.primary[3]}20`,
                     borderColor: currentTheme.primary[3]
                   }}
                   placeholder={t.enterMobile}
                   maxLength={10}
+                  autoFocus
                   disabled={loading}
+                  aria-label="Mobile number"
                 />
               </div>
 

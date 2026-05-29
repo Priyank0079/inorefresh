@@ -49,8 +49,13 @@ export default function Cart() {
           <h1 className="text-xl md:text-2xl font-bold text-neutral-900">Your Basket</h1>
           {cart.items.length > 0 && (
             <button
-              onClick={clearCart}
+              onClick={() => {
+                if (window.confirm(`Remove all ${cart.items.length} items from cart? This action cannot be undone.`)) {
+                  clearCart();
+                }
+              }}
               className="text-sm md:text-base text-red-600 font-medium hover:text-red-700 transition-colors"
+              title="Click to remove all items (will ask for confirmation)"
             >
               Clear All
             </button>
@@ -108,7 +113,7 @@ export default function Cart() {
                       variant="outline"
                       size="icon"
                       onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.variant)}
-                      className={`w-8 h-8 md:w-10 md:h-10 p-0 transition-colors group ${item.quantity === 1 ? 'border-red-300 text-red-500 hover:bg-red-500 hover:border-red-500' : 'border-neutral-300 text-neutral-600'} md:text-lg`}
+                      className={`w-11 h-11 md:w-10 md:h-10 p-0 transition-colors group min-h-[44px] min-w-[44px] ${item.quantity === 1 ? 'border-red-300 text-red-500 hover:bg-red-500 hover:border-red-500' : 'border-neutral-300 text-neutral-600'} md:text-lg`}
                       title={item.quantity === 1 ? 'Remove item' : 'Decrease quantity'}
                     >
                       {item.quantity === 1 ? (
@@ -135,7 +140,7 @@ export default function Cart() {
                       size="icon"
                       onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.variant)}
                       disabled={item.quantity >= ((item.product as any).totalAllowedQuantity || 100)}
-                      className="w-8 h-8 md:w-10 md:h-10 p-0 border-neutral-300 text-neutral-600 md:text-lg transition-colors group disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-11 h-11 md:w-10 md:h-10 p-0 border-neutral-300 text-neutral-600 md:text-lg transition-colors group disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] min-w-[44px]"
                       title={item.quantity >= ((item.product as any).totalAllowedQuantity || 100) ? 'Maximum quantity reached' : 'Increase quantity'}
                     >
                       <span className="group-hover:text-white transition-colors" style={{ color: 'inherit' }}>+</span>
