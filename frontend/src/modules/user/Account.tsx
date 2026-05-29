@@ -640,19 +640,23 @@ export default function Account() {
                 ) : (
                   <div className="space-y-3">
                     {notifications.map((notification: any) => (
-                      <motion.button
+                      <motion.div
                         key={notification._id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        onClick={() => handleNotificationClick(notification)}
-                        className={`w-full text-left p-4 rounded-2xl border-2 transition-all hover:border-teal-300 ${
+                        whileHover={{ y: -2 }}
+                        className={`group cursor-pointer rounded-2xl border-2 transition-all overflow-hidden ${
                           !notification.isRead
-                            ? 'bg-teal-50 border-teal-200 hover:bg-teal-100'
-                            : 'bg-white border-gray-100 hover:bg-gray-50'
+                            ? 'bg-teal-50 border-teal-200 hover:border-teal-400 hover:shadow-md'
+                            : 'bg-white border-gray-100 hover:border-gray-300 hover:shadow-md'
                         }`}
                       >
-                        <div className="flex gap-4">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-lg ${
+                        <button
+                          onClick={() => handleNotificationClick(notification)}
+                          className="w-full text-left p-4 flex gap-4"
+                        >
+                          {/* Icon */}
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-lg transition-transform group-hover:scale-110 ${
                             notification.type === 'Success'
                               ? 'bg-emerald-100 text-emerald-600'
                               : notification.type === 'Error'
@@ -664,17 +668,18 @@ export default function Account() {
                             </span>
                           </div>
 
+                          {/* Content */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1">
-                                <p className={`text-sm font-bold ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+                                <p className={`text-sm font-bold leading-snug ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
                                   {notification.title}
                                 </p>
-                                <p className="text-gray-600 text-sm mt-1 leading-relaxed">
+                                <p className="text-gray-600 text-sm mt-1.5 leading-relaxed line-clamp-2">
                                   {notification.message}
                                 </p>
                                 {notification.timestamp && (
-                                  <p className="text-gray-400 text-xs mt-2">
+                                  <p className="text-gray-400 text-xs mt-2.5">
                                     {new Date(notification.timestamp).toLocaleDateString('en-IN', {
                                       month: 'short',
                                       day: 'numeric',
@@ -684,13 +689,43 @@ export default function Account() {
                                   </p>
                                 )}
                               </div>
+
+                              {/* Unread Indicator */}
                               {!notification.isRead && (
-                                <div className="w-3 h-3 rounded-full bg-teal-500 flex-shrink-0 mt-1.5" />
+                                <div className="w-3 h-3 rounded-full bg-teal-500 flex-shrink-0 mt-1.5 animate-pulse" />
                               )}
                             </div>
                           </div>
+                        </button>
+
+                        {/* Action Bar - Shows on Hover */}
+                        <div className="px-4 pb-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 border-t border-gray-200/50">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(notification._id);
+                            }}
+                            className="flex-1 px-3 py-2 text-xs font-medium text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors"
+                            title={notification.isRead ? 'Mark as unread' : 'Mark as read'}
+                          >
+                            {!notification.isRead ? '✓ Mark Read' : '◦ Mark Unread'}
+                          </button>
+
+                          {notification.link && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(notification.link);
+                                setShowNotifications(false);
+                              }}
+                              className="flex-1 px-3 py-2 text-xs font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors"
+                              title="View details"
+                            >
+                              View →
+                            </button>
+                          )}
                         </div>
-                      </motion.button>
+                      </motion.div>
                     ))}
                   </div>
                 )}
