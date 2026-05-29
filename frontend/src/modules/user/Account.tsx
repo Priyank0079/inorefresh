@@ -742,138 +742,142 @@ export default function Account() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[160] bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center"
+            className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
+            onClick={() => setSelectedNotification(null)}
           >
             <motion.div
-              initial={{ y: 100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 100, opacity: 0 }}
-              className="bg-white w-full md:max-w-md rounded-t-2xl md:rounded-2xl p-6 max-h-[90vh] overflow-y-auto"
+              initial={{ scale: 0.9, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 50, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${
-                    selectedNotification.type === 'Success'
-                      ? 'bg-emerald-100 text-emerald-600'
-                      : selectedNotification.type === 'Error'
-                      ? 'bg-rose-100 text-rose-600'
-                      : 'bg-teal-100 text-teal-600'
-                  }`}>
-                    {selectedNotification.type === 'Order' || selectedNotification.type === 'Payment Confirmed' ? '🛒' :
-                     selectedNotification.type === 'Delivery' ? '🚚' :
-                     selectedNotification.type === 'Payment' ? '💳' : '🔔'}
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-bold text-gray-900">{selectedNotification.title}</h2>
-                    {selectedNotification.timestamp && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(selectedNotification.timestamp).toLocaleDateString('en-IN', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSelectedNotification(null)}
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
-
-              {/* Full Message */}
-              <div className="bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl p-4 mb-6 border border-teal-100">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words text-sm">
-                  {selectedNotification.message}
-                </p>
-
-                {/* Extract and Highlight Order ID if present */}
-                {selectedNotification.message?.match(/#ORD[\dA-Z]+/i) && (
-                  <div className="mt-4 pt-4 border-t border-teal-200">
-                    <p className="text-xs text-gray-600 mb-2">Order ID:</p>
-                    <div className="bg-white rounded-lg p-2 font-mono text-sm font-bold text-teal-600 break-all">
-                      {selectedNotification.message.match(/#ORD[\dA-Z]+/i)?.[0]}
+              <div className="p-6 space-y-6">
+                {/* Header */}
+                <div className="flex items-start justify-between -mx-6 -mt-6 px-6 pt-6 pb-4 border-b border-gray-100">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0 ${
+                      selectedNotification.type === 'Success'
+                        ? 'bg-emerald-100 text-emerald-600'
+                        : selectedNotification.type === 'Error'
+                        ? 'bg-rose-100 text-rose-600'
+                        : 'bg-teal-100 text-teal-600'
+                    }`}>
+                      {selectedNotification.type === 'Order' || selectedNotification.type === 'Payment Confirmed' ? '🛒' :
+                       selectedNotification.type === 'Delivery' ? '🚚' :
+                       selectedNotification.type === 'Payment' ? '💳' : '🔔'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-lg font-bold text-gray-900 truncate">{selectedNotification.title}</h2>
+                      {selectedNotification.timestamp && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(selectedNotification.timestamp).toLocaleDateString('en-IN', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      )}
                     </div>
                   </div>
-                )}
-              </div>
+                  <button
+                    onClick={() => setSelectedNotification(null)}
+                    className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
 
-              {/* Notification Details */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <h3 className="text-sm font-bold text-gray-900 mb-3">Details</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Type</span>
-                    <span className="font-medium text-gray-900">{selectedNotification.type || 'Notification'}</span>
-                  </div>
-                  {selectedNotification.priority && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Priority</span>
-                      <span className={`font-medium px-2 py-1 rounded text-xs ${
-                        selectedNotification.priority === 'High' ? 'bg-red-100 text-red-700' :
-                        selectedNotification.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-green-100 text-green-700'
-                      }`}>
-                        {selectedNotification.priority}
-                      </span>
+                {/* Full Message */}
+                <div className="bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl p-4 border border-teal-100">
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words text-sm">
+                    {selectedNotification.message}
+                  </p>
+
+                  {/* Extract and Highlight Order ID if present */}
+                  {selectedNotification.message?.match(/#ORD[\dA-Z]+/i) && (
+                    <div className="mt-4 pt-4 border-t border-teal-200">
+                      <p className="text-xs text-gray-600 mb-2 font-medium">Order ID:</p>
+                      <div className="bg-white rounded-lg p-3 font-mono text-sm font-bold text-teal-600 break-all border border-teal-100">
+                        {selectedNotification.message.match(/#ORD[\dA-Z]+/i)?.[0]}
+                      </div>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Status</span>
-                    <span className={`font-medium text-xs px-2 py-1 rounded ${
-                      selectedNotification.isRead
-                        ? 'bg-gray-200 text-gray-700'
-                        : 'bg-teal-100 text-teal-700'
-                    }`}>
-                      {selectedNotification.isRead ? '✓ Read' : '● Unread'}
-                    </span>
+                </div>
+
+                {/* Notification Details */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-gray-900 mb-3">Details</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Type</span>
+                      <span className="font-medium text-gray-900">{selectedNotification.type || 'Notification'}</span>
+                    </div>
+                    {selectedNotification.priority && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Priority</span>
+                        <span className={`font-medium px-2 py-1 rounded text-xs ${
+                          selectedNotification.priority === 'High' ? 'bg-red-100 text-red-700' :
+                          selectedNotification.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-green-100 text-green-700'
+                        }`}>
+                          {selectedNotification.priority}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Status</span>
+                      <span className={`font-medium text-xs px-2 py-1 rounded ${
+                        selectedNotification.isRead
+                          ? 'bg-gray-200 text-gray-700'
+                          : 'bg-teal-100 text-teal-700'
+                      }`}>
+                        {selectedNotification.isRead ? '✓ Read' : '● Unread'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                {selectedNotification.link && (
+                {/* Action Buttons */}
+                <div className="space-y-3 -mx-6 -mb-6 px-6 py-6 border-t border-gray-100">
+                  {selectedNotification.link && (
+                    <button
+                      onClick={() => {
+                        navigate(selectedNotification.link);
+                        setSelectedNotification(null);
+                      }}
+                      className="w-full py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white font-bold rounded-xl hover:shadow-lg transition-all active:scale-95 min-h-[44px]"
+                    >
+                      View Order Details →
+                    </button>
+                  )}
+
+                  {!selectedNotification.link && selectedNotification.message?.includes('#ORD') && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-xs text-blue-600 text-center">
+                        💡 Check your Orders section to view the full order details
+                      </p>
+                    </div>
+                  )}
+
                   <button
-                    onClick={() => {
-                      navigate(selectedNotification.link);
-                      setSelectedNotification(null);
-                    }}
-                    className="w-full py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white font-bold rounded-xl hover:shadow-lg transition-all active:scale-95 min-h-[44px]"
+                    onClick={() => setSelectedNotification(null)}
+                    className="w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-95 min-h-[44px]"
                   >
-                    View Order Details →
+                    Dismiss
                   </button>
-                )}
 
-                {!selectedNotification.link && selectedNotification.message?.includes('#ORD') && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-xs text-blue-600 text-center">
-                      💡 Check your Orders section to view the full order details
-                    </p>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => setSelectedNotification(null)}
-                  className="w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-95 min-h-[44px]"
-                >
-                  Dismiss
-                </button>
+                  <p className="text-xs text-gray-400 text-center pt-2">
+                    ✓ Marked as read
+                  </p>
+                </div>
               </div>
-
-              {/* Footer */}
-              <p className="text-xs text-gray-400 text-center mt-4">
-                Marked as read
-              </p>
             </motion.div>
           </motion.div>
         )}
