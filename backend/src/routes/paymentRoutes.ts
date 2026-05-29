@@ -103,14 +103,41 @@ router.post('/verify', authenticate, requireUserType('Customer', 'horeca', 'reta
                     .populate({ path: 'items', populate: { path: 'warehouse' } })
                     .lean();
 
-                if (!updatedOrder) return;
+                if (!updatedOrder) {
+                    console.error('❌ Updated order not found after payment verification:', orderId);
+                    return;
+                }
 
                 const io = req.app.get('io');
+                if (!io) {
+                    console.error('❌ Socket.io instance not found on req.app!');
+                    return;
+                }
+
+                // DEBUG: Log complete order structure for verification
+                console.log('🔍 DEBUG: Order structure after payment verification:', {
+                    orderId: updatedOrder._id,
+                    orderNumber: (updatedOrder as any).orderNumber,
+                    paymentStatus: (updatedOrder as any).paymentStatus,
+                    itemsCount: (updatedOrder as any).items ? (updatedOrder as any).items.length : 0,
+                    itemDetails: (updatedOrder as any).items?.map((item: any) => ({
+                        itemId: item._id,
+                        productName: item.productName,
+                        warehouse: item.warehouse?._id || item.warehouse,
+                        warehouseExists: !!item.warehouse
+                    }))
+                });
 
                 // 1. Notify warehouses — this is their FIRST notification (order was held until payment confirmed)
-                if (io) {
+                if (io && (updatedOrder as any).items && (updatedOrder as any).items.length > 0) {
+                    console.log(`📦 About to notify warehouses for paid order: ${(updatedOrder as any).orderNumber}`);
                     await notifyWarehousesOfOrderUpdate(io, updatedOrder, 'NEW_ORDER');
                     console.log(`✅ Warehouses notified of new paid order ${(updatedOrder as any).orderNumber}`);
+                } else {
+                    console.warn('⚠️ Could not notify warehouses - order has no items or io unavailable:', {
+                        itemsCount: (updatedOrder as any).items?.length,
+                        ioAvailable: !!io
+                    });
                 }
 
                 // 2. Notify admin about the newly paid order

@@ -37,13 +37,36 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
 
   useEffect(() => {
     if (notification) {
+      console.log('🔔 Notification received, attempting to play sound:', {
+        notificationType: notification.type,
+        orderNumber: notification.orderNumber,
+        audioRefExists: !!audioRef.current,
+        audioSrc: audioRef.current?.src
+      });
+
       // Play sound when notification arrives
       if (audioRef.current) {
         audioRef.current.volume = volume;
-        audioRef.current.play().catch(err => console.error('Error playing sound:', err));
+        const playPromise = audioRef.current.play();
+
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('✅ Sound played successfully');
+            })
+            .catch((err) => {
+              console.error('❌ Error playing sound:', {
+                errorName: err.name,
+                errorMessage: err.message,
+                message: 'Some browsers require user interaction for autoplay'
+              });
+            });
+        }
+      } else {
+        console.error('❌ Audio ref not available!');
       }
     }
-  }, [notification]);
+  }, [notification, volume]);
 
   useEffect(() => {
     if (audioRef.current) {

@@ -31,10 +31,25 @@ export async function notifyWarehousesOfOrderUpdate(
             const wId = item.warehouse?._id || item.warehouse;
             return wId ? wId.toString() : (null as any);
         }).filter((id: any): id is string => !!id);
-        
+
         const warehouseIds: string[] = Array.from(new Set(rawIds)) as string[];
 
-        console.log(`🔔 Notifying ${warehouseIds.length} warehouses about ${type} for order ${order.orderNumber}:`, warehouseIds);
+        console.log(`🔔 Notifying ${warehouseIds.length} warehouses about ${type} for order ${order.orderNumber}:`, {
+            warehouseIds,
+            orderNumber: order.orderNumber,
+            orderId: order._id?.toString(),
+            itemsCount: orderItems.length,
+            ioConnected: !!io,
+            itemWithWarehouses: orderItems.map((item: any) => ({
+                productName: item.productName,
+                warehouse: item.warehouse?._id || item.warehouse
+            }))
+        });
+
+        if (warehouseIds.length === 0) {
+            console.warn('⚠️ WARNING: No warehouses found for order items! Order items may not be properly populated.');
+            return;
+        }
 
         for (const warehouseId of warehouseIds) {
             // Get only items belonging to this warehouse
@@ -68,8 +83,9 @@ export async function notifyWarehousesOfOrderUpdate(
 
             // Emit to warehouse-specific room
             const roomName = `warehouse-${warehouseId}`;
+            console.log(`📤 About to emit warehouse-notification to room: ${roomName}`);
             io.to(roomName).emit('warehouse-notification', notificationData);
-            console.log(`📤 Emitted socket notification to room: ${roomName}`);
+            console.log(`✅ Emitted socket notification to room: ${roomName}`);
 
             // Also send push notification
             try {
