@@ -4,6 +4,7 @@ import StatusBadge from '../../components/common/StatusBadge';
 import { getMyNegotiations } from '../../../../services/api/portOfferService';
 import { useNavigate } from 'react-router-dom';
 import { useRefresh } from '@/context/RefreshContext';
+import { useCachedFetch } from '@/hooks/useCachedFetch';
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -29,32 +30,36 @@ const getWarehouseName = (warehouse) => {
 
 const MyOffers = () => {
   const [offers, setOffers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { registerRefresh, unregisterRefresh } = useRefresh();
 
-  const fetchOffers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await getMyNegotiations();
-      if (response.success) {
-        setOffers(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching offers:", error);
-    } finally {
-      setLoading(false);
+  const fetchOffersData = useCallback(async () => {
+    const response = await getMyNegotiations();
+    return response.success ? response.data : [];
+  }, []);
+
+  // Use cached fetch with 5-minute TTL
+  const { data: offersData, loading } = useCachedFetch(
+    fetchOffersData,
+    'my_offers',
+    5 * 60 * 1000 // 5 minutes
+  );
+
+  useEffect(() => {
+    if (offersData) setOffers(offersData);
+  }, [offersData]);
+
+  const refreshOffers = useCallback(async () => {
+    const response = await getMyNegotiations();
+    if (response.success) {
+      setOffers(response.data);
     }
   }, []);
 
   useEffect(() => {
-    fetchOffers();
-  }, [fetchOffers]);
-
-  useEffect(() => {
-    registerRefresh(fetchOffers);
+    registerRefresh(refreshOffers);
     return () => unregisterRefresh();
-  }, [fetchOffers, registerRefresh, unregisterRefresh]);
+  }, [refreshOffers, registerRefresh, unregisterRefresh]);
 
   if (loading) {
     return (

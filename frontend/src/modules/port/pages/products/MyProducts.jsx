@@ -5,39 +5,43 @@ import { useNavigate } from 'react-router-dom';
 import { getMyProducts, deleteProduct } from '../../../../services/api/portProductService';
 import { useToast } from '../../../../context/ToastContext';
 import { useRefresh } from '@/context/RefreshContext';
+import { useCachedFetch } from '@/hooks/useCachedFetch';
 
 const MyProducts = () => {
   const { showToast } = useToast();
   const [viewType, setViewType] = useState('grid'); // 'grid' or 'table'
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [confirmDeleteProductId, setConfirmDeleteProductId] = useState(null);
   const navigate = useNavigate();
   const { registerRefresh, unregisterRefresh } = useRefresh();
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await getMyProducts();
-      if (response.success) {
-        setProducts(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      showToast('Failed to load products', 'error');
-    } finally {
-      setLoading(false);
+  const fetchProductsData = useCallback(async () => {
+    const response = await getMyProducts();
+    return response.success ? response.data : [];
+  }, []);
+
+  // Use cached fetch with 5-minute TTL
+  const { data: productsData, loading } = useCachedFetch(
+    fetchProductsData,
+    'my_products',
+    5 * 60 * 1000 // 5 minutes
+  );
+
+  useEffect(() => {
+    if (productsData) setProducts(productsData);
+  }, [productsData]);
+
+  const refreshProducts = useCallback(async () => {
+    const response = await getMyProducts();
+    if (response.success) {
+      setProducts(response.data);
     }
-  }, [showToast]);
+  }, []);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  useEffect(() => {
-    registerRefresh(fetchProducts);
+    registerRefresh(refreshProducts);
     return () => unregisterRefresh();
-  }, [fetchProducts, registerRefresh, unregisterRefresh]);
+  }, [refreshProducts, registerRefresh, unregisterRefresh]);
 
   const handleDelete = (id) => {
     setConfirmDeleteProductId(id);
