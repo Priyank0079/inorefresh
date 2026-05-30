@@ -95,7 +95,7 @@ export const createPromoStrip = asyncHandler(async (req: Request, res: Response)
     order,
   });
 
-  const populated = await PromoStrip.findById(promoStrip._id)
+  const populated: any = await PromoStrip.findById(promoStrip._id)
     .populate("categoryCards.categoryId", "name slug image")
     .populate("featuredProducts", "productName mainImage price mrp status publish");
 
@@ -285,7 +285,7 @@ export const updatePromoStrip = asyncHandler(async (req: Request, res: Response)
 
   await promoStrip.save();
 
-  const populated = await PromoStrip.findById(promoStrip._id)
+  const populated: any = await PromoStrip.findById(promoStrip._id)
     .populate("categoryCards.categoryId", "name slug image")
     .populate("featuredProducts", "productName mainImage price mrp status publish");
 

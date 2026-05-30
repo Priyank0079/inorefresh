@@ -84,9 +84,7 @@ export const getRecentActivities = asyncHandler(async (req: Request, res: Respon
   });
 });
 
-export const getRecentRequirements = asyncHandler(async (req: Request, res: Response) => {
-  const portId = (req as any).user?.userId || (req as any).user?.id || (req as any).user?._id;
-
+export const getRecentRequirements = asyncHandler(async (_req: Request, res: Response) => {
   const requirements = await PortRequirement.find({ status: 'Open' })
     .sort({ createdAt: -1 })
     .limit(5)

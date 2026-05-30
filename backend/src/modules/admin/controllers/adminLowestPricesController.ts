@@ -53,7 +53,8 @@ export const getLowestPricesProductById = async (req: Request, res: Response) =>
         }
 
         // Check if product is active and published
-        if (lowestPricesProduct.product.status !== "Active" || !lowestPricesProduct.product.publish) {
+        const populatedProduct = lowestPricesProduct.product as any;
+        if (populatedProduct.status !== "Active" || !populatedProduct.publish) {
             return res.status(404).json({
                 success: false,
                 message: "Lowest prices product not found or unavailable",

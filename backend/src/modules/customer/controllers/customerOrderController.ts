@@ -449,7 +449,7 @@ export const createOrder = async (req: Request, res: Response) => {
         for (const item of items) {
             const product = await Product.findById(item.product.id);
             if (product) {
-                const taxRate = product.taxRate || 18; // Default 18% GST
+                const taxRate = (product as any).taxRate || 18; // Default 18% GST
                 const itemTax = (item.quantity * calculateItemPrice(product, item.variant || item.variation) * taxRate) / 100;
                 calculatedTax += itemTax;
                 taxBreakdown.push({
