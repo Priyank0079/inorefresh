@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import DashboardCard from '../../components/cards/DashboardCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import PageTitle from '../../components/common/PageTitle';
-import { getDashboardStats, getRecentActivities, getRecentRequirements } from '../../../../services/api/portDashboardService';
+import { getCompleteDashboard } from '../../../../services/api/portDashboardService';
 import { useAuth } from '@/context/AuthContext';
 
 const formatDate = (dateString) => {
@@ -31,22 +31,25 @@ const Dashboard = () => {
   const [activities, setActivities] = useState([]);
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError('');
       try {
-        const [statsRes, activityRes, reqRes] = await Promise.all([
-          getDashboardStats(token),
-          getRecentActivities(token),
-          getRecentRequirements(token)
-        ]);
+        const response = await getCompleteDashboard(token);
 
-        if (statsRes.success) setStats(statsRes.data);
-        if (activityRes.success) setActivities(activityRes.data);
-        if (reqRes.success) setRequirements(reqRes.data);
+        if (response.success) {
+          setStats(response.data.stats);
+          setActivities(response.data.activities);
+          setRequirements(response.data.requirements);
+        } else {
+          setError(response.message || 'Failed to load dashboard');
+        }
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        setError(error.message || 'An error occurred while loading dashboard');
+        console.error('Error fetching dashboard data:', error);
       } finally {
         setLoading(false);
       }
@@ -56,41 +59,41 @@ const Dashboard = () => {
   }, [token]);
 
   const statCards = [
-    { 
-      title: 'Active Requirements', 
-      value: stats.totalRequirements.toString(), 
-      icon: 'list_alt', 
-      color: 'bg-blue-500', 
-      trend: 5, 
+    {
+      title: 'Active Requirements',
+      value: stats.totalRequirements.toString(),
+      icon: 'list_alt',
+      color: 'bg-blue-500',
+      trend: 5,
       link: '/port/requirements',
-      isPositive: true 
+      isPositive: true
     },
-    { 
-      title: 'Offers Sent', 
-      value: (stats.activeOffers + stats.approvedOffers).toString(), 
-      icon: 'send', 
-      color: 'bg-emerald-500', 
-      trend: 12, 
+    {
+      title: 'Offers Sent',
+      value: (stats.activeOffers + stats.approvedOffers).toString(),
+      icon: 'send',
+      color: 'bg-emerald-500',
+      trend: 12,
       link: '/port/offers',
-      isPositive: true 
+      isPositive: true
     },
-    { 
-      title: 'Active Negotiations', 
-      value: stats.activeOffers.toString(), 
-      icon: 'sync', 
-      color: 'bg-amber-500', 
-      trend: -2, 
+    {
+      title: 'Active Negotiations',
+      value: stats.activeOffers.toString(),
+      icon: 'sync',
+      color: 'bg-amber-500',
+      trend: -2,
       link: '/port/offers/negotiations',
-      isPositive: false 
+      isPositive: false
     },
-    { 
-      title: 'Total Revenue', 
-      value: `₹${stats.totalRevenue.toLocaleString()}`, 
-      icon: 'payments', 
-      color: 'bg-teal-600', 
-      trend: 18, 
-      link: null,
-      isPositive: true 
+    {
+      title: 'Total Revenue',
+      value: `₹${stats.totalRevenue.toLocaleString()}`,
+      icon: 'payments',
+      color: 'bg-teal-600',
+      trend: 18,
+      link: '/port/analytics/revenue',
+      isPositive: true
     }
   ];
 
@@ -98,6 +101,15 @@ const Dashboard = () => {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-700 font-semibold">Error Loading Dashboard</p>
+        <p className="text-red-600 text-sm mt-1">{error}</p>
       </div>
     );
   }
@@ -163,20 +175,20 @@ const Dashboard = () => {
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={stats.chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
                   tick={{ fill: '#94a3b8', fontSize: 12 }}
                   dy={10}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
                   tick={{ fill: '#94a3b8', fontSize: 12 }}
-                  tickFormatter={(value) => `₹${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
+                  tickFormatter={(value) => `₹${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`}
                 />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: '#f8fafc' }}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                 />
@@ -196,8 +208,13 @@ const Dashboard = () => {
         <h3 className="font-bold text-slate-800 mb-6">Recent Activity</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {activities.map((activity, idx) => (
-            <div key={idx} className="flex gap-4 p-4 rounded-lg bg-slate-50 border border-slate-100 transition-hover hover:shadow-md">
-              <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center ${activity.color}`}>
+            <div
+              key={idx}
+              className={`flex gap-4 p-4 rounded-lg border border-slate-100 transition-hover hover:shadow-md ${activity.bgColor || 'bg-slate-50'}`}
+            >
+              <div
+                className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center ${activity.iconColor || 'bg-blue-100 text-blue-600'}`}
+              >
                 <span className="material-icons-outlined text-xl">{activity.icon}</span>
               </div>
               <div>

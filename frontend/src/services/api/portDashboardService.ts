@@ -35,3 +35,12 @@ export const getRecentOffers = async () => {
     return error.response?.data || { success: false, message: error.message };
   }
 };
+
+export const getCompleteDashboard = async (token?: string) => {
+  try {
+    const response = await API.get('/port/dashboard/complete');
+    return response.data;
+  } catch (error: any) {
+    return error.response?.data || { success: false, message: error.message };
+  }
+};

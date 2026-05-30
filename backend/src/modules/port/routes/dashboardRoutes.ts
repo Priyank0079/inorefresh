@@ -11,5 +11,6 @@ router.get('/stats', dashboardController.getDashboardStats);
 router.get('/activities', dashboardController.getRecentActivities);
 router.get('/recent-requirements', dashboardController.getRecentRequirements);
 router.get('/recent-offers', dashboardController.getRecentOffers);
+router.get('/complete', dashboardController.getCompleteDashboard);
 
 export default router;
