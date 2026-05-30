@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PageTitle from '../../components/common/PageTitle';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useNavigate } from 'react-router-dom';
 import { getMyProducts, deleteProduct } from '../../../../services/api/portProductService';
 import { useToast } from '../../../../context/ToastContext';
+import { useRefresh } from '@/context/RefreshContext';
 
 const MyProducts = () => {
   const { showToast } = useToast();
@@ -12,8 +13,9 @@ const MyProducts = () => {
   const [loading, setLoading] = useState(true);
   const [confirmDeleteProductId, setConfirmDeleteProductId] = useState(null);
   const navigate = useNavigate();
+  const { registerRefresh, unregisterRefresh } = useRefresh();
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getMyProducts();
@@ -26,11 +28,16 @@ const MyProducts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
+
+  useEffect(() => {
+    registerRefresh(fetchProducts);
+    return () => unregisterRefresh();
+  }, [fetchProducts, registerRefresh, unregisterRefresh]);
 
   const handleDelete = (id) => {
     setConfirmDeleteProductId(id);

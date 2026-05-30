@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import PortSidebar from './PortSidebar';
 import PortNavbar from './PortNavbar';
+import '../../styles/port-global.css';
 
 const PortLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -36,7 +37,7 @@ const PortLayout = () => {
           title={getTitle(location.pathname)} 
         />
         
-        <main className="flex-1 px-4 pt-4 pb-28 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden scrollbar-hide">
+        <main className="flex-1 px-4 pt-4 pb-32 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden">
           <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>

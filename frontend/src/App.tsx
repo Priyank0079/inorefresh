@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider } from "./context/ToastContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { RefreshProvider } from "./context/RefreshContext";
 import { LoadingProvider } from "./context/LoadingContext";
 import { AxiosLoadingInterceptor } from "./context/AxiosLoadingInterceptor";
 import IconLoader from "./components/loaders/IconLoader";
@@ -59,7 +60,8 @@ function App() {
             <ThemeProvider>
               <ToastProvider>
                 <NotificationProvider>
-                  <BrowserRouter
+                  <RefreshProvider>
+                    <BrowserRouter
                     future={{
                       v7_startTransition: true,
                       v7_relativeSplatPath: true,
@@ -231,6 +233,7 @@ function App() {
                       </Routes>
                     </SmoothScroll>
                   </BrowserRouter>
+                  </RefreshProvider>
                 </NotificationProvider>
               </ToastProvider>
             </ThemeProvider>

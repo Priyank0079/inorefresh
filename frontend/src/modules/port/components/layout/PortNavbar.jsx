@@ -2,11 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@/context/NotificationContext';
+import { useRefresh } from '@/context/RefreshContext';
 
 const PortNavbar = ({ onMenuClick, title }) => {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { trigger: refreshPage, isRefreshing } = useRefresh();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const notificationRef = useRef(null);
@@ -57,6 +59,18 @@ const PortNavbar = ({ onMenuClick, title }) => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
+          {/* Refresh Button */}
+          <button
+            onClick={refreshPage}
+            disabled={isRefreshing}
+            className={`p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors ${isRefreshing ? 'opacity-60 cursor-not-allowed' : ''}`}
+            title="Refresh page"
+          >
+            <span className={`material-icons-outlined ${isRefreshing ? 'animate-spin' : ''}`}>
+              refresh
+            </span>
+          </button>
+
           {/* Global Search */}
           <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors hidden sm:block">
             <span className="material-icons-outlined">search</span>

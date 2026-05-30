@@ -1,1 +1,58 @@
 /* port-global styles */
+
+/* Scrollbar styling for Port Module */
+main {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.6) rgba(226, 232, 240, 0.4);
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+main::-webkit-scrollbar {
+  width: 8px;
+}
+
+main::-webkit-scrollbar-track {
+  background: rgba(226, 232, 240, 0.4);
+  border-radius: 8px;
+}
+
+main::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.6);
+  border-radius: 8px;
+  transition: background 0.3s ease;
+}
+
+main::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.8);
+}
+
+/* Firefox */
+* {
+  scrollbar-color: rgba(148, 163, 184, 0.6) rgba(226, 232, 240, 0.4);
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Ensure page content is scrollable */
+main {
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+/* Refresh button animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

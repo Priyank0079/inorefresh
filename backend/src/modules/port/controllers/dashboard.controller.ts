@@ -75,8 +75,7 @@ export const getRecentActivities = asyncHandler(async (req: Request, res: Respon
     desc: `Offer for ${act.requirementId ? (act.requirementId as any).fishName : 'Requirement'} status changed to ${act.status}`,
     time: act.updatedAt,
     icon: act.status === 'approved' ? 'check_circle' : 'history',
-    bgColor: 'bg-slate-50',
-    iconColor: act.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
+    color: act.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
   }));
 
   res.status(200).json({

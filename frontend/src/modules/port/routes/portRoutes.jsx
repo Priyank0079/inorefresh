@@ -1,18 +1,28 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import PortLayout from '../components/layout/PortLayout';
-import Dashboard from '../pages/dashboard/Dashboard';
-import IncomingRequirements from '../pages/requirements/IncomingRequirements';
-import MyOffers from '../pages/offers/MyOffers';
-import MyProducts from '../pages/products/MyProducts';
-import AddProduct from '../pages/products/AddProduct';
-import MyOrders from '../pages/orders/MyOrders';
-import TrackOrder from '../pages/orders/TrackOrder';
-import Notifications from '../pages/notifications/Notifications';
-import ProfileSettings from '../pages/settings/ProfileSettings';
-import NegotiationPage from '../pages/offers/NegotiationPage';
-import RequirementHistory from '../pages/requirements/RequirementHistory';
 import ProtectedRoute from '@/components/ProtectedRoute';
+
+// Lazy load pages for code splitting
+const Dashboard = lazy(() => import('../pages/dashboard/Dashboard'));
+const IncomingRequirements = lazy(() => import('../pages/requirements/IncomingRequirements'));
+const MyOffers = lazy(() => import('../pages/offers/MyOffers'));
+const MyProducts = lazy(() => import('../pages/products/MyProducts'));
+const AddProduct = lazy(() => import('../pages/products/AddProduct'));
+const MyOrders = lazy(() => import('../pages/orders/MyOrders'));
+const TrackOrder = lazy(() => import('../pages/orders/TrackOrder'));
+const PortShipments = lazy(() => import('../pages/shipments/PortShipments'));
+const Notifications = lazy(() => import('../pages/notifications/Notifications'));
+const ProfileSettings = lazy(() => import('../pages/settings/ProfileSettings'));
+const NegotiationPage = lazy(() => import('../pages/offers/NegotiationPage'));
+const RequirementHistory = lazy(() => import('../pages/requirements/RequirementHistory'));
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+  </div>
+);
 
 const PortRoutes = () => {
   return (
@@ -20,23 +30,25 @@ const PortRoutes = () => {
       <Routes>
         <Route element={<PortLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          
-          <Route path="requirements" element={<IncomingRequirements />} />
-          <Route path="requirements/history" element={<RequirementHistory />} />
-          
-          <Route path="offers" element={<MyOffers />} />
-          <Route path="offers/negotiations" element={<NegotiationPage />} />
-          
-          <Route path="products" element={<MyProducts />} />
-          <Route path="products/add" element={<AddProduct />} />
-          
-          <Route path="orders" element={<MyOrders />} />
-          <Route path="orders/track/:id" element={<TrackOrder />} />
-          
-          <Route path="notifications" element={<Notifications />} />
-          
-          <Route path="settings/profile" element={<ProfileSettings />} />
+          <Route path="dashboard" element={<Suspense fallback={<LoadingFallback />}><Dashboard /></Suspense>} />
+
+          <Route path="requirements" element={<Suspense fallback={<LoadingFallback />}><IncomingRequirements /></Suspense>} />
+          <Route path="requirements/history" element={<Suspense fallback={<LoadingFallback />}><RequirementHistory /></Suspense>} />
+
+          <Route path="offers" element={<Suspense fallback={<LoadingFallback />}><MyOffers /></Suspense>} />
+          <Route path="offers/negotiations" element={<Suspense fallback={<LoadingFallback />}><NegotiationPage /></Suspense>} />
+
+          <Route path="products" element={<Suspense fallback={<LoadingFallback />}><MyProducts /></Suspense>} />
+          <Route path="products/add" element={<Suspense fallback={<LoadingFallback />}><AddProduct /></Suspense>} />
+
+          <Route path="orders" element={<Suspense fallback={<LoadingFallback />}><MyOrders /></Suspense>} />
+          <Route path="orders/track/:id" element={<Suspense fallback={<LoadingFallback />}><TrackOrder /></Suspense>} />
+
+          <Route path="shipments" element={<Suspense fallback={<LoadingFallback />}><PortShipments /></Suspense>} />
+
+          <Route path="notifications" element={<Suspense fallback={<LoadingFallback />}><Notifications /></Suspense>} />
+
+          <Route path="settings/profile" element={<Suspense fallback={<LoadingFallback />}><ProfileSettings /></Suspense>} />
         </Route>
       </Routes>
     </ProtectedRoute>

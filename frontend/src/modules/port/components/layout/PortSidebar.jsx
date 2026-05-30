@@ -32,7 +32,8 @@ const menuSections = [
   {
     title: "ORDER SECTION",
     items: [
-      { label: "My Orders", path: "/port/orders", icon: "shopping_cart" }
+      { label: "My Orders", path: "/port/orders", icon: "shopping_cart" },
+      { label: "Port Shipment", path: "/port/shipments", icon: "local_shipping" }
     ]
   },
   {

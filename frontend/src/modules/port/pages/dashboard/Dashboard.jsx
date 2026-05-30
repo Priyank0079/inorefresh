@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
@@ -6,8 +6,10 @@ import {
 import DashboardCard from '../../components/cards/DashboardCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import PageTitle from '../../components/common/PageTitle';
-import { getCompleteDashboard } from '../../../../services/api/portDashboardService';
+import DashboardSkeleton from '../../components/skeletons/DashboardSkeleton';
+import { getDashboardStats, getRecentActivities, getRecentRequirements } from '../../../../services/api/portDashboardService';
 import { useAuth } from '@/context/AuthContext';
+import { useRefresh } from '@/context/RefreshContext';
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -21,6 +23,7 @@ const formatDate = (dateString) => {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { token } = useAuth();
+  const { registerRefresh, unregisterRefresh } = useRefresh();
   const [stats, setStats] = useState({
     totalRequirements: 0,
     activeOffers: 0,
@@ -33,30 +36,35 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const response = await getCompleteDashboard(token);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [statsRes, activityRes, reqRes] = await Promise.all([
+        getDashboardStats(token),
+        getRecentActivities(token),
+        getRecentRequirements(token)
+      ]);
 
-        if (response.success) {
-          setStats(response.data.stats);
-          setActivities(response.data.activities);
-          setRequirements(response.data.requirements);
-        } else {
-          setError(response.message || 'Failed to load dashboard');
-        }
-      } catch (error) {
-        setError(error.message || 'An error occurred while loading dashboard');
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (token) fetchData();
+      if (statsRes.success) setStats(statsRes.data);
+      if (activityRes.success) setActivities(activityRes.data);
+      if (reqRes.success) setRequirements(reqRes.data);
+    } catch (error) {
+      setError(error.message || 'An error occurred while loading dashboard');
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [token]);
+
+  useEffect(() => {
+    if (token) fetchData();
+  }, [token, fetchData]);
+
+  useEffect(() => {
+    registerRefresh(fetchData);
+    return () => unregisterRefresh();
+  }, [fetchData, registerRefresh, unregisterRefresh]);
 
   const statCards = [
     {
@@ -91,18 +99,14 @@ const Dashboard = () => {
       value: `₹${stats.totalRevenue.toLocaleString()}`,
       icon: 'payments',
       color: 'bg-teal-600',
-      trend: 18,
-      link: '/port/analytics/revenue',
+      trend: null,
+      link: '/port/offers',
       isPositive: true
     }
   ];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error) {
@@ -208,13 +212,8 @@ const Dashboard = () => {
         <h3 className="font-bold text-slate-800 mb-6">Recent Activity</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {activities.map((activity, idx) => (
-            <div
-              key={idx}
-              className={`flex gap-4 p-4 rounded-lg border border-slate-100 transition-hover hover:shadow-md ${activity.bgColor || 'bg-slate-50'}`}
-            >
-              <div
-                className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center ${activity.iconColor || 'bg-blue-100 text-blue-600'}`}
-              >
+            <div key={idx} className="flex gap-4 p-4 rounded-lg bg-slate-50 border border-slate-100 transition-hover hover:shadow-md">
+              <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center ${activity.color || 'bg-blue-100 text-blue-600'}`}>
                 <span className="material-icons-outlined text-xl">{activity.icon}</span>
               </div>
               <div>

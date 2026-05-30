@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTitle from '../../components/common/PageTitle';
 import StatusBadge from '../../components/common/StatusBadge';
 import { getPortOrders, updateDeliveryDetails } from '../../../../services/api/portOfferService';
 import { useToast } from '../../../../context/ToastContext';
+import { useRefresh } from '@/context/RefreshContext';
 
 const getWarehouseName = (warehouse) => {
   if (!warehouse) return '';
@@ -14,6 +15,7 @@ const getWarehouseName = (warehouse) => {
 const MyOrders = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { registerRefresh, unregisterRefresh } = useRefresh();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,7 +32,7 @@ const MyOrders = () => {
     status: 'In Transit'
   });
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getPortOrders();
@@ -45,7 +47,7 @@ const MyOrders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchOrders();
@@ -53,7 +55,7 @@ const MyOrders = () => {
     // Socket listening for real-time updates
     const portId = localStorage.getItem('userId');
     const socket = window.socket; // Assuming socket is available globally or through a hook
-    
+
     if (socket && portId) {
       socket.on('delivery-update', (data) => {
         console.log('Received delivery update:', data);
@@ -64,7 +66,12 @@ const MyOrders = () => {
         socket.off('delivery-update');
       };
     }
-  }, []);
+  }, [fetchOrders]);
+
+  useEffect(() => {
+    registerRefresh(fetchOrders);
+    return () => unregisterRefresh();
+  }, [fetchOrders, registerRefresh, unregisterRefresh]);
 
   const handleUpdateDelivery = (order) => {
     setSelectedOrder(order);
@@ -88,9 +95,27 @@ const MyOrders = () => {
     try {
       const response = await updateDeliveryDetails(selectedOrder._id, deliveryData);
       if (response.success) {
-        showToast('Delivery updated successfully', 'success');
+        // Update local state with the new delivery data
+        setOrders(prev => prev.map(order =>
+          order._id === selectedOrder._id
+            ? {
+                ...order,
+                deliveryDetails: {
+                  ...order.deliveryDetails,
+                  ...deliveryData
+                },
+                status: deliveryData.status || order.status
+              }
+            : order
+        ));
+
         setShowDeliveryModal(false);
-        fetchOrders();
+        setSelectedOrder(null);
+
+        // Reset filter to 'All' so user can see the updated order
+        setStatusFilter('All');
+
+        showToast('✓ Delivery updated successfully! Showing all orders.', 'success');
       } else {
         showToast(response.message || 'Failed to update delivery', 'error');
       }
@@ -129,41 +154,55 @@ const MyOrders = () => {
         title="My Orders" 
         subtitle="Manage confirmed orders and shipment tracking"
         actions={
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative">
+          <div className="flex items-center gap-3 w-full">
+            <div className="relative flex-1">
               <span className="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-              <input 
-                type="text" 
-                placeholder="Search orders..." 
-                className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none w-full sm:w-64 transition-all"
+              <input
+                type="text"
+                placeholder="Search orders..."
+                className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none w-full transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="relative">
-              <button 
+            <div className="relative z-50">
+              <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-semibold transition-all ${showFilters ? 'bg-teal-50 border-teal-200 text-teal-600' : 'bg-white border-slate-200 text-slate-600 hover:shadow-sm'}`}
+                className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${showFilters ? 'bg-teal-50 border-teal-200 text-teal-600' : 'bg-white border-slate-200 text-slate-600 hover:shadow-sm'}`}
               >
                 <span className="material-icons-outlined text-lg">filter_list</span>
-                {statusFilter === 'All' ? 'Filters' : `Status: ${statusFilter}`}
+                <span className="hidden sm:inline">{statusFilter === 'All' ? 'Filters' : `Status: ${statusFilter}`}</span>
+                <span className="sm:hidden">Filters</span>
               </button>
-              
+
               {showFilters && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {['All', 'approved', 'Delivered', 'In Transit', 'Pending', 'Cancelled'].map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => {
-                        setStatusFilter(status);
-                        setShowFilters(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 transition-colors ${statusFilter === status ? 'text-teal-600 font-bold bg-teal-50/50' : 'text-slate-600'}`}
-                    >
-                      {status === 'approved' ? 'Confirmed' : status}
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowFilters(false)} />
+                  <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-200 py-1 z-50">
+                    <div className="px-4 py-2 border-b border-slate-100">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Filter by Status</p>
+                    </div>
+                    {['All', 'approved', 'Delivered', 'In Transit', 'Pending', 'Cancelled'].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => {
+                          setStatusFilter(status);
+                          setShowFilters(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
+                          statusFilter === status
+                            ? 'bg-teal-50 text-teal-700 font-bold border-l-4 border-teal-600 pl-3'
+                            : 'text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {statusFilter === status && <span className="material-icons-outlined text-base">check</span>}
+                          {status === 'approved' ? 'Confirmed' : status}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </div>

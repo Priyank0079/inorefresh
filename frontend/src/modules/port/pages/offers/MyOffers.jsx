@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PageTitle from '../../components/common/PageTitle';
 import StatusBadge from '../../components/common/StatusBadge';
 import { getMyNegotiations } from '../../../../services/api/portOfferService';
 import { useNavigate } from 'react-router-dom';
+import { useRefresh } from '@/context/RefreshContext';
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -30,24 +31,30 @@ const MyOffers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { registerRefresh, unregisterRefresh } = useRefresh();
+
+  const fetchOffers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getMyNegotiations();
+      if (response.success) {
+        setOffers(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching offers:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchOffers = async () => {
-      setLoading(true);
-      try {
-        const response = await getMyNegotiations();
-        if (response.success) {
-          setOffers(response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching offers:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOffers();
-  }, []);
+  }, [fetchOffers]);
+
+  useEffect(() => {
+    registerRefresh(fetchOffers);
+    return () => unregisterRefresh();
+  }, [fetchOffers, registerRefresh, unregisterRefresh]);
 
   if (loading) {
     return (
