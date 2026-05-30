@@ -19,12 +19,16 @@ export const useCachedFetch = (
   const isMounted = useRef(true);
 
   useEffect(() => {
+    let isActive = true;
+
     const fetchData = async () => {
       // Check if we have cached data that's still valid
       const cached = cache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < cached.ttl) {
-        setData(cached.data);
-        setLoading(false);
+        if (isActive) {
+          setData(cached.data);
+          setLoading(false);
+        }
         return;
       }
 
@@ -33,7 +37,7 @@ export const useCachedFetch = (
         setError(null);
         const result = await fetchFn();
 
-        if (isMounted.current) {
+        if (isActive) {
           setData(result);
           // Cache the result
           cache.set(cacheKey, {
@@ -43,11 +47,11 @@ export const useCachedFetch = (
           });
         }
       } catch (err: any) {
-        if (isMounted.current) {
+        if (isActive) {
           setError(err.message || 'Failed to fetch data');
         }
       } finally {
-        if (isMounted.current) {
+        if (isActive) {
           setLoading(false);
         }
       }
@@ -56,7 +60,7 @@ export const useCachedFetch = (
     fetchData();
 
     return () => {
-      isMounted.current = false;
+      isActive = false;
     };
   }, [cacheKey, fetchFn, ttl]);
 

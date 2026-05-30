@@ -7,7 +7,7 @@ import DashboardCard from '../../components/cards/DashboardCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import PageTitle from '../../components/common/PageTitle';
 import DashboardSkeleton from '../../components/skeletons/DashboardSkeleton';
-import { getDashboardStats, getRecentActivities, getRecentRequirements } from '../../../../services/api/portDashboardService';
+import { getCompleteDashboard } from '../../../../services/api/portDashboardService';
 import { useAuth } from '@/context/AuthContext';
 import { useRefresh } from '@/context/RefreshContext';
 import { useCachedFetch } from '@/hooks/useCachedFetch';
@@ -37,69 +37,38 @@ const Dashboard = () => {
   const [error, setError] = useState('');
 
   // Memoized fetch functions to avoid recreating on every render
-  const fetchStats = useCallback(async () => {
-    const res = await getDashboardStats(token);
+  const fetchDashboardData = useCallback(async () => {
+    const res = await getCompleteDashboard(token);
     return res.success ? res.data : null;
   }, [token]);
 
-  const fetchActivities = useCallback(async () => {
-    const res = await getRecentActivities(token);
-    return res.success ? res.data : [];
-  }, [token]);
-
-  const fetchRequirements = useCallback(async () => {
-    const res = await getRecentRequirements(token);
-    return res.success ? res.data : [];
-  }, [token]);
-
   // Use cached fetch with 3-minute TTL for dashboard data
-  const { data: statsData, loading: statsLoading } = useCachedFetch(
-    fetchStats,
-    'dashboard_stats',
+  const { data: dashboardData, loading } = useCachedFetch(
+    fetchDashboardData,
+    'dashboard_complete',
     3 * 60 * 1000 // 3 minutes
   );
 
-  const { data: activitiesData, loading: activitiesLoading } = useCachedFetch(
-    fetchActivities,
-    'dashboard_activities',
-    3 * 60 * 1000
-  );
-
-  const { data: requirementsData, loading: requirementsLoading } = useCachedFetch(
-    fetchRequirements,
-    'dashboard_requirements',
-    3 * 60 * 1000
-  );
-
-  // Check if any data is still loading
-  const loading = statsLoading || activitiesLoading || requirementsLoading;
-
   // Update state when cached data arrives
   useEffect(() => {
-    if (statsData) setStats(statsData);
-  }, [statsData]);
-
-  useEffect(() => {
-    if (activitiesData) setActivities(activitiesData);
-  }, [activitiesData]);
-
-  useEffect(() => {
-    if (requirementsData) setRequirements(requirementsData);
-  }, [requirementsData]);
+    if (dashboardData) {
+      if (dashboardData.stats) setStats(dashboardData.stats);
+      if (dashboardData.activities) setActivities(dashboardData.activities);
+      if (dashboardData.requirements) setRequirements(dashboardData.requirements);
+    }
+  }, [dashboardData]);
 
   // Combined refresh function that re-fetches all data
   const fetchAllData = useCallback(async () => {
     try {
       setError('');
-      const [statsRes, activityRes, reqRes] = await Promise.all([
-        getDashboardStats(token),
-        getRecentActivities(token),
-        getRecentRequirements(token)
-      ]);
+      const res = await getCompleteDashboard(token);
 
-      if (statsRes.success) setStats(statsRes.data);
-      if (activityRes.success) setActivities(activityRes.data);
-      if (reqRes.success) setRequirements(reqRes.data);
+      if (res.success && res.data) {
+        if (res.data.stats) setStats(res.data.stats);
+        if (res.data.activities) setActivities(res.data.activities);
+        if (res.data.requirements) setRequirements(res.data.requirements);
+      }
     } catch (error) {
       setError(error.message || 'An error occurred while loading dashboard');
       console.error('Error fetching dashboard data:', error);
