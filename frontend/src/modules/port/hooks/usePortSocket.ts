@@ -61,8 +61,8 @@ export const usePortSocket = (onNewRequirement?: (requirement: any) => void) => 
             showToast(`Shipment status updated: ${data.status}`, 'info');
         });
 
-        newSocket.on('disconnect', () => {
-            console.log('❌ Port disconnected from socket server');
+        newSocket.on('disconnect', (reason) => {
+            console.log(`❌ Port disconnected from socket server. Reason: ${reason}`);
             setIsConnected(false);
         });
 
