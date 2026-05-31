@@ -446,10 +446,27 @@ export const createOrder = async (req: Request, res: Response) => {
         let calculatedTax = 0;
         const taxBreakdown: any = [];
 
+        // Resolve the default tax rate from admin settings (Settings → Tax).
+        // Falls back to 18% GST so existing behaviour is preserved when unset.
+        const taxSettings = await AppSettings.getSettings();
+        const defaultTaxRate =
+            taxSettings && typeof taxSettings.gstRate === "number" && taxSettings.gstRate > 0
+                ? taxSettings.gstRate
+                : 18;
+
         for (const item of items) {
             const product = await Product.findById(item.product.id);
             if (product) {
-                const taxRate = (product as any).taxRate || 18; // Default 18% GST
+                // Per-product tax override. Product.tax is a free-text string
+                // (e.g. "18" or "GST 18%"); parse the numeric part and fall back
+                // to the admin default when not set or not a valid number.
+                const parsedProductTax = product.tax
+                    ? parseFloat(String(product.tax).replace(/[^0-9.]/g, ""))
+                    : NaN;
+                const taxRate =
+                    Number.isFinite(parsedProductTax) && parsedProductTax > 0
+                        ? parsedProductTax
+                        : defaultTaxRate;
                 const itemTax = (item.quantity * calculateItemPrice(product, item.variant || item.variation) * taxRate) / 100;
                 calculatedTax += itemTax;
                 taxBreakdown.push({
