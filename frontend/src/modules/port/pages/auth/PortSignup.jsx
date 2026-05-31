@@ -24,6 +24,16 @@ export default function PortSignup() {
     setError("");
     
     try {
+      if (!/^[a-zA-Z\s]+$/.test(formData.name.trim())) {
+        setError("Name should contain letters and spaces only.");
+        setLoading(false);
+        return;
+      }
+      if (!/^[0-9]{10}$/.test(formData.mobile.trim())) {
+        setError("Mobile number must be exactly 10 digits.");
+        setLoading(false);
+        return;
+      }
       const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       if (!emailRegex.test(formData.email)) {
         setError("Please enter a valid email address format (e.g., name@gmail.com).");
@@ -117,7 +127,7 @@ export default function PortSignup() {
                   pattern="[0-9]{10}"
                   title="Mobile number must be exactly 10 digits"
                   value={formData.mobile}
-                  onChange={(e) => setFormData({...formData, mobile: e.target.value.replace(/\D/g, '')})}
+                  onChange={(e) => setFormData({...formData, mobile: e.target.value.replace(/\D/g, '').slice(0, 10)})}
                 />
               </div>
               <div className="space-y-1">
@@ -154,7 +164,10 @@ export default function PortSignup() {
                   className="w-full border border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all text-sm"
                   placeholder="e.g. PRT-12345"
                   required
-                  onChange={(e) => setFormData({...formData, licenseNumber: e.target.value})}
+                  value={formData.licenseNumber}
+                  pattern="[a-zA-Z0-9\-]+"
+                  title="License number should contain letters, numbers, and hyphens only"
+                  onChange={(e) => setFormData({...formData, licenseNumber: e.target.value.replace(/[^a-zA-Z0-9\-]/g, '').toUpperCase()})}
                 />
               </div>
             </div>

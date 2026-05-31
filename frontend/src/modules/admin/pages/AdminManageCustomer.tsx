@@ -322,6 +322,21 @@ export default function AdminManageCustomer() {
 
   const handleUpdateCustomer = async () => {
     if (!selectedCustomer) return;
+
+    // ── Client-side validation ──────────────────────────────────────────────
+    if (!editFormData.name.trim() || !/^[a-zA-Z\s]+$/.test(editFormData.name.trim())) {
+      showCustomerMsg("Name must contain letters and spaces only", 'error');
+      return;
+    }
+    if (editFormData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editFormData.email.trim())) {
+      showCustomerMsg("Please enter a valid email address", 'error');
+      return;
+    }
+    if (editFormData.phone && !/^[0-9]{10}$/.test(editFormData.phone.trim())) {
+      showCustomerMsg("Phone number must be exactly 10 digits", 'error');
+      return;
+    }
+    // ────────────────────────────────────────────────────────────────────────
     try {
       setIsUpdating(true);
       const response = await updateCustomer(selectedCustomer._id, editFormData);
@@ -868,7 +883,9 @@ export default function AdminManageCustomer() {
                 <input
                   type="text"
                   value={editFormData.name}
-                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value.replace(/[^a-zA-Z\s]/g, '') })}
+                  pattern="[a-zA-Z\s]+"
+                  title="Name should contain letters and spaces only"
                   className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none"
                 />
               </div>
@@ -884,9 +901,11 @@ export default function AdminManageCustomer() {
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Phone</label>
                 <input
-                  type="text"
+                  type="tel"
                   value={editFormData.phone}
-                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                  maxLength={10}
+                  title="Phone number must be 10 digits"
                   className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none"
                 />
               </div>

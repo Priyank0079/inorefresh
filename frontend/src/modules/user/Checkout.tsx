@@ -90,7 +90,6 @@ export default function Checkout() {
   const [showGstinSheet, setShowGstinSheet] = useState(false);
   const [gstin, setGstin] = useState<string>("");
   const [showCancellationPolicy, setShowCancellationPolicy] = useState(false);
-  const [giftPackaging, setGiftPackaging] = useState<boolean>(false);
 
   // Profile completion modal state
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -368,14 +367,12 @@ export default function Checkout() {
 
   // Calculate tip amount (use custom tip if custom tip input is shown, otherwise use selected tip)
   const finalTipAmount = showCustomTipInput ? customTipAmount : tipAmount || 0;
-  const giftPackagingFee = giftPackaging ? 30 : 0;
   const grandTotal = Math.max(
     0,
     discountedTotal +
     handlingCharge +
     deliveryCharge +
-    finalTipAmount +
-    giftPackagingFee -
+    finalTipAmount -
     currentCouponDiscount,
   );
 
@@ -570,7 +567,6 @@ export default function Checkout() {
       tipAmount: finalTipAmount,
       gstin: gstin || undefined,
       couponCode: selectedCoupon?.code || undefined,
-      giftPackaging: giftPackaging,
       useWallet: useWallet,
     };
 
@@ -1954,30 +1950,6 @@ export default function Checkout() {
             </div>
           )}
 
-          {/* Gift Packaging */}
-          {giftPackaging && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    fill="none"
-                  />
-                </svg>
-                <span className="text-xs text-neutral-700">Gift Packaging</span>
-              </div>
-              <span className="text-xs font-medium text-neutral-900">
-                ₹{giftPackagingFee}
-              </span>
-            </div>
-          )}
 
           {/* Usage Detail */}
           {walletAmountUsed > 0 && (
@@ -2038,68 +2010,6 @@ export default function Checkout() {
         </button>
       </div>
 
-
-      {/* Gift Packaging */}
-      <div className="px-4 py-2 border-b border-neutral-200">
-        <button
-          onClick={() => setGiftPackaging(!giftPackaging)}
-          className={`w-full flex items-center justify-between rounded-lg p-2 transition-colors ${giftPackaging
-            ? "bg-green-50 border-2 border-green-600"
-            : "bg-neutral-50 border-2 border-transparent hover:bg-neutral-100"
-            }`}>
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${giftPackaging
-                ? "border-green-600 bg-green-600"
-                : "border-neutral-400 bg-white"
-                }`}>
-              {giftPackaging && (
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M20 6L9 17l-5-5"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
-            </div>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2z"
-                stroke="currentColor"
-                strokeWidth="2"
-                fill="none"
-              />
-            </svg>
-            <div className="text-left">
-              <p
-                className={`text-xs font-semibold ${giftPackaging ? "text-green-700" : "text-neutral-900"}`}>
-                Gift Packaging
-              </p>
-              <p className="text-[10px] text-neutral-600">
-                {giftPackaging
-                  ? "Add ₹30 for gift packaging"
-                  : "Add ₹30 for elegant gift packaging"}
-              </p>
-            </div>
-          </div>
-          {giftPackaging && (
-            <span className="text-xs font-semibold text-green-600">₹30</span>
-          )}
-        </button>
-      </div>
 
       {/* Cancellation Policy */}
       <div className="px-4 py-2">

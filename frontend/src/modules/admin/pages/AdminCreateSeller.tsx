@@ -77,6 +77,14 @@ export default function AdminCreateWarehouse() {
       setError("Mobile number must be exactly 10 digits");
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    if (formData.password && formData.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
     // ────────────────────────────────────────────────────────────────────────
 
     // Backend still requires coordinates. If user does not pick current location,
