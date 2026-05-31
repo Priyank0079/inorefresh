@@ -167,10 +167,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return fishKeywords.some(kw => name.includes(kw) || categoryName.includes(kw) || categoryId.includes(kw));
   };
 
-  const getStepAndMinQuantity = (product: Product): { min: number; step: number } => {
-    // Keep cart quantity behavior consistent with backend add-to-cart (starts from 1).
-    // Fish minimum order rules are enforced by total checkout weight, not per-item cart quantity.
-    return { min: 1, step: 1 };
+  const getStepAndMinQuantity = (_product: Product): { min: number; step: number } => {
+    // Global minimum order quantity: every item starts at 5 and cannot go lower.
+    // The quantity can be increased one at a time from there.
+    return { min: 5, step: 1 };
   };
 
   const cart: Cart = useMemo(() => {
@@ -460,20 +460,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const isFish = isFishProduct(itemToUpdate.product);
     const { min: minQty } = getStepAndMinQuantity(itemToUpdate.product);
 
-    let finalQuantity = quantity;
-    if (isFish) {
-      // If user tries to go below minimum, treat as remove
-      if (quantity < minQty) {
-        removeFromCart(productId, variantId, variantTitle);
-        return;
-      }
-    } else if (quantity <= 0) {
-      removeFromCart(productId, variantId, variantTitle);
-      return;
-    }
+    // Global minimum order quantity: never go below the minimum. Clamp up instead
+    // of removing — removal is handled explicitly by the Remove button.
+    const finalQuantity = Math.max(quantity, minQty);
 
     const previousItems = [...items];
     setItems((prevItems) =>

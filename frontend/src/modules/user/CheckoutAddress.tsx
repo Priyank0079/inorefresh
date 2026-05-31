@@ -146,7 +146,8 @@ export default function CheckoutAddress() {
   }, [editAddress]);
 
   const platformFee = appConfig.platformFee;
-  const deliveryFee = cart.total >= appConfig.freeDeliveryThreshold ? 0 : appConfig.deliveryFee;
+  // Free delivery removed: delivery is always charged.
+  const deliveryFee = appConfig.deliveryFee;
   const totalAmount = cart.total + platformFee + deliveryFee;
 
   const validateForm = (): boolean => {

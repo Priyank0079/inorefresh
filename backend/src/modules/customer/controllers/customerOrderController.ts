@@ -386,7 +386,8 @@ export const createOrder = async (req: Request, res: Response) => {
         // --- Distance-Based Delivery Charge Calculation ---
         try {
             const settings = await AppSettings.getSettings();
-            const freeDeliveryThreshold = settings?.freeDeliveryThreshold || 0;
+            // Free delivery is disabled platform-wide: delivery is always charged.
+            const freeDeliveryThreshold = 0;
 
             // Check for Free Delivery eligibility first
             if (freeDeliveryThreshold > 0 && calculatedSubtotal >= freeDeliveryThreshold) {

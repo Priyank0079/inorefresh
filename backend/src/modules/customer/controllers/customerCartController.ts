@@ -10,6 +10,9 @@ import { getRoadDistances } from '../../../services/mapService';
 import Seller from '../../../models/Seller';
 import { calculateItemPrice } from '../../../utils/priceUtils';
 
+// Global minimum order quantity enforced for every cart item.
+const MIN_CART_QUANTITY = 5;
+
 
 // Helper to calculate cart total with location filtering
 const calculateCartTotal = async (cartId: any) => {
@@ -38,7 +41,8 @@ const calculateDeliveryStuff = async (total: number, items: any[], userLat: numb
     try {
         const settings = await AppSettings.getSettings();
         platformFee = settings.platformFee || 0;
-        freeDeliveryThreshold = settings.freeDeliveryThreshold || 0;
+        // Free delivery is disabled platform-wide: delivery is always charged.
+        freeDeliveryThreshold = 0;
 
         // Check free delivery threshold
         if (freeDeliveryThreshold > 0 && total >= freeDeliveryThreshold) {
@@ -219,7 +223,11 @@ export const addToCart = async (req: Request, res: Response) => {
         }
 
         const existingItem = await CartItem.findOne({ cart: cart._id, product: productId, variation: variation || null });
-        const newQuantity = (existingItem?.quantity || 0) + Number(quantity);
+        // Enforce the global minimum order quantity for brand-new cart items.
+        const addQuantity = existingItem
+            ? Number(quantity)
+            : Math.max(Number(quantity), MIN_CART_QUANTITY);
+        const newQuantity = (existingItem?.quantity || 0) + addQuantity;
 
         // Check stock limit
         let maxStock = product.stock || 0;
@@ -254,7 +262,7 @@ export const addToCart = async (req: Request, res: Response) => {
             const newItem = await CartItem.create({
                 cart: cart._id,
                 product: productId,
-                quantity: Number(quantity),
+                quantity: newQuantity,
                 variation: variation || null,
             });
             cart.items.push(newItem._id as any);
@@ -305,12 +313,11 @@ export const updateCartItem = async (req: Request, res: Response) => {
     try {
         const userId = req.user?.userId;
         const { itemId } = req.params;
-        const { quantity } = req.body;
+        const { quantity: rawQuantity } = req.body;
         const { latitude, longitude } = req.query;
 
-        if (quantity < 1) {
-            return res.status(400).json({ success: false, message: 'Quantity must be at least 1' });
-        }
+        // Enforce the global minimum order quantity (clamp up instead of rejecting).
+        const quantity = Math.max(Number(rawQuantity) || 0, MIN_CART_QUANTITY);
 
         // Parse location
         const userLat = latitude ? parseFloat(latitude as string) : null;

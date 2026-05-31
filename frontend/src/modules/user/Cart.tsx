@@ -11,7 +11,8 @@ export default function Cart() {
   const navigate = useNavigate();
   const { currentTheme } = useThemeContext();
 
-  const deliveryFee = cart.total >= appConfig.freeDeliveryThreshold ? 0 : appConfig.deliveryFee;
+  // Free delivery removed: delivery is always charged.
+  const deliveryFee = appConfig.deliveryFee;
   const platformFee = appConfig.platformFee;
   const gstRate = appConfig.taxes?.gst || 0;
   const gstAmount = gstRate > 0 ? Math.round(cart.total * gstRate / 100) : 0;
@@ -202,17 +203,6 @@ export default function Cart() {
               <div className="flex justify-between text-neutral-700 md:text-base">
                 <span>GST ({gstRate}%)</span>
                 <span className="font-medium">₹{gstAmount.toLocaleString('en-IN')}</span>
-              </div>
-            )}
-            {cart.total < appConfig.freeDeliveryThreshold && (
-              <div
-                className="text-xs md:text-sm px-2 py-1 rounded"
-                style={{
-                  color: currentTheme.primary[3],
-                  backgroundColor: `${currentTheme.primary[3]}10`
-                }}
-              >
-                Add ₹{(appConfig.freeDeliveryThreshold - cart.total).toLocaleString('en-IN')} more for free delivery
               </div>
             )}
           </div>
