@@ -248,11 +248,20 @@ const menuItems: MenuItem[] = [
         ),
       },
       {
-        label: "User Refunds",
+        label: "Verify Return",
         path: "/warehouse/return/verify",
         icon: (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" />
+          </svg>
+        ),
+      },
+      {
+        label: "Refund Information",
+        path: "/warehouse/return/refunds",
+        icon: (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18M3 12h18M3 18h12" /><circle cx="19" cy="18" r="2.5" />
           </svg>
         ),
       },
