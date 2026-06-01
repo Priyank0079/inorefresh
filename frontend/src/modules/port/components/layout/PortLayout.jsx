@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import PortSidebar from './PortSidebar';
 import PortNavbar from './PortNavbar';
+import { usePortSocket } from '../../hooks/usePortSocket';
+import RealtimeAlertPopup from '../../../../components/RealtimeAlertPopup';
 import '../../styles/port-global.css';
 
 const PortLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [alert, setAlert] = useState(null);
   const location = useLocation();
+
+  // Global real-time popup + sound for new requirements / offers / approvals.
+  const handleAlert = useCallback((a) => setAlert(a), []);
+  usePortSocket(undefined, handleAlert);
 
   // Map paths to titles for the navbar
   const getTitle = (path) => {
@@ -21,6 +28,9 @@ const PortLayout = () => {
 
   return (
     <div className="h-screen overflow-hidden bg-slate-50 font-sans">
+      {/* Real-time popup + sound for requirements / offers / approvals */}
+      <RealtimeAlertPopup alert={alert} onClose={() => setAlert(null)} accent="bg-cyan-600" />
+
       <PortSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       
       {/* Main Content Overlay for mobile sidebar */}

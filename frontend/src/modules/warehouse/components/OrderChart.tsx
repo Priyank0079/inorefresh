@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 
 interface OrderChartProps {
   title: string;
@@ -7,619 +7,219 @@ interface OrderChartProps {
   height?: number;
 }
 
-export default function OrderChart({ title, data, maxValue, height = 400 }: OrderChartProps) {
+export default function OrderChart({ title, data, maxValue }: OrderChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
-  const [zoom, setZoom] = useState(1);
-  const [panX, setPanX] = useState(0);
-  const [isPanning, setIsPanning] = useState(false);
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [brushStart, setBrushStart] = useState<number | null>(null);
-  const [brushEnd, setBrushEnd] = useState<number | null>(null);
-  const [chartWidth, setChartWidth] = useState(1200);
 
-  const svgRef = useRef<SVGSVGElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-4 flex items-center justify-center h-48">
+        <p className="text-neutral-400 text-sm">No data available</p>
+      </div>
+    );
+  }
 
-  // Responsive chart dimensions
-  useEffect(() => {
-    const updateChartWidth = () => {
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.offsetWidth;
-        if (containerWidth < 640) {
-          setChartWidth(400);
-        } else if (containerWidth < 1024) {
-          setChartWidth(600);
-        } else {
-          setChartWidth(1200);
-        }
-      }
-    };
+  // Chart layout — generous left padding for Y-axis labels
+  const W = 560;
+  const H = 220;
+  const pad = { top: 16, right: 20, bottom: 48, left: 52 };
+  const gW = W - pad.left - pad.right;
+  const gH = H - pad.top - pad.bottom;
 
-    updateChartWidth();
-    window.addEventListener('resize', updateChartWidth);
-    return () => window.removeEventListener('resize', updateChartWidth);
-  }, []);
+  // Nice round Y-axis max (round up to nearest 5 if small, or 10 for larger)
+  const rawMax = maxValue <= 0 ? 5 : maxValue;
+  const step = rawMax <= 10 ? 1 : rawMax <= 50 ? 5 : 10;
+  const chartMax = Math.ceil(rawMax / step) * step || step;
 
-  // Prevent page scroll when zooming/panning with active listener
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  // 5 Y-axis ticks (0, 25%, 50%, 75%, 100%)
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map(r => Math.round(chartMax * r));
 
-    const handleWheel = (e: WheelEvent) => {
-      if (e.ctrlKey) {
-        // Allow default zoom behavior if ctrl is pressed? 
-        // Or strictly prevent all scrolling? 
-        // Original code was strictly e.preventDefault()
-        e.preventDefault();
-        e.stopPropagation();
-      } else {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    };
+  // Point positions
+  const pts = data.map((d, i) => ({
+    x: pad.left + (data.length === 1 ? gW / 2 : (i / (data.length - 1)) * gW),
+    y: pad.top + gH - (d.value / chartMax) * gH,
+    value: d.value,
+    date: d.date,
+    i,
+  }));
 
-    container.addEventListener('wheel', handleWheel, { passive: false });
-
-    return () => {
-      container.removeEventListener('wheel', handleWheel);
-    };
-  }, []);
-
-  const chartHeight = height;
-  const padding = { top: 30, right: 15, bottom: 80, left: 30 };
-  const graphWidth = chartWidth - padding.left - padding.right;
-  const graphHeight = chartHeight - padding.top - padding.bottom;
-
-  // Calculate points for the line with smooth curves (always show all data, transform handles zoom/pan)
-  const points = data.map((item, index) => {
-    const x = padding.left + (index / (data.length - 1)) * graphWidth;
-    const y = padding.top + graphHeight - (item.value / maxValue) * graphHeight;
-    return { x, y, value: item.value, date: item.date, index };
-  });
-
-  // Create smooth curvy path using cubic Bezier curves that stay above x-axis
-  const createSmoothPath = () => {
-    if (points.length < 2) return '';
-    if (points.length === 2) {
-      return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
+  // Smooth line path (monotone cubic)
+  const linePath = (() => {
+    if (pts.length < 2) return `M${pts[0]?.x} ${pts[0]?.y}`;
+    let d = `M${pts[0].x} ${pts[0].y}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const cx = (pts[i].x + pts[i + 1].x) / 2;
+      d += ` C${cx} ${pts[i].y}, ${cx} ${pts[i + 1].y}, ${pts[i + 1].x} ${pts[i + 1].y}`;
     }
+    return d;
+  })();
 
-    const xAxisY = padding.top + graphHeight; // X-axis position (bottom of chart)
+  const areaPath = `${linePath} L${pts[pts.length - 1].x} ${pad.top + gH} L${pts[0].x} ${pad.top + gH} Z`;
 
-    let path = `M ${points[0].x} ${points[0].y}`;
+  // X-axis label density — show every Nth label to avoid overlap
+  const labelStep = data.length <= 12 ? 1 : data.length <= 16 ? 2 : data.length <= 31 ? 3 : 4;
 
-    // Use cubic Bezier curves for smooth, curvy transitions
-    for (let i = 0; i < points.length - 1; i++) {
-      const current = points[i];
-      const next = points[i + 1];
-
-      let cp1x, cp1y, cp2x, cp2y;
-
-      if (i === 0) {
-        // First segment: create smooth curve towards next point
-        const dx = next.x - current.x;
-        const dy = next.y - current.y;
-        cp1x = current.x + dx * 0.4;
-        cp1y = current.y + dy * 0.4;
-        cp2x = current.x + dx * 0.6;
-        cp2y = current.y + dy * 0.6;
-      } else if (i === points.length - 2) {
-        // Last segment: create smooth curve from previous point
-        const prev = points[i - 1];
-        const dx = next.x - prev.x;
-        const dy = next.y - prev.y;
-        cp1x = current.x + dx * 0.2;
-        cp1y = current.y + dy * 0.2;
-        cp2x = next.x - dx * 0.2;
-        cp2y = next.y - dy * 0.2;
-      } else {
-        // Middle segments: use Catmull-Rom style control points for smooth curves
-        const prev = points[i - 1];
-        const nextNext = points[i + 2];
-
-        // Calculate tangent vectors for smooth curve
-        const t1x = (next.x - prev.x) * 0.3;
-        const t1y = (next.y - prev.y) * 0.3;
-        const t2x = (nextNext.x - current.x) * 0.3;
-        const t2y = (nextNext.y - current.y) * 0.3;
-
-        cp1x = current.x + t1x;
-        cp1y = current.y + t1y;
-        cp2x = next.x - t2x;
-        cp2y = next.y - t2y;
-      }
-
-      // Constrain control points to prevent curve from going below x-axis
-      // Find the minimum Y value among current, next, and x-axis
-      const minAllowedY = Math.min(current.y, next.y, xAxisY);
-
-      // Ensure control points don't go below the minimum allowed Y
-      cp1y = Math.max(cp1y, minAllowedY);
-      cp2y = Math.max(cp2y, minAllowedY);
-
-      // Also ensure they don't go below x-axis
-      cp1y = Math.min(cp1y, xAxisY);
-      cp2y = Math.min(cp2y, xAxisY);
-
-      // Additional constraint: ensure control points create smooth curves
-      // by keeping them within reasonable bounds relative to data points
-      const maxY = Math.max(current.y, next.y);
-      cp1y = Math.min(cp1y, maxY + (maxY - minAllowedY) * 0.2);
-      cp2y = Math.min(cp2y, maxY + (maxY - minAllowedY) * 0.2);
-
-      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${next.x} ${next.y}`;
-    }
-
-    return path;
-  };
-
-  const smoothPath = createSmoothPath();
-
-  // Create area path (for gradient fill)
-  const areaPath = `${smoothPath} L ${points[points.length - 1]?.x || 0} ${padding.top + graphHeight} L ${points[0]?.x || 0} ${padding.top + graphHeight} Z`;
-
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!svgRef.current || !containerRef.current || isPanning || isDragging) return;
-
-    const svgRect = svgRef.current.getBoundingClientRect();
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const viewBoxWidth = chartWidth / zoom;
-    const scaleX = svgRect.width / viewBoxWidth;
-    const mouseX = ((e.clientX - svgRect.left) / scaleX) - panX;
-    const mouseY = (e.clientY - svgRect.top) / scaleX;
-
-    // Find the nearest point
-    let nearestIndex = 0;
-    let minDistance = Infinity;
-
-    points.forEach((point) => {
-      const distance = Math.abs(mouseX - point.x);
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestIndex = point.index;
-      }
-    });
-
-    // Only show tooltip if mouse is within the graph area
-    if (
-      mouseX >= padding.left &&
-      mouseX <= padding.left + graphWidth &&
-      mouseY >= padding.top &&
-      mouseY <= padding.top + graphHeight
-    ) {
-      setHoveredIndex(nearestIndex);
-      const tooltipX = e.clientX - containerRect.left;
-      const tooltipY = e.clientY - containerRect.top - 50;
-      setTooltipPosition({ x: tooltipX, y: tooltipY });
-    } else {
-      setHoveredIndex(null);
-      setTooltipPosition(null);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isPanning && !isDragging) {
-      setHoveredIndex(null);
-      setTooltipPosition(null);
-    }
-  };
-
-  // Pan functionality
-  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (e.button !== 0 || e.shiftKey) return; // Only left mouse button, not shift
-    setIsPanning(true);
-    setPanStart({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleMouseMovePan = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!isPanning || !svgRef.current) return;
-
-    const deltaX = e.clientX - panStart.x;
-    const svgRect = svgRef.current.getBoundingClientRect();
-    const viewBoxWidth = chartWidth / zoom;
-    const scaleX = svgRect.width / viewBoxWidth;
-    const adjustedDeltaX = deltaX / scaleX;
-
-    setPanX((prev) => {
-      const maxPan = chartWidth * (1 - 1 / zoom);
-      const newPan = prev - adjustedDeltaX;
-      return Math.max(-maxPan, Math.min(0, newPan));
-    });
-
-    setPanStart({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleMouseUp = () => {
-    setIsPanning(false);
-    setIsDragging(false);
-    if (brushStart !== null && brushEnd !== null) {
-      // Apply zoom to selected area
-      const start = Math.min(brushStart, brushEnd);
-      const end = Math.max(brushStart, brushEnd);
-      const range = end - start;
-      if (range > 0) {
-        const newZoom = Math.min(5, data.length / range);
-        setZoom(newZoom);
-        const centerX = (start + end) / 2;
-        const centerXPixel = padding.left + (centerX / (data.length - 1)) * graphWidth;
-        const newPanX = -(centerXPixel - chartWidth / 2);
-        setPanX(Math.max(-chartWidth * (1 - 1 / newZoom), Math.min(0, newPanX)));
-      }
-      setBrushStart(null);
-      setBrushEnd(null);
-    }
-  };
-
-  // Brush selection for zooming
-  const handleBrushStart = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (e.shiftKey && !isPanning) {
-      setIsDragging(true);
-      if (svgRef.current) {
-        const svgRect = svgRef.current.getBoundingClientRect();
-        const viewBoxWidth = chartWidth / zoom;
-        const scaleX = svgRect.width / viewBoxWidth;
-        const mouseX = ((e.clientX - svgRect.left) / scaleX) - panX;
-        if (mouseX >= padding.left && mouseX <= padding.left + graphWidth) {
-          const index = Math.round(((mouseX - padding.left) / graphWidth) * (data.length - 1));
-          setBrushStart(index);
-          setBrushEnd(index);
-        }
-      }
-    }
-  };
-
-  const handleBrushMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (isDragging && brushStart !== null && svgRef.current) {
-      const svgRect = svgRef.current.getBoundingClientRect();
-      const viewBoxWidth = chartWidth / zoom;
-      const scaleX = svgRect.width / viewBoxWidth;
-      const mouseX = ((e.clientX - svgRect.left) / scaleX) - panX;
-      if (mouseX >= padding.left && mouseX <= padding.left + graphWidth) {
-        const index = Math.round(((mouseX - padding.left) / graphWidth) * (data.length - 1));
-        setBrushEnd(index);
-      }
-    }
-  };
-
-  // Zoom controls
-  const handleZoomIn = () => {
-    const newZoom = Math.min(5, zoom * 1.2);
-    // Keep the center of the visible area centered when zooming
-    const currentViewBoxWidth = chartWidth / zoom;
-    const newViewBoxWidth = chartWidth / newZoom;
-    const centerPoint = panX + currentViewBoxWidth / 2;
-    const newPanX = centerPoint - newViewBoxWidth / 2;
-    const maxPan = chartWidth * (1 - 1 / newZoom);
-    setZoom(newZoom);
-    // Constrain panX to keep graph within bounds
-    setPanX(Math.max(-maxPan, Math.min(0, newPanX)));
-  };
-
-  const handleZoomOut = () => {
-    const newZoom = Math.max(1, zoom / 1.2);
-    if (newZoom === 1) {
-      setPanX(0);
-    } else {
-      // Keep the center of the visible area centered when zooming out
-      const currentViewBoxWidth = chartWidth / zoom;
-      const newViewBoxWidth = chartWidth / newZoom;
-      const centerPoint = panX + currentViewBoxWidth / 2;
-      const newPanX = centerPoint - newViewBoxWidth / 2;
-      const maxPan = chartWidth * (1 - 1 / newZoom);
-      // Constrain panX to keep graph within bounds
-      setPanX(Math.max(-maxPan, Math.min(0, newPanX)));
-    }
-    setZoom(newZoom);
-  };
-
-  const handleReset = () => {
-    setZoom(1);
-    setPanX(0);
-    setBrushStart(null);
-    setBrushEnd(null);
-  };
-
-  // Get brush coordinates for display
-  const getBrushCoordinates = () => {
-    if (brushStart === null || brushEnd === null) return null;
-    const start = Math.min(brushStart, brushEnd);
-    const end = Math.max(brushStart, brushEnd);
-    const startX = padding.left + (start / (data.length - 1)) * graphWidth;
-    const endX = padding.left + (end / (data.length - 1)) * graphWidth;
-    return { startX, endX, start, end };
-  };
-
-  const brushCoords = getBrushCoordinates();
+  const gradId = `wh-grad-${title.replace(/\W/g, '')}`;
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-neutral-200 p-2 sm:p-3 md:p-4 hover:shadow-xl transition-shadow duration-300">
-      {/* Chart Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 sm:mb-4 gap-2 sm:gap-0">
-        <h3 className="text-base sm:text-lg md:text-xl font-bold text-neutral-900">{title}</h3>
-        <div className="flex items-center gap-2">
-          {/* Zoom Controls */}
-          <button
-            onClick={handleZoomOut}
-            disabled={zoom <= 1}
-            className="p-1.5 text-neutral-400 hover:text-neutral-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            title="Zoom Out"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-              <path d="M8 12H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
-          <button
-            onClick={handleZoomIn}
-            disabled={zoom >= 5}
-            className="p-1.5 text-neutral-400 hover:text-neutral-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            title="Zoom In"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-              <path d="M12 8V16M8 12H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
-          <button
-            onClick={handleReset}
-            className="p-1.5 text-neutral-400 hover:text-neutral-600 transition-colors"
-            title="Reset Zoom"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path d="M9 22V12H15V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
-      </div>
+    <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-3">
+      {/* Header */}
+      <h3 className="text-sm font-bold text-neutral-800 mb-2 truncate">{title}</h3>
 
-      {/* Chart */}
-      <div
-        ref={containerRef}
-        className="w-full relative overflow-hidden"
-      >
+      {/* SVG Chart */}
+      <div className="w-full">
         <svg
-          ref={svgRef}
-          width={chartWidth}
-          height={chartHeight}
-          viewBox={`${panX} 0 ${chartWidth / zoom} ${chartHeight}`}
-          className="w-full h-auto cursor-move"
+          viewBox={`0 0 ${W} ${H}`}
           preserveAspectRatio="xMidYMid meet"
-          onMouseMove={(e) => {
-            handleMouseMove(e);
-            handleMouseMovePan(e);
-            handleBrushMove(e);
-          }}
-          onMouseDown={(e) => {
-            handleMouseDown(e);
-            handleBrushStart(e);
-          }}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
+          className="w-full"
+          style={{ display: 'block' }}
+          onMouseLeave={() => setHoveredIndex(null)}
         >
-          {/* Gradient Definitions */}
           <defs>
-            <linearGradient id={`gradient-${title.replace(/\s+/g, '-')}`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#ccfbf1" stopOpacity="0.2" />
-              <stop offset="50%" stopColor="#ccfbf1" stopOpacity="0.1" />
-              <stop offset="100%" stopColor="#ccfbf1" stopOpacity="0" />
+            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#0d9488" stopOpacity="0.18" />
+              <stop offset="100%" stopColor="#0d9488" stopOpacity="0" />
             </linearGradient>
-            <filter id={`glow-${title.replace(/\s+/g, '-')}`}>
-              <feGaussianBlur stdDeviation="4" result="coloredBlur" />
-              <feMerge>
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
           </defs>
 
-          {/* Grid Lines */}
-          {(() => {
-            // For maxValue 20, show grid at 0, 5, 10, 15, 20; for others show proportional
-            const ratios = maxValue === 20
-              ? [0, 0.25, 0.5, 0.75, 1]
-              : [0, 0.25, 0.5, 0.75, 1];
-
-            return ratios.map((ratio, idx) => {
-              const y = padding.top + graphHeight - ratio * graphHeight;
-              return (
+          {/* Horizontal grid lines */}
+          {yTicks.map((v, idx) => {
+            const y = pad.top + gH - (v / chartMax) * gH;
+            return (
+              <g key={idx}>
                 <line
-                  key={idx}
-                  x1={padding.left}
-                  y1={y}
-                  x2={padding.left + graphWidth}
-                  y2={y}
-                  stroke="#e5e7eb"
-                  strokeWidth="1.5"
-                  strokeDasharray="3 3"
-                  opacity="0.4"
+                  x1={pad.left} y1={y}
+                  x2={pad.left + gW} y2={y}
+                  stroke={idx === 0 ? '#9ca3af' : '#e5e7eb'}
+                  strokeWidth={idx === 0 ? 1.5 : 1}
+                  strokeDasharray={idx === 0 ? '' : '4 3'}
                 />
-              );
-            });
-          })()}
+                {/* Y-axis label — positioned with enough room */}
+                <text
+                  x={pad.left - 8}
+                  y={y + 4}
+                  textAnchor="end"
+                  fontSize="11"
+                  fill="#6b7280"
+                  fontWeight="500"
+                >
+                  {v}
+                </text>
+              </g>
+            );
+          })}
 
-          {/* Brush Selection Area */}
-          {brushCoords && (
-            <rect
-              x={brushCoords.startX}
-              y={padding.top}
-              width={brushCoords.endX - brushCoords.startX}
-              height={graphHeight}
-              fill="rgba(20, 184, 166, 0.1)"
-              stroke="#14b8a6"
-              strokeWidth="2"
-              strokeDasharray="4 4"
-            />
-          )}
-
-          {/* Area Fill with Gradient - Very Light Teal */}
-          <path
-            d={areaPath}
-            fill={`url(#gradient-${title.replace(/\s+/g, '-')})`}
-            style={{ opacity: 1 }}
+          {/* Left axis line */}
+          <line
+            x1={pad.left} y1={pad.top}
+            x2={pad.left} y2={pad.top + gH}
+            stroke="#9ca3af" strokeWidth="1.5"
           />
 
-          {/* Smooth Line */}
+          {/* Area fill */}
+          <path d={areaPath} fill={`url(#${gradId})`} />
+
+          {/* Line */}
           <path
-            d={smoothPath}
+            d={linePath}
             fill="none"
             stroke="#0d9488"
-            strokeWidth="4"
+            strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            filter={`url(#glow-${title})`}
-            style={{ transition: 'all 0.3s ease' }}
           />
 
-          {/* Hover Vertical Line */}
-          {hoveredIndex !== null && (
-            <line
-              x1={points.find(p => p.index === hoveredIndex)?.x || 0}
-              y1={padding.top}
-              x2={points.find(p => p.index === hoveredIndex)?.x || 0}
-              y2={padding.top + graphHeight}
-              stroke="#0d9488"
-              strokeWidth="2.5"
-              strokeDasharray="6 4"
-              opacity="0.8"
-              style={{ transition: 'all 0.2s ease' }}
-            />
-          )}
+          {/* Hover vertical line */}
+          {hoveredIndex !== null && (() => {
+            const p = pts[hoveredIndex];
+            return (
+              <line
+                x1={p.x} y1={pad.top}
+                x2={p.x} y2={pad.top + gH}
+                stroke="#0d9488" strokeWidth="1.5"
+                strokeDasharray="4 3" opacity="0.6"
+              />
+            );
+          })()}
 
-          {/* Data Points with Animation */}
-          {points.map((point) => {
-            const isHovered = hoveredIndex === point.index;
+          {/* Data points (only render meaningful ones to avoid clutter on 31-day charts) */}
+          {pts.map((p) => {
+            const show = data.length <= 15 || p.value > 0 || p.i === hoveredIndex;
+            if (!show) return null;
+            const hov = p.i === hoveredIndex;
             return (
               <circle
-                key={point.index}
-                cx={point.x}
-                cy={point.y}
-                r={isHovered ? 8 : 5}
-                fill={isHovered ? '#0d9488' : '#14b8a6'}
+                key={p.i}
+                cx={p.x} cy={p.y}
+                r={hov ? 6 : p.value > 0 ? 4 : 2.5}
+                fill={p.value > 0 ? '#0d9488' : '#d1fae5'}
                 stroke="white"
-                strokeWidth={isHovered ? 4 : 3}
-                style={{
-                  transition: 'all 0.2s ease',
-                  filter: isHovered ? 'drop-shadow(0 0 8px rgba(13, 148, 136, 0.9))' : 'drop-shadow(0 2px 4px rgba(20, 184, 166, 0.3))'
-                }}
+                strokeWidth={hov ? 2.5 : 1.5}
+                style={{ cursor: 'pointer' }}
+                onMouseEnter={() => setHoveredIndex(p.i)}
               />
             );
           })}
 
-          {/* Invisible hover areas */}
-          {points.map((point) => (
+          {/* Invisible hover strips for each data point */}
+          {pts.map((p) => (
             <rect
-              key={`hover-${point.index}`}
-              x={point.x - 20}
-              y={padding.top}
-              width="40"
-              height={graphHeight}
+              key={`h${p.i}`}
+              x={p.x - gW / (data.length * 2)}
+              y={pad.top}
+              width={gW / data.length}
+              height={gH}
               fill="transparent"
-              style={{ cursor: 'pointer' }}
-              onMouseEnter={() => {
-                if (!isPanning && !isDragging) {
-                  setHoveredIndex(point.index);
-                }
-              }}
+              onMouseEnter={() => setHoveredIndex(p.i)}
             />
           ))}
 
-          {/* Y-Axis Labels */}
-          {(() => {
-            // For maxValue 20, show 0, 5, 10, 15, 20; for others show proportional
-            const labels = maxValue === 20
-              ? [0, 5, 10, 15, 20]
-              : [0, 0.25, 0.5, 0.75, 1].map(ratio => Math.round(maxValue * ratio));
-
-            return labels.map((value, idx) => {
-              const ratio = maxValue === 20 ? value / 20 : value / maxValue;
-              const y = padding.top + graphHeight - ratio * graphHeight;
-              return (
-                <text
-                  key={idx}
-                  x={padding.left - 20}
-                  y={y + 5}
-                  textAnchor="end"
-                  className="text-sm fill-neutral-600 font-semibold"
-                >
-                  {value}
-                </text>
-              );
-            });
-          })()}
-
-          {/* X-Axis Labels - Rotated diagonally */}
-          {data.map((item, index) => {
-            const x = padding.left + (index / (data.length - 1)) * graphWidth;
-            // Show all labels for monthly data (12 items), show every 3rd for daily data (31 items)
-            const shouldShow = data.length <= 12 || index % Math.ceil(data.length / 10) === 0 || index === data.length - 1;
-            return shouldShow ? (
+          {/* X-axis labels */}
+          {pts.map((p) => {
+            if (p.i % labelStep !== 0 && p.i !== pts.length - 1) return null;
+            return (
               <text
-                key={index}
-                x={x}
-                y={chartHeight - padding.bottom + 20}
-                textAnchor="end"
-                className="text-sm fill-neutral-600 font-semibold"
-                transform={`rotate(-45 ${x} ${chartHeight - padding.bottom + 20})`}
+                key={p.i}
+                x={p.x}
+                y={pad.top + gH + 14}
+                textAnchor="middle"
+                fontSize={data.length > 20 ? '9' : '10'}
+                fill="#6b7280"
+                fontWeight="500"
               >
-                {item.date}
+                {p.date}
               </text>
-            ) : null;
+            );
           })}
 
-          {/* Axes */}
-          <line
-            x1={padding.left}
-            y1={padding.top}
-            x2={padding.left}
-            y2={padding.top + graphHeight}
-            stroke="#9ca3af"
-            strokeWidth="2.5"
-          />
-          <line
-            x1={padding.left}
-            y1={padding.top + graphHeight}
-            x2={padding.left + graphWidth}
-            y2={padding.top + graphHeight}
-            stroke="#9ca3af"
-            strokeWidth="2.5"
-          />
+          {/* Tooltip */}
+          {hoveredIndex !== null && (() => {
+            const p = pts[hoveredIndex];
+            const ttW = 80;
+            const ttH = 38;
+            const ttX = Math.min(Math.max(p.x - ttW / 2, pad.left), pad.left + gW - ttW);
+            const ttY = p.y - ttH - 8 < pad.top ? p.y + 8 : p.y - ttH - 8;
+            return (
+              <g>
+                <rect
+                  x={ttX} y={ttY} width={ttW} height={ttH}
+                  rx="6" fill="white"
+                  stroke="#0d9488" strokeWidth="1.5"
+                  filter="drop-shadow(0 2px 6px rgba(0,0,0,0.12))"
+                />
+                <text x={ttX + ttW / 2} y={ttY + 13} textAnchor="middle" fontSize="9" fill="#6b7280">
+                  {p.date}
+                </text>
+                <text x={ttX + ttW / 2} y={ttY + 28} textAnchor="middle" fontSize="13" fontWeight="700" fill="#0d9488">
+                  {p.value}
+                </text>
+              </g>
+            );
+          })()}
         </svg>
-
-        {/* Tooltip */}
-        {hoveredIndex !== null && tooltipPosition && (
-          <div
-            className="absolute bg-white text-neutral-900 text-sm rounded-lg px-5 py-4 shadow-2xl pointer-events-none z-10 whitespace-nowrap border-2 border-neutral-200"
-            style={{
-              left: `${tooltipPosition.x}px`,
-              top: `${tooltipPosition.y}px`,
-              transform: 'translateX(-50%)',
-              animation: 'fadeIn 0.2s ease',
-            }}
-          >
-            <div className="font-bold mb-2 text-neutral-900 text-base">{data[hoveredIndex]?.date}</div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-teal-600"></div>
-              <span className="text-neutral-700 font-semibold">Orders: <span className="text-teal-600 font-bold">{data[hoveredIndex]?.value}</span></span>
-            </div>
-          </div>
-        )}
-
-        {/* Zoom Indicator */}
-        {zoom > 1 && (
-          <div className="absolute top-2 right-2 bg-teal-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-            {Math.round(zoom * 100)}%
-          </div>
-        )}
       </div>
+
+      {/* Y-axis label */}
+      <p className="text-[10px] text-neutral-400 text-center mt-0.5">Orders</p>
     </div>
   );
 }

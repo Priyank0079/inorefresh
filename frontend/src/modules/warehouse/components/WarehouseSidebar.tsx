@@ -233,7 +233,31 @@ const menuItems: MenuItem[] = [
       },
     ],
   },
-  { label: "Return", path: "/warehouse/return" },
+  {
+    label: "Return",
+    path: "/warehouse/return",
+    hasSubmenu: true,
+    submenuItems: [
+      {
+        label: "Return Inbox",
+        path: "/warehouse/return/inbox",
+        icon: (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 14 4 9 9 4" /><path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+          </svg>
+        ),
+      },
+      {
+        label: "User Refunds",
+        path: "/warehouse/return/verify",
+        icon: (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" />
+          </svg>
+        ),
+      },
+    ],
+  },
   { 
     label: "Explore", 
     path: "/warehouse/explore",

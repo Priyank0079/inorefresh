@@ -403,10 +403,14 @@ export default function CategoryFormModal({
               type="text"
               name="name"
               value={formData.name}
-              onChange={handleInputChange}
+              onChange={(e) => {
+                // Allow only alphabets and spaces
+                const v = e.target.value;
+                if (/^[a-zA-Z\s]*$/.test(v)) handleInputChange(e);
+              }}
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 ${errors.name ? "border-red-300" : "border-neutral-300"
                 }`}
-              placeholder="Enter category name"
+              placeholder="Enter category name (alphabets only)"
               disabled={submitting}
             />
             {errors.name && (

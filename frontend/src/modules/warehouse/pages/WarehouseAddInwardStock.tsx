@@ -193,7 +193,12 @@ export default function WarehouseAddInwardStock() {
                                         list="product-list"
                                         required
                                         value={formData.fishName}
-                                        onChange={(e) => setFormData({...formData, fishName: e.target.value})}
+                                        onChange={(e) => {
+                                            const v = e.target.value;
+                                            // Reject value if it contains only digits (must have at least one letter)
+                                            if (/^\d+$/.test(v)) return;
+                                            setFormData({...formData, fishName: v});
+                                        }}
                                         className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all font-bold text-slate-800"
                                         placeholder="Fish Name"
                                     />
@@ -244,6 +249,7 @@ export default function WarehouseAddInwardStock() {
                                     <input
                                         type="date"
                                         required
+                                        min={new Date().toISOString().split('T')[0]}
                                         value={formData.deadline}
                                         onChange={(e) => setFormData({...formData, deadline: e.target.value})}
                                         className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:border-teal-500 outline-none transition-all text-slate-600"

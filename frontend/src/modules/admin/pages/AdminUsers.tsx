@@ -207,7 +207,7 @@ export default function AdminUsers() {
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-semibold text-teal-800">User List</h1>
                     <div className="text-sm text-blue-500">
-                        <span className="text-blue-500 hover:underline cursor-pointer">Home</span>{' '}
+                        <a href="/admin" className="text-blue-500 hover:underline cursor-pointer">Home</a>{' '}
                         <span className="text-neutral-400">/</span> User List
                     </div>
                 </div>

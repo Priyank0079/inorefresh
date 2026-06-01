@@ -155,23 +155,6 @@ export default function AdminBillingSettings() {
                             <p className="mt-1 text-xs text-gray-500">Added to every order as handling charge.</p>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Free Delivery Threshold (₹)
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={freeDeliveryThreshold}
-                                    onChange={(e) => setFreeDeliveryThreshold(Number(e.target.value))}
-                                    className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-[#12b2a2] focus:border-[#12b2a2]"
-                                    placeholder="e.g. 499"
-                                />
-                            </div>
-                            <p className="mt-1 text-xs text-gray-500">Orders above this amount will have free delivery.</p>
-                        </div>
                     </div>
                 </div>
 

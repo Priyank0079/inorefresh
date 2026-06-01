@@ -4,6 +4,7 @@ import {
   getAllOrders,
   type Order,
 } from "../../../services/api/admin/adminOrderService";
+import { getAllWarehouses } from "../../../services/api/warehouseService";
 import { useAuth } from "../../../context/AuthContext";
 
 type SortField =
@@ -22,6 +23,7 @@ export default function AdminAllOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [dateRange, setDateRange] = useState("");
   const [seller, setSeller] = useState("All Sellers");
+  const [warehouses, setWarehouses] = useState<{ _id: string; warehouseName: string }[]>([]);
   const [status, setStatus] = useState("All Status");
   const [entriesPerPage, setEntriesPerPage] = useState("10");
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,6 +32,11 @@ export default function AdminAllOrders() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch warehouses for seller filter
+  useEffect(() => {
+    getAllWarehouses().then((r) => { if (r.success) setWarehouses(r.data as any); }).catch(() => {});
+  }, []);
 
   // Fetch orders on component mount
   useEffect(() => {
@@ -56,19 +63,14 @@ export default function AdminAllOrders() {
           params.search = searchQuery;
         }
 
-        // Parse date range if provided
+        // Warehouse/seller filter
+        if (seller && seller !== "All Sellers") {
+          params.warehouseId = seller;
+        }
+
+        // Parse date range if provided (dates are already YYYY-MM-DD from date inputs)
         if (dateRange && dateRange.includes(" - ")) {
-          const [dateFrom, dateTo] = dateRange.split(" - ").map((d) => {
-            // Convert MM/DD/YYYY to YYYY-MM-DD
-            const parts = d.trim().split("/");
-            if (parts.length === 3) {
-              return `${parts[2]}-${parts[0].padStart(
-                2,
-                "0"
-              )}-${parts[1].padStart(2, "0")}`;
-            }
-            return d.trim();
-          });
+          const [dateFrom, dateTo] = dateRange.split(" - ").map((d) => d.trim());
           params.dateFrom = dateFrom;
           params.dateTo = dateTo;
         }
@@ -303,36 +305,28 @@ export default function AdminAllOrders() {
                 <label className="text-xs sm:text-sm font-medium text-neutral-700 whitespace-nowrap">
                   From - To Order Date
                 </label>
-                <div className="flex items-center gap-2 bg-white border border-neutral-300 rounded px-2 sm:px-3 py-1.5 sm:py-2 w-full sm:w-auto">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="text-neutral-500 flex-shrink-0">
-                    <path
-                      d="M8 2V6M16 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <input
-                    type="text"
-                    value={dateRange}
-                    onChange={(e) => {
-                      setDateRange(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="flex-1 sm:w-48 text-xs sm:text-sm text-neutral-600 bg-transparent focus:outline-none placeholder:text-neutral-400"
-                    placeholder="MM/DD/YYYY - MM/DD/YYYY"
+                    type="date"
+                    aria-label="From date"
+                    value={dateRange.split(' - ')[0] || ''}
+                    max={dateRange.split(' - ')[1] || undefined}
+                    onChange={(e) => { setDateRange(`${e.target.value} - ${dateRange.split(' - ')[1] || ''}`); setCurrentPage(1); }}
+                    className="px-3 py-2 text-xs sm:text-sm border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]"
                   />
-                  {dateRange && (
+                  <span className="text-neutral-400 text-xs">to</span>
+                  <input
+                    type="date"
+                    aria-label="To date"
+                    value={dateRange.split(' - ')[1] || ''}
+                    min={dateRange.split(' - ')[0] || undefined}
+                    onChange={(e) => { setDateRange(`${dateRange.split(' - ')[0] || ''} - ${e.target.value}`); setCurrentPage(1); }}
+                    className="px-3 py-2 text-xs sm:text-sm border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]"
+                  />
+                  {dateRange.trim() !== '-' && dateRange && (
                     <button
                       onClick={handleClearDate}
-                      className="ml-2 px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-200 hover:bg-neutral-300 rounded transition-colors flex-shrink-0">
+                      className="px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-200 hover:bg-neutral-300 rounded transition-colors flex-shrink-0">
                       Clear
                     </button>
                   )}
@@ -351,10 +345,10 @@ export default function AdminAllOrders() {
                     setCurrentPage(1);
                   }}
                   className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]">
-                  <option>All Sellers</option>
-                  <option>Seller 1</option>
-                  <option>Seller 2</option>
-                  <option>Seller 3</option>
+                  <option value="All Sellers">All Sellers</option>
+                  {warehouses.map((w: any) => (
+                    <option key={w._id} value={w._id}>{w.warehouseName}</option>
+                  ))}
                 </select>
               </div>
 

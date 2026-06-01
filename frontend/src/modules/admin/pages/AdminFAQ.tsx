@@ -220,9 +220,9 @@ export default function AdminFAQ() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-neutral-800">FAQ</h1>
           <div className="text-sm text-blue-500">
-            <span className="text-blue-500 hover:underline cursor-pointer">
+            <a href="/admin" className="text-blue-500 hover:underline cursor-pointer">
               Home
-            </span>{" "}
+            </a>{" "}
             <span className="text-neutral-400">/</span>{" "}
             <span className="text-blue-500 hover:underline cursor-pointer">
               Dashboard

@@ -5,7 +5,10 @@ import { getSocketBaseURL } from '@/services/api/config';
 import { useToast } from '@/context/ToastContext';
 
 
-export const usePortSocket = (onNewRequirement?: (requirement: any) => void) => {
+export const usePortSocket = (
+    onNewRequirement?: (requirement: any) => void,
+    onAlert?: (alert: { title: string; message: string }) => void
+) => {
     const { user, token, isAuthenticated } = useAuth();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
@@ -24,7 +27,15 @@ export const usePortSocket = (onNewRequirement?: (requirement: any) => void) => 
         const newSocket = io(socketUrl, {
             auth: { token },
             transports: ['websocket', 'polling'],
+            // Independent connection so the layout-level popup and a page-level
+            // list-refresh usage don't share/cancel each other's socket.
+            forceNew: true,
         });
+
+        const fireAlert = (title: string, message: string) => {
+            if (onAlert) onAlert({ title, message });
+            else showToast(message, 'info');
+        };
 
         newSocket.on('connect', () => {
             console.log('⚓ Port connected to socket server');
@@ -40,7 +51,7 @@ export const usePortSocket = (onNewRequirement?: (requirement: any) => void) => 
 
         newSocket.on('new-requirement', (data: any) => {
             console.log('🔔 New port requirement received:', data);
-            showToast(`New requirement for ${data.requirement?.fishName}`, 'info');
+            fireAlert('🔔 New Requirement', `New requirement for ${data.requirement?.fishName || 'fish'}`);
             if (onNewRequirement) {
                 onNewRequirement(data.requirement);
             }
@@ -48,12 +59,12 @@ export const usePortSocket = (onNewRequirement?: (requirement: any) => void) => 
 
         newSocket.on('new-counter-offer', (data: any) => {
             console.log('🔔 Admin counter offer received:', data);
-            showToast(data.message || 'Admin has sent a counter offer', 'info');
+            fireAlert('🔔 Counter Offer', data.message || 'Admin has sent a counter offer');
         });
 
         newSocket.on('offer-approved', (data: any) => {
             console.log('✅ Offer approved by Admin:', data);
-            showToast('Your offer has been approved and confirmed!', 'success');
+            fireAlert('✅ Offer Approved', 'Your offer has been approved and confirmed!');
         });
         
         newSocket.on('delivery-update', (data: any) => {

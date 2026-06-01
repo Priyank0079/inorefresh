@@ -224,10 +224,10 @@ export default function AdminCashCollection() {
                       <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
                     <input
-                      type="text"
+                      type="date"
                       value={fromDate}
+                      max={toDate || undefined}
                       onChange={(e) => setFromDate(e.target.value)}
-                      placeholder="MM/DD/YYYY"
                       className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[140px]"
                     />
                   </div>
@@ -255,10 +255,10 @@ export default function AdminCashCollection() {
                       <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
                     <input
-                      type="text"
+                      type="date"
                       value={toDate}
+                      min={fromDate || undefined}
                       onChange={(e) => setToDate(e.target.value)}
-                      placeholder="MM/DD/YYYY"
                       className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[140px]"
                     />
                   </div>

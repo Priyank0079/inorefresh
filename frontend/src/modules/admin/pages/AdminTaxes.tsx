@@ -258,8 +258,8 @@ export default function AdminTaxes() {
                   <input
                     type="text"
                     value={taxTitle}
-                    onChange={(e) => setTaxTitle(e.target.value)}
-                    placeholder="Enter Tax Title"
+                    onChange={(e) => { if (/^[a-zA-Z\s%]*$/.test(e.target.value)) setTaxTitle(e.target.value); }}
+                    placeholder="Enter Tax Title (alphabets only)"
                     className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
                   />
                 </div>

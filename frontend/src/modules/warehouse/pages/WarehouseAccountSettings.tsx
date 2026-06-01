@@ -16,6 +16,7 @@ const WarehouseAccountSettings = () => {
     const [error, setError] = useState<string | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [saveLoading, setSaveLoading] = useState(false);
+    const [successMsg, setSuccessMsg] = useState('');
 
     // Initial state with empty values
     const [WarehouseData, setWarehouseData] = useState({
@@ -198,6 +199,25 @@ const WarehouseAccountSettings = () => {
                 return;
             }
 
+            // Bank details — all required when on the bank tab
+            if (activeTab === 'bank') {
+                const bankFields: [string, string][] = [
+                    [WarehouseData.accountName, 'Account Holder Name'],
+                    [WarehouseData.bankName, 'Bank Name'],
+                    [WarehouseData.accountNumber, 'Account Number'],
+                    [WarehouseData.ifsc, 'IFSC Code'],
+                    [WarehouseData.panCard, 'PAN Card Number'],
+                    [WarehouseData.taxNumber, 'Tax Number (GST)'],
+                ];
+                for (const [val, label] of bankFields) {
+                    if (!val || !val.trim()) {
+                        setError(`${label} is required`);
+                        setSaveLoading(false);
+                        return;
+                    }
+                }
+            }
+
             // Password (optional change) — must be at least 6 characters
             if (WarehouseData.password && WarehouseData.password.length < 6) {
                 setError('Password must be at least 6 characters');
@@ -240,6 +260,8 @@ const WarehouseAccountSettings = () => {
             const response = await updateWarehouseProfile(updateData);
             if (response.success) {
                 setIsEditing(false);
+                setSuccessMsg('Profile updated successfully!');
+                setTimeout(() => setSuccessMsg(''), 3000);
                 const data: any = response.data;
                 const locationCoords = data.location?.coordinates || [];
                 setWarehouseData(prev => ({
@@ -298,15 +320,6 @@ const WarehouseAccountSettings = () => {
             icon: (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-            )
-        },
-        {
-            id: 'branding',
-            label: 'Store Branding',
-            icon: (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
             )
         },
@@ -399,6 +412,16 @@ const WarehouseAccountSettings = () => {
 
                     {/* Main Content Area */}
                     <div className="flex-1">
+                        {successMsg && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl flex items-center gap-2 shadow-sm"
+                            >
+                                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                                <span className="font-medium">{successMsg}</span>
+                            </motion.div>
+                        )}
                         {error && (
                             <motion.div
                                 initial={{ opacity: 0, y: -10 }}
@@ -677,47 +700,6 @@ const WarehouseAccountSettings = () => {
                                             </div>
                                         )}
 
-                                        {activeTab === 'branding' && (
-                                            <div className="space-y-8">
-                                                <div className="space-y-3">
-                                                    <label className="text-sm font-semibold text-gray-700 ml-1">Store Banner</label>
-                                                    <div className="relative group rounded-xl overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 aspect-[21/9] transition-all hover:border-teal-300">
-                                                        <img
-                                                            src={WarehouseData.storeBanner || 'https://placehold.co/1200x400?text=Store+Banner'}
-                                                            alt="Store Banner"
-                                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                                        />
-                                                        {isEditing && (
-                                                            <label className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm">
-                                                                <input type="file" accept="image/*" capture="environment" className="hidden" disabled={uploadingField !== null} onChange={(e) => handlePhotoUpload('storeBanner', e)} />
-                                                                <div className="bg-white/20 p-4 rounded-full border border-white/30 backdrop-blur-md">
-                                                                    {uploadingField === 'storeBanner'
-                                                                        ? <span className="text-white text-xs font-bold">Uploading…</span>
-                                                                        : <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>}
-                                                                </div>
-                                                            </label>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-xs text-gray-500 ml-1">Recommended size: 1200x400px. Supports JPG, PNG.</p>
-                                                </div>
-
-                                                <div className="space-y-3">
-                                                    <div className="flex justify-between items-end">
-                                                        <label className="text-sm font-semibold text-gray-700 ml-1">Store Description</label>
-                                                        <span className="text-xs text-gray-400">Displayed on your store page</span>
-                                                    </div>
-                                                    <textarea
-                                                        name="storeDescription"
-                                                        value={WarehouseData.storeDescription || ''}
-                                                        onChange={handleInputChange}
-                                                        disabled={!isEditing}
-                                                        rows={6}
-                                                        placeholder="Tell customers about your store, specialty, and heritage..."
-                                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none disabled:bg-gray-50/50 disabled:text-gray-500 transition-all resize-none leading-relaxed"
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
 
                                         {activeTab === 'bank' && (
                                             <div className="space-y-10">
@@ -729,10 +711,10 @@ const WarehouseAccountSettings = () => {
                                                         <h4 className="text-lg font-bold text-gray-900">Bank Details</h4>
                                                     </div>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50/50 p-6 rounded-xl border border-gray-100">
-                                                        <InputGroup label="Account Holder Name" name="accountName" value={WarehouseData.accountName} onChange={handleInputChange} disabled={!isEditing} />
-                                                        <InputGroup label="Bank Name" name="bankName" value={WarehouseData.bankName} onChange={handleInputChange} disabled={!isEditing} />
-                                                        <InputGroup label="Account Number" name="accountNumber" value={WarehouseData.accountNumber} onChange={handleInputChange} disabled={!isEditing} />
-                                                        <InputGroup label="IFSC Code" name="ifsc" value={WarehouseData.ifsc} onChange={handleInputChange} disabled={!isEditing} />
+                                                        <InputGroup label="Account Holder Name *" name="accountName" value={WarehouseData.accountName} onChange={handleInputChange} disabled={!isEditing} required />
+                                                        <InputGroup label="Bank Name *" name="bankName" value={WarehouseData.bankName} onChange={handleInputChange} disabled={!isEditing} required />
+                                                        <InputGroup label="Account Number *" name="accountNumber" value={WarehouseData.accountNumber} onChange={handleInputChange} disabled={!isEditing} required />
+                                                        <InputGroup label="IFSC Code *" name="ifsc" value={WarehouseData.ifsc} onChange={handleInputChange} disabled={!isEditing} required />
                                                     </div>
                                                 </section>
 
@@ -744,8 +726,8 @@ const WarehouseAccountSettings = () => {
                                                         <h4 className="text-lg font-bold text-gray-900">Tax Information</h4>
                                                     </div>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50/50 p-6 rounded-xl border border-gray-100">
-                                                        <InputGroup label="PAN Card Number" name="panCard" value={WarehouseData.panCard} onChange={handleInputChange} disabled={!isEditing} />
-                                                        <InputGroup label="Tax Number (GST)" name="taxNumber" value={WarehouseData.taxNumber} onChange={handleInputChange} disabled={!isEditing} />
+                                                        <InputGroup label="PAN Card Number *" name="panCard" value={WarehouseData.panCard} onChange={handleInputChange} disabled={!isEditing} required />
+                                                        <InputGroup label="Tax Number (GST) *" name="taxNumber" value={WarehouseData.taxNumber} onChange={handleInputChange} disabled={!isEditing} required />
                                                     </div>
                                                 </section>
                                             </div>
@@ -789,7 +771,7 @@ const WarehouseAccountSettings = () => {
     );
 };
 
-const InputGroup = ({ label, name, value, onChange, disabled, type = "text", placeholder = "", autoComplete }: any) => (
+const InputGroup = ({ label, name, value, onChange, disabled, type = "text", placeholder = "", autoComplete, required }: any) => (
 
     <div className="space-y-1.5">
         <label className="text-sm font-semibold text-gray-700 ml-1">{label}</label>
@@ -801,6 +783,7 @@ const InputGroup = ({ label, name, value, onChange, disabled, type = "text", pla
             disabled={disabled}
             placeholder={placeholder}
             autoComplete={autoComplete}
+            required={required}
             className={`w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all ${disabled ? 'bg-gray-50/50 text-gray-500 cursor-default' : 'bg-white'
 
                 }`}

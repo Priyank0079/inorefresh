@@ -5,7 +5,6 @@ import OrderChart from '../components/OrderChart';
 import AlertCard from '../components/AlertCard';
 import { getWarehouseDashboardStats, DashboardStats, NewOrder } from '../../../services/api/dashboardService';
 import { getWarehouseProfile } from '../../../services/api/warehouseService';
-import { toggleShopStatus } from '../../../services/api/auth/warehouseAuthService';
 
 export default function WarehouseDashboard() {
   const navigate = useNavigate();
@@ -15,10 +14,6 @@ export default function WarehouseDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isShopOpen, setIsShopOpen] = useState(true);
-  const [statusLoading, setStatusLoading] = useState(false);
-  // Bug #142: inline shop-toggle feedback instead of alert()
-  const [shopMessage, setShopMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -36,12 +31,6 @@ export default function WarehouseDashboard() {
           setError(statsResponse.message || 'Failed to fetch dashboard data');
         }
 
-        if (profileResponse.success) {
-          // Use nullish coalescing to default to true if isShopOpen is undefined
-          const shopStatus = profileResponse.data.isShopOpen ?? true;
-          console.log('Initial shop status from profile:', shopStatus, 'Raw value:', profileResponse.data.isShopOpen);
-          setIsShopOpen(shopStatus);
-        }
       } catch (err: any) {
         setError(err.response?.data?.message || 'Error loading dashboard data');
       } finally {
@@ -52,25 +41,6 @@ export default function WarehouseDashboard() {
     fetchDashboardData();
   }, []);
 
-  const handleToggleShop = async () => {
-    try {
-      setStatusLoading(true);
-      const response = await toggleShopStatus();
-
-      if (response.success) {
-        setIsShopOpen(response.data.isShopOpen);
-        setShopMessage({ text: `Shop is now ${response.data.isShopOpen ? 'Open 🟢' : 'Closed 🔴'}`, type: 'success' });
-      } else {
-        setShopMessage({ text: 'Failed to toggle shop status: ' + (response.message || 'Unknown error'), type: 'error' });
-      }
-      setTimeout(() => setShopMessage(null), 3000);
-    } catch (error: any) {
-      setShopMessage({ text: error.response?.data?.message || error.message || 'Error toggling shop status', type: 'error' });
-      setTimeout(() => setShopMessage(null), 3000);
-    } finally {
-      setStatusLoading(false);
-    }
-  };
 
 
   const getStatusBadgeClass = (status: NewOrder['status']) => {
@@ -247,42 +217,11 @@ export default function WarehouseDashboard() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header with Shop Status Toggle */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#12b2a2] p-6 rounded-lg shadow-sm border border-teal-700 gap-4 sm:gap-0 transition-all text-white">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-sm text-teal-50">Overview of your store performance</p>
-        </div>
-        <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start bg-white/10 backdrop-blur-sm p-3 rounded-xl border border-white/20">
-          <span className={`text-sm font-bold tracking-tight ${isShopOpen ? 'text-white' : 'text-red-100'}`}>
-            {isShopOpen ? (
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                Shop is Live
-              </span>
-            ) : 'Shop is Closed'}
-          </span>
-          <button
-            onClick={handleToggleShop}
-            disabled={statusLoading}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#12b2a2] ${isShopOpen ? 'bg-white' : 'bg-white/30'
-              } ${statusLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-            <span
-              className={`${isShopOpen ? 'translate-x-6 bg-[#12b2a2]' : 'translate-x-1 bg-white'
-                } inline-block h-4 w-4 transform rounded-full transition-transform duration-200 ease-in-out shadow-sm`}
-            />
-          </button>
-        </div>
+      {/* Dashboard Header */}
+      <div className="bg-[#12b2a2] p-6 rounded-lg shadow-sm border border-teal-700 text-white">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-sm text-teal-50">Overview of your store performance</p>
       </div>
-      {/* Bug #142: inline shop toggle feedback */}
-      {shopMessage && (
-        <div className={`px-4 py-2.5 rounded-lg text-sm font-medium text-center transition-all ${
-          shopMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
-        }`}>
-          {shopMessage.text}
-        </div>
-      )}
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <DashboardCard icon={categoryIcon} title="Total Category" value={stats.totalCategory} accentColor="#eab308" onClick={() => navigate('/warehouse/category')} />

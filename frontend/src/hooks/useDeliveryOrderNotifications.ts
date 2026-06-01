@@ -5,9 +5,18 @@ import { OrderNotificationData } from '../services/api/delivery/deliveryOrderNot
 import { acceptOrder, rejectOrder } from '../services/api/delivery/deliveryOrderNotificationService';
 import { getSocketBaseURL } from '../services/api/config';
 
+export interface ReturnPickupAlert {
+    returnId: string;
+    orderId: string;
+    orderNumber: string;
+    customerName: string;
+    timestamp: Date;
+}
+
 interface NotificationState {
     currentNotification: OrderNotificationData | null;
     notificationQueue: OrderNotificationData[];
+    returnPickupAlert: ReturnPickupAlert | null;
     isConnected: boolean;
     error: string | null;
 }
@@ -17,6 +26,7 @@ export const useDeliveryOrderNotifications = () => {
     const [state, setState] = useState<NotificationState>({
         currentNotification: null,
         notificationQueue: [],
+        returnPickupAlert: null,
         isConnected: false,
         error: null,
     });
@@ -144,6 +154,12 @@ export const useDeliveryOrderNotifications = () => {
             });
         });
 
+        // ---- Return pickup popup (warehouse approved a return → go collect) ----
+        socket.on('return-pickup-alert', (data: ReturnPickupAlert) => {
+            console.log('↩️ Return pickup alert received:', data.orderNumber);
+            setState(prev => ({ ...prev, returnPickupAlert: data }));
+        });
+
         socket.on('error', (err: any) => {
             console.error('Socket error:', err);
         });
@@ -237,14 +253,20 @@ export const useDeliveryOrderNotifications = () => {
         });
     }, []);
 
+    const clearReturnPickupAlert = useCallback(() => {
+        setState(prev => ({ ...prev, returnPickupAlert: null }));
+    }, []);
+
     return {
         currentNotification: state.currentNotification,
         notificationQueue: state.notificationQueue,
+        returnPickupAlert: state.returnPickupAlert,
         isConnected: state.isConnected,
         error: state.error,
         acceptOrder: handleAccept,
         rejectOrder: handleReject,
         clearNotification: clearCurrentNotification,
+        clearReturnPickupAlert,
         socket: socketRef.current,
     };
 };

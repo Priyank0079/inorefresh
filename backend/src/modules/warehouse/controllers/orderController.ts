@@ -4,7 +4,7 @@ import OrderItem from "../../../models/OrderItem";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import Warehouse from "../../../models/Warehouse";
 import WalletTransaction from "../../../models/WalletTransaction";
-import { notifyDeliveryBoysOfNewOrder } from "../../../services/orderNotificationService";
+import { notifyDeliveryBoysOfNewOrder, findDeliveryBoysNearwarehouseLocations } from "../../../services/orderNotificationService";
 import { Server as SocketIOServer } from "socket.io";
 import { sendOrderStatusNotification, sendNotification } from "../../../services/notificationService";
 
@@ -311,6 +311,24 @@ export const updateOrderStatus = asyncHandler(
             console.log(`🔔 Triggering delivery boy notification for accepted order ${order.orderNumber}`);
             await notifyDeliveryBoysOfNewOrder(io, fullOrder);
             console.log(`✅ Delivery notification complete for order ${order.orderNumber}`);
+
+            // Persisted bell + FCM push for ALL nearby riders (covers those
+            // not currently connected — they see it when they open the app).
+            try {
+              const nearbyIds = await findDeliveryBoysNearwarehouseLocations(fullOrder);
+              for (const item of nearbyIds) {
+                const id = ((item as any).deliveryBoyId || item).toString();
+                await sendNotification(
+                  "Delivery",
+                  id,
+                  "🚚 New Order Available",
+                  `Order #${order.orderNumber} is ready for pickup — ₹${order.total?.toFixed(2)}`,
+                  { type: "Order", priority: "High", link: `/delivery/orders` }
+                );
+              }
+            } catch (bellErr) {
+              console.error("Failed to send delivery bell notifications:", bellErr);
+            }
           } else {
             console.error(`❌ Could not re-fetch order ${order._id} for delivery notification`);
           }

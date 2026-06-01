@@ -413,13 +413,25 @@ export default function AdminManageCustomer() {
                 <label className="block text-xs font-medium text-neutral-700 mb-1">
                   Date Range
                 </label>
-                <input
-                  type="text"
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value)}
-                  placeholder="MM/DD/YYYY - MM/DD/YYYY"
-                  className="w-full px-3 py-2 text-sm border border-neutral-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    aria-label="From date"
+                    value={dateRange.split(' - ')[0] || ''}
+                    max={dateRange.split(' - ')[1] || undefined}
+                    onChange={(e) => setDateRange(`${e.target.value} - ${dateRange.split(' - ')[1] || ''}`)}
+                    className="flex-1 px-3 py-2 text-sm border border-neutral-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  />
+                  <span className="text-neutral-400 text-xs">to</span>
+                  <input
+                    type="date"
+                    aria-label="To date"
+                    value={dateRange.split(' - ')[1] || ''}
+                    min={dateRange.split(' - ')[0] || undefined}
+                    onChange={(e) => setDateRange(`${dateRange.split(' - ')[0] || ''} - ${e.target.value}`)}
+                    className="flex-1 px-3 py-2 text-sm border border-neutral-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-medium text-neutral-700 mb-1">

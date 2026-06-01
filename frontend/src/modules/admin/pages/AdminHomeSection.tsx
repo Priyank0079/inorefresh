@@ -337,9 +337,9 @@ export default function AdminHomeSection() {
                         Home Sections
                     </h1>
                     <div className="text-sm text-blue-500">
-                        <span className="text-blue-500 hover:underline cursor-pointer">
+                        <a href="/admin" className="text-blue-500 hover:underline cursor-pointer">
                             Home
-                        </span>{" "}
+                        </a>{" "}
                         <span className="text-neutral-400">/</span> Home Sections
                     </div>
                 </div>
@@ -379,8 +379,8 @@ export default function AdminHomeSection() {
                                 <input
                                     type="text"
                                     value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    placeholder="e.g., Grocery & Kitchen"
+                                    onChange={(e) => { if (/^[a-zA-Z\s&]*$/.test(e.target.value)) setTitle(e.target.value); }}
+                                    placeholder="e.g., Grocery & Kitchen (alphabets only)"
                                     className="w-full px-3 py-2 border border-neutral-300 rounded bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
                                 />
                             </div>

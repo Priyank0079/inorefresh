@@ -4,7 +4,10 @@ import { useAuth } from '@/context/AuthContext';
 import { getSocketBaseURL } from '@/services/api/config';
 import { useToast } from '@/context/ToastContext';
 
-export const useAdminSocket = (onNewOffer?: (offer: any) => void) => {
+export const useAdminSocket = (
+    onNewOffer?: (offer: any) => void,
+    onAlert?: (alert: { title: string; message: string }) => void
+) => {
     const { user, token, isAuthenticated } = useAuth();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
@@ -43,23 +46,41 @@ export const useAdminSocket = (onNewOffer?: (offer: any) => void) => {
             console.log('👑 Joined admin notification room');
         });
 
-        // New order placed by customer → show toast + badge update
+        // Prefer the prominent popup when a handler is provided; else fall back to a toast.
+        const fireAlert = (title: string, message: string) => {
+            if (onAlert) onAlert({ title, message });
+            else showToast(message, 'info');
+        };
+
+        // New order placed by customer → popup + badge update
         newSocket.on('new-order-admin', (data: any) => {
             console.log('🛒 New order received (admin):', data.orderNumber);
-            showToast(`New Order #${data.orderNumber} from ${data.customerName} — ₹${data.total}`, 'success');
+            fireAlert('🛒 New Order', `New Order #${data.orderNumber} from ${data.customerName} — ₹${data.total}`);
             if (onNewOffer) onNewOffer({ type: 'new_order', ...data });
         });
 
         // Payment confirmed for an online order
         newSocket.on('new-paid-order', (data: any) => {
             console.log('💰 Payment confirmed for order:', data.orderNumber);
-            showToast(`Payment confirmed for Order #${data.orderNumber}`, 'success');
+            fireAlert('💰 Payment Confirmed', `Payment confirmed for Order #${data.orderNumber}`);
         });
 
         newSocket.on('new-port-offer', (data: any) => {
             console.log('🔔 New port offer received:', data);
-            showToast(`New offer from ${data.portName} for ${data.fishName} (₹${data.offeredPrice}/kg)`, 'info');
+            fireAlert('🔔 New Port Offer', `New offer from ${data.portName} for ${data.fishName} (₹${data.offeredPrice}/kg)`);
             if (onNewOffer) onNewOffer(data);
+        });
+
+        // New delivery boy registered — admin must approve/activate
+        newSocket.on('new-delivery-registration', (data: any) => {
+            console.log('🚚 New delivery boy registration:', data.name);
+            fireAlert(data.title || '🚚 New Delivery Boy Registration', data.message || 'A new delivery boy is pending approval.');
+        });
+
+        // Negative-balance refund popup — admin needs to act
+        newSocket.on('return-refund-alert', (data: any) => {
+            console.log('⚠️ Return refund alert (negative balance):', data);
+            fireAlert(data.title || '⚠️ Warehouse Balance Negative', data.message || 'Action required.');
         });
 
         newSocket.on('delivery-update', (data: any) => {

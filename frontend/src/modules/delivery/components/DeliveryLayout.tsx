@@ -6,6 +6,7 @@ import { DeliveryUserProvider, useDeliveryUser } from '../context/DeliveryUserCo
 import { getDeliveryProfile } from '../../../services/api/delivery/deliveryService';
 import { useDeliveryOrderNotifications } from '../../../hooks/useDeliveryOrderNotifications';
 import OrderNotificationCard from './OrderNotificationCard';
+import DeliveryReturnPickupAlert from './DeliveryReturnPickupAlert';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../../../context/AuthContext';
 import { registerFCMToken } from '../../../services/pushNotificationService';
@@ -23,6 +24,8 @@ function DeliveryLayoutContent({ children }: DeliveryLayoutContentProps) {
     currentNotification,
     acceptOrder,
     rejectOrder,
+    returnPickupAlert,
+    clearReturnPickupAlert,
     isConnected,
     error: socketError,
   } = useDeliveryOrderNotifications();
@@ -115,6 +118,12 @@ function DeliveryLayoutContent({ children }: DeliveryLayoutContentProps) {
           />
         )}
       </AnimatePresence>
+
+      {/* Return pickup popup (warehouse approved a return → go collect) */}
+      <DeliveryReturnPickupAlert
+        alert={returnPickupAlert}
+        onClose={clearReturnPickupAlert}
+      />
     </div>
   );
 }

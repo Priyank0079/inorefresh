@@ -673,6 +673,11 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
     if (path === "/admin") {
       return location.pathname === "/admin" || location.pathname === "/admin/";
     }
+    // Exact match for leaf paths — prevents /admin/return also highlighting
+    // when /admin/return/refunds is the current route (and vice-versa).
+    if (path === "/admin/return") {
+      return location.pathname === "/admin/return" || location.pathname === "/admin/return/";
+    }
     return location.pathname.startsWith(path);
   };
 

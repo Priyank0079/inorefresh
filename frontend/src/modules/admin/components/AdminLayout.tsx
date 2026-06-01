@@ -1,8 +1,9 @@
-import { useState, ReactNode } from 'react';
+import { useState, useCallback, ReactNode } from 'react';
 import AdminSidebar from './AdminSidebar';
 import AdminHeader from './AdminHeader';
 import GlobalBackButton from '../../../components/GlobalBackButton';
 import { useAdminSocket } from '../hooks/useAdminSocket';
+import RealtimeAlertPopup, { RealtimeAlert } from '../../../components/RealtimeAlertPopup';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -10,9 +11,12 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default to open on desktop
-  
-  // Initialize admin socket for real-time notifications
-  useAdminSocket();
+  const [alert, setAlert] = useState<RealtimeAlert | null>(null);
+
+  const handleAlert = useCallback((a: { title: string; message: string }) => setAlert(a), []);
+
+  // Initialize admin socket for real-time notifications (popup + sound)
+  useAdminSocket(undefined, handleAlert);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -20,6 +24,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="flex min-h-screen bg-neutral-50">
+      {/* Real-time popup + sound for new orders / payments / port offers */}
+      <RealtimeAlertPopup alert={alert} onClose={() => setAlert(null)} accent="bg-indigo-600" />
+
       {/* Overlay for mobile */}
       {isSidebarOpen && (
         <div

@@ -6,6 +6,8 @@ import {
 } from "../../../services/otpService";
 import { generateToken } from "../../../services/jwtService";
 import { asyncHandler } from "../../../utils/asyncHandler";
+import { sendNotification } from "../../../services/notificationService";
+import Admin from "../../../models/Admin";
 // import { uploadDocument } from "../../../services/uploadService"; // File does not exist
 
 /**
@@ -190,10 +192,44 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   // Generate token (Optional: usually registration doesn't login immediately if approval needed, but for seamless UX we can)
   // However, FE Flow: Register -> OTP -> Login. So we return success, then FE calls sendSmsOtp.
 
+  // Notify all admins: new delivery boy pending approval
+  // Use socket emit (popup) + persisted bell for each admin.
+  try {
+    const { getIO } = await import("../../../socket/socketService");
+    let io: any = null;
+    try { io = getIO(); } catch { /* socket not yet running in tests */ }
+
+    const title = "🚚 New Delivery Boy Registration";
+    const message = `${name} (${mobile}) has registered and is awaiting approval.`;
+    const admins = await Admin.find({}).select("_id").lean();
+
+    for (const admin of admins) {
+      await sendNotification("Admin", admin._id.toString(), title, message, {
+        type: "System",
+        priority: "High",
+        link: "/admin/delivery-boy/manage",
+      });
+    }
+
+    // Also emit popup event directly to admin-notifications room
+    if (io) {
+      io.to("admin-notifications").emit("new-delivery-registration", {
+        title,
+        message,
+        name,
+        mobile,
+        link: "/admin/delivery-boy/manage",
+        timestamp: new Date(),
+      });
+    }
+  } catch (notifyErr) {
+    // Non-fatal: registration still succeeds even if notification fails
+    console.error("Failed to notify admin of delivery registration:", notifyErr);
+  }
+
   return res.status(201).json({
     success: true,
     message: "Delivery partner registered successfully.",
-    // No token returned here, flow continues to OTP
   });
 });
 

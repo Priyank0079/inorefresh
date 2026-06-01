@@ -48,17 +48,20 @@ function validateWarehouseOtp(
  */
 async function sendRawSms(mobile: string, message: string): Promise<void> {
   const cleanMobile = '91' + mobile.replace(/\D/g, '');
-  await axios.get('http://cloud.smsindiahub.in/vendorsms/pushsms.aspx', {
-    params: {
-      APIKey: process.env.SMS_INDIA_HUB_API_KEY,
-      msisdn: cleanMobile,
-      sid: process.env.SMS_INDIA_HUB_SENDER_ID,
-      msg: message,
-      fl: '0',
-      gwid: '2',
-    },
-    timeout: 30000,
-  });
+  const params: Record<string, string> = {
+    APIKey: process.env.SMS_INDIA_HUB_API_KEY || '',
+    msisdn: cleanMobile,
+    sid: process.env.SMS_INDIA_HUB_SENDER_ID || '',
+    msg: message,
+    fl: '0',
+    gwid: '2',
+  };
+  // Only include entity/template IDs when configured — missing these causes
+  // silent failures on the SMSIndiahub API for DLT-mandated SMS.
+  if (process.env.SMS_INDIA_HUB_ENTITY_ID) params.pe_id = process.env.SMS_INDIA_HUB_ENTITY_ID;
+  if (process.env.SMS_INDIA_HUB_DLT_TEMPLATE_ID) params.temp_id = process.env.SMS_INDIA_HUB_DLT_TEMPLATE_ID;
+  const res = await axios.get('http://cloud.smsindiahub.in/vendorsms/pushsms.aspx', { params, timeout: 30000 });
+  console.log('[OTP SMS] response:', String(res.data).slice(0, 100));
 }
 
 /**
@@ -279,44 +282,51 @@ export async function executeReturnRefund(returnId: string): Promise<RefundResul
  */
 async function notifyRefundParties(r: RefundResult): Promise<void> {
   const orderNumber = (r.order as any)?.orderNumber;
-  // Only notify the warehouse about a deduction when it was actually debited
-  // (COD-funded refunds). Platform-funded refunds don't touch the warehouse.
+  let io: any;
+  try { io = getIO(); } catch { io = null; }
+
+  // 1) Warehouse — deducted from balance (COD only). Popup if negative balance.
   if (r.warehouseId && r.fundedBy === 'WAREHOUSE') {
     try {
       await sendNotification(
         'Warehouse',
         r.warehouseId,
         r.isNegativeBalance ? '⚠️ Return Refund — Balance Negative' : 'Return Refund Deducted 💸',
-        `₹${r.refundAmount.toFixed(2)} deducted from your wallet as refund for Order #${orderNumber}${
-          r.isNegativeBalance
-            ? `. ⚠️ Your balance is now negative (₹${r.warehouseNewBalance.toFixed(2)}). Please top up.`
-            : '.'
+        `₹${r.refundAmount.toFixed(2)} deducted from your wallet for Order #${orderNumber}${
+          r.isNegativeBalance ? `. ⚠️ Balance is now negative (₹${r.warehouseNewBalance.toFixed(2)}). Please top up.` : '.'
         }`,
         { type: 'Order', priority: r.isNegativeBalance ? 'Urgent' : 'High' }
       );
     } catch (e) { console.error('[notify] Warehouse:', e); }
   }
+
+  // 2) Customer — refund confirmed. Popup via socket so NotificationContext shows it prominently.
   if (r.customerId) {
     try {
-      await sendNotification(
+      const notif = await sendNotification(
         'Customer',
         r.customerId,
         'Refund Credited! 💰',
-        `₹${r.refundAmount.toFixed(2)} has been added to your Inor Wallet for the return on Order #${orderNumber}. You can use it on your next order.`,
-        { type: 'Order', priority: 'High' }
+        `₹${r.refundAmount.toFixed(2)} added to your Inor Wallet for return on Order #${orderNumber}.`,
+        { type: 'Payment', priority: 'High' }
       );
+      // Emit directly to the customer's room so the toast appears immediately
+      if (io) io.to(`customer-${r.customerId}`).emit('new-notification', notif);
     } catch (e) { console.error('[notify] Customer:', e); }
   }
+
+  // 3) Admin — single socket broadcast (no DB loop). Popup only when negative balance.
   try {
-    const admins = await Admin.find({});
-    for (const admin of admins) {
-      await sendNotification(
-        'Admin',
-        admin._id.toString(),
-        r.isNegativeBalance ? '⚠️ Refund: Warehouse Negative Balance' : 'Return Refunded ✅',
-        `₹${r.refundAmount.toFixed(2)} refunded for Order #${orderNumber}.${r.isNegativeBalance ? ' Warehouse balance is now negative — action required.' : ''}`,
-        { type: 'Order', priority: r.isNegativeBalance ? 'Urgent' : 'High' }
-      );
+    if (io) {
+      io.to('admin-notifications').emit(r.isNegativeBalance ? 'return-refund-alert' : 'new-notification', {
+        title: r.isNegativeBalance ? '⚠️ Refund: Warehouse Negative Balance' : 'Return Refunded ✅',
+        message: `₹${r.refundAmount.toFixed(2)} refunded for Order #${orderNumber}.${r.isNegativeBalance ? ' Warehouse balance negative — action required.' : ''}`,
+        type: 'Order',
+        priority: r.isNegativeBalance ? 'Urgent' : 'Medium',
+        recipientType: 'Admin',
+        isRead: false,
+        createdAt: new Date(),
+      });
     }
   } catch (e) { console.error('[notify] Admins:', e); }
 }
@@ -428,20 +438,21 @@ export const submitReturnRequest = asyncHandler(async (req: Request, res: Respon
       console.error("[Return Request] socket emit failed:", e);
     }
 
-    // Notify all Admins
+    // Admin: silent bell only — admin does NOT need a popup for every return submit.
+    // They get a popup only on escalation or failed refund (see those paths below).
     try {
-      const admins = await Admin.find({});
-      for (const admin of admins) {
-        await sendNotification(
-          "Admin",
-          admin._id.toString(),
-          "New Return Request",
-          `A return request has been submitted for Order #${order.orderNumber}.`,
-          { type: "Order", priority: "High" }
-        );
-      }
+      const io = getIO();
+      io.to('admin-notifications').emit('new-notification', {
+        title: 'New Return Request',
+        message: `Return submitted for Order #${order.orderNumber}.`,
+        type: 'Order',
+        priority: 'Medium',
+        recipientType: 'Admin',
+        isRead: false,
+        createdAt: new Date(),
+      });
     } catch (err) {
-      console.error("Failed to notify admins of return request:", err);
+      console.error("Failed to notify admin of return request:", err);
     }
   }
 
@@ -496,6 +507,23 @@ export const reviewReturnRequest = asyncHandler(async (req: Request, res: Respon
       `Return request for Order #${order.orderNumber} has been ${action}d.`,
       { type: "Order", priority: "High" }
     );
+
+    // On approval, fire an instant popup (with sound) so the rider knows to
+    // go collect the returned goods from the customer right away.
+    if (action === 'Approve') {
+      try {
+        const io = getIO();
+        io.to(`delivery-${returnReq.deliveryBoy.toString()}`).emit('return-pickup-alert', {
+          returnId: (returnReq._id as any).toString(),
+          orderId: order._id?.toString(),
+          orderNumber: order.orderNumber,
+          customerName: order.customerName || 'Customer',
+          timestamp: new Date(),
+        });
+      } catch (e) {
+        console.error('[Return Pickup] socket emit failed:', e);
+      }
+    }
   }
 
   return res.status(200).json({ success: true, data: returnReq });

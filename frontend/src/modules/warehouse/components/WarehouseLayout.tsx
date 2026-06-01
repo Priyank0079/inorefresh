@@ -15,7 +15,10 @@ interface WarehouseLayoutProps {
 }
 
 export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Default open on desktop (lg+), closed on mobile
+  const [isSidebarOpen, setIsSidebarOpen] = useState(
+    typeof window !== 'undefined' && window.innerWidth >= 1024
+  );
   const [activeNotification, setActiveNotification] = useState<WarehouseNotification | null>(null);
   const [activeOtpAlert, setActiveOtpAlert] = useState<ReturnOtpAlert | null>(null);
   const [activeReturnRequest, setActiveReturnRequest] = useState<ReturnRequestAlert | null>(null);
@@ -83,7 +86,7 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
         onClose={() => setActiveReturnRequest(null)}
       />
 
-      {/* Overlay for mobile */}
+      {/* Overlay for mobile only (sidebar open + small screen) */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
@@ -91,17 +94,17 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
         />
       )}
 
-      {/* Sidebar - Fixed */}
+      {/* Sidebar — controlled entirely by isSidebarOpen on all screen sizes */}
       <div
         className={`fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <WarehouseSidebar onClose={() => setIsSidebarOpen(false)} />
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 min-w-0 flex flex-col h-[100dvh] transition-all duration-300 w-full lg:ml-64 relative">
+      {/* Main Content — shifts right when sidebar is open on desktop */}
+      <div className={`flex-1 min-w-0 flex flex-col h-[100dvh] transition-all duration-300 w-full relative ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
         {/* Header */}
         <WarehouseHeader onMenuClick={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 

@@ -167,7 +167,29 @@ export default function AdminReturnRequest() {
   };
 
   const handleExport = () => {
-    // Export functionality placeholder
+    const rows = displayedRequests;
+    if (!rows.length) return;
+    const headers = ['Order ID', 'Customer', 'Product', 'Variant', 'Qty', 'Price', 'Reason', 'Status', 'Requested At'];
+    const lines = [
+      headers.join(','),
+      ...rows.map((r) => [
+        `"${r.orderId}"`,
+        `"${r.userName}"`,
+        `"${r.productName}"`,
+        `"${r.variant || ''}"`,
+        r.quantity,
+        r.price,
+        `"${r.reason.replace(/"/g, "'")}"`,
+        `"${r.status}"`,
+        `"${new Date(r.requestedAt).toLocaleDateString()}"`,
+      ].join(','))
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `return_requests_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   };
 
   const handleClearDate = () => {
@@ -250,11 +272,11 @@ export default function AdminReturnRequest() {
                       <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
                     <input
-                      type="text"
+                      type="date"
                       value={fromDate}
+                      max={toDate || undefined}
                       onChange={(e) => setFromDate(e.target.value)}
-                      placeholder="MM/DD/YYYY"
-                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2] min-w-[140px]"
+                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[140px]"
                     />
                   </div>
                   <span className="text-neutral-500">-</span>
@@ -281,11 +303,11 @@ export default function AdminReturnRequest() {
                       <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
                     <input
-                      type="text"
+                      type="date"
                       value={toDate}
+                      min={fromDate || undefined}
                       onChange={(e) => setToDate(e.target.value)}
-                      placeholder="MM/DD/YYYY"
-                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2] min-w-[140px]"
+                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[140px]"
                     />
                   </div>
                   <button

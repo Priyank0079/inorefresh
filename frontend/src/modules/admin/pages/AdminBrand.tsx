@@ -272,8 +272,8 @@ export default function AdminBrand() {
               <input
                 type="text"
                 value={brandName}
-                onChange={(e) => setBrandName(e.target.value)}
-                placeholder="Enter Brand Name"
+                onChange={(e) => { if (/^[a-zA-Z\s]*$/.test(e.target.value)) setBrandName(e.target.value); }}
+                placeholder="Enter Brand Name (alphabets only)"
                 className="w-full px-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
                 disabled={uploading}
               />

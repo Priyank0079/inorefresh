@@ -105,7 +105,7 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
             <img
               src="/assets/Inor fresh.png"
               alt="Inor Fresh"
-              className="h-8 sm:h-10 w-auto object-contain cursor-pointer"
+              className="h-10 sm:h-12 w-auto object-contain cursor-pointer"
             />
           </button>
         </div>
@@ -114,23 +114,19 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
         <div className="hidden md:flex items-center gap-4 lg:gap-6">
           <button
             onClick={() => navigate('/admin/orders')}
-            className={`relative px-3 lg:px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${isActive('/admin/orders') ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900'
-              }`}
+            className={`px-3 lg:px-4 py-2 text-xs sm:text-sm font-semibold transition-all border-b-2 ${isActive('/admin/orders') ? 'text-[#12b2a2] border-[#12b2a2]' : 'text-neutral-600 border-transparent hover:text-neutral-900 hover:border-neutral-300'}`}
           >
             Orders
-
           </button>
           <button
             onClick={() => navigate('/admin/customers')}
-            className={`px-3 lg:px-4 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${isActive('/admin/customers') ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900'
-              }`}
+            className={`px-3 lg:px-4 py-2 text-xs sm:text-sm font-semibold transition-all whitespace-nowrap border-b-2 ${isActive('/admin/customers') ? 'text-[#12b2a2] border-[#12b2a2]' : 'text-neutral-600 border-transparent hover:text-neutral-900 hover:border-neutral-300'}`}
           >
             Manage Customer
           </button>
           <button
             onClick={() => navigate('/admin/collect-cash')}
-            className={`px-3 lg:px-4 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${isActive('/admin/collect-cash') ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900'
-              }`}
+            className={`px-3 lg:px-4 py-2 text-xs sm:text-sm font-semibold transition-all whitespace-nowrap border-b-2 ${isActive('/admin/collect-cash') ? 'text-[#12b2a2] border-[#12b2a2]' : 'text-neutral-600 border-transparent hover:text-neutral-900 hover:border-neutral-300'}`}
           >
             Collect Cash
           </button>
