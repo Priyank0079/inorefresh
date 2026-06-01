@@ -316,7 +316,7 @@ export default function RetailerReturnSession() {
                       {uploadingIndex === index ? "Uploading..." : "Add Photos"}
                       <input 
                         type="file" 
-                        accept="image/*" 
+                        accept="image/*" capture="environment" 
                         className="hidden" 
                         disabled={uploadingIndex !== null}
                         onChange={(e) => handleFileUpload(index, e)} 

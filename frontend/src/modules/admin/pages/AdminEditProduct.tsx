@@ -480,7 +480,7 @@ export default function AdminEditProduct() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A1.5 1.5 0 004.5 20.25h15a1.5 1.5 0 001.5-1.5V16.5m-12-9l3-3m0 0l3 3m-3-3v12.25" />
                   </svg>
                   Choose Image
-                  <input type="file" accept="image/*" className="hidden" onChange={handleMainImageChange} />
+                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleMainImageChange} />
                 </label>
                 <p className="text-xs text-neutral-400 mt-2">
                   JPG, PNG, or WebP. Max 5MB. 

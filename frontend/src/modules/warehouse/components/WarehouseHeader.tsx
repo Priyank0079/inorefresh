@@ -166,7 +166,7 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
             <img
               src="/assets/Inor fresh.png"
               alt="Inor Fresh"
-              className="h-8 sm:h-10 w-auto object-contain cursor-pointer"
+              className="h-10 sm:h-12 w-auto object-contain cursor-pointer"
             />
           </button>
         </div>

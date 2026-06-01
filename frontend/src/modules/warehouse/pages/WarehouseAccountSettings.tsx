@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getWarehouseProfile, updateWarehouseProfile } from '../../../services/api/warehouseService';
+import { uploadImage } from '../../../services/api/uploadService';
 import { useAuth } from '../../../context/AuthContext';
 import { getCategories, Category } from '../../../services/api/categoryService';
 import GoogleMapsAutocomplete from '../../../components/GoogleMapsAutocomplete';
@@ -45,8 +46,10 @@ const WarehouseAccountSettings = () => {
         storeBanner: '',
         storeDescription: '',
         commission: 0,
-        status: ''
+        status: '',
+        password: ''
     });
+    const [uploadingField, setUploadingField] = useState<string | null>(null);
 
     useEffect(() => {
         fetchProfile();
@@ -73,6 +76,9 @@ const WarehouseAccountSettings = () => {
                 setWarehouseData(prev => ({
                     ...prev,
                     ...data,
+                    // Schema field is `warehouseName`; the form binds to `WarehouseName`.
+                    WarehouseName: data.warehouseName || data.WarehouseName || '',
+                    password: '',
                     latitude: data.latitude || (locationCoords[1]?.toString() || ''),
                     longitude: data.longitude || (locationCoords[0]?.toString() || ''),
                     searchLocation: data.searchLocation || data.address || '',
@@ -95,13 +101,66 @@ const WarehouseAccountSettings = () => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         let sanitized = value;
-        if (name === 'mobile') {
-            sanitized = value.replace(/\D/g, '').slice(0, 10);
+        switch (name) {
+            case 'mobile':
+                sanitized = value.replace(/\D/g, '').slice(0, 10);
+                break;
+            // Names: letters and spaces only
+            case 'WarehouseName':
+            case 'accountName':
+            case 'bankName':
+                sanitized = value.replace(/[^a-zA-Z\s]/g, '');
+                break;
+            // Account number: digits only
+            case 'accountNumber':
+                sanitized = value.replace(/\D/g, '').slice(0, 18);
+                break;
+            // IFSC: 11-char uppercase alphanumeric
+            case 'ifsc':
+                sanitized = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 11);
+                break;
+            // PAN: 10-char uppercase alphanumeric (e.g. ABCDE1234F)
+            case 'panCard':
+                sanitized = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+                break;
+            // GST tax number: 15-char uppercase alphanumeric
+            case 'taxNumber':
+                sanitized = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+                break;
         }
         setWarehouseData(prev => ({
             ...prev,
             [name]: sanitized
         }));
+    };
+
+    // Upload a profile / logo / banner image and store its URL in the form state.
+    const handlePhotoUpload = async (
+        field: 'profile' | 'logo' | 'storeBanner',
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const file = e.target.files?.[0];
+        e.target.value = ''; // allow re-selecting the same file
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            setError('Please select a valid image file');
+            return;
+        }
+        try {
+            setUploadingField(field);
+            setError('');
+            const res = await uploadImage(file);
+            const url = (res as any)?.url || (res as any)?.data?.url || (res as any)?.secure_url;
+            if (url) {
+                setWarehouseData(prev => ({ ...prev, [field]: url }));
+            } else {
+                setError('Image upload failed. Please try again.');
+            }
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Image upload failed');
+        } finally {
+            setUploadingField(null);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -139,14 +198,44 @@ const WarehouseAccountSettings = () => {
                 return;
             }
 
-            const updateData = {
+            // Password (optional change) — must be at least 6 characters
+            if (WarehouseData.password && WarehouseData.password.length < 6) {
+                setError('Password must be at least 6 characters');
+                setSaveLoading(false);
+                return;
+            }
+
+            // Bank / tax format checks (only when a value is entered)
+            if (WarehouseData.ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(WarehouseData.ifsc)) {
+                setError('Invalid IFSC code (format: ABCD0123456)');
+                setSaveLoading(false);
+                return;
+            }
+            if (WarehouseData.panCard && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(WarehouseData.panCard)) {
+                setError('Invalid PAN number (format: ABCDE1234F)');
+                setSaveLoading(false);
+                return;
+            }
+            if (WarehouseData.taxNumber && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/.test(WarehouseData.taxNumber)) {
+                setError('Invalid GST number format');
+                setSaveLoading(false);
+                return;
+            }
+
+            const updateData: any = {
                 ...WarehouseData,
+                // Schema field is lowercase `warehouseName`.
+                warehouseName: WarehouseData.WarehouseName,
                 serviceRadiusKm: WarehouseData.serviceAreaType === 'radius' ? radius : undefined,
                 serviceAreaGeo: WarehouseData.serviceAreaType === 'polygon' ? {
                     type: 'Polygon',
                     coordinates: [WarehouseData.serviceAreaCoordinates]
                 } : null
             };
+            // Only send password when the user actually entered a new one.
+            if (!WarehouseData.password) {
+                delete updateData.password;
+            }
 
             const response = await updateWarehouseProfile(updateData);
             if (response.success) {
@@ -156,6 +245,8 @@ const WarehouseAccountSettings = () => {
                 setWarehouseData(prev => ({
                     ...prev,
                     ...data,
+                    WarehouseName: data.warehouseName || data.WarehouseName || '',
+                    password: '',
                     latitude: data.latitude || (locationCoords[1]?.toString() || ''),
                     longitude: data.longitude || (locationCoords[0]?.toString() || ''),
                     searchLocation: data.searchLocation || data.address || '',
@@ -344,12 +435,13 @@ const WarehouseAccountSettings = () => {
                                                             className="relative w-32 h-32 rounded-full object-cover border-4 border-white shadow-md bg-white"
                                                         />
                                                         {isEditing && (
-                                                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm z-10">
+                                                            <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm z-10">
+                                                                <input type="file" accept="image/*" capture="environment" className="hidden" disabled={uploadingField !== null} onChange={(e) => handlePhotoUpload('profile', e)} />
                                                                 <span className="text-white text-xs font-bold uppercase tracking-wider flex flex-col items-center gap-1">
                                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                                                    Change
+                                                                    {uploadingField === 'profile' ? 'Uploading…' : 'Change'}
                                                                 </span>
-                                                            </div>
+                                                            </label>
                                                         )}
                                                     </div>
                                                     <div className="text-center sm:text-left">
@@ -369,6 +461,9 @@ const WarehouseAccountSettings = () => {
                                                         <div className="relative">
                                                             <input
                                                                 type="password"
+                                                                name="password"
+                                                                value={WarehouseData.password}
+                                                                onChange={handleInputChange}
                                                                 autoComplete="new-password"
                                                                 placeholder="••••••••"
                                                                 disabled={!isEditing}
@@ -393,9 +488,10 @@ const WarehouseAccountSettings = () => {
                                                             />
                                                         </div>
                                                         {isEditing && (
-                                                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm">
-                                                                <span className="text-white text-xs font-bold">UPLOAD</span>
-                                                            </div>
+                                                            <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm">
+                                                                <input type="file" accept="image/*" capture="environment" className="hidden" disabled={uploadingField !== null} onChange={(e) => handlePhotoUpload('logo', e)} />
+                                                                <span className="text-white text-xs font-bold">{uploadingField === 'logo' ? 'UPLOADING…' : 'UPLOAD'}</span>
+                                                            </label>
                                                         )}
                                                     </div>
                                                     <div>
@@ -592,11 +688,14 @@ const WarehouseAccountSettings = () => {
                                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                                         />
                                                         {isEditing && (
-                                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm">
+                                                            <label className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm">
+                                                                <input type="file" accept="image/*" capture="environment" className="hidden" disabled={uploadingField !== null} onChange={(e) => handlePhotoUpload('storeBanner', e)} />
                                                                 <div className="bg-white/20 p-4 rounded-full border border-white/30 backdrop-blur-md">
-                                                                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                                                    {uploadingField === 'storeBanner'
+                                                                        ? <span className="text-white text-xs font-bold">Uploading…</span>
+                                                                        : <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>}
                                                                 </div>
-                                                            </div>
+                                                            </label>
                                                         )}
                                                     </div>
                                                     <p className="text-xs text-gray-500 ml-1">Recommended size: 1200x400px. Supports JPG, PNG.</p>

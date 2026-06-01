@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../../../context/AuthContext';
-import { getSocketBaseURL } from '../../../services/api/config';
+import api, { getSocketBaseURL } from '../../../services/api/config';
 import { useToast } from '../../../context/ToastContext';
 
 export interface WarehouseNotification {
@@ -41,14 +41,26 @@ export interface ReturnOtpAlert {
     timestamp: Date;
 }
 
+export interface ReturnRequestAlert {
+    orderId: string;
+    orderNumber: string;
+    customerName: string;
+    itemCount: number;
+    timestamp: Date;
+}
+
 export const useWarehouseSocket = (
     onNotificationReceived?: (notification: WarehouseNotification) => void,
-    onReturnOtp?: (alert: ReturnOtpAlert) => void
+    onReturnOtp?: (alert: ReturnOtpAlert) => void,
+    onReturnRequest?: (alert: ReturnRequestAlert) => void
 ) => {
     const { user, token, isAuthenticated } = useAuth();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const { showToast } = useToast();
+    // Orders we've already popped a return-request alert for — prevents the
+    // reconnect catch-up from re-showing a popup the warehouse already saw.
+    const shownReturnOrdersRef = useRef<Set<string>>(new Set());
 
     useEffect(() => {
         if (!isAuthenticated || !token || !user || user.userType !== 'Warehouse') {
@@ -85,6 +97,31 @@ export const useWarehouseSocket = (
 
             // Always re-join room on (re)connect so we never miss notifications
             newSocket.emit('join-warehouse-room', warehouseId);
+
+            // Catch-up: a popup emitted while we were briefly disconnected is lost
+            // (socket events aren't queued). On every (re)connect, pull returns
+            // still awaiting approval and surface a popup for any we haven't shown.
+            if (onReturnRequest) {
+                api.get('/returns?status=All Status')
+                    .then((res: any) => {
+                        const list: any[] = res?.data?.data || [];
+                        const pending = list.filter((r) =>
+                            (r.status === 'REQUESTED' || r.status === 'Pending') &&
+                            r.orderId && !shownReturnOrdersRef.current.has(String(r.orderId))
+                        );
+                        if (pending.length === 0) return;
+                        pending.forEach((p) => shownReturnOrdersRef.current.add(String(p.orderId)));
+                        const newest = pending[0];
+                        onReturnRequest({
+                            orderId: String(newest.orderId || ''),
+                            orderNumber: String(newest.orderNumber || newest.orderId || ''),
+                            customerName: newest.customerName || newest.shopName || 'Customer',
+                            itemCount: pending.length,
+                            timestamp: new Date(),
+                        });
+                    })
+                    .catch(() => { /* non-fatal — bell + push still cover it */ });
+            }
         });
 
         newSocket.on('joined-warehouse-room', (data) => {
@@ -113,6 +150,18 @@ export const useWarehouseSocket = (
             });
             if (onReturnOtp) {
                 onReturnOtp(alert);
+            }
+        });
+
+        newSocket.on('return-request-alert', (alert: ReturnRequestAlert) => {
+            console.log('↩️ New return request received:', {
+                orderNumber: alert.orderNumber,
+                itemCount: alert.itemCount,
+            });
+            // Mark as shown so the reconnect catch-up won't re-popup this order.
+            if (alert.orderId) shownReturnOrdersRef.current.add(String(alert.orderId));
+            if (onReturnRequest) {
+                onReturnRequest(alert);
             }
         });
 

@@ -362,7 +362,7 @@ export default function AdminSubCategory() {
                 )}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*" capture="environment"
                   onChange={handleFileChange}
                   className="hidden"
                   disabled={uploading}

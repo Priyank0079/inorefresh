@@ -474,7 +474,7 @@ export default function CategoryFormModal({
               )}
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*" capture="environment"
                 onChange={handleFileChange}
                 className="hidden"
                 disabled={submitting || uploading}

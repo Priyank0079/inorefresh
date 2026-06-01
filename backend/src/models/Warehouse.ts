@@ -25,6 +25,24 @@ export interface IWarehouse extends Document {
     commissionRate?: number;
     fcmTokens?: string[];
     fcmTokenMobile?: string[];
+    // Store details / branding
+    storeName?: string;
+    category?: string;
+    city?: string;
+    storeDescription?: string;
+    profile?: string;
+    logo?: string;
+    storeBanner?: string;
+    // Bank details
+    accountName?: string;
+    bankName?: string;
+    branch?: string;
+    accountNumber?: string;
+    ifsc?: string;
+    // Tax details
+    panCard?: string;
+    taxName?: string;
+    taxNumber?: string;
     createdAt: Date;
     updatedAt: Date;
     comparePassword(candidatePassword: string): Promise<boolean>;
@@ -121,6 +139,24 @@ const WarehouseSchema = new Schema<IWarehouse>(
             type: [String],
             default: [],
         },
+        // Store details / branding
+        storeName: { type: String, trim: true },
+        category: { type: String, trim: true },
+        city: { type: String, trim: true },
+        storeDescription: { type: String, trim: true },
+        profile: { type: String, trim: true },
+        logo: { type: String, trim: true },
+        storeBanner: { type: String, trim: true },
+        // Bank details
+        accountName: { type: String, trim: true },
+        bankName: { type: String, trim: true },
+        branch: { type: String, trim: true },
+        accountNumber: { type: String, trim: true },
+        ifsc: { type: String, trim: true, uppercase: true },
+        // Tax details
+        panCard: { type: String, trim: true, uppercase: true },
+        taxName: { type: String, trim: true },
+        taxNumber: { type: String, trim: true, uppercase: true },
     },
     {
         timestamps: true,

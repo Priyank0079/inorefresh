@@ -106,14 +106,23 @@ export const updateProfile = asyncHandler(
     const updates = req.body;
 
     // Prevent updating sensitive fields directly
-    const restrictedFields = [
-      "password",
-      "mobile",
-      "email",
-      "status",
-      "balance",
-    ];
+    const restrictedFields = ["mobile", "email", "status", "balance"];
     restrictedFields.forEach((field) => delete updates[field]);
+
+    // Password change: only when a non-empty value is provided. Must be >= 6
+    // chars and is hashed here (findByIdAndUpdate skips the pre-save hash hook).
+    if (typeof updates.password === "string" && updates.password.trim() !== "") {
+      if (updates.password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 6 characters",
+        });
+      }
+      const bcrypt = (await import("bcrypt")).default;
+      updates.password = await bcrypt.hash(updates.password, 10);
+    } else {
+      delete updates.password;
+    }
 
     // Handle location update (convert lat/lng to GeoJSON)
     if (updates.latitude && updates.longitude) {

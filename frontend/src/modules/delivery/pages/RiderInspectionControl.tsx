@@ -414,7 +414,7 @@ export default function RiderInspectionControl() {
                             {uploadingReturnId === ret._id ? "Uploading Photo..." : "Add Proof Photos"}
                             <input
                               type="file"
-                              accept="image/*"
+                              accept="image/*" capture="environment"
                               className="hidden"
                               disabled={uploadingReturnId !== null}
                               onChange={(e) => handleRiderFileUpload(ret._id, e)}

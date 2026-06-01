@@ -197,15 +197,30 @@ export default function WarehouseOrders() {
                       strokeLinejoin="round"
                     />
                   </svg>
+                  {/* Native date inputs prevent invalid characters; the filter
+                      only applies once BOTH dates are chosen. */}
                   <input
-                    type="text"
-                    value={dateRange}
+                    type="date"
+                    aria-label="From date"
+                    value={dateRange.split(' - ')[0] || ''}
                     onChange={(e) => {
-                      setDateRange(e.target.value);
+                      const to = dateRange.split(' - ')[1] || '';
+                      setDateRange(`${e.target.value} - ${to}`);
                       setCurrentPage(1);
                     }}
-                    className="flex-1 sm:w-48 text-xs sm:text-sm text-neutral-600 bg-transparent focus:outline-none placeholder:text-neutral-400"
-                    placeholder="MM/DD/YYYY - MM/DD/YYYY"
+                    className="text-xs sm:text-sm text-neutral-600 bg-transparent focus:outline-none"
+                  />
+                  <span className="px-1 text-xs text-neutral-400">to</span>
+                  <input
+                    type="date"
+                    aria-label="To date"
+                    value={dateRange.split(' - ')[1] || ''}
+                    onChange={(e) => {
+                      const from = dateRange.split(' - ')[0] || '';
+                      setDateRange(`${from} - ${e.target.value}`);
+                      setCurrentPage(1);
+                    }}
+                    className="text-xs sm:text-sm text-neutral-600 bg-transparent focus:outline-none"
                   />
                   {dateRange && (
                     <button

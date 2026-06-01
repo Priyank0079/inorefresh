@@ -399,6 +399,7 @@ export const submitReturnRequest = asyncHandler(async (req: Request, res: Respon
 
   // Notify Warehouse
   if (returnRequests.length > 0) {
+    // Persisted bell notification + push
     await sendNotification(
       "Warehouse",
       returnRequests[0].warehouse?.toString() || "",
@@ -406,6 +407,26 @@ export const submitReturnRequest = asyncHandler(async (req: Request, res: Respon
       `A return request has been submitted for Order #${order.orderNumber}.`,
       { type: "Order", priority: "High" }
     );
+
+    // Immediate real-time popup (with sound) at every involved warehouse so the
+    // manager can approve the return right away — emitted per unique warehouse.
+    try {
+      const io = getIO();
+      const warehouseIds = Array.from(
+        new Set(returnRequests.map((r) => r.warehouse?.toString()).filter(Boolean))
+      );
+      for (const whId of warehouseIds) {
+        io.to(`warehouse-${whId}`).emit("return-request-alert", {
+          orderId: order._id?.toString(),
+          orderNumber: order.orderNumber,
+          customerName: (order as any).customerName || "Customer",
+          itemCount: returnRequests.filter((r) => r.warehouse?.toString() === whId).length,
+          timestamp: new Date(),
+        });
+      }
+    } catch (e) {
+      console.error("[Return Request] socket emit failed:", e);
+    }
 
     // Notify all Admins
     try {

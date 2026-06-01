@@ -971,6 +971,43 @@ export const cancelOrder = async (req: Request, res: Response) => {
             }
         }
 
+        // ── Refund whatever the customer already paid, straight to their wallet ──
+        // Paid order (online/wallet) → refund the full total. COD/Pending that
+        // only used wallet → refund just the wallet portion (cash was never taken).
+        const refundAmount = order.paymentStatus === 'Paid'
+            ? (order.total || 0)
+            : (order.walletAmountUsed || 0);
+
+        if (refundAmount > 0) {
+            // Resolve the buyer on whichever model they belong to.
+            let buyer: any = await Customer.findById(order.customer).session(session);
+            let buyerType: 'CUSTOMER' | 'horeca' | 'retailer' = 'CUSTOMER';
+            if (!buyer) { buyer = await HorecaUser.findById(order.customer).session(session); if (buyer) buyerType = 'horeca'; }
+            if (!buyer) { buyer = await RetailerUser.findById(order.customer).session(session); if (buyer) buyerType = 'retailer'; }
+
+            if (buyer) {
+                const opening = buyer.walletAmount || 0;
+                buyer.walletAmount = opening + refundAmount;
+                if (session) { await buyer.save({ session }); } else { await buyer.save(); }
+
+                const refundTxn = new WalletTransaction({
+                    userId: buyer._id,
+                    userType: buyerType,
+                    amount: refundAmount,
+                    type: 'Credit',
+                    description: `Refund for cancelled order #${order.orderNumber}`,
+                    reference: `CANCEL-REF-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                    relatedOrder: order._id,
+                    openingBalance: opening,
+                    closingBalance: opening + refundAmount,
+                    status: 'Completed',
+                });
+                if (session) { await refundTxn.save({ session }); } else { await refundTxn.save(); }
+
+                order.paymentStatus = 'Refunded';
+            }
+        }
+
         order.status = 'Cancelled';
         order.cancellationReason = reason;
         order.cancelledAt = new Date();

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import Order from "../../../models/Order";
 import Product from "../../../models/Product";
-// import Category from "../../../models/Category";
-// import Category from "../../../models/Category";
+import Category from "../../../models/Category";
+import SubCategory from "../../../models/SubCategory";
 import OrderItem from "../../../models/OrderItem";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import mongoose from "mongoose";
@@ -35,8 +35,12 @@ export const getDashboardStats = asyncHandler(
             Order.countDocuments({ _id: { $in: WarehouseOrderIds }, status: "Pending" }),
             Order.countDocuments({ _id: { $in: WarehouseOrderIds }, status: "Cancelled" }),
             Product.countDocuments({ warehouse: WarehouseId }), // Fix uppercase W
-            Product.distinct("category", { warehouse: WarehouseId }).then(ids => ids.length),
-            Product.distinct("subcategory", { warehouse: WarehouseId }).then(ids => ids.length),
+            // Count only categories that are non-null AND still exist (drops
+            // products with a missing category or referencing a deleted one).
+            Product.distinct("category", { warehouse: WarehouseId, category: { $ne: null } })
+                .then(ids => Category.countDocuments({ _id: { $in: ids } })),
+            Product.distinct("subcategory", { warehouse: WarehouseId, subcategory: { $ne: null } })
+                .then(ids => SubCategory.countDocuments({ _id: { $in: ids } })),
             Order.distinct("customer", { _id: { $in: WarehouseOrderIds } }).then(ids => ids.length),
         ]);
 

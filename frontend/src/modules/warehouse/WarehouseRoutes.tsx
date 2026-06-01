@@ -5,7 +5,6 @@ import IconLoader from "../../components/loaders/IconLoader";
 
 // Lazy load layout and shared pages
 const WarehouseLayout = lazy(() => import("./components/WarehouseLayout"));
-const AdminManageSellerList = lazy(() => import("../admin/pages/AdminManageSellerList"));
 
 // Lazy load warehouse pages
 const WarehouseDashboard = lazy(() => import("./pages/WarehouseDashboard"));
@@ -58,7 +57,6 @@ export default function WarehouseRoutes() {
             <Route path="account-settings" element={<WarehouseAccountSettings />} />
             <Route path="explore" element={<WarehouseExploreProducts />} />
             <Route path="port-shipments" element={<WarehousePortShipments />} />
-            <Route path="all" element={<AdminManageSellerList />} />
           </Routes>
         </WarehouseLayout>
       </Suspense>

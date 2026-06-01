@@ -285,7 +285,6 @@ export default function WarehouseDashboard() {
       )}
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <DashboardCard icon={userIcon} title="Total User" value={stats.totalUser} accentColor="#3b82f6" onClick={() => navigate('/warehouse/all')} />
         <DashboardCard icon={categoryIcon} title="Total Category" value={stats.totalCategory} accentColor="#eab308" onClick={() => navigate('/warehouse/category')} />
         <DashboardCard icon={subcategoryIcon} title="Total Subcategory" value={stats.totalSubcategory} accentColor="#ec4899" onClick={() => navigate('/warehouse/subcategory')} />
         <DashboardCard icon={productIcon} title="Total Product" value={stats.totalProduct} accentColor="#f97316" onClick={() => navigate('/warehouse/product/list')} />

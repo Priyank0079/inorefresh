@@ -2,9 +2,10 @@ import { ReactNode, useState, useCallback, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import WarehouseHeader from './WarehouseHeader';
 import WarehouseSidebar from './WarehouseSidebar';
-import { useWarehouseSocket, WarehouseNotification, ReturnOtpAlert } from '../hooks/useWarehouseSocket';
+import { useWarehouseSocket, WarehouseNotification, ReturnOtpAlert, ReturnRequestAlert } from '../hooks/useWarehouseSocket';
 import WarehouseNotificationAlert from './WarehouseNotificationAlert';
 import WarehouseReturnOtpAlert from './WarehouseReturnOtpAlert';
+import WarehouseReturnRequestAlert from './WarehouseReturnRequestAlert';
 import GlobalBackButton from '../../../components/GlobalBackButton';
 import { useAuth } from '../../../context/AuthContext';
 import { registerFCMToken } from '../../../services/pushNotificationService';
@@ -17,6 +18,7 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeNotification, setActiveNotification] = useState<WarehouseNotification | null>(null);
   const [activeOtpAlert, setActiveOtpAlert] = useState<ReturnOtpAlert | null>(null);
+  const [activeReturnRequest, setActiveReturnRequest] = useState<ReturnRequestAlert | null>(null);
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
@@ -28,7 +30,11 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
     setActiveOtpAlert(alert);
   }, []);
 
-  useWarehouseSocket(handleNotificationReceived, handleReturnOtp);
+  const handleReturnRequest = useCallback((alert: ReturnRequestAlert) => {
+    setActiveReturnRequest(alert);
+  }, []);
+
+  useWarehouseSocket(handleNotificationReceived, handleReturnOtp, handleReturnRequest);
 
   // ── Register FCM push-notification token for this warehouse ────────────
   useEffect(() => {
@@ -69,6 +75,12 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
       <WarehouseReturnOtpAlert
         alert={activeOtpAlert}
         onClose={() => setActiveOtpAlert(null)}
+      />
+
+      {/* New return request popup (immediate, with sound) */}
+      <WarehouseReturnRequestAlert
+        alert={activeReturnRequest}
+        onClose={() => setActiveReturnRequest(null)}
       />
 
       {/* Overlay for mobile */}

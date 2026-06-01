@@ -103,7 +103,7 @@ const AddProduct = () => {
               type="file" 
               ref={fileInputRef}
               onChange={handleImageChange}
-              accept="image/*"
+              accept="image/*" capture="environment"
               className="hidden" 
             />
             <div 

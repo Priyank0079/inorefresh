@@ -974,7 +974,7 @@ export default function DeliveryOrderDetail() {
                                         : otpAlreadySent
                                             ? 'Enter OTP'
                                             : getOtpEnabled
-                                                ? 'Enter OTP to Deliver'
+                                                ? 'Get OTP'
                                                 : 'Move within 500m to get OTP'}
                                 </button>
                             ) : (
