@@ -38,7 +38,9 @@ router.post('/create-order', authenticate, requireUserType('Customer', 'horeca',
             });
         }
 
-        const result = await createRazorpayOrder(orderId, order.total);
+        // Charge only the amount still due after any wallet balance was applied.
+        const amountDue = Math.max(0, (order.total || 0) - ((order as any).walletAmountUsed || 0));
+        const result = await createRazorpayOrder(orderId, amountDue);
 
         if (!result.success) {
             return res.status(400).json(result);

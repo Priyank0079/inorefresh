@@ -6,9 +6,12 @@ import Return from "../models/Return";
 import Inventory from "../models/Inventory";
 import WalletTransaction from "../models/WalletTransaction";
 import Customer from "../models/Customer";
+import HorecaUser from "../models/HorecaUser";
+import RetailerUser from "../models/RetailerUser";
 import OrderItem from "../models/OrderItem";
 import Admin from "../models/Admin";
 import Warehouse from "../models/Warehouse";
+import PlatformWallet from "../models/PlatformWallet";
 import axios from "axios";
 import { sendNotification } from "../services/notificationService";
 import { getIO } from "../socket/socketService";
@@ -16,14 +19,28 @@ import { getIO } from "../socket/socketService";
 // startInspection removed: Verification is now triggered strictly by OTP delivery.
 
 /**
- * Helper: Check if we are in mock/dev OTP mode
+ * Helper: strictly validate the warehouse OTP for a return (no mock / no bypass).
+ * The OTP must match exactly and must not be expired.
  */
-function isMockOtpMode(): boolean {
-  return (
-    process.env.USE_MOCK_OTP === 'true' ||
-    !process.env.SMS_INDIA_HUB_API_KEY ||
-    !process.env.SMS_INDIA_HUB_SENDER_ID
-  );
+function validateWarehouseOtp(
+  returnReq: any,
+  otp: any
+): { ok: boolean; message?: string } {
+  const otpStr = String(otp ?? '').trim();
+  if (!otpStr) return { ok: false, message: 'OTP is required' };
+  if (!returnReq.warehouseVerificationOtp) {
+    return { ok: false, message: 'No OTP generated yet. Ask the rider to resend the OTP.' };
+  }
+  if (
+    returnReq.warehouseVerificationOtpExpiresAt &&
+    new Date(returnReq.warehouseVerificationOtpExpiresAt) < new Date()
+  ) {
+    return { ok: false, message: 'OTP has expired. Please resend a new OTP.' };
+  }
+  if (String(returnReq.warehouseVerificationOtp) !== otpStr) {
+    return { ok: false, message: 'Invalid OTP. Please try again.' };
+  }
+  return { ok: true };
 }
 
 /**
@@ -42,6 +59,266 @@ async function sendRawSms(mobile: string, message: string): Promise<void> {
     },
     timeout: 30000,
   });
+}
+
+/**
+ * Compute the correct refund for one returned line:
+ *   base price (unitPrice × returnedQty)
+ *   + the line's share of the GST/tax that was charged
+ *   − the line's share of any coupon discount
+ * This replaces the old "unitPrice × qty only" math which lost the tax.
+ */
+function computeReturnRefundAmount(
+  orderItem: any,
+  returnQty: number,
+  orderedQty: number,
+  order: any
+): number {
+  const base = (orderItem?.unitPrice || 0) * returnQty;
+
+  // taxBreakdown stores the tax for the FULL ordered quantity per item.
+  // Prorate it by how much of the line is being returned.
+  let taxShare = 0;
+  const breakdown = (order?.taxBreakdown || []) as any[];
+  const tb = breakdown.find(
+    (t) =>
+      String(t.itemId) === String(orderItem?.product) ||
+      t.itemName === orderItem?.productName
+  );
+  const baseOrderedQty = orderedQty || orderItem?.quantity || returnQty;
+  if (tb && baseOrderedQty > 0) {
+    taxShare = (Number(tb.amount) || 0) * (returnQty / baseOrderedQty);
+  }
+
+  // Coupon discount: refund only the line's proportional share so we never
+  // over-refund a discounted order.
+  let discountShare = 0;
+  if (order && Number(order.discount) > 0 && Number(order.subtotal) > 0) {
+    discountShare = Number(order.discount) * (base / Number(order.subtotal));
+  }
+
+  return Math.max(0, Number((base + taxShare - discountShare).toFixed(2)));
+}
+
+export interface RefundResult {
+  refundAmount: number;
+  warehouseNewBalance: number;
+  customerNewBalance: number;
+  isNegativeBalance: boolean;
+  fundedBy: "WAREHOUSE" | "PLATFORM";
+  order: any;
+  warehouseId: string | null;
+  customerId: string | null;
+}
+
+/**
+ * Resolve a buyer id to its actual model. Buyers live in THREE collections —
+ * Customer, HorecaUser, RetailerUser — and a Return only stores the raw id.
+ * The refund must credit the wallet on the correct model, otherwise (e.g. for
+ * a HoReCa buyer) Customer.findById returns null and the credit is silently
+ * skipped — leaving the wallet at ₹0.
+ */
+async function resolveBuyer(
+  buyerId: any,
+  session: any
+): Promise<{ doc: any; userType: 'CUSTOMER' | 'horeca' | 'retailer' } | null> {
+  const customer = await Customer.findById(buyerId).session(session);
+  if (customer) return { doc: customer, userType: 'CUSTOMER' };
+  const horeca = await HorecaUser.findById(buyerId).session(session);
+  if (horeca) return { doc: horeca, userType: 'horeca' };
+  const retailer = await RetailerUser.findById(buyerId).session(session);
+  if (retailer) return { doc: retailer, userType: 'retailer' };
+  return null;
+}
+
+/**
+ * Single, atomic, idempotent refund engine used by EVERY refund entry point
+ * (rider OTP, warehouse OTP, admin fallback). Money can only move once.
+ *   - cuts the warehouse wallet balance
+ *   - credits the retailer (customer) wallet
+ *   - records both ledger rows
+ *   - tracks returned stock
+ * Throws { isUserError, message:'ALREADY_REFUNDED' } if already refunded.
+ */
+export async function executeReturnRefund(returnId: string): Promise<RefundResult> {
+  const session = await mongoose.startSession();
+  try {
+    let result: RefundResult | null = null;
+    await session.withTransaction(async () => {
+      const returnDoc = await Return.findById(returnId).session(session);
+      if (!returnDoc) {
+        throw Object.assign(new Error('RETURN_NOT_FOUND'), { isUserError: true });
+      }
+      if (returnDoc.status === 'REFUNDED') {
+        throw Object.assign(new Error('ALREADY_REFUNDED'), { isUserError: true });
+      }
+
+      const [order, orderItem, warehouseDoc] = await Promise.all([
+        Order.findById(returnDoc.order).session(session),
+        OrderItem.findById(returnDoc.orderItem).session(session),
+        Warehouse.findById(returnDoc.warehouse).session(session),
+      ]);
+
+      // Credit the buyer's wallet on whichever model they belong to
+      // (Customer / HorecaUser / RetailerUser).
+      const buyer = await resolveBuyer(returnDoc.customer, session);
+      const customerDoc = buyer?.doc ?? null;
+      const buyerUserType = buyer?.userType ?? 'CUSTOMER';
+
+      const refundAmount = computeReturnRefundAmount(
+        orderItem,
+        returnDoc.quantity,
+        returnDoc.orderedQuantity,
+        order
+      );
+
+      // Funding source: COD orders are funded by the seller/warehouse balance
+      // (the warehouse is owed the cash the rider collected). Online/Wallet-paid
+      // orders were collected up-front by the platform, so the PLATFORM funds the
+      // wallet refund — the warehouse must NOT be debited for money it never held.
+      const isCOD =
+        !(order as any)?.paymentMethod ||
+        String((order as any).paymentMethod).toUpperCase() === 'COD';
+      const fundedBy: 'WAREHOUSE' | 'PLATFORM' = isCOD ? 'WAREHOUSE' : 'PLATFORM';
+
+      const warehousePrev = warehouseDoc?.balance ?? 0;
+      const customerPrev = customerDoc?.walletAmount ?? 0;
+      const warehouseNew = isCOD ? warehousePrev - refundAmount : warehousePrev;
+      const customerNew = customerPrev + refundAmount;
+      const nowMs = Date.now();
+
+      // 1) Lock the return as REFUNDED (idempotency guard inside the txn)
+      returnDoc.status = 'REFUNDED';
+      returnDoc.refundAmount = refundAmount;
+      returnDoc.refundFundedBy = fundedBy;
+      returnDoc.warehouseVerificationOtpVerified = true;
+      await returnDoc.save({ session });
+
+      // 2) Debit the funding source for the refund
+      if (isCOD) {
+        // COD → debit warehouse wallet (ledger style — may go negative)
+        if (warehouseDoc) {
+          warehouseDoc.balance = warehouseNew;
+          await warehouseDoc.save({ session });
+          await WalletTransaction.create([{
+            userId: warehouseDoc._id,
+            userType: 'Warehouse',
+            type: 'Debit',
+            amount: refundAmount,
+            description: `Return refund issued to retailer — Order #${(order as any)?.orderNumber}`,
+            reference: `RTN-WH-${nowMs}`,
+            relatedOrder: returnDoc.order,
+            openingBalance: warehousePrev,
+            closingBalance: warehouseNew,
+            status: 'Completed',
+          }], { session });
+        }
+      } else {
+        // Online / Wallet-paid → platform funds the wallet refund.
+        const platform = await PlatformWallet.findOne().session(session);
+        if (platform) {
+          platform.currentPlatformBalance = Math.max(
+            0,
+            (platform.currentPlatformBalance || 0) - refundAmount
+          );
+          await platform.save({ session });
+        }
+      }
+
+      // 3) Credit retailer wallet (this is what the next order can spend)
+      if (customerDoc) {
+        customerDoc.walletAmount = customerNew;
+        await customerDoc.save({ session });
+        await WalletTransaction.create([{
+          userId: customerDoc._id,
+          userType: buyerUserType,
+          type: 'Credit',
+          amount: refundAmount,
+          description: `Refund credited — Return on Order #${(order as any)?.orderNumber}`,
+          reference: `RTN-CUST-${nowMs}`,
+          relatedOrder: returnDoc.order,
+          openingBalance: customerPrev,
+          closingBalance: customerNew,
+          status: 'Completed',
+        }], { session });
+      }
+
+      // 4) Track returned stock (quarantine pool only — do NOT reduce sellable
+      //    stock again; the original sale already accounted for that).
+      if (orderItem) {
+        const inventory = await Inventory.findOne({
+          product: orderItem.product,
+          warehouse: returnDoc.warehouse,
+        }).session(session);
+        if (inventory) {
+          inventory.returnedStock = (inventory.returnedStock || 0) + returnDoc.quantity;
+          await inventory.save({ session });
+        }
+      }
+
+      result = {
+        refundAmount,
+        warehouseNewBalance: warehouseNew,
+        customerNewBalance: customerNew,
+        isNegativeBalance: isCOD && warehouseNew < 0,
+        fundedBy,
+        order,
+        warehouseId: warehouseDoc?._id?.toString() || returnDoc.warehouse?.toString() || null,
+        customerId: customerDoc?._id?.toString() || returnDoc.customer?.toString() || null,
+      };
+    });
+    return result!;
+  } finally {
+    await session.endSession();
+  }
+}
+
+/**
+ * Fire-and-forget notifications after a refund (warehouse, retailer, admins).
+ * Never throws — notification failure must not affect the refund.
+ */
+async function notifyRefundParties(r: RefundResult): Promise<void> {
+  const orderNumber = (r.order as any)?.orderNumber;
+  // Only notify the warehouse about a deduction when it was actually debited
+  // (COD-funded refunds). Platform-funded refunds don't touch the warehouse.
+  if (r.warehouseId && r.fundedBy === 'WAREHOUSE') {
+    try {
+      await sendNotification(
+        'Warehouse',
+        r.warehouseId,
+        r.isNegativeBalance ? '⚠️ Return Refund — Balance Negative' : 'Return Refund Deducted 💸',
+        `₹${r.refundAmount.toFixed(2)} deducted from your wallet as refund for Order #${orderNumber}${
+          r.isNegativeBalance
+            ? `. ⚠️ Your balance is now negative (₹${r.warehouseNewBalance.toFixed(2)}). Please top up.`
+            : '.'
+        }`,
+        { type: 'Order', priority: r.isNegativeBalance ? 'Urgent' : 'High' }
+      );
+    } catch (e) { console.error('[notify] Warehouse:', e); }
+  }
+  if (r.customerId) {
+    try {
+      await sendNotification(
+        'Customer',
+        r.customerId,
+        'Refund Credited! 💰',
+        `₹${r.refundAmount.toFixed(2)} has been added to your Inor Wallet for the return on Order #${orderNumber}. You can use it on your next order.`,
+        { type: 'Order', priority: 'High' }
+      );
+    } catch (e) { console.error('[notify] Customer:', e); }
+  }
+  try {
+    const admins = await Admin.find({});
+    for (const admin of admins) {
+      await sendNotification(
+        'Admin',
+        admin._id.toString(),
+        r.isNegativeBalance ? '⚠️ Refund: Warehouse Negative Balance' : 'Return Refunded ✅',
+        `₹${r.refundAmount.toFixed(2)} refunded for Order #${orderNumber}.${r.isNegativeBalance ? ' Warehouse balance is now negative — action required.' : ''}`,
+        { type: 'Order', priority: r.isNegativeBalance ? 'Urgent' : 'High' }
+      );
+    }
+  } catch (e) { console.error('[notify] Admins:', e); }
 }
 
 export const submitReturnRequest = asyncHandler(async (req: Request, res: Response) => {
@@ -74,6 +351,16 @@ export const submitReturnRequest = asyncHandler(async (req: Request, res: Respon
   for (const item of items) {
     const orderItem = await OrderItem.findById(item.orderItemId);
     if (!orderItem) continue;
+
+    // Guard: you can never accept + return more than what was actually ordered.
+    const accepted = Number(item.acceptedQuantity) || 0;
+    const returned = Number(item.returnedQuantity) || 0;
+    if (accepted < 0 || returned < 0 || accepted + returned > orderItem.quantity) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid quantities for ${orderItem.productName}: accepted (${accepted}) + returned (${returned}) cannot exceed ordered (${orderItem.quantity}).`,
+      });
+    }
 
     totalOrdered += orderItem.quantity;
     totalAccepted += item.acceptedQuantity;
@@ -223,7 +510,8 @@ export const collectReturn = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export const verifyWarehouseReceipt = asyncHandler(async (req: Request, res: Response) => {
-  // Warehouse verifies receipt from rider via OTP
+  // Warehouse verifies receipt from rider via OTP — this triggers the SAME
+  // atomic refund as the rider OTP path (single, idempotent money movement).
   const warehouseId = req.user?.userId;
   const { returnId } = req.params;
   const { otp } = req.body;
@@ -231,71 +519,89 @@ export const verifyWarehouseReceipt = asyncHandler(async (req: Request, res: Res
   const returnReq = await Return.findById(returnId);
   if (!returnReq) return res.status(404).json({ success: false, message: "Return request not found" });
 
+  if (returnReq.status === 'REFUNDED') {
+    return res.status(409).json({ success: false, message: "This return has already been refunded." });
+  }
+
   if (returnReq.warehouse?.toString() !== warehouseId) {
      return res.status(403).json({ success: false, message: "Unauthorized" });
   }
 
-  if (returnReq.warehouseVerificationOtp !== otp) {
-     return res.status(400).json({ success: false, message: "Invalid OTP" });
+  // Strict OTP validation (no mock / no bypass).
+  const otpCheck = validateWarehouseOtp(returnReq, otp);
+  if (!otpCheck.ok) {
+     return res.status(400).json({ success: false, message: otpCheck.message });
   }
 
-  returnReq.status = 'RECEIVED_AT_WAREHOUSE';
-  returnReq.warehouseVerificationOtpVerified = true;
-  await returnReq.save();
-
-  // Inventory adjustment: move to quarantined
-  const orderItem = await OrderItem.findById(returnReq.orderItem);
-  if (orderItem) {
-     const inventory = await Inventory.findOne({ product: orderItem.product, warehouse: warehouseId });
-     if (inventory) {
-        // Decrease sellable, increase returned pool
-        inventory.currentStock = Math.max(0, inventory.currentStock - returnReq.quantity);
-        inventory.returnedStock += returnReq.quantity;
-        await inventory.save();
-     }
+  let refundResult: RefundResult;
+  try {
+    refundResult = await executeReturnRefund(returnId);
+  } catch (err: any) {
+    if (err?.isUserError && err.message === 'ALREADY_REFUNDED') {
+      return res.status(409).json({ success: false, message: "This return has already been refunded." });
+    }
+    console.error('[verifyWarehouseReceipt] Refund failed:', err);
+    return res.status(500).json({ success: false, message: "Refund transaction failed. Please try again." });
   }
 
-  return res.status(200).json({ success: true, data: returnReq });
+  await notifyRefundParties(refundResult);
+
+  return res.status(200).json({
+    success: true,
+    message: `₹${refundResult.refundAmount.toFixed(2)} refunded to retailer wallet successfully!`,
+    data: {
+      returnId,
+      status: 'REFUNDED',
+      refundAmount: refundResult.refundAmount,
+      warehouseBalance: refundResult.warehouseNewBalance,
+      customerWalletBalance: refundResult.customerNewBalance,
+      isNegativeBalance: refundResult.isNegativeBalance,
+    },
+  });
 });
 
 export const approveRefund = asyncHandler(async (req: Request, res: Response) => {
-  // Admin approves refund and issues wallet credit
+  // Admin fallback: approve (and refund via the shared engine) or reject.
   const { returnId } = req.params;
-  const { action, amount } = req.body;
+  const { action } = req.body;
 
   const returnReq = await Return.findById(returnId).populate('order');
   if (!returnReq) return res.status(404).json({ success: false, message: "Return request not found" });
 
-  if (returnReq.status !== 'RECEIVED_AT_WAREHOUSE') {
-     return res.status(400).json({ success: false, message: "Return not received at warehouse yet" });
-  }
-
   if (action === 'Approve') {
-     returnReq.status = 'REFUNDED';
-     returnReq.refundAmount = amount;
-     await returnReq.save();
+    if (returnReq.status === 'REFUNDED') {
+      return res.status(409).json({ success: false, message: "This return has already been refunded." });
+    }
 
-     // Credit customer wallet
-     const customer = await Customer.findById(returnReq.customer);
-     if (customer) {
-        customer.walletAmount = (customer.walletAmount || 0) + amount;
-        await customer.save();
+    let refundResult: RefundResult;
+    try {
+      refundResult = await executeReturnRefund(returnId);
+    } catch (err: any) {
+      if (err?.isUserError && err.message === 'ALREADY_REFUNDED') {
+        return res.status(409).json({ success: false, message: "This return has already been refunded." });
+      }
+      console.error('[approveRefund] Refund failed:', err);
+      return res.status(500).json({ success: false, message: "Refund transaction failed. Please try again." });
+    }
 
-        await WalletTransaction.create({
-           wallet: customer._id,
-           userModel: 'CUSTOMER',
-           type: 'Credit',
-           amount: amount,
-           transactionId: `TXN-REF-${Date.now()}`,
-           description: `Refund for returned order #${(returnReq.order as any)?.orderNumber}`,
-           status: 'Completed'
-        });
-     }
-  } else {
-     returnReq.status = 'Rejected';
-     await returnReq.save();
+    await notifyRefundParties(refundResult);
+
+    return res.status(200).json({
+      success: true,
+      message: `₹${refundResult.refundAmount.toFixed(2)} refunded to retailer wallet successfully!`,
+      data: {
+        returnId,
+        status: 'REFUNDED',
+        refundAmount: refundResult.refundAmount,
+        warehouseBalance: refundResult.warehouseNewBalance,
+        customerWalletBalance: refundResult.customerNewBalance,
+        isNegativeBalance: refundResult.isNegativeBalance,
+      },
+    });
   }
 
+  returnReq.status = 'Rejected';
+  await returnReq.save();
   return res.status(200).json({ success: true, data: returnReq });
 });
 
@@ -392,43 +698,55 @@ export const sendWarehouseOtp = asyncHandler(async (req: Request, res: Response)
   }
 
   const warehouse = returnReq.warehouse as any;
-  if (!warehouse?.mobile) {
-    return res.status(400).json({ success: false, message: "Warehouse mobile number not found" });
-  }
+  const warehouseId = warehouse?._id?.toString() || returnReq.warehouse?.toString();
 
-  if (isMockOtpMode()) {
-    // Dev/localhost mode: always use 1234 as the OTP
-    returnReq.warehouseVerificationOtp = '1234';
-    await returnReq.save();
-    console.log(
-      `[MOCK OTP] Warehouse "${warehouse.warehouseName}" OTP is: 1234 (mobile: ${warehouse.mobile})`
-    );
-    return res.status(200).json({
-      success: true,
-      message: "OTP sent (Mock mode - use 1234)",
-    });
-  }
-
-  // Real mode: reuse existing OTP or generate new one
-  let otp = returnReq.warehouseVerificationOtp;
-  if (!otp) {
-    otp = Math.floor(1000 + Math.random() * 9000).toString();
-    returnReq.warehouseVerificationOtp = otp;
-    returnReq.warehouseVerificationOtpExpiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 min
-    await returnReq.save();
-  }
+  // Always generate a fresh REAL OTP (no mock / no 1234).
+  const otp = Math.floor(1000 + Math.random() * 9000).toString();
+  returnReq.warehouseVerificationOtp = otp;
+  returnReq.warehouseVerificationOtpExpiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 min
+  await returnReq.save();
 
   const order = await Order.findById(returnReq.order);
-  const message = `InoFresh Return OTP: ${otp}. Rider has arrived at your warehouse to deliver returned goods for Order #${order?.orderNumber}. Share this OTP to confirm receipt.`;
+  const orderNumber = order?.orderNumber;
 
+  // 1) Real-time popup + sound on the warehouse dashboard (dedicated event).
   try {
-    await sendRawSms(warehouse.mobile, message);
-  } catch (smsErr) {
-    console.error('[Return OTP] Failed to send SMS:', smsErr);
-    // Don't fail the request — OTP is saved, manager can see it in their panel
+    const io = getIO();
+    io.to(`warehouse-${warehouseId}`).emit('return-otp-alert', {
+      otp,
+      orderId: returnReq.order?.toString(),
+      orderNumber,
+      returnId: (returnReq._id as any).toString(),
+      timestamp: new Date(),
+    });
+  } catch (e) {
+    console.error('[Return OTP] socket emit failed:', e);
   }
 
-  return res.status(200).json({ success: true, message: "OTP sent to warehouse mobile" });
+  // 2) Persisted in-app notification (bell) + push so it is never missed.
+  try {
+    await sendNotification(
+      'Warehouse',
+      warehouseId,
+      '🔐 Return Pickup OTP',
+      `Rider has arrived to deliver returned goods for Order #${orderNumber}. Your OTP is ${otp}. Share it with the rider to confirm receipt.`,
+      { type: 'Order', priority: 'Urgent' }
+    );
+  } catch (e) {
+    console.error('[Return OTP] in-app notification failed:', e);
+  }
+
+  // 3) SMS as a secondary channel (only when SMS provider is configured).
+  if (warehouse?.mobile && process.env.SMS_INDIA_HUB_API_KEY && process.env.SMS_INDIA_HUB_SENDER_ID) {
+    const message = `InoFresh Return OTP: ${otp}. Rider has arrived at your warehouse to deliver returned goods for Order #${orderNumber}. Share this OTP to confirm receipt.`;
+    try {
+      await sendRawSms(warehouse.mobile, message);
+    } catch (smsErr) {
+      console.error('[Return OTP] Failed to send SMS:', smsErr);
+    }
+  }
+
+  return res.status(200).json({ success: true, message: "OTP sent to warehouse (app alert + SMS)." });
 });
 
 // ---------------------------------------------------------------------------
@@ -462,178 +780,40 @@ export const riderVerifyWarehouseOtp = asyncHandler(async (req: Request, res: Re
     return res.status(400).json({ success: false, message: "Return is not in transit to warehouse" });
   }
 
-  // OTP validation
-  const otpStr = String(otp).trim();
-  const isMock = isMockOtpMode();
-  const isBypass = otpStr === '1234' || otpStr === '999999';
-  const otpMatch = returnReq.warehouseVerificationOtp === otpStr;
-  if (!isBypass && !isMock && !otpMatch) {
-    return res.status(400).json({ success: false, message: "Invalid OTP. Please try again." });
+  // Strict OTP validation (no mock / no bypass).
+  const otpCheck = validateWarehouseOtp(returnReq, otp);
+  if (!otpCheck.ok) {
+    return res.status(400).json({ success: false, message: otpCheck.message });
   }
 
-  // Gather stable data before the session
-  const warehouseId = (returnReq.warehouse as any)?._id?.toString() || returnReq.warehouse?.toString();
-  const [order, orderItem] = await Promise.all([
-    Order.findById(returnReq.order),
-    OrderItem.findById(returnReq.orderItem),
-  ]);
-  const refundAmount = (orderItem?.unitPrice || 0) * returnReq.quantity;
-
-  // ── Atomic MongoDB Transaction ───────────────────────────────────────────
-  const session = await mongoose.startSession();
-  let refundResult: {
-    refundAmount: number;
-    warehouseNewBalance: number;
-    customerNewBalance: number;
-    isNegativeBalance: boolean;
-  } | null = null;
-
+  // ── Atomic refund via the shared engine (correct amount incl. tax) ───────
+  let refundResult: RefundResult;
   try {
-    await session.withTransaction(async () => {
-      // Fetch fresh docs inside session (prevents stale reads)
-      const [warehouseDoc, customerDoc, returnDoc] = await Promise.all([
-        Warehouse.findById(warehouseId).session(session),
-        Customer.findById(returnReq.customer).session(session),
-        Return.findById(returnId).session(session),
-      ]);
-
-      // Double-check inside session (atomic lock)
-      if (!returnDoc || returnDoc.status === 'REFUNDED') {
-        throw Object.assign(new Error('ALREADY_REFUNDED'), { isUserError: true });
-      }
-
-      const warehousePrevBalance = warehouseDoc?.balance ?? 0;
-      const customerPrevBalance = customerDoc?.walletAmount ?? 0;
-      const warehouseNewBalance = warehousePrevBalance - refundAmount;
-      const customerNewBalance = customerPrevBalance + refundAmount;
-      const isNegativeBalance = warehouseNewBalance < 0;
-      const nowMs = Date.now();
-
-      // 1️⃣ Mark return as REFUNDED
-      returnDoc.status = 'REFUNDED';
-      returnDoc.refundAmount = refundAmount;
-      returnDoc.warehouseVerificationOtpVerified = true;
-      await returnDoc.save({ session });
-
-      // 2️⃣ Deduct from warehouse balance (allow negative — ledger style)
-      if (warehouseDoc) {
-        warehouseDoc.balance = warehouseNewBalance;
-        await warehouseDoc.save({ session });
-        await WalletTransaction.create([{
-          userId: warehouseDoc._id,
-          userType: 'Warehouse',
-          type: 'Debit',
-          amount: refundAmount,
-          description: `Return refund issued to retailer — Order #${order?.orderNumber}`,
-          reference: `RTN-WH-${nowMs}`,
-          relatedOrder: returnDoc.order,
-          openingBalance: warehousePrevBalance,
-          closingBalance: warehouseNewBalance,
-          status: 'Completed',
-        }], { session });
-      }
-
-      // 3️⃣ Credit retailer wallet
-      if (customerDoc) {
-        customerDoc.walletAmount = customerNewBalance;
-        await customerDoc.save({ session });
-        await WalletTransaction.create([{
-          userId: customerDoc._id,
-          userType: 'CUSTOMER',
-          type: 'Credit',
-          amount: refundAmount,
-          description: `Refund credited — Return on Order #${order?.orderNumber}`,
-          reference: `RTN-CUST-${nowMs}`,
-          relatedOrder: returnDoc.order,
-          openingBalance: customerPrevBalance,
-          closingBalance: customerNewBalance,
-          status: 'Completed',
-        }], { session });
-      }
-
-      // 4️⃣ Inventory adjustment
-      if (orderItem) {
-        const inventory = await Inventory.findOne({
-          product: orderItem.product,
-          warehouse: warehouseId,
-        }).session(session);
-        if (inventory) {
-          inventory.currentStock = Math.max(0, inventory.currentStock - returnDoc.quantity);
-          inventory.returnedStock = (inventory.returnedStock || 0) + returnDoc.quantity;
-          await inventory.save({ session });
-        }
-      }
-
-      refundResult = { refundAmount, warehouseNewBalance, customerNewBalance, isNegativeBalance };
-    });
+    refundResult = await executeReturnRefund(returnId);
   } catch (err: any) {
     if (err?.isUserError && err.message === 'ALREADY_REFUNDED') {
       return res.status(409).json({ success: false, message: "This return has already been refunded." });
     }
-    console.error('[riderVerifyWarehouseOtp] Transaction aborted:', err);
+    console.error('[riderVerifyWarehouseOtp] Refund failed:', err);
     return res.status(500).json({
       success: false,
       message: "Refund transaction failed. Please try again.",
     });
-  } finally {
-    await session.endSession();
   }
 
-  // ── Post-commit: notifications (non-critical, outside session) ───────────
-  const { isNegativeBalance } = refundResult!;
-
-  // Notify warehouse
-  if (warehouseId) {
-    try {
-      await sendNotification(
-        "Warehouse",
-        warehouseId,
-        isNegativeBalance ? "⚠️ Return Refund — Balance Negative" : "Return Refund Deducted 💸",
-        `₹${refundAmount.toFixed(2)} deducted from your wallet as refund for Order #${order?.orderNumber}${
-          isNegativeBalance
-            ? `. ⚠️ Your balance is now negative (₹${refundResult!.warehouseNewBalance.toFixed(2)}). Please top up.`
-            : '.'}
-        `,
-        { type: "Order", priority: isNegativeBalance ? "Urgent" : "High" }
-      );
-    } catch (e) { console.error("[notify] Warehouse:", e); }
-  }
-
-  // Notify retailer
-  try {
-    await sendNotification(
-      "Customer",
-      returnReq.customer.toString(),
-      "Refund Credited! 💰",
-      `₹${refundAmount.toFixed(2)} has been added to your Inor Wallet for the return on Order #${order?.orderNumber}.`,
-      { type: "Order", priority: "High" }
-    );
-  } catch (e) { console.error("[notify] Customer:", e); }
-
-  // Notify admins
-  try {
-    const admins = await Admin.find({});
-    for (const admin of admins) {
-      await sendNotification(
-        "Admin",
-        admin._id.toString(),
-        isNegativeBalance ? "⚠️ Auto-Refund: Warehouse Negative Balance" : "Return Auto-Refunded ✅",
-        `₹${refundAmount.toFixed(2)} auto-refunded for Order #${order?.orderNumber}. Warehouse: ${(returnReq.warehouse as any)?.warehouseName}.${isNegativeBalance ? " Balance is now negative — action required." : ""}`,
-        { type: "Order", priority: isNegativeBalance ? "Urgent" : "High" }
-      );
-    }
-  } catch (e) { console.error("[notify] Admins:", e); }
+  // Post-commit notifications (non-critical)
+  await notifyRefundParties(refundResult);
 
   return res.status(200).json({
     success: true,
-    message: `₹${refundAmount.toFixed(2)} refunded to retailer wallet successfully!`,
+    message: `₹${refundResult.refundAmount.toFixed(2)} refunded to retailer wallet successfully!`,
     data: {
       returnId,
       status: 'REFUNDED',
-      refundAmount,
-      warehouseBalance: refundResult!.warehouseNewBalance,
-      customerWalletBalance: refundResult!.customerNewBalance,
-      isNegativeBalance,
+      refundAmount: refundResult.refundAmount,
+      warehouseBalance: refundResult.warehouseNewBalance,
+      customerWalletBalance: refundResult.customerNewBalance,
+      isNegativeBalance: refundResult.isNegativeBalance,
     },
   });
 });

@@ -21,6 +21,16 @@ export default function HomeHero({ activeTab = 'all', onTabChange }: HomeHeroPro
 
   return (
     <div className="relative w-full overflow-hidden font-sans">
+      {/* Home-only high-priority preload for the hero background (CSS bg can't
+          carry fetchpriority, so this hidden eager <img> warms the cache). */}
+      <img
+        src={HERO_IMAGE}
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+        {...({ fetchpriority: 'high' } as any)}
+        style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
+      />
       {/* 🌊 HERO SECTION */}
       {/*
         backgroundAttachment:'fixed' is intentionally removed — it disables GPU

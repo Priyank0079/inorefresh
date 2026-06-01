@@ -33,7 +33,18 @@ export interface WarehouseNotification {
     timestamp: Date;
 }
 
-export const useWarehouseSocket = (onNotificationReceived?: (notification: WarehouseNotification) => void) => {
+export interface ReturnOtpAlert {
+    otp: string;
+    orderId: string;
+    orderNumber: string;
+    returnId: string;
+    timestamp: Date;
+}
+
+export const useWarehouseSocket = (
+    onNotificationReceived?: (notification: WarehouseNotification) => void,
+    onReturnOtp?: (alert: ReturnOtpAlert) => void
+) => {
     const { user, token, isAuthenticated } = useAuth();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
@@ -92,6 +103,16 @@ export const useWarehouseSocket = (onNotificationReceived?: (notification: Wareh
             });
             if (onNotificationReceived) {
                 onNotificationReceived(notification);
+            }
+        });
+
+        newSocket.on('return-otp-alert', (alert: ReturnOtpAlert) => {
+            console.log('🔐 Return pickup OTP received:', {
+                orderNumber: alert.orderNumber,
+                returnId: alert.returnId,
+            });
+            if (onReturnOtp) {
+                onReturnOtp(alert);
             }
         });
 

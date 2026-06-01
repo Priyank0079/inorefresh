@@ -530,9 +530,11 @@ export const createOrder = async (req: Request, res: Response) => {
         let payableAmount = finalTotal;
 
         if (useWallet) {
-            // Check threshold: Get from AppSettings (default 10000 if not configured)
+            // Minimum order value required to use wallet. Defaults to 0 (no minimum)
+            // so refunded wallet balance can be used on any order. Admins can set a
+            // higher minimum via AppSettings.walletMinimumPurchase if desired.
             const settings = await AppSettings.getSettings();
-            const walletMinimumPurchase = settings?.walletMinimumPurchase || 10000;
+            const walletMinimumPurchase = settings?.walletMinimumPurchase ?? 0;
 
             if (calculatedSubtotal < walletMinimumPurchase) {
                 if (session) await session.abortTransaction();

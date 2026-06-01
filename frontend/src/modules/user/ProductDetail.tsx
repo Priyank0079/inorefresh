@@ -1000,7 +1000,7 @@ export default function ProductDetail() {
 
                   return (
                     <div
-                      key={similarProduct.id}
+                      key={similarProduct.id || similarProduct._id}
                       className="flex-shrink-0 w-40 bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden relative">
                       {/* Heart icon - top right */}
                       <WishlistButton

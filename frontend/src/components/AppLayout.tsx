@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useRef, useState, useMemo } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useReducedMotion } from 'framer-motion';
 // framer-motion removed from AppLayout — replaced with CSS animation to
 // prevent AnimatePresence key changes from causing full content remount (CLS fix)
 import FloatingCartPill from './FloatingCartPill';
@@ -32,6 +33,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [showLocationChangeModal, setShowLocationChangeModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { currentTheme } = useThemeContext();
+  const prefersReducedMotion = useReducedMotion();
 
   // State to track if service is available at user's location
   const [isServiceAvailable, setIsServiceAvailable] = useState<boolean>(true);
@@ -180,10 +182,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Hide bottom nav on product detail — the page has its own sticky "Add to Cart / Buy Now" footer
   const showFooter = !isCheckoutPage && !isProductDetailPage;
 
+  // Perf: the animated ocean backgrounds (fish + underwater motion) are expensive
+  // framer-motion loops. Only run them on the Home page, and never when the user
+  // prefers reduced motion. Other pages keep the static ocean gradient only.
+  const showAmbientFx = isHomePage && !prefersReducedMotion;
+
   return (
     <>
       <div className="flex flex-col min-h-screen w-full relative overflow-x-hidden ocean-theme-bg">
-        <AmbientFishBackground />
+        {showAmbientFx && <AmbientFishBackground />}
         {/* 💫 FLOATING WATER LIGHT EFFECT */}
         <div
           className="fixed top-0 left-0 w-full h-full pointer-events-none z-[1]"
@@ -207,10 +214,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
             {/* Scrollable Main Content */}
             <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide pb-24 md:pb-8 relative">
-              {/* Global Underwater Atmosphere Layer */}
-              <div className="fixed inset-0 pointer-events-none z-0 opacity-40">
-                <UnderwaterEffect />
-              </div>
+              {/* Global Underwater Atmosphere Layer (Home only, motion-safe) */}
+              {showAmbientFx && (
+                <div className="fixed inset-0 pointer-events-none z-0 opacity-40">
+                  <UnderwaterEffect />
+                </div>
+              )}
 
               {/*
                 Key was previously tied to location state, causing the entire

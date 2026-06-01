@@ -49,6 +49,7 @@ export interface IReturn extends Document {
 
   // Refund
   refundAmount?: number;
+  refundFundedBy?: "WAREHOUSE" | "PLATFORM";
   refundId?: mongoose.Types.ObjectId;
 
   createdAt: Date;
@@ -200,6 +201,10 @@ const ReturnSchema = new Schema<IReturn>(
     refundAmount: {
       type: Number,
       min: [0, "Refund amount cannot be negative"],
+    },
+    refundFundedBy: {
+      type: String,
+      enum: ["WAREHOUSE", "PLATFORM"],
     },
     refundId: {
       type: Schema.Types.ObjectId,

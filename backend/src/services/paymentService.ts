@@ -129,7 +129,7 @@ export const capturePayment = async (
             razorpayOrderId,
             razorpayPaymentId,
             razorpaySignature,
-            amount: order.total,
+            amount: Math.max(0, (order.total || 0) - ((order as any).walletAmountUsed || 0)),
             currency: 'INR',
             status: 'Completed',
             paidAt: new Date(),

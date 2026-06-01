@@ -376,8 +376,8 @@ export default function Checkout() {
     currentCouponDiscount,
   );
 
-  // Wallet Logic
-  const walletThreshold = 10000;
+  // Wallet Logic — no minimum order value; wallet/refund balance can be used on any order.
+  const walletThreshold = 0;
   const isWalletEligible = discountedTotal >= walletThreshold;
   const walletBalance = user?.walletAmount || 0;
 

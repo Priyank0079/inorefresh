@@ -2,8 +2,9 @@ import { ReactNode, useState, useCallback, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import WarehouseHeader from './WarehouseHeader';
 import WarehouseSidebar from './WarehouseSidebar';
-import { useWarehouseSocket, WarehouseNotification } from '../hooks/useWarehouseSocket';
+import { useWarehouseSocket, WarehouseNotification, ReturnOtpAlert } from '../hooks/useWarehouseSocket';
 import WarehouseNotificationAlert from './WarehouseNotificationAlert';
+import WarehouseReturnOtpAlert from './WarehouseReturnOtpAlert';
 import GlobalBackButton from '../../../components/GlobalBackButton';
 import { useAuth } from '../../../context/AuthContext';
 import { registerFCMToken } from '../../../services/pushNotificationService';
@@ -15,6 +16,7 @@ interface WarehouseLayoutProps {
 export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeNotification, setActiveNotification] = useState<WarehouseNotification | null>(null);
+  const [activeOtpAlert, setActiveOtpAlert] = useState<ReturnOtpAlert | null>(null);
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
@@ -22,7 +24,11 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
     setActiveNotification(notification);
   }, []);
 
-  useWarehouseSocket(handleNotificationReceived);
+  const handleReturnOtp = useCallback((alert: ReturnOtpAlert) => {
+    setActiveOtpAlert(alert);
+  }, []);
+
+  useWarehouseSocket(handleNotificationReceived, handleReturnOtp);
 
   // ── Register FCM push-notification token for this warehouse ────────────
   useEffect(() => {
@@ -57,6 +63,12 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
       <WarehouseNotificationAlert
         notification={activeNotification}
         onClose={closeNotification}
+      />
+
+      {/* Return pickup OTP popup (real OTP + sound) */}
+      <WarehouseReturnOtpAlert
+        alert={activeOtpAlert}
+        onClose={() => setActiveOtpAlert(null)}
       />
 
       {/* Overlay for mobile */}
