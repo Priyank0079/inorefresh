@@ -20,9 +20,17 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
   const { user, logout } = useAuth();
   const { currentTheme } = useThemeContext();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const [refreshing, setRefreshing] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const locationRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
+
+  // Manual refresh — reloads the current page so the warehouse can pull fresh
+  // data (orders, returns, wallet) on mobile without using the browser chrome.
+  const handleRefresh = () => {
+    setRefreshing(true);
+    window.location.reload();
+  };
 
   const isActive = (path: string) => location.pathname.includes(path);
 
@@ -198,6 +206,28 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
 
         {/* Action Icons */}
         <div className="ml-auto flex items-center gap-2 md:gap-4 relative">
+          {/* Refresh Button — pulls fresh data on mobile without browser refresh */}
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="p-2 text-neutral-600 hover:text-neutral-900 transition-colors disabled:opacity-60"
+            aria-label="Refresh"
+            title="Refresh"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className={refreshing ? 'animate-spin' : ''}
+            >
+              <path d="M23 4V10H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M1 20V14H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.51 9.00001C4.01717 7.56645 4.87913 6.28474 6.01547 5.27543C7.1518 4.26613 8.52547 3.55995 10.0083 3.22427C11.4911 2.8886 13.0348 2.93479 14.4952 3.35843C15.9556 3.78207 17.2853 4.56885 18.36 5.64001L23 10M1 14L5.64 18.36C6.71475 19.4312 8.04437 20.2179 9.50481 20.6416C10.9652 21.0652 12.5089 21.1114 13.9917 20.7757C15.4745 20.4401 16.8482 19.7339 17.9845 18.7246C19.1209 17.7153 19.9828 16.4336 20.49 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
           {/* Notifications Button */}
           <div className="relative" ref={notificationsRef}>
             <button

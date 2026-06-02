@@ -57,17 +57,17 @@ export default function WholesalerReturnInbox() {
   });
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Return Requests Inbox</h1>
-          <p className="text-gray-500">Review and manage retailer return requests.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Return Requests Inbox</h1>
+          <p className="text-sm sm:text-base text-gray-500">Review and manage retailer return requests.</p>
         </div>
         <div className="flex items-center gap-3">
-           <select 
+           <select
              value={filter}
              onChange={e => setFilter(e.target.value)}
-             className="border-gray-300 rounded-lg text-sm focus:ring-red-500 focus:border-red-500"
+             className="w-full sm:w-auto border-gray-300 rounded-lg text-sm focus:ring-red-500 focus:border-red-500"
            >
              <option value="All">All Requests</option>
              <option value="Pending Review">Pending Review</option>
@@ -81,29 +81,79 @@ export default function WholesalerReturnInbox() {
       {loading ? (
         <div className="text-center py-12 text-gray-500">Loading inbox...</div>
       ) : (
-        <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 text-gray-600 font-medium border-b">
-              <tr>
-                <th className="px-6 py-4">Request ID</th>
-                <th className="px-6 py-4">Retailer</th>
-                <th className="px-6 py-4">Product</th>
-                <th className="px-6 py-4">Returned Qty</th>
-                <th className="px-6 py-4">Reason</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredReturns.map((req) => (
-                <tr key={req.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-900">#{req.id.slice(-6).toUpperCase()}</td>
-                  <td className="px-6 py-4">{req.shopName}</td>
-                  <td className="px-6 py-4">{req.productName}</td>
-                  <td className="px-6 py-4 text-red-600 font-bold">{req.quantity}</td>
-                  <td className="px-6 py-4">{req.returnReason}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+        <>
+          {/* Desktop / tablet — table (horizontally scrollable as a safety net) */}
+          <div className="hidden md:block bg-white border rounded-xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 text-gray-600 font-medium border-b">
+                  <tr>
+                    <th className="px-6 py-4">Request ID</th>
+                    <th className="px-6 py-4">Retailer</th>
+                    <th className="px-6 py-4">Product</th>
+                    <th className="px-6 py-4">Returned Qty</th>
+                    <th className="px-6 py-4">Reason</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredReturns.map((req) => (
+                    <tr key={req.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium text-gray-900">#{req.id.slice(-6).toUpperCase()}</td>
+                      <td className="px-6 py-4">{req.shopName}</td>
+                      <td className="px-6 py-4">{req.productName}</td>
+                      <td className="px-6 py-4 text-red-600 font-bold">{req.quantity}</td>
+                      <td className="px-6 py-4">{req.returnReason}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                          req.status === 'REQUESTED' || req.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
+                          req.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                          req.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                          'bg-blue-100 text-blue-800'
+                        }`}>
+                          {req.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => setSelectedReturn(req)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Review Details"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredReturns.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                        No return requests found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile — card list */}
+          <div className="md:hidden space-y-3">
+            {filteredReturns.length === 0 ? (
+              <div className="bg-white border rounded-xl shadow-sm py-12 text-center text-gray-500">
+                No return requests found.
+              </div>
+            ) : (
+              filteredReturns.map((req) => (
+                <div key={req.id} className="bg-white border rounded-xl shadow-sm p-4">
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900 text-sm truncate">{req.productName}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 truncate">{req.shopName}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">#{req.id.slice(-6).toUpperCase()}</p>
+                    </div>
+                    <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-[10px] font-medium ${
                       req.status === 'REQUESTED' || req.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
                       req.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
                       req.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
@@ -111,28 +161,30 @@ export default function WholesalerReturnInbox() {
                     }`}>
                       {req.status}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => setSelectedReturn(req)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Review Details"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredReturns.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                    No return requests found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-gray-100">
+                    <div>
+                      <p className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider">Returned Qty</p>
+                      <p className="text-sm font-bold text-red-600 mt-0.5">{req.quantity}</p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider">Reason</p>
+                      <p className="text-sm font-medium text-gray-700 mt-0.5 truncate">{req.returnReason}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setSelectedReturn(req)}
+                    className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-700 font-semibold rounded-lg text-sm hover:bg-blue-100 transition-colors"
+                  >
+                    <Eye className="w-4 h-4" /> Review Details
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </>
       )}
 
       {/* Review Modal */}
@@ -196,7 +248,7 @@ export default function WholesalerReturnInbox() {
             </div>
 
             {/* Actions */}
-            <div className="p-6 border-t bg-gray-50 flex gap-3 rounded-b-2xl">
+            <div className="p-4 sm:p-6 border-t bg-gray-50 flex flex-col sm:flex-row gap-3 rounded-b-2xl">
               {(selectedReturn.status === 'REQUESTED' || selectedReturn.status === 'Pending') ? (
                 <>
                   <button 
