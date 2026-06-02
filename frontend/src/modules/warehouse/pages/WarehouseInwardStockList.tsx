@@ -94,12 +94,12 @@ export default function WarehouseInwardStockList() {
     return (
         <div className="flex flex-col h-full bg-neutral-50 min-h-screen">
             {/* Page Header */}
-            <div className="bg-[#12b2a2] text-white p-6 rounded-lg shadow-sm mb-6 flex justify-between items-center transition-all mx-4 mt-4">
+            <div className="bg-[#12b2a2] text-white p-4 rounded-lg shadow-sm mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 transition-all mx-4 mt-4">
                 <div>
-                    <h1 className="text-2xl font-bold">Inward Stock</h1>
-                    <p className="text-teal-50 text-sm mt-1">Manage stock incoming from suppliers and other ports</p>
+                    <h1 className="text-xl sm:text-2xl font-bold">Inward Stock</h1>
+                    <p className="text-teal-50 text-xs sm:text-sm mt-0.5 hidden sm:block">Manage stock incoming from suppliers and other ports</p>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-xs sm:text-sm bg-teal-800/30 px-3 py-1.5 rounded-full">
                     <Link to="/warehouse" className="text-teal-50 hover:text-white font-medium transition-colors">Home</Link>
                     <span className="text-teal-200">/</span>
                     <span className="text-white font-medium">Inward Stock</span>
@@ -107,30 +107,31 @@ export default function WarehouseInwardStockList() {
             </div>
 
             {/* Content Card */}
-            <div className="mx-4 mb-8 bg-white rounded-lg shadow-sm border border-neutral-200 flex flex-col">
-                <div className="bg-[#12b2a2] text-white px-6 py-3 rounded-t-lg flex justify-between items-center">
-                    <h2 className="text-lg font-semibold">View Inward Stock List</h2>
+            <div className="mx-4 mb-6 bg-white rounded-lg shadow-sm border border-neutral-200 flex flex-col">
+                <div className="bg-[#12b2a2] text-white px-4 py-3 rounded-t-lg flex justify-between items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-semibold whitespace-nowrap">View Inward Stock</h2>
                     <Link 
                         to="/warehouse/inward-stock/add"
-                        className="bg-white text-[#12b2a2] hover:bg-teal-50 px-4 py-1.5 rounded-md text-sm font-bold transition-colors flex items-center gap-2"
+                        className="bg-white text-[#12b2a2] hover:bg-teal-50 px-3 py-1.5 rounded-md text-xs sm:text-sm font-bold transition-colors flex items-center gap-1.5 whitespace-nowrap"
                     >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
-                        Add Inward Stock
+                        <span className="hidden sm:inline">Add Inward Stock</span>
+                        <span className="sm:hidden">Add Stock</span>
                     </Link>
                 </div>
 
                 {/* Filters */}
-                <div className="p-4 border-b border-neutral-100 flex flex-col lg:flex-row justify-between gap-4">
-                    <div className="flex flex-wrap gap-3">
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm text-neutral-600">Status:</span>
+                <div className="p-3 border-b border-neutral-100 flex flex-col lg:flex-row justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <span className="text-xs sm:text-sm text-neutral-600 whitespace-nowrap">Status:</span>
                             <select 
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="bg-white border border-neutral-300 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-[#12b2a2] outline-none"
+                                className="bg-white border border-neutral-300 rounded px-2 py-1.5 text-xs sm:text-sm focus:ring-1 focus:ring-[#12b2a2] outline-none flex-1 sm:flex-none"
                             >
                                 <option>All Status</option>
                                 <option>Pending</option>
@@ -139,32 +140,32 @@ export default function WarehouseInwardStockList() {
                             </select>
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm text-neutral-600 font-medium">Filter by Date:</span>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <span className="text-xs sm:text-sm text-neutral-600 font-medium whitespace-nowrap">Date:</span>
                             <input 
                                 type="date"
                                 value={selectedDate}
                                 onChange={(e) => setSelectedDate(e.target.value)}
-                                className="bg-white border border-neutral-300 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-[#12b2a2] outline-none"
+                                className="bg-white border border-neutral-300 rounded px-2 py-1.5 text-xs sm:text-sm focus:ring-1 focus:ring-[#12b2a2] outline-none flex-1 sm:flex-none"
                             />
                             <button 
                                 onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                                className="px-3 py-1.5 bg-[#12b2a2] text-white rounded text-xs font-bold hover:bg-[#0e8a7d] transition-colors"
+                                className="px-2 py-1.5 bg-[#12b2a2] text-white rounded text-xs font-bold hover:bg-[#0e8a7d] transition-colors whitespace-nowrap"
                             >
                                 Today
                             </button>
                             {selectedDate && (
                                 <button 
                                     onClick={() => setSelectedDate('')}
-                                    className="text-xs text-red-500 hover:underline font-medium"
+                                    className="text-xs text-red-500 hover:underline font-medium whitespace-nowrap"
                                 >
                                     Clear
                                 </button>
                             )}
                         </div>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                        <div className="relative w-full sm:w-auto">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <circle cx="11" cy="11" r="8"></circle>
                                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -172,10 +173,10 @@ export default function WarehouseInwardStockList() {
                             </span>
                             <input 
                                 type="text"
-                                placeholder="Search supplier, product..."
+                                placeholder="Search..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-9 pr-4 py-1.5 bg-neutral-50 border border-neutral-300 rounded-md text-sm focus:ring-1 focus:ring-[#12b2a2] outline-none w-64"
+                                className="pl-8 pr-3 py-1.5 bg-neutral-50 border border-neutral-300 rounded-md text-xs sm:text-sm focus:ring-1 focus:ring-[#12b2a2] outline-none w-full sm:w-48"
                             />
                         </div>
                     </div>
@@ -185,17 +186,17 @@ export default function WarehouseInwardStockList() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-neutral-50 text-xs font-bold text-neutral-700 uppercase tracking-wider border-b border-neutral-200">
-                                <th className="p-4">Entry Date</th>
-                                <th className="p-4">Invoice #</th>
-                                <th className="p-4">Order Date</th>
-                                <th className="p-4">Delivery Date</th>
-                                <th className="p-4">Supplier</th>
-                                <th className="p-4">Product / Variant</th>
-                                <th className="p-4 text-center">Qty</th>
-                                <th className="p-4 text-center">Status</th>
+                            <tr className="bg-neutral-50 text-[10px] sm:text-xs font-bold text-neutral-700 uppercase tracking-wider border-b border-neutral-200">
+                                <th className="px-3 py-2.5">Entry Date</th>
+                                <th className="px-3 py-2.5">Invoice #</th>
+                                <th className="px-3 py-2.5">Order Date</th>
+                                <th className="px-3 py-2.5">Delivery Date</th>
+                                <th className="px-3 py-2.5">Supplier</th>
+                                <th className="px-3 py-2.5">Product / Variant</th>
+                                <th className="px-3 py-2.5 text-center">Qty</th>
+                                <th className="px-3 py-2.5 text-center">Status</th>
 
-                                <th className="p-4 text-center">Action</th>
+                                <th className="px-3 py-2.5 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-100">
@@ -205,52 +206,52 @@ export default function WarehouseInwardStockList() {
                                 <tr><td colSpan={11} className="p-12 text-center text-neutral-400">No inward stock records found.</td></tr>
                             ) : (
                                 stocks.map((stock) => (
-                                    <tr key={stock._id} className="hover:bg-neutral-50 transition-colors text-sm">
-                                        <td className="p-4 whitespace-nowrap text-neutral-500">{new Date(stock.date).toLocaleDateString()}</td>
-                                        <td className="p-4 font-medium text-[#12b2a2]">{stock.invoiceNumber || 'N/A'}</td>
-                                        <td className="p-4 whitespace-nowrap">{stock.orderDate ? new Date(stock.orderDate).toLocaleDateString() : '-'}</td>
-                                        <td className="p-4 whitespace-nowrap font-medium text-teal-700">{stock.deliveryDate ? new Date(stock.deliveryDate).toLocaleDateString() : '-'}</td>
-                                        <td className="p-4">
-                                            <div className="font-medium">{stock.supplierName}</div>
-                                            {stock.sourcePort && <div className="text-[10px] text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded inline-block mt-1">From: {stock.sourcePort}</div>}
+                                    <tr key={stock._id} className="hover:bg-neutral-50 transition-colors text-xs sm:text-sm">
+                                        <td className="px-3 py-2 whitespace-nowrap text-neutral-500">{new Date(stock.date).toLocaleDateString()}</td>
+                                        <td className="px-3 py-2 font-medium text-[#12b2a2]">{stock.invoiceNumber || 'N/A'}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap">{stock.orderDate ? new Date(stock.orderDate).toLocaleDateString() : '-'}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap font-medium text-teal-700">{stock.deliveryDate ? new Date(stock.deliveryDate).toLocaleDateString() : '-'}</td>
+                                        <td className="px-3 py-2">
+                                            <div className="font-medium truncate max-w-[150px] sm:max-w-[200px]" title={stock.supplierName}>{stock.supplierName}</div>
+                                            {stock.sourcePort && <div className="text-[9px] sm:text-[10px] text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded inline-block mt-0.5">From: {stock.sourcePort}</div>}
                                         </td>
-                                        <td className="p-4">
-                                            <div className="font-medium">{stock.productName}</div>
-                                            <div className="text-xs text-neutral-500">{stock.variant}</div>
+                                        <td className="px-3 py-2">
+                                            <div className="font-medium truncate max-w-[150px] sm:max-w-[200px]" title={stock.productName}>{stock.productName}</div>
+                                            <div className="text-[10px] sm:text-xs text-neutral-500">{stock.variant}</div>
                                         </td>
-                                        <td className="p-4 text-center font-bold">{stock.quantity}</td>
-                                        <td className="p-4 text-center">
+                                        <td className="px-3 py-2 text-center font-bold">{stock.quantity}</td>
+                                        <td className="px-3 py-2 text-center">
 
                                             <select 
                                                 value={stock.status}
                                                 onChange={(e) => handleStatusUpdate(stock._id, e.target.value)}
-                                                className={`px-2 py-1 rounded-full text-[10px] font-bold border-none outline-none cursor-pointer ${getStatusColor(stock.status)}`}
+                                                className={`px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold border-none outline-none cursor-pointer ${getStatusColor(stock.status)}`}
                                             >
                                                 <option value="Pending">Pending</option>
                                                 <option value="Received">Received</option>
                                                 <option value="Cancelled">Cancelled</option>
                                             </select>
                                         </td>
-                                        <td className="p-4">
-                                            <div className="flex items-center justify-center gap-2">
+                                        <td className="px-3 py-2">
+                                            <div className="flex items-center justify-center gap-1.5">
                                                 <button 
                                                     onClick={() => navigate(`/warehouse/inward-stock/edit/${stock._id}`, { state: { stock } })}
-                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                    className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                                     title="Edit"
                                                 >
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"></path>
                                                     </svg>
                                                 </button>
                                                 <button 
                                                     onClick={() => handleDelete(stock._id)}
-                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                    className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
                                                     title="Delete"
                                                 >
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                         <polyline points="3 6 5 6 21 6"></polyline>
-                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
                                                         <line x1="10" y1="11" x2="10" y2="17"></line>
                                                         <line x1="14" y1="11" x2="14" y2="17"></line>
                                                     </svg>

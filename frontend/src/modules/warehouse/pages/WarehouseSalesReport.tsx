@@ -115,108 +115,112 @@ export default function WarehouseSalesReport() {
                     </div>
 
                     {/* Controls Panel */}
-                    <div className="p-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-neutral-100">
+                    <div className="p-3 border-b border-neutral-100 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
                         {/* Left Side: Date Range Filter */}
-                        <div className="flex items-center gap-2">
-                            <label className="text-sm text-neutral-600 whitespace-nowrap">From - To Date:</label>
-                            <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
+                            <label className="text-xs sm:text-sm text-neutral-600 whitespace-nowrap">Date Range:</label>
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
                                 <input
                                     type="date"
                                     aria-label="From date"
                                     value={fromDate}
                                     max={toDate || undefined}
                                     onChange={(e) => setFromDate(e.target.value)}
-                                    className="px-3 py-2 bg-white border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none"
+                                    className="px-2 py-1.5 bg-white border border-neutral-300 rounded text-xs sm:text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none w-full"
                                 />
-                                <span className="text-neutral-400 text-xs">to</span>
+                                <span className="text-neutral-400 text-[10px] sm:text-xs text-center hidden sm:block">to</span>
                                 <input
                                     type="date"
                                     aria-label="To date"
                                     value={toDate}
                                     min={fromDate || undefined}
                                     onChange={(e) => setToDate(e.target.value)}
-                                    className="px-3 py-2 bg-white border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none"
+                                    className="px-2 py-1.5 bg-white border border-neutral-300 rounded text-xs sm:text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none w-full"
                                 />
                             </div>
                             <button
                                 onClick={handleClearDates}
-                                className="px-3 py-2 bg-neutral-700 hover:bg-neutral-800 text-white text-sm rounded transition-colors"
+                                className="px-2.5 py-1.5 bg-neutral-700 hover:bg-neutral-800 text-white text-xs sm:text-sm rounded transition-colors whitespace-nowrap w-full sm:w-auto"
                             >
                                 Clear
                             </button>
                         </div>
 
                         {/* Right Side: Per Page, Export, Search */}
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                            {/* Per Page */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-neutral-600">Per Page:</span>
-                                <select
-                                    value={rowsPerPage}
-                                    onChange={(e) => {
-                                        setRowsPerPage(Number(e.target.value));
-                                        setCurrentPage(1);
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                            <div className="flex justify-between sm:justify-start items-center gap-3 w-full sm:w-auto">
+                                {/* Per Page */}
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs sm:text-sm text-neutral-600 whitespace-nowrap">Per Page:</span>
+                                    <select
+                                        value={rowsPerPage}
+                                        onChange={(e) => {
+                                            setRowsPerPage(Number(e.target.value));
+                                            setCurrentPage(1);
+                                        }}
+                                        className="bg-white border border-neutral-300 rounded py-1 px-2 text-xs sm:text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer"
+                                    >
+                                        <option value={10}>10</option>
+                                        <option value={20}>20</option>
+                                        <option value={50}>50</option>
+                                        <option value={100}>100</option>
+                                    </select>
+                                </div>
+
+                                {/* Export Button */}
+                                <button
+                                    onClick={() => {
+                                        const headers = ['Order Id', 'Shop Name', 'Order Item Id', 'Product', 'Variant', 'Total', 'Date'];
+                                        const csvContent = [
+                                            headers.join(','),
+                                            ...reports.map(report => [
+                                                report.orderId,
+                                                `"${report.shopName}"`,
+                                                report.orderItemId,
+                                                `"${report.product}"`,
+                                                `"${report.variant}"`,
+                                                report.total,
+                                                report.date
+                                            ].join(','))
+                                        ].join('\n');
+                                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                                        const link = document.createElement('a');
+                                        const url = URL.createObjectURL(blob);
+                                        link.setAttribute('href', url);
+                                        link.setAttribute('download', `sales_report_${new Date().toISOString().split('T')[0]}.csv`);
+                                        link.style.visibility = 'hidden';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
                                     }}
-                                    className="bg-white border border-neutral-300 rounded py-1.5 px-3 text-sm focus:ring-1 focus:ring-teal-500 focus:outline-none cursor-pointer"
+                                    className="bg-[#12b2a2] hover:bg-[#0e7490] text-white px-2.5 py-1.5 rounded text-xs sm:text-sm font-medium flex items-center gap-1 transition-colors whitespace-nowrap"
                                 >
-                                    <option value={10}>10</option>
-                                    <option value={20}>20</option>
-                                    <option value={50}>50</option>
-                                    <option value={100}>100</option>
-                                </select>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Export
+                                </button>
                             </div>
 
-                            {/* Export Button */}
-                            <button
-                                onClick={() => {
-                                    const headers = ['Order Id', 'Shop Name', 'Order Item Id', 'Product', 'Variant', 'Total', 'Date'];
-                                    const csvContent = [
-                                        headers.join(','),
-                                        ...reports.map(report => [
-                                            report.orderId,
-                                            `"${report.shopName}"`,
-                                            report.orderItemId,
-                                            `"${report.product}"`,
-                                            `"${report.variant}"`,
-                                            report.total,
-                                            report.date
-                                        ].join(','))
-                                    ].join('\n');
-                                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                                    const link = document.createElement('a');
-                                    const url = URL.createObjectURL(blob);
-                                    link.setAttribute('href', url);
-                                    link.setAttribute('download', `sales_report_${new Date().toISOString().split('T')[0]}.csv`);
-                                    link.style.visibility = 'hidden';
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                }}
-                                className="bg-[#12b2a2] hover:bg-[#0e7490] text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 transition-colors"
-                            >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                Export
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </button>
-
                             {/* Search */}
-                            <div className="relative">
-                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 text-xs">Search:</span>
+                            <div className="relative w-full sm:w-auto">
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                </span>
                                 <input
                                     type="text"
-                                    className="pl-14 pr-3 py-1.5 bg-neutral-100 border-none rounded text-sm focus:ring-1 focus:ring-teal-500 w-full sm:w-48"
+                                    className="pl-8 pr-3 py-1.5 bg-neutral-100 border border-neutral-200 rounded text-xs sm:text-sm focus:ring-1 focus:ring-teal-500 w-full sm:w-48 outline-none"
                                     value={searchTerm}
                                     onChange={(e) => {
                                         setSearchTerm(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    placeholder=""
+                                    placeholder="Search..."
                                 />
                             </div>
                         </div>
@@ -233,66 +237,66 @@ export default function WarehouseSalesReport() {
                         ) : (
                             <table className="w-full text-left border-collapse border border-neutral-200">
                                 <thead>
-                                    <tr className="bg-neutral-50 text-xs font-bold text-neutral-800">
+                                    <tr className="bg-neutral-50 text-[10px] sm:text-xs font-bold text-neutral-800 uppercase tracking-wider">
                                         <th
-                                            className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
+                                            className="px-3 py-2.5 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
                                             onClick={() => handleSort('orderId')}
                                         >
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1 whitespace-nowrap">
                                                 Order Id
                                                 <SortIcon column="orderId" />
                                             </div>
                                         </th>
                                         <th
-                                            className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
+                                            className="px-3 py-2.5 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
                                             onClick={() => handleSort('shopName')}
                                         >
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1 whitespace-nowrap">
                                                 Shop Name
                                                 <SortIcon column="shopName" />
                                             </div>
                                         </th>
                                         <th
-                                            className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
+                                            className="px-3 py-2.5 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
                                             onClick={() => handleSort('orderItemId')}
                                         >
-                                            <div className="flex items-center gap-1">
-                                                Order Item Id
+                                            <div className="flex items-center gap-1 whitespace-nowrap">
+                                                Order Item
                                                 <SortIcon column="orderItemId" />
                                             </div>
                                         </th>
                                         <th
-                                            className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
+                                            className="px-3 py-2.5 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
                                             onClick={() => handleSort('product')}
                                         >
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1 whitespace-nowrap">
                                                 Product
                                                 <SortIcon column="product" />
                                             </div>
                                         </th>
                                         <th
-                                            className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
+                                            className="px-3 py-2.5 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
                                             onClick={() => handleSort('variant')}
                                         >
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1 whitespace-nowrap">
                                                 Variant
                                                 <SortIcon column="variant" />
                                             </div>
                                         </th>
                                         <th
-                                            className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
+                                            className="px-3 py-2.5 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
                                             onClick={() => handleSort('total')}
                                         >
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1 whitespace-nowrap">
                                                 Total
                                                 <SortIcon column="total" />
                                             </div>
                                         </th>
                                         <th
-                                            className="p-4 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
+                                            className="px-3 py-2.5 border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
                                             onClick={() => handleSort('date')}
                                         >
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1 whitespace-nowrap">
                                                 Date
                                                 <SortIcon column="date" />
                                             </div>
@@ -308,18 +312,18 @@ export default function WarehouseSalesReport() {
                                         </tr>
                                     ) : (
                                         reports.map((report, index) => (
-                                            <tr key={index} className="hover:bg-neutral-50">
-                                                <td className="p-4 border border-neutral-200 text-sm">
-                                                    <span className="text-blue-600 hover:text-blue-700 font-medium">
+                                            <tr key={index} className="hover:bg-neutral-50 text-[10px] sm:text-xs">
+                                                <td className="px-3 py-2 border border-neutral-200">
+                                                    <span className="text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap">
                                                         {report.orderId}
                                                     </span>
                                                 </td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{report.shopName}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{report.orderItemId}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{report.product}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{report.variant}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{report.total.toFixed(2)}</td>
-                                                <td className="p-4 border border-neutral-200 text-sm text-neutral-900">{report.date}</td>
+                                                <td className="px-3 py-2 border border-neutral-200 text-neutral-900 truncate max-w-[100px] sm:max-w-none" title={report.shopName}>{report.shopName}</td>
+                                                <td className="px-3 py-2 border border-neutral-200 text-neutral-900 truncate max-w-[80px] sm:max-w-none" title={report.orderItemId}>{report.orderItemId}</td>
+                                                <td className="px-3 py-2 border border-neutral-200 text-neutral-900 truncate max-w-[120px] sm:max-w-none" title={report.product}>{report.product}</td>
+                                                <td className="px-3 py-2 border border-neutral-200 text-neutral-900 truncate max-w-[80px] sm:max-w-none" title={report.variant}>{report.variant}</td>
+                                                <td className="px-3 py-2 border border-neutral-200 text-neutral-900 font-medium whitespace-nowrap">₹{report.total.toFixed(2)}</td>
+                                                <td className="px-3 py-2 border border-neutral-200 text-neutral-900 whitespace-nowrap">{report.date}</td>
                                             </tr>
                                         ))
                                     )}
