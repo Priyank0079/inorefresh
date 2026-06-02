@@ -985,27 +985,34 @@ export const cancelOrder = async (req: Request, res: Response) => {
             if (!buyer) { buyer = await HorecaUser.findById(order.customer).session(session); if (buyer) buyerType = 'horeca'; }
             if (!buyer) { buyer = await RetailerUser.findById(order.customer).session(session); if (buyer) buyerType = 'retailer'; }
 
-            if (buyer) {
-                const opening = buyer.walletAmount || 0;
-                buyer.walletAmount = opening + refundAmount;
-                if (session) { await buyer.save({ session }); } else { await buyer.save(); }
-
-                const refundTxn = new WalletTransaction({
-                    userId: buyer._id,
-                    userType: buyerType,
-                    amount: refundAmount,
-                    type: 'Credit',
-                    description: `Refund for cancelled order #${order.orderNumber}`,
-                    reference: `CANCEL-REF-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-                    relatedOrder: order._id,
-                    openingBalance: opening,
-                    closingBalance: opening + refundAmount,
-                    status: 'Completed',
-                });
-                if (session) { await refundTxn.save({ session }); } else { await refundTxn.save(); }
-
-                order.paymentStatus = 'Refunded';
+            // HARD GUARD: a refund is owed but we can't resolve the buyer wallet.
+            // Abort instead of cancelling silently — never lose the customer's
+            // money. The transaction rolls back so the cancel can be retried.
+            if (!buyer) {
+                throw new Error(
+                    `Refund of ₹${refundAmount} owed but buyer not found for order #${order.orderNumber}. Cancellation aborted to avoid losing the refund.`
+                );
             }
+
+            const opening = buyer.walletAmount || 0;
+            buyer.walletAmount = opening + refundAmount;
+            if (session) { await buyer.save({ session }); } else { await buyer.save(); }
+
+            const refundTxn = new WalletTransaction({
+                userId: buyer._id,
+                userType: buyerType,
+                amount: refundAmount,
+                type: 'Credit',
+                description: `Refund for cancelled order #${order.orderNumber}`,
+                reference: `CANCEL-REF-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                relatedOrder: order._id,
+                openingBalance: opening,
+                closingBalance: opening + refundAmount,
+                status: 'Completed',
+            });
+            if (session) { await refundTxn.save({ session }); } else { await refundTxn.save(); }
+
+            order.paymentStatus = 'Refunded';
         }
 
         order.status = 'Cancelled';
