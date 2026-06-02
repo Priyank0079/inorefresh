@@ -35,7 +35,21 @@ const WarehouseReturnRequestAlert: React.FC<WarehouseReturnRequestAlertProps> = 
 
   if (!alert) return null;
 
+  // Stop the looping alert sound immediately on any interaction.
+  const stopSound = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  };
+
+  const handleClose = () => {
+    stopSound();
+    onClose();
+  };
+
   const goToInbox = () => {
+    stopSound();
     onClose();
     navigate('/warehouse/return/inbox');
   };
@@ -60,7 +74,7 @@ const WarehouseReturnRequestAlert: React.FC<WarehouseReturnRequestAlertProps> = 
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-white hover:bg-white hover:bg-opacity-10 p-1 rounded-full transition-colors"
             aria-label="Close"
           >
@@ -102,7 +116,7 @@ const WarehouseReturnRequestAlert: React.FC<WarehouseReturnRequestAlertProps> = 
 
           <div className="flex gap-3">
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="flex-1 py-3 rounded-xl font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors"
             >
               Dismiss

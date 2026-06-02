@@ -16,8 +16,22 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [statusError, setStatusError] = useState('');
 
+  // Stop the looping alert sound immediately (don't wait for unmount / network).
+  const stopSound = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  };
+
+  const handleClose = () => {
+    stopSound();
+    onClose();
+  };
+
   const handleStatusUpdate = async (status: string) => {
     if (!notification) return;
+    stopSound(); // kill the sound the instant the manager acts, before the API call
     setLoading(true);
     try {
       await updateOrderStatus(notification.orderId, { status: status as any });
@@ -102,7 +116,7 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-white hover:bg-white hover:bg-opacity-10 p-1 rounded-full transition-colors"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -195,7 +209,7 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
                  {loading ? 'Please wait...' : 'Accept Order'}
                </button>
                <button
-                 onClick={() => setShowRejectConfirm(true)}
+                 onClick={() => { stopSound(); setShowRejectConfirm(true); }}
                  disabled={loading}
                  className="flex-1 py-4 rounded-xl font-bold text-white shadow-lg bg-red-600 hover:bg-red-700 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                >
@@ -204,7 +218,7 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
              </div>
           ) : (
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="w-full py-4 rounded-xl font-bold text-white shadow-lg transition-transform active:scale-95 bg-blue-600 hover:bg-blue-700"
             >
               Acknowledge & Dismiss

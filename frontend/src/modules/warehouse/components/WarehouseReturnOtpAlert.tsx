@@ -34,6 +34,19 @@ const WarehouseReturnOtpAlert: React.FC<WarehouseReturnOtpAlertProps> = ({ alert
 
   if (!alert) return null;
 
+  // Stop the looping alert sound immediately on any interaction.
+  const stopSound = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  };
+
+  const handleClose = () => {
+    stopSound();
+    onClose();
+  };
+
   const otpDigits = String(alert.otp || '').split('');
 
   return (
@@ -56,7 +69,7 @@ const WarehouseReturnOtpAlert: React.FC<WarehouseReturnOtpAlertProps> = ({ alert
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-white hover:bg-white hover:bg-opacity-10 p-1 rounded-full transition-colors"
             aria-label="Close"
           >
@@ -106,7 +119,7 @@ const WarehouseReturnOtpAlert: React.FC<WarehouseReturnOtpAlertProps> = ({ alert
           </div>
 
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="w-full py-4 rounded-xl font-bold text-white shadow-lg transition-transform active:scale-95 bg-teal-600 hover:bg-teal-700"
           >
             Got it — OTP shared

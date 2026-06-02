@@ -224,6 +224,21 @@ export default function RiderInspectionControl() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading Order...</div>;
   if (!order) return <div className="p-8 text-center text-gray-500">Order not found</div>;
 
+  // ── Derived UI state ─────────────────────────────────────────────────────────
+  const isReturnOrder = order.status === 'Partially Returned' || order.status === 'Fully Returned';
+  // Returns that still need the rider to act on them (collect or deliver to warehouse).
+  const activeReturns = returns.filter((r) =>
+    ['Approved', 'COLLECTED_BY_RIDER', 'IN_TRANSIT_TO_WAREHOUSE'].includes(r.status)
+  );
+  const hasPendingRiderWork = activeReturns.length > 0;
+  const isVerificationActive = order.status === 'Delivered' && !order.isVerifiedByCustomer;
+  // The whole return flow is finished when every return reached the warehouse.
+  const returnsAllComplete =
+    isReturnOrder && !loadingReturns && returns.length > 0 &&
+    returns.every((r) => ['RECEIVED_AT_WAREHOUSE', 'Rejected'].includes(r.status));
+  // Show the payout warning ONLY while there is real action left to do.
+  const showPayoutWarning = isVerificationActive || hasPendingRiderWork;
+
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* Header */}
@@ -243,16 +258,18 @@ export default function RiderInspectionControl() {
       </div>
 
       <div className="p-4 space-y-4">
-        {/* Payout Warning Banner */}
-        <div className="bg-gradient-to-r from-amber-500 to-red-600 text-white p-4 rounded-xl shadow-md flex gap-3">
-          <div className="text-2xl">⚠️</div>
-          <div>
-            <p className="font-bold text-sm tracking-wide">MANDATORY RIDER VERIFICATION</p>
-            <p className="text-xs opacity-90 font-semibold leading-relaxed mt-0.5">
-              You must verify all returned & accepted items with the customer before leaving. If verification is not completed, your delivery payout will NOT be processed!
-            </p>
+        {/* Payout Warning Banner — only while there is real action left to do */}
+        {showPayoutWarning && (
+          <div className="bg-gradient-to-r from-amber-500 to-red-600 text-white p-4 rounded-xl shadow-md flex gap-3">
+            <div className="text-2xl">⚠️</div>
+            <div>
+              <p className="font-bold text-sm tracking-wide">MANDATORY RIDER VERIFICATION</p>
+              <p className="text-xs opacity-90 font-semibold leading-relaxed mt-0.5">
+                You must verify all returned & accepted items with the customer before leaving. If verification is not completed, your delivery payout will NOT be processed!
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Order Meta */}
         <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
@@ -322,23 +339,56 @@ export default function RiderInspectionControl() {
         )}
 
         {/* Returns Checklist and Collection UI */}
-        {(order.status === 'Partially Returned' || order.status === 'Fully Returned') && (
+        {isReturnOrder && (
           <div className="space-y-4">
-            <div className="bg-amber-50 rounded-xl border border-amber-200 p-4">
-              <h2 className="text-sm font-bold text-amber-900 flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-amber-600" />
-                Return Collection Pending
-              </h2>
-              <p className="text-xs text-amber-700 mt-1">
-                Customer returns are approved. Please collect the specified items from the customer. You must upload Proof of Pickup Evidence for each item.
-              </p>
-            </div>
+            {/* Header reflects actual state: pending collection vs. all done */}
+            {hasPendingRiderWork && (
+              <div className="bg-amber-50 rounded-xl border border-amber-200 p-4">
+                <h2 className="text-sm font-bold text-amber-900 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-amber-600" />
+                  Return Collection Pending
+                </h2>
+                <p className="text-xs text-amber-700 mt-1">
+                  Customer returns are approved. Please collect the specified items from the customer. You must upload Proof of Pickup Evidence for each item.
+                </p>
+              </div>
+            )}
 
             {loadingReturns ? (
               <div className="text-center text-gray-500 py-4">Loading return items...</div>
             ) : returns.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center text-gray-500">
-                No returns found to collect.
+              /* No return records to act on — flow is complete / nothing assigned to rider */
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center space-y-3">
+                <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto text-green-600">
+                  <CheckCircle className="w-7 h-7" />
+                </div>
+                <h2 className="text-base font-bold text-gray-900">Return Process Complete</h2>
+                <p className="text-sm text-gray-500 font-medium">
+                  There are no return items pending collection for this order. Your task here is done.
+                </p>
+                <button
+                  onClick={() => navigate('/delivery/orders')}
+                  className="w-full py-3 bg-neutral-900 hover:bg-neutral-800 text-white font-bold rounded-xl transition-all"
+                >
+                  Back to Deliveries
+                </button>
+              </div>
+            ) : returnsAllComplete ? (
+              /* All returns reached the warehouse — show a clean completed summary */
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center space-y-3">
+                <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto text-green-600">
+                  <CheckCheck className="w-7 h-7" />
+                </div>
+                <h2 className="text-base font-bold text-gray-900">All Returns Delivered ✅</h2>
+                <p className="text-sm text-gray-500 font-medium">
+                  Every returned item has been collected and handed over to the wholeseller. Your task for this order is complete.
+                </p>
+                <button
+                  onClick={() => navigate('/delivery/orders')}
+                  className="w-full py-3 bg-neutral-900 hover:bg-neutral-800 text-white font-bold rounded-xl transition-all"
+                >
+                  Back to Deliveries
+                </button>
               </div>
             ) : (
               <div className="space-y-4">
