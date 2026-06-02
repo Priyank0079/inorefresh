@@ -168,6 +168,17 @@ export async function executeReturnRefund(returnId: string): Promise<RefundResul
       const customerDoc = buyer?.doc ?? null;
       const buyerUserType = buyer?.userType ?? 'CUSTOMER';
 
+      // HARD GUARD: never mark a return REFUNDED unless we can actually credit a
+      // real buyer wallet. Without this, a missing buyer silently flips the
+      // return to REFUNDED with no credit — money lost (root cause of the
+      // ₹420 wallet shortfall). Aborting the txn keeps the return retryable.
+      if (!customerDoc) {
+        throw Object.assign(
+          new Error('BUYER_NOT_FOUND_FOR_REFUND'),
+          { isUserError: true }
+        );
+      }
+
       const refundAmount = computeReturnRefundAmount(
         orderItem,
         returnDoc.quantity,
