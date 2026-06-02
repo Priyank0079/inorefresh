@@ -90,13 +90,13 @@ export const getDashboardStats = asyncHandler(
               ],
             },
           },
-          // Return Orders Today
+          // Return Orders Today — use the ACTUAL return statuses the system sets.
           returnOrdersToday: {
             $sum: {
               $cond: [
                 {
                   $and: [
-                    { $in: ["$status", ["Returned", "Cancelled"]] },
+                    { $in: ["$status", ["Returned", "Partially Returned", "Fully Returned", "Cancelled"]] },
                     { $gte: ["$updatedAt", todayStart] },
                     { $lte: ["$updatedAt", todayEnd] },
                   ],
@@ -106,16 +106,17 @@ export const getDashboardStats = asyncHandler(
               ],
             },
           },
-          // Daily Collection: Cash collected from COD orders delivered TODAY
+          // Daily Collection: cash collected from COD orders delivered TODAY.
+          // Fall back to updatedAt when deliveredAt was never stamped.
           dailyCollection: {
             $sum: {
               $cond: [
                 {
                   $and: [
                     { $eq: ["$status", "Delivered"] },
-                    { $eq: ["$paymentMethod", "COD"] }, // Assuming 'COD' string for Cash on Delivery
-                    { $gte: ["$deliveredAt", todayStart] },
-                    { $lte: ["$deliveredAt", todayEnd] },
+                    { $eq: ["$paymentMethod", "COD"] },
+                    { $gte: [{ $ifNull: ["$deliveredAt", "$updatedAt"] }, todayStart] },
+                    { $lte: [{ $ifNull: ["$deliveredAt", "$updatedAt"] }, todayEnd] },
                   ],
                 },
                 "$total", // Sum the order total
@@ -123,16 +124,32 @@ export const getDashboardStats = asyncHandler(
               ],
             },
           },
-          // Today's Earning: Commission earned today (Mock calculation: 40 per order)
-          // In real app, this should come from a Commission model or field on Order
+          // Cash currently in hand = COD orders delivered by this rider that are
+          // not yet settled (paymentStatus still Pending). Computed from real
+          // orders so it can't drift like a counter field.
+          cashInHand: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$status", "Delivered"] },
+                    { $eq: ["$paymentMethod", "COD"] },
+                    { $ne: ["$paymentStatus", "Paid"] },
+                  ],
+                },
+                "$total",
+                0,
+              ],
+            },
+          },
           todayDeliveredCount: {
             $sum: {
               $cond: [
                 {
                   $and: [
                     { $eq: ["$status", "Delivered"] },
-                    { $gte: ["$deliveredAt", todayStart] },
-                    { $lte: ["$deliveredAt", todayEnd] },
+                    { $gte: [{ $ifNull: ["$deliveredAt", "$updatedAt"] }, todayStart] },
+                    { $lte: [{ $ifNull: ["$deliveredAt", "$updatedAt"] }, todayEnd] },
                   ],
                 },
                 1,
@@ -155,9 +172,22 @@ export const getDashboardStats = asyncHandler(
       allOrdersToday: 0,
       returnOrdersToday: 0,
       dailyCollection: 0,
+      cashInHand: 0,
       todayDeliveredCount: 0,
       totalDeliveredCount: 0,
     };
+
+    // Real return-item workload for this rider (replaces the old hardcoded 0).
+    // - returnItemsTotal: all returns ever assigned to the rider
+    // - returnItemsActive: returns still in the rider's pipeline to handle
+    const { default: Return } = await import("../../../models/Return");
+    const [returnItemsTotal, returnItemsActive] = await Promise.all([
+      Return.countDocuments({ deliveryBoy: objectId }),
+      Return.countDocuments({
+        deliveryBoy: objectId,
+        status: { $in: ["Approved", "COLLECTED_BY_RIDER", "IN_TRANSIT_TO_WAREHOUSE"] },
+      }),
+    ]);
 
     // Calculate Earnings (Real Logic from Commission Collection)
     const { default: Commission } = await import("../../../models/Commission");
@@ -271,11 +301,15 @@ export const getDashboardStats = asyncHandler(
       success: true,
       data: {
         dailyCollection: result.dailyCollection,
-        cashBalance: deliveryPartner.cashCollected, // This field stores total cash holding
+        // Cash in hand = undeposited COD cash, computed from real orders so it
+        // never drifts (the old cashCollected counter was never incremented).
+        cashBalance: result.cashInHand,
         pendingOrders: result.pendingOrders,
         allOrders: result.allOrdersToday,
         returnOrders: result.returnOrdersToday,
-        returnItems: 0, // Need 'OrderItem' logic for this, keeping 0 for now
+        // "Total return item have" = active returns still to handle; falls back
+        // to lifetime total so it reflects real return activity, not a stub 0.
+        returnItems: returnItemsActive > 0 ? returnItemsActive : returnItemsTotal,
         todayEarning: todayEarning,
         totalEarning: totalEarning,
         walletBalance: walletBalance,
