@@ -288,9 +288,9 @@ export default function WarehouseReturnRequest() {
                         </div>
                     )}
 
-                    {/* Table */}
+                    {/* Table — desktop/tablet only */}
                     {!loading && !error && (
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto hidden md:block">
                             <table className="w-full text-left border-collapse border border-neutral-200">
                                 <thead>
                                     <tr className="bg-neutral-50 text-xs font-bold text-neutral-800">
@@ -432,6 +432,55 @@ export default function WarehouseReturnRequest() {
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                    )}
+
+                    {/* Mobile card list */}
+                    {!loading && !error && (
+                        <div className="md:hidden p-3 space-y-3">
+                            {displayedRequests.length === 0 ? (
+                                <div className="p-8 text-center text-neutral-500 text-sm">No data available</div>
+                            ) : (
+                                displayedRequests.map((request, index) => (
+                                    <div key={index} className="bg-white border border-neutral-200 rounded-xl p-4 shadow-sm">
+                                        <div className="flex justify-between items-start gap-3">
+                                            <div className="min-w-0">
+                                                <p className="font-bold text-neutral-900 text-sm truncate">{request.productName || request.product}</p>
+                                                <p className="text-xs text-neutral-500 mt-0.5 truncate">{request.shopName}</p>
+                                                <p className="text-[11px] text-neutral-400 mt-0.5">#{String(request.orderItemId || '').slice(-8).toUpperCase()}</p>
+                                            </div>
+                                            <span className={`flex-shrink-0 px-2 py-1 rounded-full text-[10px] font-bold ${
+                                                request.status === 'Approved' ? 'bg-green-100 text-green-700' :
+                                                request.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                                request.status === 'REFUNDED' ? 'bg-blue-100 text-blue-700' :
+                                                'bg-yellow-100 text-yellow-700'
+                                            }`}>
+                                                {request.status}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-neutral-100 text-center">
+                                            <div>
+                                                <p className="text-[9px] uppercase font-semibold text-neutral-400 tracking-wider">Qty</p>
+                                                <p className="text-sm font-bold text-neutral-900 mt-0.5">{request.quantity}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] uppercase font-semibold text-neutral-400 tracking-wider">Total</p>
+                                                <p className="text-sm font-bold text-neutral-900 mt-0.5">₹{(request.total || request.amount || 0).toFixed(2)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] uppercase font-semibold text-neutral-400 tracking-wider">Date</p>
+                                                <p className="text-[11px] font-medium text-neutral-700 mt-1">{request.date}</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setViewingRequest(request)}
+                                            className="w-full mt-3 py-2 bg-teal-50 text-[#12b2a2] font-semibold rounded-lg text-sm hover:bg-teal-100 transition-colors"
+                                        >
+                                            View Details
+                                        </button>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     )}
 

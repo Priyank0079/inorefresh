@@ -767,8 +767,8 @@ export default function WarehouseAddProduct() {
 
                 {/* Extra variants table */}
                 {variations.length > 0 ? (
-                  <div className="overflow-hidden border border-neutral-200 rounded-xl">
-                    <table className="w-full text-sm border-collapse">
+                  <div className="overflow-x-auto border border-neutral-200 rounded-xl">
+                    <table className="w-full min-w-[480px] text-sm border-collapse">
                       <thead>
                         <tr className="bg-neutral-50 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
                           <th className="px-4 py-3 text-left border-b border-neutral-200">Label</th>
