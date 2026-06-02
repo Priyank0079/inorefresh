@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Camera, CheckCircle, Clock, MapPin, Package,
   ShieldCheck, XCircle, Upload, Phone, Navigation,
-  Truck, KeyRound, Building2, User, CheckCheck
+  Truck, KeyRound, Building2, User, CheckCheck,
+  Image as ImageIcon
 } from 'lucide-react';
 import api from '../../../services/api/config';
 import toast from 'react-hot-toast';
@@ -110,20 +111,28 @@ export default function RiderInspectionControl() {
   const handleRiderFileUpload = async (returnId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    const fileArr = Array.from(files);
+    for (const f of fileArr) {
+      if (!f.type.startsWith("image/")) { toast.error("Please select valid image files only."); e.target.value = ''; return; }
+      if (f.size > 5 * 1024 * 1024) { toast.error("Each image must be under 5MB."); e.target.value = ''; return; }
+    }
     setUploadingReturnId(returnId);
-    const toastId = toast.loading("Uploading pickup proof...");
+    const toastId = toast.loading(`Uploading ${fileArr.length} photo${fileArr.length > 1 ? 's' : ''}...`);
     try {
-      const file = files[0];
-      const result = await uploadImage(file, "returns-rider");
+      const uploaded: string[] = [];
+      for (const f of fileArr) {
+        const result = await uploadImage(f, "returns-rider");
+        uploaded.push(result.secureUrl || result.url);
+      }
       const currentPhotos = pickupEvidence[returnId] || [];
-      const updatedPhotos = [...currentPhotos, result.secureUrl || result.url];
-      setPickupEvidence(prev => ({ ...prev, [returnId]: updatedPhotos }));
-      toast.success("Pickup proof uploaded!", { id: toastId });
+      setPickupEvidence(prev => ({ ...prev, [returnId]: [...currentPhotos, ...uploaded] }));
+      toast.success(`${uploaded.length} photo${uploaded.length > 1 ? 's' : ''} uploaded!`, { id: toastId });
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Failed to upload photo", { id: toastId });
     } finally {
       setUploadingReturnId(null);
+      e.target.value = '';
     }
   };
 
@@ -409,17 +418,40 @@ export default function RiderInspectionControl() {
                             1. Photo of returned fish with scale/packaging (Required)<br />
                             2. Weight machine photo (if possible)
                           </p>
-                          <label className="flex items-center justify-center gap-2 w-full py-2 px-4 border border-dashed border-gray-300 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">
-                            <Upload className="w-4 h-4" />
-                            {uploadingReturnId === ret._id ? "Uploading Photo..." : "Add Proof Photos"}
-                            <input
-                              type="file"
-                              accept="image/*" capture="environment"
-                              className="hidden"
-                              disabled={uploadingReturnId !== null}
-                              onChange={(e) => handleRiderFileUpload(ret._id, e)}
-                            />
-                          </label>
+                          {uploadingReturnId === ret._id ? (
+                            <div className="flex items-center justify-center gap-2 w-full py-2 px-4 border border-dashed border-gray-300 rounded-lg text-xs font-bold text-gray-600">
+                              <Upload className="w-4 h-4 animate-pulse" /> Uploading Photo...
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              {/* Gallery — opens photo gallery / file picker (supports multiple) */}
+                              <label className="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-gray-300 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">
+                                <ImageIcon className="w-4 h-4" />
+                                Gallery
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  className="hidden"
+                                  disabled={uploadingReturnId !== null}
+                                  onChange={(e) => handleRiderFileUpload(ret._id, e)}
+                                />
+                              </label>
+                              {/* Camera — opens the device camera to take a live photo */}
+                              <label className="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-teal-300 bg-teal-50/40 rounded-lg text-xs font-bold text-teal-700 hover:bg-teal-50 cursor-pointer">
+                                <Camera className="w-4 h-4" />
+                                Camera
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  capture="environment"
+                                  className="hidden"
+                                  disabled={uploadingReturnId !== null}
+                                  onChange={(e) => handleRiderFileUpload(ret._id, e)}
+                                />
+                              </label>
+                            </div>
+                          )}
                           {pickupEvidence[ret._id] && pickupEvidence[ret._id].length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-3">
                               {pickupEvidence[ret._id].map((imgUrl: string, imgIdx: number) => (

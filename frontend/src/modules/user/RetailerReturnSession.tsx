@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Upload, XCircle, AlertCircle, Clock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Upload, XCircle, AlertCircle, Clock, Camera, Image as ImageIcon } from 'lucide-react';
 import api from '../../services/api/config'; // Wait, let's just mock it or assume simple fetch API
 import toast from 'react-hot-toast';
 import { uploadImage } from '../../services/api/uploadService';
@@ -91,26 +91,39 @@ export default function RetailerReturnSession() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const file = files[0];
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size must be under 5MB. Please choose a smaller file.");
-      e.target.value = '';
-      return;
+    const fileArr = Array.from(files);
+    // Validate each selected file
+    for (const f of fileArr) {
+      if (!f.type.startsWith("image/")) {
+        toast.error("Please select valid image files only.");
+        e.target.value = '';
+        return;
+      }
+      if (f.size > 5 * 1024 * 1024) {
+        toast.error("Each image must be under 5MB. Please choose smaller files.");
+        e.target.value = '';
+        return;
+      }
     }
 
     setUploadingIndex(index);
-    const toastId = toast.loading("Uploading photo...");
+    const toastId = toast.loading(`Uploading ${fileArr.length} photo${fileArr.length > 1 ? 's' : ''}...`);
     try {
-      const result = await uploadImage(file, "returns");
+      const uploadedUrls: string[] = [];
+      for (const f of fileArr) {
+        const result = await uploadImage(f, "returns");
+        uploadedUrls.push(result.secureUrl || result.url);
+      }
       const updated = [...returnItems];
-      updated[index].images = [...(updated[index].images || []), result.secureUrl || result.url];
+      updated[index].images = [...(updated[index].images || []), ...uploadedUrls];
       setReturnItems(updated);
-      toast.success("Photo uploaded successfully!", { id: toastId });
+      toast.success(`${uploadedUrls.length} photo${uploadedUrls.length > 1 ? 's' : ''} uploaded!`, { id: toastId });
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Failed to upload photo", { id: toastId });
     } finally {
       setUploadingIndex(null);
+      e.target.value = ''; // allow re-selecting the same file
     }
   };
 
@@ -311,17 +324,40 @@ export default function RetailerReturnSession() {
                   
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Upload Photo proof (Required)*</label>
-                    <label className="flex items-center justify-center gap-2 w-full py-2 px-4 border border-dashed border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 cursor-pointer">
-                      <Upload className="w-4 h-4" />
-                      {uploadingIndex === index ? "Uploading..." : "Add Photos"}
-                      <input 
-                        type="file" 
-                        accept="image/*" capture="environment" 
-                        className="hidden" 
-                        disabled={uploadingIndex !== null}
-                        onChange={(e) => handleFileUpload(index, e)} 
-                      />
-                    </label>
+                    {uploadingIndex === index ? (
+                      <div className="flex items-center justify-center gap-2 w-full py-2 px-4 border border-dashed border-gray-300 rounded-lg text-sm text-gray-600">
+                        <Upload className="w-4 h-4 animate-pulse" /> Uploading...
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        {/* Gallery — opens photo gallery / file picker (supports multiple) */}
+                        <label className="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 cursor-pointer">
+                          <ImageIcon className="w-4 h-4" />
+                          Gallery
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            disabled={uploadingIndex !== null}
+                            onChange={(e) => handleFileUpload(index, e)}
+                          />
+                        </label>
+                        {/* Camera — opens the device camera to take a live photo */}
+                        <label className="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-teal-300 bg-teal-50/40 rounded-lg text-sm text-teal-700 hover:bg-teal-50 cursor-pointer">
+                          <Camera className="w-4 h-4" />
+                          Camera
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            disabled={uploadingIndex !== null}
+                            onChange={(e) => handleFileUpload(index, e)}
+                          />
+                        </label>
+                      </div>
+                    )}
                   </div>
 
                   {/* Photo Previews */}
