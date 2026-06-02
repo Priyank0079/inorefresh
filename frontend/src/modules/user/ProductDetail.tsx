@@ -1187,28 +1187,28 @@ export default function ProductDetail() {
       )}
 
       {/* Sticky Footer */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-neutral-200 shadow-lg">
-        <div className="px-4 py-2.5 flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-neutral-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div className="px-3 py-2 flex items-center justify-between">
           {/* Left side - Product details */}
           <div className="flex-1">
             {/* First line - Pack size */}
             <div>
-              <span className="text-sm text-neutral-900 font-medium">
+              <span className="text-[13px] text-neutral-800 font-medium leading-tight block mb-0.5">
                 {variantTitle}
               </span>
             </div>
             {/* Second line - Price, MRP, and OFF */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-base font-bold text-neutral-900">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="text-[15px] font-bold text-neutral-900 leading-none">
                 ₹{variantPrice.toLocaleString('en-IN')}
               </span>
               {hasDiscount && (
                 <>
-                  <span className="text-xs text-neutral-500 line-through">
-                    MRP ₹{variantMrp.toLocaleString('en-IN')}
+                  <span className="text-[11px] text-neutral-400 line-through leading-none">
+                    ₹{variantMrp.toLocaleString('en-IN')}
                   </span>
                   {discount > 0 && (
-                    <Badge className="!bg-blue-500 !text-white !border-blue-500 text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+                    <Badge className="!bg-blue-600 !text-white !border-blue-600 text-[9px] px-1 py-0 rounded font-bold uppercase tracking-wide leading-none">
                       {discount}% OFF
                     </Badge>
                   )}
@@ -1216,13 +1216,13 @@ export default function ProductDetail() {
               )}
             </div>
             {/* Third line - Inclusive of all taxes */}
-            <p className="text-[11px] text-neutral-500 leading-none">
+            <p className="text-[10px] text-neutral-400 leading-none">
               Inclusive of all taxes
             </p>
           </div>
 
           {/* Right side - Add to cart button or Quantity Stepper */}
-          <div className="ml-3 flex items-center gap-2">
+          <div className="ml-2 flex items-center gap-1.5">
             <AnimatePresence mode="wait">
               {inCartQty === 0 ? (
                 <motion.div
@@ -1238,7 +1238,7 @@ export default function ProductDetail() {
                     size="default"
                     onClick={handleAddToCart}
                     disabled={!isAvailableAtLocation || !isVariantAvailable}
-                    className={`px-6 py-2 text-sm font-semibold h-[36px] ${!isAvailableAtLocation || !isVariantAvailable
+                    className={`!rounded-md px-4 py-0 text-[13px] font-bold h-[34px] shadow-sm ${!isAvailableAtLocation || !isVariantAvailable
                       ? "opacity-50 cursor-not-allowed"
                       : ""
                       }`}
@@ -1264,8 +1264,7 @@ export default function ProductDetail() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.2 }}
-                  className="flex items-center gap-2 bg-white border-2 rounded-full px-2 py-1 h-[36px]"
-                  style={{ borderColor: currentTheme.primary[3] }}
+                  className="flex items-center justify-between bg-white border border-neutral-300 rounded-md px-1 h-[34px] w-[90px] shadow-sm"
                 >
                   <motion.button
                     whileTap={{ scale: 0.9 }}
@@ -1274,13 +1273,7 @@ export default function ProductDetail() {
                       const variantId = selectedVariant?._id;
                       updateQuantity(String(productId || ""), inCartQty - 1, variantId, variantTitle);
                     }}
-                    className="w-6 h-6 flex items-center justify-center font-bold rounded-full transition-colors border p-0 leading-none text-base"
-                    style={{
-                      lineHeight: 1,
-                      color: currentTheme.primary[3],
-                      borderColor: currentTheme.primary[3],
-                      backgroundColor: 'transparent'
-                    }}>
+                    className="w-7 h-full flex items-center justify-center font-bold text-neutral-600 hover:text-neutral-900 transition-colors bg-transparent border-none p-0 text-lg">
                     <span className="relative top-[-1px]">−</span>
                   </motion.button>
                   <motion.span
@@ -1288,8 +1281,7 @@ export default function ProductDetail() {
                     initial={{ scale: 1.2, y: -2 }}
                     animate={{ scale: 1, y: 0 }}
                     transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                    className="text-sm font-bold min-w-[1.5rem] text-center"
-                    style={{ color: currentTheme.primary[3] }}>
+                    className="text-[13px] font-bold text-neutral-900 text-center w-6">
                     {inCartQty}
                   </motion.span>
                   <motion.button
@@ -1299,13 +1291,8 @@ export default function ProductDetail() {
                       const variantId = selectedVariant?._id;
                       updateQuantity(String(productId || ""), inCartQty + 1, variantId, variantTitle);
                     }}
-                    className="w-6 h-6 flex items-center justify-center font-bold rounded-full transition-colors border p-0 leading-none text-base"
-                  style={{
-                    lineHeight: 1,
-                    color: currentTheme.primary[3],
-                    borderColor: currentTheme.primary[3],
-                    backgroundColor: 'transparent'
-                  }}>
+                    className="w-7 h-full flex items-center justify-center font-bold text-neutral-600 hover:text-neutral-900 transition-colors bg-transparent border-none p-0 text-lg"
+                  >
                   <span className="relative top-[-1px]">+</span>
                 </motion.button>
               </motion.div>
@@ -1316,7 +1303,7 @@ export default function ProductDetail() {
               size="default"
               onClick={handleBuyNow}
               disabled={!isAvailableAtLocation || !isVariantAvailable || isBuying}
-              className="px-5 py-2 text-sm font-semibold h-[36px]"
+              className="!rounded-md px-4 py-0 text-[13px] font-bold h-[34px] shadow-sm"
               style={(!isAvailableAtLocation || !isVariantAvailable) ? {} : { backgroundColor: currentTheme.primary[3] }}>
               {isBuying ? "Processing..." : "Buy Now"}
             </Button>

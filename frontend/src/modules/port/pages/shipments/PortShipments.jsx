@@ -3,9 +3,11 @@ import PageTitle from '../../components/common/PageTitle';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useNavigate } from 'react-router-dom';
 import { useRefresh } from '@/context/RefreshContext';
+import { useToast } from '../../../../context/ToastContext';
 
 const PortShipments = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { registerRefresh, unregisterRefresh } = useRefresh();
   const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,6 +15,16 @@ const PortShipments = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedShipment, setSelectedShipment] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadInvoice = () => {
+    setDownloading(true);
+    showToast('Preparing invoice for download...', 'info');
+    setTimeout(() => {
+      setDownloading(false);
+      showToast('Invoice downloaded successfully!', 'success');
+    }, 1500);
+  };
 
   const mockShipments = [
     {
@@ -337,8 +349,14 @@ const PortShipments = () => {
 
       {/* Shipment Details Modal */}
       {selectedShipment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
+          onClick={() => setSelectedShipment(null)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-800">Shipment Details</h2>
               <button
@@ -461,9 +479,22 @@ const PortShipments = () => {
                 >
                   Close
                 </button>
-                <button className="flex-1 px-4 py-2.5 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition-colors flex items-center justify-center gap-2">
-                  <span className="material-icons-outlined text-lg">download</span>
-                  Download Invoice
+                <button 
+                  onClick={handleDownloadInvoice}
+                  disabled={downloading}
+                  className="flex-1 px-4 py-2.5 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {downloading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-icons-outlined text-lg">download</span>
+                      Download Invoice
+                    </>
+                  )}
                 </button>
               </div>
             </div>

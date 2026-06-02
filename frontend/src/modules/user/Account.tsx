@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { getProfile, updateProfile, CustomerProfile } from '../../services/api/customerService';
 import { uploadImage } from '../../services/api/uploadService';
+import LocationPermissionRequest from '../../components/LocationPermissionRequest';
 
 export default function Account() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function Account() {
   const [gstError, setGstError] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
@@ -70,8 +72,15 @@ export default function Account() {
   const handleNotificationClick = (notification: any) => {
     // Mark as read when clicked
     markAsRead(notification._id);
-    // Show detailed view
-    setSelectedNotification(notification);
+    
+    if (notification.link) {
+      // Navigate to the linked page (e.g. order details)
+      navigate(notification.link);
+      setShowNotifications(false);
+    } else {
+      // Show detailed text view modal if no link exists
+      setSelectedNotification(notification);
+    }
   };
 
   const handleImageClick = () => {
@@ -317,18 +326,18 @@ export default function Account() {
       <div className="px-6 -mt-12 mb-8 relative z-20">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Wallet Card */}
-          <div className="bg-white rounded-[32px] p-6 md:p-8 shadow-xl shadow-teal-900/5 border border-white relative overflow-hidden group">
+          <div className="bg-white rounded-[24px] p-5 shadow-xl shadow-teal-900/5 border border-gray-50 relative overflow-hidden group">
             <div className="flex items-center justify-between relative z-10">
-              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-teal-50 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2.5">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center group-hover:scale-105 transition-transform border border-teal-100">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2.5">
                     <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
                     <path d="M1 10h22" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mb-1">Inor Wallet</p>
-                  <p className="text-3xl md:text-4xl font-bold text-gray-900">
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Inor Wallet</p>
+                  <p className="text-2xl font-black text-gray-900 tracking-tight leading-none">
                     ₹{(profile?.walletAmount || user?.walletAmount || 0).toLocaleString('en-IN')}
                   </p>
                 </div>
@@ -336,8 +345,8 @@ export default function Account() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/checkout')}
-                className="px-6 py-3 bg-teal-600 text-white rounded-xl font-bold text-sm tracking-tight shadow-lg shadow-teal-600/20 transition-all"
+                onClick={() => navigate('/')}
+                className="px-5 py-2.5 bg-teal-600 text-white rounded-xl font-bold text-xs tracking-wide shadow-lg shadow-teal-600/20 transition-all whitespace-nowrap"
               >
                 Use Balance
               </motion.button>
@@ -422,13 +431,14 @@ export default function Account() {
               {[
                 { name: 'Address Book', icon: <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />, path: '/address-book' },
                 { name: 'Your Wishlist', icon: <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />, path: '/wishlist' },
+                { name: 'Change Location', icon: <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>, action: () => setShowLocationModal(true) },
                 { name: 'GST Details', icon: <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6" />, action: () => setShowGstModal(true) },
-                { name: 'About Inor Fresh', icon: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></>, action: () => window.open('https://about.dhakadsnazzy.com', '_blank') },
+                { name: 'About Inor Fresh', icon: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></>, path: '/about-us' },
                 { name: 'Log Out', icon: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />, action: handleLogout, danger: true }
               ].map((item) => (
                 <button
                   key={item.name}
-                  onClick={item.action || (() => navigate(item.path!))}
+                  onClick={item.action ? item.action : () => navigate(item.path!)}
                   className="w-full flex items-center justify-between px-6 py-5 hover:bg-gray-50 transition-colors group"
                 >
                   <div className="flex items-center gap-4">
@@ -465,7 +475,7 @@ export default function Account() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="bg-white rounded-t-[40px] w-full max-w-xl p-8 pt-12 relative z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]"
+              className="bg-white rounded-t-[40px] w-full max-w-xl p-8 pt-12 pb-28 md:pb-8 relative z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]"
             >
               <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-100 rounded-full" />
               <div className="text-center">
@@ -546,7 +556,7 @@ export default function Account() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="bg-white rounded-t-[40px] w-full max-w-xl p-8 pt-12 relative z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]"
+              className="bg-white rounded-t-[40px] w-full max-w-xl p-8 pt-12 pb-28 md:pb-8 relative z-10 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]"
             >
               <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-100 rounded-full" />
               <div className="text-center">
@@ -739,41 +749,52 @@ export default function Account() {
       <AnimatePresence>
         {selectedNotification && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
-            onClick={() => setSelectedNotification(null)}
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-[200] bg-white overflow-hidden flex flex-col"
           >
-            <motion.div
-              initial={{ scale: 0.9, y: 50, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.9, y: 50, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6 space-y-6">
-                {/* Header */}
-                <div className="flex items-start justify-between -mx-6 -mt-6 px-6 pt-6 pb-4 border-b border-gray-100">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0 ${
+            {/* Header */}
+            <div className="sticky top-0 z-40 bg-gradient-to-b from-teal-600 to-teal-700 pb-6 pt-6 px-4 md:px-6 shadow-lg">
+              <div className="max-w-2xl mx-auto flex items-center gap-4">
+                <button
+                  onClick={() => setSelectedNotification(null)}
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-all min-h-[44px] min-w-[44px]"
+                  aria-label="Back"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 18L9 12L15 6" />
+                  </svg>
+                </button>
+                <div className="flex-1">
+                  <h1 className="text-xl md:text-2xl font-bold text-white">Notification Details</h1>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50">
+              <div className="max-w-2xl mx-auto space-y-6">
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                  <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-50">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 ${
                       selectedNotification.type === 'Success'
-                        ? 'bg-emerald-100 text-emerald-600'
+                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                         : selectedNotification.type === 'Error'
-                        ? 'bg-rose-100 text-rose-600'
-                        : 'bg-teal-100 text-teal-600'
+                        ? 'bg-rose-50 text-rose-600 border border-rose-100'
+                        : 'bg-teal-50 text-teal-600 border border-teal-100'
                     }`}>
                       {selectedNotification.type === 'Order' || selectedNotification.type === 'Payment Confirmed' ? '🛒' :
                        selectedNotification.type === 'Delivery' ? '🚚' :
                        selectedNotification.type === 'Payment' ? '💳' : '🔔'}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-lg font-bold text-gray-900 truncate">{selectedNotification.title}</h2>
+                      <h2 className="text-xl font-bold text-gray-900 mb-1 leading-tight">{selectedNotification.title}</h2>
                       {selectedNotification.timestamp && (
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-sm font-medium text-gray-500">
                           {new Date(selectedNotification.timestamp).toLocaleDateString('en-IN', {
-                            month: 'short',
+                            month: 'long',
                             day: 'numeric',
                             year: 'numeric',
                             hour: '2-digit',
@@ -783,105 +804,73 @@ export default function Account() {
                       )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => setSelectedNotification(null)}
-                    className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
-                  >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                  </button>
-                </div>
 
-                {/* Full Message */}
-                <div className="bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl p-4 border border-teal-100">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words text-sm">
-                    {selectedNotification.message}
-                  </p>
+                  {/* Full Message */}
+                  <div className="bg-gradient-to-br from-teal-50/50 to-blue-50/50 rounded-2xl p-5 border border-teal-100/50">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words text-[15px]">
+                      {selectedNotification.message}
+                    </p>
 
-                  {/* Extract and Highlight Order ID if present */}
-                  {selectedNotification.message?.match(/#ORD[\dA-Z]+/i) && (
-                    <div className="mt-4 pt-4 border-t border-teal-200">
-                      <p className="text-xs text-gray-600 mb-2 font-medium">Order ID:</p>
-                      <div className="bg-white rounded-lg p-3 font-mono text-sm font-bold text-teal-600 break-all border border-teal-100">
-                        {selectedNotification.message.match(/#ORD[\dA-Z]+/i)?.[0]}
+                    {/* Extract and Highlight Order ID if present */}
+                    {selectedNotification.message?.match(/#ORD[\dA-Z]+/i) && (
+                      <div className="mt-5 pt-5 border-t border-teal-100">
+                        <p className="text-xs text-teal-600 font-bold uppercase tracking-wider mb-2">Order Reference</p>
+                        <div className="bg-white rounded-xl p-3.5 font-mono text-sm font-bold text-gray-900 break-all border border-teal-100/50 shadow-sm">
+                          {selectedNotification.message.match(/#ORD[\dA-Z]+/i)?.[0]}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
-                {/* Notification Details */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-bold text-gray-900 mb-3">Details</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Type</span>
-                      <span className="font-medium text-gray-900">{selectedNotification.type || 'Notification'}</span>
+                {/* Notification Details Table */}
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                  <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Meta Information</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-3 border-b border-gray-50 last:border-0">
+                      <span className="text-gray-500 font-medium">Type</span>
+                      <span className="font-bold text-gray-900 bg-gray-50 px-3 py-1 rounded-lg">{selectedNotification.type || 'Notification'}</span>
                     </div>
                     {selectedNotification.priority && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Priority</span>
-                        <span className={`font-medium px-2 py-1 rounded text-xs ${
-                          selectedNotification.priority === 'High' ? 'bg-red-100 text-red-700' :
-                          selectedNotification.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-green-100 text-green-700'
+                      <div className="flex justify-between items-center py-3 border-b border-gray-50 last:border-0">
+                        <span className="text-gray-500 font-medium">Priority</span>
+                        <span className={`font-bold px-3 py-1 rounded-lg text-xs tracking-wide uppercase ${
+                          selectedNotification.priority === 'High' ? 'bg-red-50 text-red-600' :
+                          selectedNotification.priority === 'Medium' ? 'bg-yellow-50 text-yellow-600' :
+                          'bg-emerald-50 text-emerald-600'
                         }`}>
                           {selectedNotification.priority}
                         </span>
                       </div>
                     )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Status</span>
-                      <span className={`font-medium text-xs px-2 py-1 rounded ${
+                    <div className="flex justify-between items-center py-3 border-b border-gray-50 last:border-0">
+                      <span className="text-gray-500 font-medium">Status</span>
+                      <span className={`font-bold px-3 py-1 rounded-lg text-xs tracking-wide uppercase ${
                         selectedNotification.isRead
-                          ? 'bg-gray-200 text-gray-700'
-                          : 'bg-teal-100 text-teal-700'
+                          ? 'bg-gray-50 text-gray-600'
+                          : 'bg-teal-50 text-teal-600'
                       }`}>
-                        {selectedNotification.isRead ? '✓ Read' : '● Unread'}
+                        {selectedNotification.isRead ? 'Read' : 'Unread'}
                       </span>
                     </div>
                   </div>
                 </div>
-
-                {/* Action Buttons */}
-                <div className="space-y-3 -mx-6 -mb-6 px-6 py-6 border-t border-gray-100">
-                  {selectedNotification.link && (
-                    <button
-                      onClick={() => {
-                        navigate(selectedNotification.link);
-                        setSelectedNotification(null);
-                      }}
-                      className="w-full py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white font-bold rounded-xl hover:shadow-lg transition-all active:scale-95 min-h-[44px]"
-                    >
-                      View Order Details →
-                    </button>
-                  )}
-
-                  {!selectedNotification.link && selectedNotification.message?.includes('#ORD') && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="text-xs text-blue-600 text-center">
-                        💡 Check your Orders section to view the full order details
-                      </p>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => setSelectedNotification(null)}
-                    className="w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-95 min-h-[44px]"
-                  >
-                    Dismiss
-                  </button>
-
-                  <p className="text-xs text-gray-400 text-center pt-2">
-                    ✓ Marked as read
-                  </p>
-                </div>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Change Location Modal */}
+      {showLocationModal && (
+        <LocationPermissionRequest
+          onLocationGranted={() => setShowLocationModal(false)}
+          skipable={true}
+          title="Change Location"
+          description="Search and update your delivery location."
+          forceOpen={true}
+        />
+      )}
     </div>
   );
 }

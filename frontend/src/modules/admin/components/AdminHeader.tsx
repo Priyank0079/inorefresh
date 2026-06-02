@@ -111,22 +111,22 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
         </div>
 
         {/* Navigation Tabs */}
-        <div className="hidden md:flex items-center gap-4 lg:gap-6">
+        <div className="hidden md:flex flex-1 justify-center items-center gap-2 lg:gap-8 mx-4">
           <button
             onClick={() => navigate('/admin/orders')}
-            className={`px-3 lg:px-4 py-2 text-xs sm:text-sm font-semibold transition-all border-b-2 ${isActive('/admin/orders') ? 'text-[#12b2a2] border-[#12b2a2]' : 'text-neutral-600 border-transparent hover:text-neutral-900 hover:border-neutral-300'}`}
+            className={`px-3 lg:px-6 py-2 text-sm font-semibold transition-all border-b-[3px] ${isActive('/admin/orders') ? 'text-[#12b2a2] border-[#12b2a2]' : 'text-neutral-500 border-transparent hover:text-neutral-900 hover:border-neutral-300'}`}
           >
             Orders
           </button>
           <button
             onClick={() => navigate('/admin/customers')}
-            className={`px-3 lg:px-4 py-2 text-xs sm:text-sm font-semibold transition-all whitespace-nowrap border-b-2 ${isActive('/admin/customers') ? 'text-[#12b2a2] border-[#12b2a2]' : 'text-neutral-600 border-transparent hover:text-neutral-900 hover:border-neutral-300'}`}
+            className={`px-3 lg:px-6 py-2 text-sm font-semibold transition-all whitespace-nowrap border-b-[3px] ${isActive('/admin/customers') ? 'text-[#12b2a2] border-[#12b2a2]' : 'text-neutral-500 border-transparent hover:text-neutral-900 hover:border-neutral-300'}`}
           >
             Manage Customer
           </button>
           <button
             onClick={() => navigate('/admin/collect-cash')}
-            className={`px-3 lg:px-4 py-2 text-xs sm:text-sm font-semibold transition-all whitespace-nowrap border-b-2 ${isActive('/admin/collect-cash') ? 'text-[#12b2a2] border-[#12b2a2]' : 'text-neutral-600 border-transparent hover:text-neutral-900 hover:border-neutral-300'}`}
+            className={`px-3 lg:px-6 py-2 text-sm font-semibold transition-all whitespace-nowrap border-b-[3px] ${isActive('/admin/collect-cash') ? 'text-[#12b2a2] border-[#12b2a2]' : 'text-neutral-500 border-transparent hover:text-neutral-900 hover:border-neutral-300'}`}
           >
             Collect Cash
           </button>

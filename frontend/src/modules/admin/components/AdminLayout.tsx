@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   return (
-    <div className="flex min-h-screen bg-neutral-50">
+    <div className="flex h-screen overflow-hidden bg-neutral-50">
       {/* Real-time popup + sound for new orders / payments / port offers */}
       <RealtimeAlertPopup alert={alert} onClose={() => setAlert(null)} accent="bg-indigo-600" />
 

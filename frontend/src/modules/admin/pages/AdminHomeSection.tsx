@@ -380,7 +380,7 @@ export default function AdminHomeSection() {
                                     type="text"
                                     value={title}
                                     onChange={(e) => { if (/^[a-zA-Z\s&]*$/.test(e.target.value)) setTitle(e.target.value); }}
-                                    placeholder="e.g., Grocery & Kitchen (alphabets only)"
+                                    placeholder="e.g., Fish (alphabets only)"
                                     className="w-full px-3 py-2 border border-neutral-300 rounded bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
                                 />
                             </div>
@@ -449,7 +449,7 @@ export default function AdminHomeSection() {
                                     type="text"
                                     value={slug}
                                     onChange={(e) => setSlug(e.target.value)}
-                                    placeholder="grocery-kitchen"
+                                    placeholder="fish"
                                     className="w-full px-3 py-2 border border-neutral-300 rounded bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
                                 />
                                 <p className="text-xs text-neutral-500 mt-1">

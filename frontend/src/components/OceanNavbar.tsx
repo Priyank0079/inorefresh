@@ -5,6 +5,7 @@ import { useThemeContext } from '../context/ThemeContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 import { useLocation as useLocationContext } from '../hooks/useLocation';
+import { useCart } from '../context/CartContext';
 
 interface OceanNavbarProps {
     onMenuClick: () => void;
@@ -23,6 +24,9 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
     const { unreadCount } = useNotifications();
     const { logout, isAuthenticated } = useAuth();
     const { isLocationEnabled } = useLocationContext();
+    const { cart } = useCart();
+
+    const cartItemsCount = Array.isArray(cart) ? cart.reduce((total, item) => total + (item.quantity || 1), 0) : 0;
 
     useEffect(() => {
         const controlNavbar = () => {
@@ -109,6 +113,29 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
 
                 {/* Right side - Action Icon Row */}
                 <div className="flex-1 flex items-center justify-end gap-0.5">
+
+                    {/* 🛒 Cart */}
+                    <button
+                        id="navbar-cart-btn"
+                        onClick={() => internalNavigate('/cart')}
+                        className={`relative p-2 rounded-xl transition-all duration-200 active:scale-90 ${iconColorClass}`}
+                        aria-label="Cart"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="9" cy="21" r="1" />
+                            <circle cx="20" cy="21" r="1" />
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                        </svg>
+                        {cartItemsCount > 0 && (
+                            <motion.span
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-md"
+                            >
+                                {cartItemsCount > 99 ? '99+' : cartItemsCount}
+                            </motion.span>
+                        )}
+                    </button>
 
                     {/* 🔔 Notifications */}
                     {!isHome && (

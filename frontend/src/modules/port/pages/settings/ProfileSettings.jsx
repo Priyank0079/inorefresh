@@ -23,6 +23,8 @@ const ProfileSettings = () => {
     profileImage: ''
   });
 
+  const [formErrors, setFormErrors] = useState({});
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -55,6 +57,50 @@ const ProfileSettings = () => {
     }
   }, [token]);
 
+  const validateForm = () => {
+    const errors = {};
+    
+    // Port Name validation
+    if (!formData.portName.trim()) {
+      errors.portName = "Port name is required";
+    } else if (formData.portName.trim().length < 3) {
+      errors.portName = "Port name must be at least 3 characters";
+    }
+
+    // Manager Name validation
+    if (!formData.managerName.trim()) {
+      errors.managerName = "Manager name is required";
+    } else if (!/^[a-zA-Z\s.-]+$/.test(formData.managerName.trim())) {
+      errors.managerName = "Can only contain letters, spaces, dots, and hyphens";
+    } else if (formData.managerName.trim().length < 2) {
+      errors.managerName = "Manager name must be at least 2 characters";
+    }
+
+    // Email validation
+    if (!formData.email.trim()) {
+      errors.email = "Email address is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    // Location validation
+    if (!formData.location.trim()) {
+      errors.location = "Location is required";
+    } else if (formData.location.trim().length < 3) {
+      errors.location = "Location must be at least 3 characters";
+    }
+
+    // License Number validation
+    if (!formData.licenseNumber.trim()) {
+      errors.licenseNumber = "License number is required";
+    } else if (!/^[a-zA-Z0-9-]+$/.test(formData.licenseNumber.trim())) {
+      errors.licenseNumber = "Can only contain letters, numbers, and hyphens";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -63,6 +109,12 @@ const ProfileSettings = () => {
 
     if (!token) {
       setError("Session expired. Please login again.");
+      setSaving(false);
+      return;
+    }
+
+    if (!validateForm()) {
+      setError("Please fix the errors in the form before saving.");
       setSaving(false);
       return;
     }
@@ -199,37 +251,58 @@ const ProfileSettings = () => {
             <div className="p-6 border-b border-slate-100">
               <h3 className="font-bold text-slate-800">Company Information</h3>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-6 space-y-6" noValidate>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Port Name</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Port Name <span className="text-red-500">*</span></label>
                   <input 
                     type="text" 
                     value={formData.portName} 
-                    onChange={(e) => setFormData({...formData, portName: e.target.value})}
-                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" 
-                    required
+                    onChange={(e) => {
+                      setFormData({...formData, portName: e.target.value});
+                      if (formErrors.portName) setFormErrors({...formErrors, portName: ''});
+                    }}
+                    className={`w-full border rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${
+                      formErrors.portName 
+                        ? 'border-red-300 focus:ring-2 focus:ring-red-500/20 focus:border-red-500' 
+                        : 'border-slate-200 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500'
+                    }`}
                   />
+                  {formErrors.portName && <p className="text-[10px] text-red-500 font-medium mt-1">{formErrors.portName}</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Manager Name</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Manager Name <span className="text-red-500">*</span></label>
                   <input 
                     type="text" 
                     value={formData.managerName} 
-                    onChange={(e) => setFormData({...formData, managerName: e.target.value})}
-                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" 
-                    required
+                    onChange={(e) => {
+                      setFormData({...formData, managerName: e.target.value});
+                      if (formErrors.managerName) setFormErrors({...formErrors, managerName: ''});
+                    }}
+                    className={`w-full border rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${
+                      formErrors.managerName 
+                        ? 'border-red-300 focus:ring-2 focus:ring-red-500/20 focus:border-red-500' 
+                        : 'border-slate-200 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500'
+                    }`}
                   />
+                  {formErrors.managerName && <p className="text-[10px] text-red-500 font-medium mt-1">{formErrors.managerName}</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address <span className="text-red-500">*</span></label>
                   <input 
                     type="email" 
                     value={formData.email} 
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" 
-                    required
+                    onChange={(e) => {
+                      setFormData({...formData, email: e.target.value});
+                      if (formErrors.email) setFormErrors({...formErrors, email: ''});
+                    }}
+                    className={`w-full border rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${
+                      formErrors.email 
+                        ? 'border-red-300 focus:ring-2 focus:ring-red-500/20 focus:border-red-500' 
+                        : 'border-slate-200 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500'
+                    }`}
                   />
+                  {formErrors.email && <p className="text-[10px] text-red-500 font-medium mt-1">{formErrors.email}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Contact Number</label>
@@ -242,24 +315,38 @@ const ProfileSettings = () => {
                   <p className="text-[10px] text-slate-400 italic">Contact number cannot be changed</p>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Location (City/State)</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Location (City/State) <span className="text-red-500">*</span></label>
                   <input 
                     type="text" 
                     value={formData.location} 
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
-                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" 
-                    required
+                    onChange={(e) => {
+                      setFormData({...formData, location: e.target.value});
+                      if (formErrors.location) setFormErrors({...formErrors, location: ''});
+                    }}
+                    className={`w-full border rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${
+                      formErrors.location 
+                        ? 'border-red-300 focus:ring-2 focus:ring-red-500/20 focus:border-red-500' 
+                        : 'border-slate-200 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500'
+                    }`}
                   />
+                  {formErrors.location && <p className="text-[10px] text-red-500 font-medium mt-1">{formErrors.location}</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Fishing License No.</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Fishing License No. <span className="text-red-500">*</span></label>
                   <input 
                     type="text" 
                     value={formData.licenseNumber} 
-                    onChange={(e) => setFormData({...formData, licenseNumber: e.target.value})}
-                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" 
-                    required
+                    onChange={(e) => {
+                      setFormData({...formData, licenseNumber: e.target.value});
+                      if (formErrors.licenseNumber) setFormErrors({...formErrors, licenseNumber: ''});
+                    }}
+                    className={`w-full border rounded-lg px-4 py-2.5 text-sm outline-none transition-all ${
+                      formErrors.licenseNumber 
+                        ? 'border-red-300 focus:ring-2 focus:ring-red-500/20 focus:border-red-500' 
+                        : 'border-slate-200 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500'
+                    }`}
                   />
+                  {formErrors.licenseNumber && <p className="text-[10px] text-red-500 font-medium mt-1">{formErrors.licenseNumber}</p>}
                 </div>
               </div>
               

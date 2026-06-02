@@ -195,17 +195,7 @@ export default function AdminLogin() {
             </div>
           )}
 
-          <div className="mt-4 pt-4 border-t border-neutral-100 text-center">
-            <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
-              Demo Admin Credentials
-            </p>
-            <p className="text-xs text-neutral-600">
-              Mobile: <span className="font-mono font-semibold bg-neutral-100 px-1 py-0.5 rounded">9111966732</span>
-            </p>
-            <p className="text-xs text-neutral-600 mt-1">
-              OTP: <span className="font-mono font-semibold bg-neutral-100 px-1.5 py-0.5 rounded">1234</span>
-            </p>
-          </div>
+
         </div>
       </div>
 

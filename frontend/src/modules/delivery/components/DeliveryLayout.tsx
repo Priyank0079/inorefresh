@@ -78,7 +78,6 @@ function DeliveryLayoutContent({ children }: DeliveryLayoutContentProps) {
       <main className="flex-1 overflow-y-auto scrollbar-hide pb-20">
         {children}
       </main>
-      <DeliveryBottomNav />
 
       {/* Socket connection status — shown when disconnected so driver knows notifications may be delayed */}
       <AnimatePresence>

@@ -24,7 +24,7 @@ export default function Cart() {
 
   if (cart.items.length === 0) {
     return (
-      <div className="px-4 py-8 md:py-16 text-center">
+      <div className="px-4 py-8 md:py-16 text-center flex flex-col items-center justify-center min-h-[60vh] md:min-h-[calc(100vh-200px)]">
         <div className="text-6xl md:text-8xl mb-4">🛒</div>
         <h2 className="text-xl md:text-2xl font-bold text-neutral-900 mb-2">Your cart is empty</h2>
         <p className="text-neutral-600 mb-6 md:mb-8 md:text-lg">Add some items to get started!</p>

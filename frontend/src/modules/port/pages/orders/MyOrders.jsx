@@ -24,6 +24,8 @@ const MyOrders = () => {
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [deliveryData, setDeliveryData] = useState({
     vehicleType: 'Truck',
     estimatedArrival: '',
@@ -140,6 +142,14 @@ const MyOrders = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1;
+  const paginatedOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
       day: '2-digit',
@@ -214,15 +224,15 @@ const MyOrders = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wider">
-                <th className="px-6 py-4 font-bold">Requirement ID</th>
-                <th className="px-6 py-4 font-bold">Order Date</th>
-                <th className="px-6 py-4 font-bold">Warehouse</th>
-                <th className="px-6 py-4 font-bold">Item & Qty</th>
-                <th className="px-6 py-4 font-bold">Final Price</th>
-                <th className="px-6 py-4 font-bold">Delivery Date / ETA</th>
-                <th className="px-6 py-4 font-bold">Tracking Info</th>
-                <th className="px-6 py-4 font-bold">Status</th>
-                <th className="px-6 py-4 font-bold text-right">Actions</th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">Requirement ID</th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">Order Date</th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">Warehouse</th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">Item & Qty</th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">Final Price</th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">Delivery Date / ETA</th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">Tracking Info</th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">Status</th>
+                <th className="px-6 py-4 font-bold text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -235,9 +245,9 @@ const MyOrders = () => {
                     </div>
                   </td>
                 </tr>
-              ) : filteredOrders.length > 0 ? filteredOrders.map((order) => (
+              ) : paginatedOrders.length > 0 ? paginatedOrders.map((order) => (
                 <tr key={order._id} className="hover:bg-slate-50 transition-colors group">
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <button 
                       onClick={() => navigate(`/port/orders/track/${order._id}`)}
                       className="text-sm font-bold text-teal-600 hover:underline"
@@ -245,17 +255,17 @@ const MyOrders = () => {
                       {order.requirementId?.requirementId || 'N/A'}
                     </button>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-500 font-medium">{formatDate(order.createdAt)}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-sm text-slate-500 font-medium whitespace-nowrap">{formatDate(order.createdAt)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <p className="text-sm font-semibold text-slate-800">{getWarehouseName(order.warehouseId) || 'N/A'}</p>
                     <p className="text-[10px] text-slate-400 font-bold uppercase">{order.warehouseId?.city}, {order.warehouseId?.state}</p>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <p className="text-sm font-bold text-slate-800">{order.requirementId?.fishName}</p>
                     <p className="text-xs text-slate-500">{order.quantityOffered} KG</p>
                   </td>
-                  <td className="px-6 py-4 text-sm font-bold text-slate-800">₹{order.offeredPrice.toLocaleString()}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-sm font-bold text-slate-800 whitespace-nowrap">₹{order.offeredPrice.toLocaleString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="space-y-1">
                       <p className="text-xs font-bold text-slate-800">{formatDate(order.deliveryDate)}</p>
                       {order.deliveryDetails?.estimatedArrival && (
@@ -266,7 +276,7 @@ const MyOrders = () => {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     {order.deliveryDetails?.trackingNumber ? (
                       <div className="space-y-1">
                         <p className="text-[10px] font-bold text-slate-400 uppercase">Tracking</p>
@@ -276,10 +286,10 @@ const MyOrders = () => {
                       <span className="text-xs text-slate-400 italic">No Tracking</span>
                     )}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <StatusBadge status={order.status === 'approved' ? 'Confirmed' : order.status} />
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-2">
                       <button 
                         onClick={() => handleUpdateDelivery(order)}
@@ -312,13 +322,23 @@ const MyOrders = () => {
         </div>
         
         <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50">
-          <p className="text-sm text-slate-500">Showing {filteredOrders.length} entries</p>
+          <p className="text-sm text-slate-500">Showing {paginatedOrders.length} entries of {filteredOrders.length}</p>
           <div className="flex items-center gap-1">
-            <button className="p-2 text-slate-400 hover:text-slate-600 disabled:opacity-50" disabled>
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="p-2 text-slate-400 hover:text-slate-600 disabled:opacity-50 transition-colors"
+            >
               <span className="material-icons-outlined">chevron_left</span>
             </button>
-            <button className="w-8 h-8 rounded-lg bg-teal-600 text-white text-sm font-bold shadow-md shadow-teal-600/20">1</button>
-            <button className="p-2 text-slate-400 hover:text-slate-600 disabled:opacity-50" disabled>
+            <button className="min-w-[32px] h-8 rounded-lg bg-teal-600 text-white text-sm font-bold shadow-md shadow-teal-600/20 px-2">
+              {currentPage}
+            </button>
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="p-2 text-slate-400 hover:text-slate-600 disabled:opacity-50 transition-colors"
+            >
               <span className="material-icons-outlined">chevron_right</span>
             </button>
           </div>

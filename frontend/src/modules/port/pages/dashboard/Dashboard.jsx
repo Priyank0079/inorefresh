@@ -1,8 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
-} from 'recharts';
 import DashboardCard from '../../components/cards/DashboardCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import PageTitle from '../../components/common/PageTitle';
@@ -11,6 +8,8 @@ import { getCompleteDashboard } from '../../../../services/api/portDashboardServ
 import { useAuth } from '@/context/AuthContext';
 import { useRefresh } from '@/context/RefreshContext';
 import { useCachedFetch } from '@/hooks/useCachedFetch';
+
+const RevenueChart = lazy(() => import('../../components/charts/RevenueChart'));
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -184,33 +183,9 @@ const Dashboard = () => {
             </select>
           </div>
           <div className="h-[250px] w-full">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-              <BarChart data={stats.chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#94a3b8', fontSize: 12 }}
-                  dy={10}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#94a3b8', fontSize: 12 }}
-                  tickFormatter={(value) => `₹${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`}
-                />
-                <Tooltip
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                />
-                <Bar dataKey="revenue" radius={[4, 4, 0, 0]} barSize={30}>
-                  {stats.chartData.map((_entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index === stats.chartData.length - 1 ? '#0d9488' : '#94a3b8'} fillOpacity={0.8} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<div className="h-full w-full flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div></div>}>
+              <RevenueChart data={stats.chartData} />
+            </Suspense>
           </div>
         </div>
       </div>
