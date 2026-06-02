@@ -42,11 +42,12 @@ const Dashboard = () => {
     return res.success ? res.data : null;
   }, [token]);
 
-  // Use cached fetch with 3-minute TTL for dashboard data
+  // Short cache (20s) so counts (requirements/offers) stay fresh on revisit.
+  // The navbar refresh button forces an immediate re-fetch as well.
   const { data: dashboardData, loading } = useCachedFetch(
     fetchDashboardData,
     'dashboard_complete',
-    3 * 60 * 1000 // 3 minutes
+    20 * 1000 // 20 seconds
   );
 
   // Update state when cached data arrives
@@ -80,42 +81,35 @@ const Dashboard = () => {
     return () => unregisterRefresh();
   }, [fetchAllData, registerRefresh, unregisterRefresh]);
 
+  // Note: trend badges removed — they were hardcoded fake numbers (5, 12, -2).
   const statCards = [
     {
-      title: 'Active Requirements',
+      title: 'New Requirements',
       value: stats.totalRequirements.toString(),
       icon: 'list_alt',
       color: 'bg-blue-500',
-      trend: 5,
       link: '/port/requirements',
-      isPositive: true
     },
     {
       title: 'Offers Sent',
       value: (stats.activeOffers + stats.approvedOffers).toString(),
       icon: 'send',
       color: 'bg-emerald-500',
-      trend: 12,
       link: '/port/offers',
-      isPositive: true
     },
     {
       title: 'Active Negotiations',
       value: stats.activeOffers.toString(),
       icon: 'sync',
       color: 'bg-amber-500',
-      trend: -2,
       link: '/port/offers/negotiations',
-      isPositive: false
     },
     {
       title: 'Total Revenue',
       value: `₹${stats.totalRevenue.toLocaleString()}`,
       icon: 'payments',
       color: 'bg-teal-600',
-      trend: null,
       link: '/port/offers',
-      isPositive: true
     }
   ];
 

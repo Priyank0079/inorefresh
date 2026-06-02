@@ -374,8 +374,9 @@ const MyOrders = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-700 uppercase">Estimated Arrival</label>
-                  <input 
+                  <input
                     type="date"
+                    min={new Date().toISOString().split('T')[0]}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none transition-all"
                     value={deliveryData.estimatedArrival}
                     onChange={(e) => setDeliveryData({...deliveryData, estimatedArrival: e.target.value})}

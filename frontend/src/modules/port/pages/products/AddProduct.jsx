@@ -176,13 +176,19 @@ const AddProduct = () => {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Size/Weight Class</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="sizeWeightClass"
                 value={formData.sizeWeightClass}
-                onChange={handleChange}
-                placeholder="e.g. 500g - 1kg" 
-                className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" 
+                onChange={(e) => {
+                  // Allow only digits, weight units (g/kg/mg/lb/oz), space, dash, dot
+                  const v = e.target.value;
+                  if (/^[0-9a-zA-Z\s\-.]*$/.test(v) && !/[^0-9gkmlbozGKMLBOZ\s\-.]/.test(v)) {
+                    handleChange(e);
+                  }
+                }}
+                placeholder="e.g. 500g - 1kg"
+                className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all"
               />
             </div>
             <div className="space-y-1.5">

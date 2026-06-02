@@ -113,9 +113,6 @@ const MyOffers = () => {
                       >
                         View
                       </button>
-                      <button className="p-2 text-slate-400 hover:text-teal-600 rounded-lg hover:bg-slate-100 transition-all">
-                        <span className="material-icons-outlined text-lg">edit</span>
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -164,9 +161,6 @@ const MyOffers = () => {
                 >
                   <span className="material-icons-outlined text-xs">visibility</span>
                   View
-                </button>
-                <button className="p-1.5 text-slate-400 hover:text-teal-600 rounded-lg hover:bg-slate-100 transition-all">
-                  <span className="material-icons-outlined text-base">edit</span>
                 </button>
               </div>
             </div>

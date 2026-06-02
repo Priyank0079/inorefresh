@@ -136,7 +136,7 @@ const IncomingRequirements = () => {
                     <div className="px-4 py-2 border-b border-slate-100">
                       <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Filter by Status</p>
                     </div>
-                    {['All', 'Open', 'Pending', 'Negotiating', 'Expired'].map((status) => (
+                    {['All', 'Open', 'Pending', 'Negotiating', 'Completed', 'Cancelled', 'Expired'].map((status) => (
                       <button
                         key={status}
                         onClick={() => {
