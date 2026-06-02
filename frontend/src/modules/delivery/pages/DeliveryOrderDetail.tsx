@@ -117,6 +117,17 @@ export default function DeliveryOrderDetail() {
     const [deliveryMessage, setDeliveryMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
     const showDeliveryMsg = (text: string, type: 'success' | 'error') => { setDeliveryMessage({ text, type }); setTimeout(() => setDeliveryMessage(null), 3000); };
 
+    // Tick down the resend-OTP cooldown once per second. Without this the
+    // "Resend OTP in Ns" timer stayed frozen and the resend button was
+    // permanently disabled after the first send.
+    useEffect(() => {
+        if (resendCooldown <= 0) return;
+        const timer = setInterval(() => {
+            setResendCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [resendCooldown]);
+
     const fetchOrder = async () => {
         if (!id) return;
         try {

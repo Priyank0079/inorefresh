@@ -65,6 +65,10 @@ export default function AdminCreateWarehouse() {
       setError("Warehouse name must be at least 2 characters");
       return;
     }
+    if (!/^[a-zA-Z0-9\s]+$/.test(formData.warehouseName.trim())) {
+      setError("Warehouse name must contain only letters, numbers, and spaces");
+      return;
+    }
     if (formData.managerName.trim().length < 2) {
       setError("Manager name must be at least 2 characters");
       return;

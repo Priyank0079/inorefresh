@@ -112,6 +112,9 @@ export const useDeliveryOrderNotifications = () => {
         socket.on('new-order', (orderData: OrderNotificationData) => {
             console.log('📦 New order notification received:', orderData.orderNumber, orderData.orderId);
 
+            // Let other delivery screens (e.g. the dashboard counts) refresh live.
+            window.dispatchEvent(new CustomEvent('delivery:orders-changed'));
+
             setState(prev => {
                 // Deduplicate: ignore if the same order is already shown or queued
                 const isDuplicate =
@@ -134,6 +137,7 @@ export const useDeliveryOrderNotifications = () => {
 
         socket.on('order-accepted', (data: { orderId: string; acceptedBy: string }) => {
             console.log('✅ Order taken by another delivery boy:', data.orderId);
+            window.dispatchEvent(new CustomEvent('delivery:orders-changed'));
             setState(prev => {
                 if (prev.currentNotification?.orderId === data.orderId) {
                     const next = prev.notificationQueue[0] || null;

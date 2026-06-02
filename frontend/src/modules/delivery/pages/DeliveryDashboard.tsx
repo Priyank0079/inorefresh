@@ -48,9 +48,28 @@ export default function DeliveryDashboard() {
     }
   };
 
+  // Silent refresh: update the numbers without flashing the full-screen loader.
+  const silentRefresh = async () => {
+    try {
+      const data = await getDashboardStats();
+      setStats(data);
+    } catch {
+      // ignore — keep showing the last known stats
+    }
+  };
+
   useEffect(() => {
     fetchStats();
   }, [isOnline]);
+
+  // Live update when the order-notification socket (in DeliveryLayout) reports a
+  // change — e.g. a new order arrives or an available order is taken. Fixes the
+  // "Today's All Order count not updated when new order arrives" bug.
+  useEffect(() => {
+    const onOrdersChanged = () => silentRefresh();
+    window.addEventListener('delivery:orders-changed', onOrdersChanged);
+    return () => window.removeEventListener('delivery:orders-changed', onOrdersChanged);
+  }, []);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -472,6 +491,7 @@ export default function DeliveryDashboard() {
             title="Total return item have"
             value={stats?.returnItems || 0}
             accentColor="#3b82f6"
+            onClick={() => navigate("/delivery/orders/return")}
           />
         </div>
 

@@ -53,7 +53,11 @@ export default function CategoryPage() {
       setError(null);
 
       try {
-        const params: any = { category: category?._id || id };
+        // The route param `id` is the category id, so fetch products directly with
+        // it. (Previously this also depended on `category?._id`, which caused the
+        // product list to be fetched twice — once with `id`, again once the
+        // category object resolved — making the page feel slow.)
+        const params: any = { category: id };
 
         if (userLocation?.latitude && userLocation?.longitude) {
           params.latitude = userLocation.latitude;
@@ -75,10 +79,15 @@ export default function CategoryPage() {
     };
 
     fetchProductsForCategory();
-  }, [id, category?._id, userLocation]);
+  }, [id, userLocation?.latitude, userLocation?.longitude]);
 
   if ((categoryLoading || loading) && !products.length && !category) {
-    return null;
+    // Show a lightweight loader instead of a blank screen while products load.
+    return (
+      <div className="flex items-center justify-center min-h-[60vh] bg-white">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+      </div>
+    );
   }
 
   if (error && !products.length && !category) {

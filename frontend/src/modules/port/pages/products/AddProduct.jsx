@@ -139,14 +139,21 @@ const AddProduct = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Fish Name</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="productName"
                 value={formData.productName}
-                onChange={handleChange}
-                required 
-                placeholder="e.g. Pomfret" 
-                className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" 
+                onChange={(e) => {
+                  // Fish name should accept only alphabets and spaces
+                  if (/^[a-zA-Z\s]*$/.test(e.target.value)) {
+                    handleChange(e);
+                  }
+                }}
+                required
+                pattern="[a-zA-Z\s]+"
+                title="Fish name should only contain letters and spaces"
+                placeholder="e.g. Pomfret"
+                className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all"
               />
             </div>
             <div className="space-y-1.5">
