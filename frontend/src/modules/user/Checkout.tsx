@@ -333,6 +333,14 @@ export default function Checkout() {
       ? displayCart.estimatedDeliveryFee
       : appConfig.deliveryFee;
 
+  // GST — the backend charges this same tax on every order (default 18%), but it
+  // was never shown here, so the customer saw a total ~18% lower than what was
+  // actually charged. We now display it and include it in the total so the
+  // amount shown == the amount charged. Backend applies tax on the item subtotal
+  // (before coupon/fees), so we use the same base.
+  const gstRate = appConfig.taxes?.gst ?? 18;
+  const gstAmount = Number(((discountedTotal * gstRate) / 100).toFixed(2));
+
   // Recalculate or use validated discount
   // If we have a selected coupon, we should re-validate if cart total changes,
   // but for simplicity, we'll re-calculate locally if possible or trust the previous validation if acceptable (better to re-validate)
@@ -370,6 +378,7 @@ export default function Checkout() {
   const grandTotal = Math.max(
     0,
     discountedTotal +
+    gstAmount +
     handlingCharge +
     deliveryCharge +
     finalTipAmount -
@@ -1889,6 +1898,31 @@ export default function Checkout() {
               </span>
               {deliveryCharge > 0 && null}
             </div>
+          </div>
+
+          {/* GST — matches the tax the backend charges on the order */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M9 14l6-6M9.5 9.5h.01M14.5 14.5h.01M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+              </svg>
+              <span className="text-xs text-neutral-700">GST ({gstRate}%)</span>
+            </div>
+            <span className="text-xs font-medium text-neutral-900">
+              ₹{gstAmount}
+            </span>
           </div>
 
           {/* Coupon discount */}
