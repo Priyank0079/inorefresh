@@ -191,18 +191,13 @@ export default function LowestPricesEver({ activeTab = 'all', products: adminPro
 
       {/* 🌊 Subtle Depth Enhancements */}
       <div className="absolute inset-0 pointer-events-none z-0">
-        <motion.div
+        {/* Static decorative glow. The previous infinite opacity animation on a
+            mix-blend-overlay layer composited every frame forever and added to
+            scroll jank for a glow that's barely visible (0.05 opacity). */}
+        <div
           className="absolute inset-0 mix-blend-overlay opacity-[0.05]"
           style={{
             backgroundImage: 'radial-gradient(ellipse at center, rgba(0, 224, 198, 0.4) 0%, transparent 70%)',
-          }}
-          animate={{
-            opacity: [0.03, 0.07, 0.03],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
           }}
         />
       </div>
