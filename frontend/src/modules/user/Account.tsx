@@ -223,7 +223,7 @@ export default function Account() {
         ref={fileInputRef}
         onChange={handleImageChange}
         className="hidden"
-        accept="image/*" capture="environment"
+        accept="image/*"
       />
 
       {/* Header Section */}

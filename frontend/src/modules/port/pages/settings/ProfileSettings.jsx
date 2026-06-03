@@ -204,7 +204,7 @@ const ProfileSettings = () => {
                 ref={fileInputRef} 
                 onChange={handleImageChange} 
                 className="hidden" 
-                accept="image/*" capture="environment"
+                accept="image/*"
               />
               <div className="w-32 h-32 rounded-full bg-teal-600 flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-xl overflow-hidden uppercase">
                 {formData.profileImage ? (
