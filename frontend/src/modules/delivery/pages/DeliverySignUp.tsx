@@ -5,32 +5,57 @@ import {
   sendOTP,
   verifyOTP,
 } from "../../../services/api/auth/deliveryAuthService";
+import { uploadDocument } from "../../../services/api/uploadService";
 import OTPInput from "../../../components/OTPInput";
 import { useAuth } from "../../../context/AuthContext";
 
 export default function DeliverySignUp() {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const [formData, setFormData] = useState({
-    name: "",
-    mobile: "",
-    email: "",
-    dateOfBirth: "",
-    password: "",
-    address: "",
-    city: "",
-    pincode: "",
-    accountName: "",
-    bankName: "",
-    accountNumber: "",
-    ifscCode: "",
-    bonusType: "",
+  const [formData, setFormData] = useState(() => {
+    const defaults = {
+      name: "",
+      mobile: "",
+      email: "",
+      dateOfBirth: "",
+      password: "",
+      address: "",
+      city: "",
+      pincode: "",
+      accountName: "",
+      bankName: "",
+      accountNumber: "",
+      ifscCode: "",
+      bonusType: "",
+    };
+    // Restore a saved draft so a page refresh doesn't wipe everything the user
+    // typed. The password is never persisted/restored.
+    try {
+      const saved = localStorage.getItem("delivery_signup_draft");
+      if (saved) {
+        return { ...defaults, ...(JSON.parse(saved) as Partial<typeof defaults>), password: "" };
+      }
+    } catch {
+      /* ignore a corrupt draft */
+    }
+    return defaults;
   });
 
   // Clear any existing session on mount
   useEffect(() => {
     logout();
   }, [logout]);
+
+  // Persist the form (minus password) on every change so a refresh keeps it.
+  useEffect(() => {
+    const { password, ...rest } = formData;
+    void password;
+    try {
+      localStorage.setItem("delivery_signup_draft", JSON.stringify(rest));
+    } catch {
+      /* ignore storage quota errors */
+    }
+  }, [formData]);
 
   const [showOTP, setShowOTP] = useState(false);
   const [sessionId, setSessionId] = useState("");
@@ -39,6 +64,7 @@ export default function DeliverySignUp() {
   const [isCityLoading, setIsCityLoading] = useState(false);
 
   // Document upload state (#11, #12)
+  const [showPassword, setShowPassword] = useState(false);
   const [drivingLicenseFile, setDrivingLicenseFile] = useState<File | null>(null);
   const [nationalIdFile, setNationalIdFile] = useState<File | null>(null);
   const [drivingLicensePreview, setDrivingLicensePreview] = useState<string>("");
@@ -57,8 +83,11 @@ export default function DeliverySignUp() {
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Document file must be under 5MB");
+    // Phone camera photos are often >5MB, so the old 5MB cap silently rejected
+    // images captured with the camera ("captured but not added"). Use 10MB to
+    // match the backend's document upload limit (MAX_DOCUMENT_SIZE).
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Document file must be under 10MB");
       return;
     }
     const previewUrl = URL.createObjectURL(file);
@@ -95,10 +124,17 @@ export default function DeliverySignUp() {
         [name]: value.replace(/[^a-zA-Z\s]/g, ""),
       }));
     } else if (name === "city") {
-      // No digits in city
+      // City: letters and spaces only (no digits, no special characters)
       setFormData((prev) => ({
         ...prev,
-        [name]: value.replace(/[0-9]/g, ""),
+        [name]: value.replace(/[^a-zA-Z\s]/g, ""),
+      }));
+    } else if (name === "address") {
+      // Address: allow letters, digits, spaces and common address punctuation
+      // (, . - / #), strip other special characters.
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value.replace(/[^a-zA-Z0-9\s,.\-/#]/g, ""),
       }));
     } else if (name === "pincode") {
       // Digits only, max 6
@@ -230,7 +266,28 @@ export default function DeliverySignUp() {
     setError("");
 
     try {
-
+      // Upload the captured documents first so their URLs are saved with the
+      // registration. Previously the files were collected but never sent, so
+      // the driving licence / Aadhaar were lost.
+      let drivingLicenseUrl: string | undefined;
+      let nationalIdUrl: string | undefined;
+      try {
+        if (drivingLicenseFile) {
+          const up = await uploadDocument(drivingLicenseFile, "delivery-documents");
+          drivingLicenseUrl = up.secureUrl || up.url;
+        }
+        if (nationalIdFile) {
+          const up = await uploadDocument(nationalIdFile, "delivery-documents");
+          nationalIdUrl = up.secureUrl || up.url;
+        }
+      } catch (uploadErr: any) {
+        setLoading(false);
+        setError(
+          uploadErr?.response?.data?.message ||
+            "Failed to upload documents. Please try again."
+        );
+        return;
+      }
 
       const response = await register({
         name: formData.name,
@@ -246,6 +303,8 @@ export default function DeliverySignUp() {
         accountNumber: formData.accountNumber || undefined,
         ifscCode: formData.ifscCode || undefined,
         bonusType: formData.bonusType || undefined,
+        drivingLicense: drivingLicenseUrl,
+        nationalIdentityCard: nationalIdUrl,
       });
 
       if (response.success) {
@@ -280,6 +339,8 @@ export default function DeliverySignUp() {
     try {
       const response = await verifyOTP(formData.mobile, otp, sessionId);
       if (response.success) {
+        // Registration complete — discard the saved draft.
+        try { localStorage.removeItem("delivery_signup_draft"); } catch { /* ignore */ }
         navigate("/delivery");
       }
     } catch (err: any) {
@@ -419,17 +480,37 @@ export default function DeliverySignUp() {
                   <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Password <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="Enter password (min 6 characters)"
-                    required
-                    minLength={6}
-                    className="w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
-                    disabled={loading}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="Enter password (min 6 characters)"
+                      required
+                      minLength={6}
+                      className="w-full px-3 py-2.5 pr-10 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+                      disabled={loading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      tabIndex={-1}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600">
+                      {showPassword ? (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -519,7 +600,7 @@ export default function DeliverySignUp() {
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
                     </svg>
                     <span className="text-neutral-500 flex-1 truncate">
-                      {drivingLicenseFile ? drivingLicenseFile.name : "Upload driving license (JPG/PNG/PDF, max 5MB)"}
+                      {drivingLicenseFile ? drivingLicenseFile.name : "Upload driving license (JPG/PNG/PDF, max 10MB)"}
                     </span>
                     <input
                       type="file"
@@ -547,7 +628,7 @@ export default function DeliverySignUp() {
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
                     </svg>
                     <span className="text-neutral-500 flex-1 truncate">
-                      {nationalIdFile ? nationalIdFile.name : "Upload Aadhaar / national ID (JPG/PNG/PDF, max 5MB)"}
+                      {nationalIdFile ? nationalIdFile.name : "Upload Aadhaar / national ID (JPG/PNG/PDF, max 10MB)"}
                     </span>
                     <input
                       type="file"

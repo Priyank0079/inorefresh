@@ -168,7 +168,22 @@ export default function PortLogin() {
 
       {/* Footer Text */}
       <p className="mt-8 text-[11px] text-neutral-400 text-center max-w-xs leading-relaxed">
-        By continuing, you agree to Inor Fresh's <span className="text-neutral-500 font-medium">Terms of Service</span> and <span className="text-neutral-500 font-medium">Privacy Policy</span>
+        By continuing, you agree to Inor Fresh's{" "}
+        <a
+          href="/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-teal-600 font-medium underline hover:text-teal-700">
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a
+          href="/privacy-policy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-teal-600 font-medium underline hover:text-teal-700">
+          Privacy Policy
+        </a>
       </p>
     </div>
   );

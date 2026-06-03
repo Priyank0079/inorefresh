@@ -376,7 +376,7 @@ export default function WarehouseCategory() {
                 {!loading && !error && (
                     <>
                         <p className="text-sm text-neutral-500 mb-3">
-                            {filteredCategories.length} fish categories available — <span className="text-teal-600 font-medium">click to manage products</span>
+                            {filteredCategories.length} fish categories available
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                             {filteredCategories.map((category) => (

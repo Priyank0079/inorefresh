@@ -29,6 +29,7 @@ export default function AdminPendingOrders() {
   const [entriesPerPage, setEntriesPerPage] = useState("10");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [loading, setLoading] = useState(true);
@@ -86,6 +87,8 @@ export default function AdminPendingOrders() {
         const response = await getOrdersByStatus("Pending", params);
         if (response.success) {
           setOrders(response.data);
+          const pg = (response as any).pagination;
+          setTotalCount(typeof pg?.total === "number" ? pg.total : response.data.length);
         }
       } catch (err) {
         console.error("Error fetching orders:", err);
@@ -234,12 +237,10 @@ export default function AdminPendingOrders() {
     return filtered;
   }, [orders, sortField, sortDirection]);
 
-  const totalPages = Math.ceil(
-    filteredAndSortedOrders.length / parseInt(entriesPerPage)
-  );
+  // Backend already returns just this page — paginate from the server total.
+  const totalPages = Math.max(1, Math.ceil(totalCount / parseInt(entriesPerPage)));
   const startIndex = (currentPage - 1) * parseInt(entriesPerPage);
-  const endIndex = startIndex + parseInt(entriesPerPage);
-  const paginatedOrders = filteredAndSortedOrders.slice(startIndex, endIndex);
+  const paginatedOrders = filteredAndSortedOrders;
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(1, prev - 1));
@@ -873,9 +874,9 @@ export default function AdminPendingOrders() {
           <div className="px-4 sm:px-6 py-3 bg-neutral-50 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-2">
             <div className="text-xs sm:text-sm text-neutral-700">
               Showing{" "}
-              {filteredAndSortedOrders.length === 0 ? 0 : startIndex + 1} to{" "}
-              {Math.min(endIndex, filteredAndSortedOrders.length)} of{" "}
-              {filteredAndSortedOrders.length} entries
+              {totalCount === 0 ? 0 : startIndex + 1} to{" "}
+              {startIndex + filteredAndSortedOrders.length} of{" "}
+              {totalCount} entries
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -960,6 +961,8 @@ export default function AdminPendingOrders() {
               const response = await getOrdersByStatus("Pending", params);
               if (response.success) {
                 setOrders(response.data);
+                const pg = (response as any).pagination;
+                setTotalCount(typeof pg?.total === "number" ? pg.total : response.data.length);
               }
             } catch (err) {
               console.error("Error refreshing orders:", err);

@@ -222,10 +222,6 @@ export default function CategoryTreeView({
                           </span>
                         )}
 
-                        {/* Order Badge */}
-                        <span className="text-xs text-neutral-500">
-                          Order: {category.order || 0}
-                        </span>
                       </div>
                     </div>
 

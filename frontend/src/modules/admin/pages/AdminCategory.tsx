@@ -558,21 +558,6 @@ export default function AdminCategory() {
               )}
             </div>
 
-            {/* Tree View Controls */}
-            {viewMode === "tree" && (
-              <div className="mt-3 flex items-center gap-2">
-                <button
-                  onClick={handleExpandAll}
-                  className="px-3 py-1.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-300 rounded hover:bg-neutral-50 transition-colors">
-                  Expand All
-                </button>
-                <button
-                  onClick={handleCollapseAll}
-                  className="px-3 py-1.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-300 rounded hover:bg-neutral-50 transition-colors">
-                  Collapse All
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Content Area */}

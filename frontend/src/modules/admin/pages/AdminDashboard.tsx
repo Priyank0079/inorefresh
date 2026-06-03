@@ -601,7 +601,18 @@ export default function AdminDashboard() {
             <Suspense fallback={<div className="h-32 flex items-center justify-center text-xs text-neutral-400">Loading…</div>}>
               <GaugeChart
                 value={stats.avgCompletedOrderValue}
-                maxValue={521}
+                // Scale the gauge to real data: the highest completed order
+                // (rounded up to a clean number), with sensible fallbacks, so
+                // the needle position is meaningful instead of a fixed 521.
+                maxValue={Math.max(
+                  50,
+                  Math.ceil(
+                    ((stats.maxCompletedOrderValue ||
+                      stats.avgCompletedOrderValue * 2 ||
+                      100) /
+                      50)
+                  ) * 50
+                )}
                 label="Average Order Value"
               />
             </Suspense>
