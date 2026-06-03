@@ -1,16 +1,31 @@
-import React from 'react';
-import Lottie from 'lottie-react';
-import comingSoonAnimation from '../../assets/animation/coming_soon.json';
+import React, { Suspense, lazy } from 'react';
 
 interface ServiceNotAvailableProps {
     onChangeLocation: () => void;
 }
 
+// Lazy-load the Lottie player + its animation JSON so the ~317 KB lottie-web
+// runtime is only downloaded if a user actually hits an out-of-service area,
+// instead of being part of the initial customer bundle.
+const ComingSoonLottie = lazy(async () => {
+    const [{ default: Lottie }, { default: animationData }] = await Promise.all([
+        import('lottie-react'),
+        import('../../assets/animation/coming_soon.json'),
+    ]);
+    return {
+        default: () => (
+            <Lottie animationData={animationData} loop className="w-full h-auto" />
+        ),
+    };
+});
+
 const ServiceNotAvailable: React.FC<ServiceNotAvailableProps> = ({ onChangeLocation }) => {
     return (
         <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 text-center bg-white">
             <div className="w-full max-w-md mb-2">
-                <Lottie animationData={comingSoonAnimation} loop={true} className="w-full h-auto" />
+                <Suspense fallback={<div className="w-full h-48" />}>
+                    <ComingSoonLottie />
+                </Suspense>
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-neutral-900 mb-3">Service Not Available</h2>
             <p className="text-neutral-600 mb-8 max-w-md text-sm md:text-base">

@@ -71,7 +71,7 @@ export default function WarehouseStockManagement() {
         if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
 
         // Handle relative paths
-        const apiBase = import.meta.env.VITE_API_BASE_URL || "https://api.dhakadsnazzy.com/api/v1";
+        const apiBase = import.meta.env.VITE_API_BASE_URL || "https://api.inorfresh.com/api/v1";
         try {
             const urlObj = new URL(apiBase);
             const origin = urlObj.origin;

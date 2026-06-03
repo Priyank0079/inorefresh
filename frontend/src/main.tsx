@@ -25,3 +25,16 @@ ReactDOM.createRoot(rootElement!).render(
   </React.StrictMode>,
 )
 
+// Register the service worker early (after first paint) so the app shell is
+// cached for instant repeat launches in the WebView. This is permission-free
+// and idempotent with the Firebase push registration (same URL + scope), so it
+// does not affect notifications. Registered on window.load to avoid competing
+// with the initial render.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/firebase-messaging-sw.js', { scope: '/' })
+      .catch((err) => console.warn('SW registration (cache) failed:', err));
+  });
+}
+

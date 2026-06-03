@@ -9,7 +9,8 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "copy-images": "node scripts/copy-images.js",
-    "prebuild": "npm run copy-images"
+    "optimize-images": "node scripts/optimize-images.js",
+    "prebuild": "npm run optimize-images && npm run copy-images"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",

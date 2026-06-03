@@ -12,12 +12,12 @@ export const getSocketBaseURL = (): string => {
   }
 
   // Otherwise, extract base URL from VITE_API_BASE_URL
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.dhakadsnazzy.com/api/v1";
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.inorfresh.com/api/v1";
 
   // Remove /api/v1 or /api from the end
   const socketUrl = apiBaseUrl.replace(/\/api\/v\d+$|\/api$/, '');
 
-  return socketUrl || "https://api.dhakadsnazzy.com";
+  return socketUrl || "https://api.inorfresh.com";
 };
 
 // Create axios instance
