@@ -158,7 +158,7 @@ export default function AmbientFishBackground() {
 
     return (
         // contain:strict isolates this layer so browser skips layout+style recalc for it
-        <div className="fixed inset-0 pointer-events-none z-[5] overflow-hidden" aria-hidden="true" style={{ contain: 'strict' }}>
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true" style={{ contain: 'strict' }}>
             {fishData.map((fish) => (
                 <FishAnimation
                     key={fish.id}

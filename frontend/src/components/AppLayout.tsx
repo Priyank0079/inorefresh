@@ -191,11 +191,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <>
       <div className="flex flex-col min-h-screen w-full relative overflow-x-hidden ocean-theme-bg">
         {showAmbientFx && <AmbientFishBackground />}
-        {/* 💫 FLOATING WATER LIGHT EFFECT */}
-        <div
-          className="fixed top-0 left-0 w-full h-full pointer-events-none z-[1]"
-          style={{ background: 'radial-gradient(circle at 50% 20%, rgba(255,255,255,0.15), transparent 70%)' }}
-        />
         {/* Desktop Container Wrapper */}
         <div className="md:w-full md:bg-transparent md:min-h-screen overflow-x-hidden">
           <div className="md:w-full md:min-h-screen md:flex md:flex-col overflow-x-hidden relative z-10">

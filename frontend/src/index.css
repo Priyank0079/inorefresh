@@ -21,6 +21,21 @@
     display: none;
   }
 
+  /* Fix touch/click responsiveness inside mobile WebViews */
+  button, 
+  a, 
+  input, 
+  select, 
+  textarea, 
+  [role="button"], 
+  [onClick], 
+  .cursor-pointer,
+  [class*="cursor-pointer"] {
+    cursor: pointer !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+    touch-action: manipulation;
+  }
+
   html {
     margin: 0;
     padding: 0;
@@ -164,7 +179,9 @@ video {
 
 /* 🌊 THEME CLASSES */
 .ocean-theme-bg {
-  background: linear-gradient(180deg,
+  background: 
+    radial-gradient(circle at 50% 20%, rgba(255,255,255,0.15), transparent 70%),
+    linear-gradient(180deg,
       #CDEFF7 0%,
       #7ED6E8 35%,
       #2FB7D3 70%,
