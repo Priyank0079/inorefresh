@@ -80,6 +80,33 @@ router.post("/save", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // A browser/device has ONE FCM token that stays the same across logins.
+    // Before binding it to this account, strip it from EVERY other account
+    // (any type) so the previous user logged in on this same device can no
+    // longer receive this account's notifications. Without this, two
+    // warehouses tested on the same browser both end up with the token and
+    // each receives the other's order pushes.
+    if (platform === "web" || platform === "mobile") {
+      const field = platform === "mobile" ? "fcmTokenMobile" : "fcmTokens";
+      const allModels = [
+        Customer,
+        Admin,
+        Warehouse,
+        Delivery,
+        HorecaUser,
+        RetailerUser,
+        PortUser,
+      ];
+      await Promise.all(
+        allModels.map((M: any) =>
+          M.updateMany(
+            { _id: { $ne: userId }, [field]: token },
+            { $pull: { [field]: token } },
+          ),
+        ),
+      );
+    }
+
     // Add token to appropriate array based on platform
     if (platform === "web") {
       if (!user.fcmTokens) {

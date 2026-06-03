@@ -22,8 +22,15 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
   const [activeNotification, setActiveNotification] = useState<WarehouseNotification | null>(null);
   const [activeOtpAlert, setActiveOtpAlert] = useState<ReturnOtpAlert | null>(null);
   const [activeReturnRequest, setActiveReturnRequest] = useState<ReturnRequestAlert | null>(null);
+  // Bumping this key re-mounts the page content so it refetches its data —
+  // an in-app refresh that works without a full page reload (see header).
+  const [refreshKey, setRefreshKey] = useState(0);
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
+
+  const handleRefresh = useCallback(() => {
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   const handleNotificationReceived = useCallback((notification: WarehouseNotification) => {
     setActiveNotification(notification);
@@ -106,11 +113,12 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
       {/* Main Content — shifts right when sidebar is open on desktop */}
       <div className={`flex-1 min-w-0 flex flex-col h-[100dvh] transition-all duration-300 w-full relative ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
         {/* Header */}
-        <WarehouseHeader onMenuClick={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+        <WarehouseHeader onMenuClick={toggleSidebar} isSidebarOpen={isSidebarOpen} onRefresh={handleRefresh} />
 
-        {/* Page Content */}
+        {/* Page Content — keyed on refreshKey so the refresh button remounts
+            it and the page refetches its data without a full page reload. */}
         <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pt-3 pb-28 sm:px-4 sm:pt-4 lg:p-6 bg-neutral-50 touch-pan-y overscroll-contain">
-          <div className="min-h-full">
+          <div className="min-h-full" key={refreshKey}>
             {children}
           </div>
         </main>

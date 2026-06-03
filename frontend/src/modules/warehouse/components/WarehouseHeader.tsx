@@ -7,9 +7,12 @@ import { useNotifications } from '../../../context/NotificationContext';
 interface WarehouseHeaderProps {
   onMenuClick: () => void;
   isSidebarOpen: boolean;
+  // In-app data refresh (re-mounts the page so it refetches). Preferred over a
+  // full page reload, which can fail on a deep SPA route in production/WebView.
+  onRefresh?: () => void;
 }
 
-export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: WarehouseHeaderProps) {
+export default function WarehouseHeader({ onMenuClick, isSidebarOpen, onRefresh }: WarehouseHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
@@ -25,11 +28,22 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen }: Warehous
   const locationRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
-  // Manual refresh — reloads the current page so the warehouse can pull fresh
-  // data (orders, returns, wallet) on mobile without using the browser chrome.
+  // Manual refresh — pulls fresh data (orders, returns, wallet) on mobile.
+  // Prefer an in-app refresh (re-mounts the page so it refetches its data):
+  // a full `window.location.reload()` re-requests the deep SPA route from the
+  // server, which works locally but can 404/hang in production or the Play
+  // Store WebView if the host lacks an SPA fallback. We only fall back to a
+  // hard reload when no in-app refresh handler is provided.
   const handleRefresh = () => {
+    if (refreshing) return;
     setRefreshing(true);
-    window.location.reload();
+    if (onRefresh) {
+      onRefresh();
+      // Stop the spinner shortly after — the page has remounted by then.
+      setTimeout(() => setRefreshing(false), 600);
+    } else {
+      window.location.reload();
+    }
   };
 
   const isActive = (path: string) => location.pathname.includes(path);

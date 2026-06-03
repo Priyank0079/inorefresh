@@ -61,6 +61,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { location } = useLocation();
   const { showToast } = useToast();
 
+  // Tracks the previous auth state so we can detect the guest -> logged-in
+  // transition and merge the guest cart into the server cart (see below).
+  const prevAuthRef = useRef(isAuthenticated);
+
   // Helper to map API cart items to internal CartItem structure
   const mapApiItemsToState = (apiItems: any[]): ExtendedCartItem[] => {
     return apiItems
@@ -130,10 +134,54 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, user?.userType, location?.latitude, location?.longitude]);
 
+  // When a guest logs in / registers, push any items they added while browsing
+  // (held in localStorage) into their server cart, THEN load the merged cart.
+  // Without this, fetchCart() would replace the guest cart with the empty
+  // server cart and the new user would lose everything right before checkout.
+  const mergeGuestCartThenFetch = useCallback(async () => {
+    setLoading(true);
+    const isMongoId = (id: string) => /^[0-9a-fA-F]{24}$/.test(id || '');
+    let guestItems: any[] = [];
+    try {
+      const saved = localStorage.getItem(CART_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) guestItems = parsed.filter((it: any) => it?.product);
+      }
+    } catch (e) {
+      console.warn('Cart merge: could not read guest cart', e);
+    }
+
+    for (const it of guestItems) {
+      const pid = it?.product?.id;
+      const qty = it?.quantity || 1;
+      if (!pid || !isMongoId(pid) || qty <= 0) continue;
+      const variation =
+        it?.variant || it?.product?.variantId || it?.variantTitle || it?.product?.pack;
+      try {
+        await apiAddToCart(pid, qty, variation, location?.latitude, location?.longitude);
+      } catch (e) {
+        // Best-effort per item — never block login on one bad item.
+        console.warn('Cart merge: failed to add item', pid, e);
+      }
+    }
+
+    // Load the now-merged server cart as the source of truth.
+    await fetchCart();
+  }, [location?.latitude, location?.longitude, fetchCart]);
+
   // Load cart on auth change
   useEffect(() => {
+    const wasAuthenticated = prevAuthRef.current;
+    prevAuthRef.current = isAuthenticated;
+
     if (isAuthenticated) {
-      fetchCart();
+      if (!wasAuthenticated) {
+        // Just logged in / registered — merge the guest cart first.
+        mergeGuestCartThenFetch();
+      } else {
+        fetchCart();
+      }
     } else {
       // Guest cart is already in 'items' from localStorage if it existed
       setLoading(false);
