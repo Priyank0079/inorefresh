@@ -18,7 +18,19 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import sharp from 'sharp';
+
+// sharp is a devDependency. If a production-only install (e.g. `npm ci
+// --omit=dev`) leaves it out, we must NOT crash the build — the images
+// committed to the repo are already optimized, so we simply skip this step.
+let sharp;
+try {
+  ({ default: sharp } = await import('sharp'));
+} catch {
+  console.warn(
+    '[optimize-images] sharp not installed — skipping (committed images are already optimized).'
+  );
+  process.exit(0);
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
