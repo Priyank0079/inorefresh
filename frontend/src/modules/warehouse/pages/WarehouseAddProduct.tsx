@@ -112,7 +112,14 @@ export default function WarehouseAddProduct() {
             salePrice: p.variations?.[0]?.discPrice?.toString() || p.discPrice?.toString() || "",
             baseStock: p.variations?.[0]?.stock?.toString() || p.stock?.toString() || "0",
           });
-          setVariations(p.variations || []);
+          // The backend stores the variant label in `value`, but the form/table
+          // use `title` — map it across so the label shows on edit.
+          setVariations(
+            (p.variations || []).map((v: any) => ({
+              ...v,
+              title: v.title || v.value || "",
+            }))
+          );
           if (p.mainImageUrl || p.mainImage) {
             setMainImagePreview(p.mainImageUrl || p.mainImage || "");
           }
@@ -304,7 +311,13 @@ export default function WarehouseAddProduct() {
       }
     }
 
-    const finalVariations = variations;
+    // Include `value` (the schema's label field) alongside `title` so the label
+    // persists on BOTH create and update — the update endpoint doesn't map
+    // title -> value, so without this an edit would wipe the variant label.
+    const finalVariations = variations.map((v: any) => ({
+      ...v,
+      value: v.title || v.value || "",
+    }));
 
     setUploading(true);
     try {
