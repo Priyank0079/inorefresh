@@ -186,9 +186,6 @@ export default function LowestPricesEver({ activeTab = 'all', products: adminPro
         marginTop: '0px'
       }}
     >
-      {/* 🌊 PREMIUM UNDERWATER ATMOSPHERE */}
-      <UnderwaterEffect />
-
       {/* 🌊 Subtle Depth Enhancements */}
       <div className="absolute inset-0 pointer-events-none z-0">
         {/* Static decorative glow. The previous infinite opacity animation on a

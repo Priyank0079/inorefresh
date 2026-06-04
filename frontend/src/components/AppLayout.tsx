@@ -182,10 +182,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Hide bottom nav on product detail — the page has its own sticky "Add to Cart / Buy Now" footer
   const showFooter = !isCheckoutPage && !isProductDetailPage;
 
-  // Perf: the animated ocean backgrounds (fish + underwater motion) are expensive
-  // framer-motion loops. Only run them on the Home page, and never when the user
-  // prefers reduced motion. Other pages keep the static ocean gradient only.
-  const showAmbientFx = isHomePage && !prefersReducedMotion;
+  // Perf: Disabled expensive animated ocean backgrounds (fish + underwater motion)
+  // to avoid main-thread and GPU lag on the Home page, keeping a clean static look.
+  const showAmbientFx = false;
 
   return (
     <>
