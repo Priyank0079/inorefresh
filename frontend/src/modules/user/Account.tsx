@@ -708,8 +708,9 @@ export default function Account() {
                           </div>
                         </button>
 
-                        {/* Action Bar - Shows on Hover */}
-                        <div className="px-4 pb-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 border-t border-gray-200/50">
+                        {/* Action Bar - always visible (was hover-only, which
+                            made the buttons invisible/untappable on touch). */}
+                        <div className="px-4 pb-3 pt-2 flex items-center gap-2 border-t border-gray-200/50">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -721,19 +722,20 @@ export default function Account() {
                             {!notification.isRead ? '✓ Mark Read' : '◦ Mark Unread'}
                           </button>
 
-                          {notification.link && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(notification.link);
-                                setShowNotifications(false);
-                              }}
-                              className="flex-1 px-3 py-2 text-xs font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors"
-                              title="View details"
-                            >
-                              View →
-                            </button>
-                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(notification._id);
+                              // Open the full notification (detail view) instead
+                              // of navigating away — users want to read the whole
+                              // message, which was being truncated in the list.
+                              setSelectedNotification(notification);
+                            }}
+                            className="flex-1 px-3 py-2 text-xs font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors"
+                            title="View full notification"
+                          >
+                            View →
+                          </button>
                         </div>
                       </motion.div>
                     ))}

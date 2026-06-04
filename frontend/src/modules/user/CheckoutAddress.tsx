@@ -145,10 +145,19 @@ export default function CheckoutAddress() {
     }
   }, [editAddress]);
 
-  const platformFee = appConfig.platformFee;
+  // Use the SAME values as the main checkout bill so the summary matches what is
+  // actually charged: the real platform/delivery fees from the cart (backend),
+  // plus GST. Previously this used static appConfig defaults (platform ₹2, no
+  // GST), which made this summary disagree with the checkout total.
+  const gstRate = appConfig.taxes?.gst ?? 18;
+  const platformFee = cart.platformFee ?? appConfig.platformFee;
   // Free delivery removed: delivery is always charged.
-  const deliveryFee = appConfig.deliveryFee;
-  const totalAmount = cart.total + platformFee + deliveryFee;
+  const deliveryFee =
+    cart.estimatedDeliveryFee !== undefined
+      ? cart.estimatedDeliveryFee
+      : appConfig.deliveryFee;
+  const gstAmount = Number(((cart.total * gstRate) / 100).toFixed(2));
+  const totalAmount = cart.total + gstAmount + platformFee + deliveryFee;
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof OrderAddress, string>> = {};
@@ -533,10 +542,14 @@ export default function CheckoutAddress() {
                 {deliveryFee === 0 ? 'Free' : `₹${deliveryFee}`}
               </span>
             </div>
+            <div className="flex justify-between text-xs text-neutral-700">
+              <span>GST ({gstRate}%)</span>
+              <span className="font-medium">₹{gstAmount}</span>
+            </div>
             <div className="border-t border-neutral-200 pt-2 mt-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-neutral-900">Total</span>
-                <span className="text-base font-bold text-neutral-900">₹{totalAmount.toFixed(0)}</span>
+                <span className="text-base font-bold text-neutral-900">₹{Number(totalAmount.toFixed(2))}</span>
               </div>
             </div>
           </div>

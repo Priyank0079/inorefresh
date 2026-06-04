@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { uploadImage } from "../../../services/api/uploadService";
-import { validateImageFile, createImagePreview } from "../../../utils/imageUpload";
+import { validateImageFile, createImagePreview, compressImage } from "../../../utils/imageUpload";
 import { createProduct, updateProduct, getProductById, ProductVariation } from "../../../services/api/productService";
 import { getSubcategories, SubCategory } from "../../../services/api/categoryService";
 import api from "../../../services/api/config";
@@ -166,10 +166,20 @@ export default function WarehouseAddProduct() {
     if (!file) return;
     const validation = validateImageFile(file);
     if (!validation.valid) { setUploadError(validation.error || "Invalid image"); return; }
-    setMainImageFile(file);
+    // Compress/resize large photos (e.g. from a phone camera) so the upload
+    // stays under the backend's 5MB limit — otherwise the upload fails with a
+    // "network error" on the app while small web images worked. Fall back to
+    // the original file if compression fails for any reason.
+    let compressed = file;
+    try {
+      compressed = await compressImage(file);
+    } catch {
+      compressed = file;
+    }
+    setMainImageFile(compressed);
     setUploadError("");
     try {
-      const preview = await createImagePreview(file);
+      const preview = await createImagePreview(compressed);
       setMainImagePreview(preview);
     } catch { setUploadError("Failed to preview image"); }
   };
@@ -567,7 +577,11 @@ export default function WarehouseAddProduct() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A1.5 1.5 0 004.5 20.25h15a1.5 1.5 0 001.5-1.5V16.5m-12-9l3-3m0 0l3 3m-3-3v12.25" />
                   </svg>
                    Choose Image
-                  <input type="file" accept="image/*" className="hidden" onChange={handleMainImageChange} />
+                  {/* Use explicit extensions (not image/*) so the OS opens the
+                      file/gallery picker instead of a camera-first chooser. A
+                      web file input can't fully remove the OS camera option, but
+                      this avoids the camera prompt on most Android devices. */}
+                  <input type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden" onChange={handleMainImageChange} />
                 </label>
                 <p className="text-xs text-neutral-400 mt-2">
                   JPG, PNG, or WebP. Max 5MB. 
