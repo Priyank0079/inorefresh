@@ -90,7 +90,8 @@ function ProductCard({ product, badgeText = '' }: ProductCardProps) {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2, scale: 1.01 }}
       onClick={() => navigate(`/product/${String((product as any).id || product._id)}`)}
-      className="relative bg-white rounded-2xl flex flex-col cursor-pointer overflow-hidden border border-neutral-100/80 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.10)] transition-all duration-300 w-full h-fit"
+      className="relative rounded-2xl flex flex-col cursor-pointer overflow-hidden border border-[#A8E6F5]/40 shadow-[0_2px_8px_rgba(17,111,146,0.10)] hover:shadow-[0_8px_24px_rgba(17,111,146,0.18)] transition-all duration-300 w-full h-fit"
+      style={{ background: 'linear-gradient(160deg, #EBF9FF 0%, #D6F1FA 60%, #C4EAF7 100%)' }}
     >
       {/* ── Image ─────────────────────────────── */}
       <div className="relative w-full overflow-hidden bg-[#F4F7F9]" style={{ aspectRatio: '1 / 1' }}>
@@ -142,7 +143,7 @@ function ProductCard({ product, badgeText = '' }: ProductCardProps) {
       </div>
 
       {/* ── Info ──────────────────────────────── */}
-      <div className="px-2.5 pt-2 pb-2 flex flex-col gap-0.5">
+      <div className="px-2.5 pt-2 pb-2 flex flex-col gap-0.5" style={{ background: 'linear-gradient(180deg, #D6F1FA 0%, #C4EAF7 100%)' }}>
         {/* Category + pack row */}
         <div className="flex items-center gap-1 min-w-0">
           <span className="flex-shrink-0 text-[7.5px] font-extrabold text-teal-600 uppercase tracking-[0.07em] px-1.5 py-[2px] bg-teal-50 rounded leading-none">
@@ -154,12 +155,12 @@ function ProductCard({ product, badgeText = '' }: ProductCardProps) {
         </div>
 
         {/* Product name */}
-        <h3 className="text-[12px] font-bold text-neutral-900 line-clamp-2 leading-tight group-hover:text-teal-600 transition-colors duration-200">
+        <h3 className="text-[12px] font-bold text-[#072F4A] line-clamp-2 leading-tight group-hover:text-teal-600 transition-colors duration-200">
           {product.name || product.productName || ''}
         </h3>
 
         {/* Price + Add button */}
-        <div className="flex items-center justify-between mt-0.5 pt-1 border-t border-neutral-100">
+        <div className="flex items-center justify-between mt-0.5 pt-1 border-t border-[#9FD8EE]/50">
           {/* Price column */}
           <div className="flex flex-col leading-none">
             {mrp && mrp > (resolvedPrice || 0) && (

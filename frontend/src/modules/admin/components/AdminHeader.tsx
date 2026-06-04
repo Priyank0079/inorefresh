@@ -66,9 +66,9 @@ export default function AdminHeader({ onMenuClick, isSidebarOpen }: AdminHeaderP
       className="bg-white shadow-sm sticky top-0 z-30 border-b-2"
       style={{ borderBottomColor: currentTheme.primary[3] }}
     >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4 gap-3 sm:gap-0">
+      <div className="flex flex-row items-center justify-between px-3 sm:px-4 md:px-6 py-2 sm:py-3 gap-2 min-h-[56px]">
         {/* Logo and Hamburger Menu */}
-        <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* Hamburger Menu Button */}
           <button
             onClick={onMenuClick}

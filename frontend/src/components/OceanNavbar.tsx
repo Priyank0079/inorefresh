@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useThemeContext } from '../context/ThemeContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
@@ -11,11 +11,21 @@ interface OceanNavbarProps {
     onMenuClick: () => void;
 }
 
+const FILTER_OPTIONS = [
+    { value: 0, label: 'All Time', short: 'All' },
+    { value: 1, label: 'Today',    short: 'Today' },
+    { value: 2, label: 'Last 2 Days', short: '2D' },
+    { value: 3, label: 'Last 3 Days', short: '3D' },
+    { value: 5, label: 'Last 5 Days', short: '5D' },
+    { value: 7, label: 'Last 7 Days', short: '7D' },
+    { value: 10, label: 'Last 10 Days', short: '10D' },
+];
+
 export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
     const internalNavigate = useNavigate();
     const [isVisible, setIsVisible] = useState(true);
-    // Use a ref instead of state so the scroll handler never needs to re-register
-    // (previously [lastScrollY] dep caused removeEventListener + addEventListener on every scroll)
+    const [filterOpen, setFilterOpen] = useState(false);
+    const filterRef = useRef<HTMLDivElement>(null);
     const lastScrollYRef = useRef(0);
     const { activeCategory, setActiveCategory, dateFilter, setDateFilter } = useThemeContext();
     const routerLocation = useLocation();
@@ -28,38 +38,54 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
 
     const cartItemsCount = Array.isArray(cart) ? cart.reduce((total, item) => total + (item.quantity || 1), 0) : 0;
 
+    // Hide/show navbar on scroll
     useEffect(() => {
         const controlNavbar = () => {
             const current = window.scrollY;
             if (current > lastScrollYRef.current && current > 100) {
                 setIsVisible(false);
+                setFilterOpen(false);
             } else {
                 setIsVisible(true);
             }
             lastScrollYRef.current = current;
         };
-
-        // passive: true lets the browser skip waiting for preventDefault → smoother scroll
         window.addEventListener('scroll', controlNavbar, { passive: true });
         return () => window.removeEventListener('scroll', controlNavbar);
-    }, []); // Empty deps — listener registered once, reads via ref
+    }, []);
 
-    const navSurfaceClass = isHome
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handleOutside = (e: MouseEvent) => {
+            if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+                setFilterOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleOutside);
+        return () => document.removeEventListener('mousedown', handleOutside);
+    }, []);
+
+    const isDark = isHome || isCategorySection;
+
+    const navSurfaceClass = isDark
         ? 'bg-gradient-to-b from-[#0C4A69]/95 via-[#0E5D82]/92 to-[#0B4F71]/88 border-b border-white/20 shadow-[0_12px_32px_rgba(5,30,45,0.35)]'
-        : isCategorySection
-            ? 'bg-gradient-to-b from-[#0C4A69]/95 via-[#0E5D82]/92 to-[#0B4F71]/88 border-b border-white/20 shadow-[0_12px_32px_rgba(5,30,45,0.35)]'
-            : 'bg-gradient-to-b from-[#D8F5FF]/96 via-[#BEEFFF]/92 to-[#9DE7FF]/85 border-b border-[#4AAFD1]/25 shadow-[0_10px_26px_rgba(17,111,146,0.16)]';
+        : 'bg-gradient-to-b from-[#D8F5FF]/96 via-[#BEEFFF]/92 to-[#9DE7FF]/85 border-b border-[#4AAFD1]/25 shadow-[0_10px_26px_rgba(17,111,146,0.16)]';
 
-    // Adaptive icon color depending on background (dark on home, light on other pages)
-    const iconColorClass = isHome || isCategorySection
+    const iconColorClass = isDark
         ? 'text-white/80 hover:text-white hover:bg-white/10'
         : 'text-[#072F4A]/70 hover:text-[#072F4A] hover:bg-[#072F4A]/8';
 
-
+    const activeOption = FILTER_OPTIONS.find(o => o.value === dateFilter) ?? FILTER_OPTIONS[0];
+    const isFiltered = dateFilter !== 0;
 
     const handleLogout = () => {
         logout();
         internalNavigate('/login');
+    };
+
+    const handleSelect = (value: number) => {
+        setDateFilter(value === dateFilter ? 0 : value);
+        setFilterOpen(false);
     };
 
     return (
@@ -73,28 +99,128 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
 
             <div className="relative w-full flex items-center justify-between z-10 h-full gap-2">
 
-                {/* Left side - Date Filter Pills (Scrollable) */}
-                <div className="flex-1 flex items-center overflow-x-auto scrollbar-hide py-2 max-w-[38%] md:max-w-[35%] gap-2 mask-linear-right">
-                    {[...Array(11)].map((_, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setDateFilter(dateFilter === i ? 0 : i)}
-                            className={`
-                                flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border whitespace-nowrap
-                                ${dateFilter === i
-                                    ? 'bg-[#8BE7FF] text-[#072F4A] border-[#8BE7FF] shadow-[0_0_15px_rgba(139,231,255,0.4)] scale-105'
-                                    : (isHome || isCategorySection
-                                        ? 'bg-white/10 text-white/90 border-white/20 hover:bg-white/20'
-                                        : 'bg-[#1CA7C7]/10 text-[#072F4A] border-[#1CA7C7]/20 hover:bg-[#1CA7C7]/20')}
-                                ${i === 0 && dateFilter !== 0 ? 'hidden' : ''}
-                            `}
+                {/* ── Left: Compact Date Filter ── */}
+                <div ref={filterRef} className="flex-1 flex items-center max-w-[42%] relative">
+                    {/* Trigger button */}
+                    <button
+                        id="navbar-date-filter-btn"
+                        onClick={() => setFilterOpen(p => !p)}
+                        aria-expanded={filterOpen}
+                        aria-label="Date filter"
+                        className={`
+                            flex items-center gap-1.5 pl-2.5 pr-2 py-1.5 rounded-xl
+                            text-[11px] font-bold tracking-wide transition-all duration-200
+                            border active:scale-95
+                            ${isDark
+                                ? isFiltered
+                                    ? 'bg-[#8BE7FF] text-[#072F4A] border-[#8BE7FF] shadow-[0_0_14px_rgba(139,231,255,0.45)]'
+                                    : 'bg-white/10 text-white/90 border-white/20 hover:bg-white/18'
+                                : isFiltered
+                                    ? 'bg-[#1CA7C7] text-white border-[#1CA7C7] shadow-[0_2px_10px_rgba(28,167,199,0.35)]'
+                                    : 'bg-[#1CA7C7]/10 text-[#072F4A] border-[#1CA7C7]/30 hover:bg-[#1CA7C7]/20'
+                            }
+                        `}
+                    >
+                        {/* Calendar icon */}
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <span>{activeOption.short}</span>
+                        {/* Chevron */}
+                        <svg
+                            width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"
+                            className={`transition-transform duration-200 ${filterOpen ? 'rotate-180' : ''}`}
                         >
-                            {i === 0 ? 'All' : i === 1 ? 'Today' : `Last ${i} Days`}
-                        </button>
-                    ))}
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>
+
+                    {/* Active dot indicator */}
+                    {isFiltered && (
+                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#FF6B6B] border border-white/40 shadow-sm" />
+                    )}
+
+                    {/* ── Dropdown Panel ── */}
+                    <AnimatePresence>
+                        {filterOpen && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                                transition={{ duration: 0.15, ease: 'easeOut' }}
+                                className="absolute top-[calc(100%+10px)] left-0 w-[210px] rounded-2xl overflow-hidden z-50"
+                                style={{
+                                    background: isDark
+                                        ? 'linear-gradient(145deg, rgba(8,52,80,0.97) 0%, rgba(11,63,96,0.97) 100%)'
+                                        : 'linear-gradient(145deg, rgba(216,245,255,0.98) 0%, rgba(158,231,255,0.98) 100%)',
+                                    border: isDark ? '1px solid rgba(139,231,255,0.15)' : '1px solid rgba(28,167,199,0.25)',
+                                    boxShadow: isDark
+                                        ? '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,231,255,0.08)'
+                                        : '0 16px 48px rgba(17,111,146,0.22), 0 0 0 1px rgba(28,167,199,0.12)',
+                                    backdropFilter: 'blur(20px)',
+                                }}
+                            >
+                                {/* Panel header */}
+                                <div className={`px-3.5 pt-3 pb-2 flex items-center justify-between border-b ${isDark ? 'border-white/10' : 'border-[#1CA7C7]/15'}`}>
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-[#8BE7FF]' : 'text-[#0E5D82]'}`}>
+                                        Filter by Date
+                                    </span>
+                                    {isFiltered && (
+                                        <button
+                                            onClick={() => { setDateFilter(0); setFilterOpen(false); }}
+                                            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md transition-all ${isDark ? 'text-[#8BE7FF]/70 hover:text-[#8BE7FF] hover:bg-white/10' : 'text-[#1CA7C7] hover:bg-[#1CA7C7]/10'}`}
+                                        >
+                                            Clear
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Options grid */}
+                                <div className="p-2.5 grid grid-cols-2 gap-1.5">
+                                    {FILTER_OPTIONS.map(opt => {
+                                        const isActive = dateFilter === opt.value;
+                                        return (
+                                            <button
+                                                key={opt.value}
+                                                onClick={() => handleSelect(opt.value)}
+                                                className={`
+                                                    relative flex flex-col items-start px-3 py-2 rounded-xl text-left transition-all duration-150 active:scale-[0.97]
+                                                    ${isActive
+                                                        ? isDark
+                                                            ? 'bg-[#8BE7FF] text-[#072F4A] shadow-[0_4px_14px_rgba(139,231,255,0.35)]'
+                                                            : 'bg-[#1CA7C7] text-white shadow-[0_4px_14px_rgba(28,167,199,0.40)]'
+                                                        : isDark
+                                                            ? 'bg-white/6 text-white/80 hover:bg-white/12 hover:text-white border border-white/8 hover:border-white/20'
+                                                            : 'bg-[#1CA7C7]/8 text-[#072F4A]/80 hover:bg-[#1CA7C7]/18 hover:text-[#072F4A] border border-[#1CA7C7]/15 hover:border-[#1CA7C7]/30'
+                                                    }
+                                                `}
+                                            >
+                                                <span className={`text-[11px] font-black leading-none ${isActive ? '' : ''}`}>
+                                                    {opt.short}
+                                                </span>
+                                                <span className={`text-[8.5px] font-medium mt-0.5 leading-none opacity-75`}>
+                                                    {opt.label}
+                                                </span>
+                                                {isActive && (
+                                                    <span className="absolute top-1.5 right-1.5">
+                                                        <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
+                                                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                                        </svg>
+                                                    </span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
-                {/* Center - Brand Name */}
+                {/* ── Center: Brand ── */}
                 <div
                     className="cursor-pointer group flex flex-col items-center flex-shrink-0 px-2"
                     onClick={() => {
@@ -104,17 +230,17 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
                 >
                     <span className={`
                         text-xl md:text-2xl font-black tracking-[-0.05em] transition-all duration-300
-                        ${isHome || isCategorySection ? 'text-white' : 'text-[#072F4A]'}
+                        ${isDark ? 'text-white' : 'text-[#072F4A]'}
                     `}>
-                        INOR<span className={isHome || isCategorySection ? 'text-[#8BE7FF]' : 'text-[#1CA7C7]'}>FRESH</span>
+                        INOR<span className={isDark ? 'text-[#8BE7FF]' : 'text-[#1CA7C7]'}>FRESH</span>
                     </span>
-                    <div className={`h-0.5 w-0 group-hover:w-full transition-all duration-300 rounded-full ${isHome || isCategorySection ? 'bg-[#8BE7FF]' : 'bg-[#1CA7C7]'}`} />
+                    <div className={`h-0.5 w-0 group-hover:w-full transition-all duration-300 rounded-full ${isDark ? 'bg-[#8BE7FF]' : 'bg-[#1CA7C7]'}`} />
                 </div>
 
-                {/* Right side - Action Icon Row */}
-                <div className="flex-1 flex items-center justify-end gap-0.5">
+                {/* ── Right: Action Icons ── */}
+                <div className="flex-shrink-0 flex items-center justify-end gap-0.5 ml-auto">
 
-                    {/* 🛒 Cart */}
+                    {/* Cart */}
                     <button
                         id="navbar-cart-btn"
                         onClick={() => internalNavigate('/cart')}
@@ -137,7 +263,7 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
                         )}
                     </button>
 
-                    {/* 🔔 Notifications */}
+                    {/* Notifications */}
                     {!isHome && (
                         <button
                             id="navbar-notifications-btn"
@@ -161,7 +287,7 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
                         </button>
                     )}
 
-                    {/* ⚙️ Settings / Account */}
+                    {/* Account / Settings */}
                     <button
                         id="navbar-account-btn"
                         onClick={() => internalNavigate('/account')}
@@ -174,9 +300,7 @@ export default function OceanNavbar({ onMenuClick }: OceanNavbarProps) {
                         </svg>
                     </button>
 
-
-
-                    {/* 🚪 Logout (only when authenticated) */}
+                    {/* Logout */}
                     {isAuthenticated && (
                         <button
                             id="navbar-logout-btn"

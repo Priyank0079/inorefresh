@@ -730,11 +730,11 @@ export default function Home() {
         <HomeHero activeTab={activeTab} onTabChange={setActiveTab} />
       ) : (
         // Category header with back button for mobile
-        <div className="sticky top-0 z-40 bg-white border-b border-neutral-200 shadow-sm md:hidden">
+        <div className="sticky top-0 z-40 border-b border-[#9FD8EE]/40 shadow-sm md:hidden" style={{ background: 'linear-gradient(135deg, #C4EAF7 0%, #B0E0F5 50%, #9DD6F2 100%)' }}>
           <div className="px-4 py-4 flex items-center gap-3">
             <button
               onClick={() => setActiveTab('all')}
-              className="w-11 h-11 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 rounded-full transition-colors min-h-[44px] min-w-[44px]"
+              className="w-11 h-11 flex items-center justify-center text-[#072F4A] hover:bg-[#072F4A]/10 active:bg-[#072F4A]/20 rounded-full transition-colors min-h-[44px] min-w-[44px]"
               aria-label="Go back to all products"
               title="Go back"
             >
@@ -748,7 +748,7 @@ export default function Home() {
                 />
               </svg>
             </button>
-            <h1 className="text-lg font-bold text-neutral-900 flex-1 truncate capitalize">
+            <h1 className="text-lg font-bold text-[#072F4A] flex-1 truncate capitalize">
               {activeTab}
             </h1>
           </div>
@@ -773,7 +773,7 @@ export default function Home() {
       )}
 
       {/* Main content - Premium Products Grid */}
-      <div id="fish-products-section" className="pt-6 space-y-5 md:space-y-8 md:pt-8 w-full relative z-10">
+      <div id="fish-products-section" className="pt-10 space-y-5 md:space-y-8 md:pt-12 w-full relative z-10">
         <div className="px-4 pb-20 md:px-6 lg:px-8 w-full max-w-[1280px] mx-auto overflow-x-hidden">
           {/* Framer Motion Wrapper for Grid */}
           <AnimatePresence mode="wait">
