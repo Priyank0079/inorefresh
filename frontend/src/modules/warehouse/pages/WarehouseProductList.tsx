@@ -118,7 +118,9 @@ export default function WarehouseProductList() {
         page: currentPage,
         limit: rowsPerPage,
         sortBy: sortColumn || "createdAt",
-        sortOrder: sortDirection,
+        // With no column chosen, show newest products first (top). Only use the
+        // user's chosen direction once they actually sort by a column.
+        sortOrder: sortColumn ? sortDirection : "desc",
       };
 
       if (searchTerm) {
