@@ -426,7 +426,12 @@ export default function Login() {
                 <input
                   type="text"
                   value={referralCode}
-                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  onChange={(e) => {
+                    // Only allow alphanumeric characters, limit to 8 chars (e.g. TESTLO15)
+                    const cleaned = e.target.value.replace(/[^A-Z0-9]/g, '').toUpperCase().slice(0, 8);
+                    setReferralCode(cleaned);
+                  }}
+                  maxLength={8}
                   className="block w-full px-4 py-4 bg-neutral-50 border border-neutral-200 rounded-xl text-lg font-medium text-neutral-900 placeholder-neutral-400 focus:outline-none transition-all"
                   style={{
                     boxShadow: `0 0 0 2px ${currentTheme.primary[3]}20`,

@@ -796,7 +796,7 @@ export default function Home() {
                   ease: "easeIn"
                 }
               }}
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 md:gap-6 w-full min-h-[400px]"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 md:gap-6 w-full min-h-[400px] mt-4"
             >
               {(isTabLoading || !hasResolvedActiveTab) ? (
                 <div className="col-span-full py-20 flex flex-col items-center justify-center">

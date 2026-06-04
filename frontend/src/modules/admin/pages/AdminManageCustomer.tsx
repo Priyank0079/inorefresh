@@ -408,8 +408,8 @@ export default function AdminManageCustomer() {
         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
           {/* Filters */}
           <div className="p-4 sm:p-6 border-b border-neutral-200 bg-neutral-50">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="md:col-span-2">
                 <label className="block text-xs font-medium text-neutral-700 mb-1">
                   Date Range
                 </label>

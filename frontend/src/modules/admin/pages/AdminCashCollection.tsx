@@ -228,7 +228,7 @@ export default function AdminCashCollection() {
                       value={fromDate}
                       max={toDate || undefined}
                       onChange={(e) => setFromDate(e.target.value)}
-                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[140px]"
+                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] w-[150px]"
                     />
                   </div>
                   <span className="text-neutral-500">-</span>
@@ -259,7 +259,7 @@ export default function AdminCashCollection() {
                       value={toDate}
                       min={fromDate || undefined}
                       onChange={(e) => setToDate(e.target.value)}
-                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[140px]"
+                      className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] w-[150px]"
                     />
                   </div>
                   <button
@@ -637,7 +637,7 @@ export default function AdminCashCollection() {
       </div>
 
       {/* Footer */}
-      <div className="bg-neutral-800 text-white text-center text-sm py-4">
+      <div className="bg-white text-neutral-500 text-center text-sm py-4 border-t border-neutral-200">
         Copyright © 2026. Developed By{" "}
         <a href="#" className="text-[#12b2a2] hover:text-[#0e8f82]">
           Inor fresh

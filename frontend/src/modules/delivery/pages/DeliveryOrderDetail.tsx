@@ -928,7 +928,7 @@ export default function DeliveryOrderDetail() {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="p-3 bg-neutral-50 rounded-lg">
                             <p className="text-xs text-neutral-500 mb-1">Order ID</p>
-                            <p className="text-sm font-bold text-neutral-900">{order.orderId}</p>
+                            <p className="text-sm font-bold text-neutral-900 break-all">{order.orderId}</p>
                         </div>
                         <div className="p-3 bg-neutral-50 rounded-lg">
                             <p className="text-xs text-neutral-500 mb-1">Order Date</p>

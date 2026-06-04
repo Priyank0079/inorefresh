@@ -115,9 +115,36 @@ export default function DeliveryProfile() {
   };
 
   const handleInputChange = (field: string, value: string) => {
+    let cleaned = value;
+    switch (field) {
+      case 'name':
+      case 'accountName':
+      case 'bankName':
+        // Letters and spaces only (no special characters, no digits)
+        cleaned = value.replace(/[^a-zA-Z\s]/g, '');
+        break;
+      case 'email':
+        // Lowercase, no spaces/special chars beyond valid email characters
+        cleaned = value.replace(/[^a-zA-Z0-9@._-]/g, '').toLowerCase();
+        break;
+      case 'vehicleNumber':
+        // Alphanumeric uppercase only (e.g. MH12AB1234)
+        cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        break;
+      case 'ifscCode':
+        // Alphanumeric uppercase only (e.g. HDFC0001234)
+        cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        break;
+      case 'address':
+        // Letters, digits, spaces and common address punctuation only
+        cleaned = value.replace(/[^a-zA-Z0-9\s,.\-/#]/g, '');
+        break;
+      default:
+        cleaned = value;
+    }
     setProfileData((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: cleaned,
     }));
   };
 

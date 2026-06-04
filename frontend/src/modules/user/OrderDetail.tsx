@@ -1389,7 +1389,7 @@ export default function OrderDetail() {
                   Pay now, or pay to the delivery partner using Cash/UPI
                 </p>
               </div>
-              <Button className="bg-gray-900 hover:bg-gray-800 text-white rounded-full px-6">
+              <Button className="bg-gray-900 hover:bg-gray-800 text-white rounded-md px-4 py-2 text-sm font-medium flex-shrink-0">
                 Pay now <ChevronRightIcon className="w-4 h-4 ml-1" />
               </Button>
             </div>

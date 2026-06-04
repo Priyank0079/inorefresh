@@ -406,10 +406,10 @@ export default function DeliveryDashboard() {
         <div
           onClick={() => isOnline && navigate("/delivery/sellers-in-range")}
           className={`p-4 rounded-xl border cursor-pointer transition-all active:scale-95 ${isOnline ? "bg-teal-50 border-teal-100 hover:bg-teal-100" : "bg-neutral-50 border-neutral-200"}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <div
-                className={`p-2 rounded-full ${isOnline ? "bg-teal-100 text-teal-600" : "bg-neutral-200 text-neutral-400"}`}>
+                className={`p-2 rounded-full flex-shrink-0 ${isOnline ? "bg-teal-100 text-teal-600" : "bg-neutral-200 text-neutral-400"}`}>
                 <svg
                   width="24"
                   height="24"
@@ -421,7 +421,7 @@ export default function DeliveryDashboard() {
                   <circle cx="12" cy="10" r="3" />
                 </svg>
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3
                   className={`text-sm font-semibold ${isOnline ? "text-teal-900" : "text-neutral-500"}`}>
                   {isOnline ? "Active Service Areas" : "Offline"}
@@ -434,7 +434,7 @@ export default function DeliveryDashboard() {
               </div>
             </div>
             {isOnline && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>

@@ -24,7 +24,8 @@ export default function DeliveryHelp() {
       try {
         const data = await getHelpSupport();
         setFaqs(data.faqs || []);
-        setContacts(data.contact || []);
+        // Live chat removed — filter out any chat contact option.
+        setContacts((data.contact || []).filter((c: any) => c.icon !== 'chat'));
       } catch (error) {
         console.error("Failed to load help data", error);
       } finally {

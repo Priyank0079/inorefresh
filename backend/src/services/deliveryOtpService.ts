@@ -24,7 +24,7 @@ export async function generateDeliveryOtp(orderId: string): Promise<{ success: b
     order.deliveryOtp = dynamicOtp;
     await order.save();
 
-    // Send notification to customer with the OTP
+    // Send notification to customer with the OTP (in-app + push).
     const { sendNotification } = require('./notificationService');
     await sendNotification(
       "Customer",
@@ -34,9 +34,33 @@ export async function generateDeliveryOtp(orderId: string): Promise<{ success: b
       { type: "Order", priority: "High", link: `/orders/${order._id}` }
     );
 
+    // Also send the OTP by SMS — the reliable channel. Push/in-app delivery is
+    // unreliable (no notification permission, stale FCM token, app closed), so
+    // SMS guarantees the customer actually receives the code. Best-effort: a
+    // gateway hiccup must not break the rider's "Get OTP" action.
+    let smsSent = false;
+    try {
+      const buyer: any =
+        (await Customer.findById(order.customer)) ||
+        (await HorecaUser.findById(order.customer)) ||
+        (await RetailerUser.findById(order.customer));
+      const phone = buyer?.phone || buyer?.mobile;
+      if (phone) {
+        const { sendOtpSms } = require('./otpService');
+        await sendOtpSms(String(phone), dynamicOtp);
+        smsSent = true;
+      } else {
+        console.warn(`[Delivery OTP] No phone on file for customer ${order.customer} — SMS skipped.`);
+      }
+    } catch (smsErr: any) {
+      console.error('[Delivery OTP] SMS send failed (push still delivered):', smsErr?.message || smsErr);
+    }
+
     return {
       success: true,
-      message: 'OTP generated and sent to customer successfully.',
+      message: smsSent
+        ? 'OTP sent to customer by SMS and app notification.'
+        : 'OTP sent to customer (app notification).',
     };
   } catch (error: any) {
     console.error('Error in generateDeliveryOtp:', error);

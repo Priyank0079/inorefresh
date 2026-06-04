@@ -2362,7 +2362,7 @@ export default function Checkout() {
           <button
             onClick={isMinWeightMet ? handlePlaceOrder : () => setShowMinWeightPopup(true)}
             disabled={cart.items.length === 0 || !isAllowedToOrder}
-            className={`w-full py-3 px-4 font-bold text-sm uppercase tracking-wide transition-colors ${cart.items.length > 0 && isMinWeightMet && isAllowedToOrder
+            className={`w-full py-2.5 px-4 font-bold text-sm uppercase tracking-wide transition-colors ${cart.items.length > 0 && isMinWeightMet && isAllowedToOrder
               ? "text-white hover:opacity-90"
               : "bg-neutral-300 text-neutral-500"
               }`}

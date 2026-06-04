@@ -271,6 +271,19 @@ export async function sendSmsOtp(
   }
 }
 
+/**
+ * Send a pre-generated OTP to a phone via SMS, reusing the DLT-registered
+ * template. Used by the delivery flow so the customer reliably gets the
+ * delivery OTP by SMS (push/in-app alone is unreliable). No-op in mock/bypass
+ * modes so local/dev testing doesn't send real messages.
+ */
+export async function sendOtpSms(mobile: string, otp: string): Promise<void> {
+  if (!mobile) throw new Error('Mobile number is required to send OTP SMS');
+  if (isSpecialBypass(mobile) || isMockMode()) return;
+  const message = buildOtpMessage(otp);
+  await sendSmsViaApi(mobile, message);
+}
+
 export async function verifySmsOtp(
   sessionId: string,
   otpInput: string,

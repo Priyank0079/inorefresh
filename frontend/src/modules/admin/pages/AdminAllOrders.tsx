@@ -778,10 +778,8 @@ export default function AdminAllOrders() {
                         {order.deliveryAddress?.address || "-"}
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-sm text-neutral-600">
-                        {order.estimatedDeliveryDate
-                          ? new Date(
-                            order.estimatedDeliveryDate
-                          ).toLocaleDateString()
+                        {order.deliveredAt
+                          ? new Date(order.deliveredAt).toLocaleDateString()
                           : "-"}
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-sm text-neutral-600">
