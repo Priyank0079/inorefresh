@@ -87,6 +87,11 @@ export const deleteWarehouse = async (id: string): Promise<ApiResponse<any>> => 
 export const updateWarehouseByAdmin = async (
     id: string,
     data: {
+        warehouseName?: string;
+        managerName?: string;
+        mobile?: string;
+        email?: string;
+        password?: string;
         address?: string;
         latitude?: number | string;
         longitude?: number | string;

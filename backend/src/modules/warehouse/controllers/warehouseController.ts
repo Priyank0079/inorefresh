@@ -131,72 +131,50 @@ export const updateWarehouseStatus = asyncHandler(
 export const updateWarehouse = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const updateData = req.body;
-
-    // Remove password from update data if present
-    delete updateData.password;
+    const { password, latitude, longitude, serviceRadiusKm, ...rest } = req.body;
 
     // Handle location update (convert lat/lng to GeoJSON)
-    if (updateData.latitude && updateData.longitude) {
-      const latitude = parseFloat(updateData.latitude);
-      const longitude = parseFloat(updateData.longitude);
-
-      if (!isNaN(latitude) && !isNaN(longitude)) {
-        // Update GeoJSON location for geospatial queries
-        updateData.location = {
-          type: "Point",
-          coordinates: [longitude, latitude], // MongoDB GeoJSON: [longitude, latitude]
-        };
-        // Ensure string fields are also synchronized
-        updateData.latitude = latitude.toString();
-        updateData.longitude = longitude.toString();
+    if (latitude && longitude) {
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        (rest as any).location = { type: "Point", coordinates: [lng, lat] };
+        (rest as any).latitude = lat.toString();
+        (rest as any).longitude = lng.toString();
       }
     }
 
     // Handle serviceRadiusKm update
-    if (
-      updateData.serviceRadiusKm !== undefined &&
-      updateData.serviceRadiusKm !== null &&
-      updateData.serviceRadiusKm !== ""
-    ) {
-      const radius =
-        typeof updateData.serviceRadiusKm === "string"
-          ? parseFloat(updateData.serviceRadiusKm)
-          : Number(updateData.serviceRadiusKm);
-
+    if (serviceRadiusKm !== undefined && serviceRadiusKm !== null && serviceRadiusKm !== "") {
+      const radius = typeof serviceRadiusKm === "string" ? parseFloat(serviceRadiusKm) : Number(serviceRadiusKm);
       if (!isNaN(radius) && radius >= 0.1 && radius <= 100) {
-        updateData.serviceRadiusKm = radius; // Ensure it's saved as a number
+        (rest as any).serviceRadiusKm = radius;
       } else {
-        return res.status(400).json({
-          success: false,
-          message: "Service radius must be between 0.1 and 100 kilometers",
-        });
+        return res.status(400).json({ success: false, message: "Service radius must be between 0.1 and 100 kilometers" });
       }
-    } else if (
-      updateData.serviceRadiusKm === "" ||
-      updateData.serviceRadiusKm === null
-    ) {
-      // If empty string or null is sent, remove it from updates to keep existing value
-      delete updateData.serviceRadiusKm;
     }
 
-    const warehouse = await Warehouse.findByIdAndUpdate(id, updateData, {
-      new: true,
-      runValidators: true,
-    }).select("-password");
+    // If a new password is provided, use save() so the pre-save bcrypt hook fires
+    if (password && typeof password === "string" && password.trim().length >= 6) {
+      const warehouseDoc = await Warehouse.findById(id);
+      if (!warehouseDoc) {
+        return res.status(404).json({ success: false, message: "Warehouse not found" });
+      }
+      Object.assign(warehouseDoc, rest);
+      warehouseDoc.password = password.trim();
+      const saved = await warehouseDoc.save();
+      const result = saved.toObject() as any;
+      delete result.password;
+      return res.status(200).json({ success: true, message: "Warehouse updated successfully", data: result });
+    }
 
+    // No password change — use findByIdAndUpdate (skips hash hook safely)
+    const warehouse = await Warehouse.findByIdAndUpdate(id, rest, { new: true, runValidators: true }).select("-password");
     if (!warehouse) {
-      return res.status(404).json({
-        success: false,
-        message: "Warehouse not found",
-      });
+      return res.status(404).json({ success: false, message: "Warehouse not found" });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Warehouse updated successfully",
-      data: warehouse,
-    });
+    return res.status(200).json({ success: true, message: "Warehouse updated successfully", data: warehouse });
   }
 );
 

@@ -204,16 +204,17 @@ export default function WarehouseOrderDetail() {
     doc.rect(margin, yPos, contentWidth, 10, 'F');
 
     const colWidths = [
-      contentWidth * 0.08,  // Sr. No.
-      contentWidth * 0.40,  // Product
-      contentWidth * 0.15,  // Price
-      contentWidth * 0.15,  // Tax
-      contentWidth * 0.10,  // Qty
-      contentWidth * 0.12,  // Subtotal
+      contentWidth * 0.07,  // Sr. No.
+      contentWidth * 0.32,  // Product
+      contentWidth * 0.12,  // Unit
+      contentWidth * 0.13,  // Price
+      contentWidth * 0.14,  // Tax
+      contentWidth * 0.09,  // Qty
+      contentWidth * 0.13,  // Subtotal
     ];
 
     let xPos = margin;
-    const headers = ['Sr. No.', 'Product', 'Price', 'Tax (₹) (%)', 'Qty', 'Subtotal'];
+    const headers = ['Sr. No.', 'Product', 'Unit', 'Price', 'Tax (Rs)(%)', 'Qty', 'Subtotal'];
 
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
@@ -238,10 +239,11 @@ export default function WarehouseOrderDetail() {
       const rowData = [
         item.srNo.toString(),
         item.product,
-        `₹${item.price.toFixed(2)}`,
+        formatUnit(item.unit, item.qty),
+        `Rs.${item.price.toFixed(2)}`,
         `${item.tax.toFixed(2)} (${item.taxPercent.toFixed(2)}%)`,
         item.qty.toString(),
-        `₹${item.subtotal.toFixed(2)}`,
+        `Rs.${item.subtotal.toFixed(2)}`,
       ];
 
       rowData.forEach((data, index) => {
@@ -317,7 +319,50 @@ export default function WarehouseOrderDetail() {
   };
 
   const handlePrint = () => {
-    window.print();
+    if (!orderDetail) return;
+    const printArea = document.getElementById('warehouse-print-invoice');
+    if (!printArea) return;
+
+    const w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) return;
+
+    w.document.write(`<!DOCTYPE html><html><head>
+      <title>Invoice ${orderDetail.invoiceNumber}</title>
+      <style>
+        *{box-sizing:border-box;}
+        body{font-family:Arial,sans-serif;padding:24px;color:#111;background:#fff;margin:0;}
+        .bg-teal-600{background:#0d9488;color:#fff;}
+        .px-4{padding-left:16px;} .px-6{padding-left:24px;padding-right:24px;}
+        .py-3{padding-top:12px;padding-bottom:12px;}
+        .py-6{padding-top:24px;padding-bottom:24px;}
+        .text-base{font-size:16px;} .text-lg{font-size:18px;}
+        .font-semibold{font-weight:600;} .font-bold{font-weight:700;} .font-medium{font-weight:500;}
+        .text-2xl{font-size:24px;} .text-3xl{font-size:30px;}
+        .text-sm{font-size:14px;} .text-xs{font-size:12px;}
+        .text-neutral-600{color:#4b5563;} .text-neutral-700{color:#374151;} .text-neutral-900{color:#111827;}
+        .flex{display:flex;} .flex-col{flex-direction:column;} .flex-1{flex:1;}
+        .justify-between{justify-content:space-between;} .items-center{align-items:center;}
+        .gap-6{gap:24px;} .gap-2{gap:8px;} .mb-6{margin-bottom:24px;} .mb-4{margin-bottom:16px;} .mb-2{margin-bottom:8px;} .mb-1{margin-bottom:4px;} .mb-3{margin-bottom:12px;}
+        .mt-6{margin-top:24px;} .mt-4{margin-top:16px;} .mt-1{margin-top:4px;} .mt-2{margin-top:8px;}
+        .w-8{width:32px;} .h-8{height:32px;} .rounded{border-radius:4px;}
+        .rounded-full{border-radius:9999px;} .text-white{color:#fff;}
+        .text-teal-600,.text-\\[\\#12b2a2\\]{color:#0d9488;}
+        .space-y-1>*+*{margin-top:4px;}
+        .border-t{border-top:1px solid #e5e7eb;} .border-b{border-bottom:1px solid #e5e7eb;}
+        .border-dashed{border-style:dashed;} .border-neutral-300{border-color:#d1d5db;}
+        .pt-4{padding-top:16px;} .text-center{text-align:center;} .text-right{text-align:right;}
+        .lg\\:text-right{text-align:right;}
+        table{width:100%;border-collapse:collapse;font-size:13px;}
+        thead th{background:#f9fafb;padding:12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#374151;border-bottom:1px solid #e5e7eb;}
+        tbody td{padding:12px;color:#111827;border-bottom:1px solid #e5e7eb;}
+        .overflow-x-auto{overflow:visible;}
+        .inline-flex{display:inline-flex;} .items-center{align-items:center;} .px-3{padding-left:12px;padding-right:12px;} .py-1{padding-top:4px;padding-bottom:4px;} .text-xs{font-size:12px;}
+        @media print{body{padding:0;}}
+      </style>
+    </head><body>${printArea.innerHTML}</body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(() => { w.print(); w.close(); }, 400);
   };
 
   const getStatusBadgeClass = (status: string) => {
@@ -441,7 +486,7 @@ export default function WarehouseOrderDetail() {
       </div>
 
       {/* View Order Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
+      <div id="warehouse-print-invoice" className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
         <div className="bg-teal-600 text-white px-4 sm:px-6 py-3">
           <h2 className="text-base sm:text-lg font-semibold">View Order Details</h2>
         </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { compressImageFile } from '../../../utils/compressImageFile';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Camera, CheckCircle, Clock, MapPin, Package,
@@ -110,11 +111,14 @@ export default function RiderInspectionControl() {
 
   const handleRiderFileUpload = async (returnId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
+    e.target.value = '';
     if (!files || files.length === 0) return;
-    const fileArr = Array.from(files);
+    const rawArr = Array.from(files);
+    // Compress every image (converts HEIC → JPEG, reduces large camera shots)
+    const fileArr = await Promise.all(rawArr.map((f) => compressImageFile(f)));
     for (const f of fileArr) {
-      if (!f.type.startsWith("image/")) { toast.error("Please select valid image files only."); e.target.value = ''; return; }
-      if (f.size > 5 * 1024 * 1024) { toast.error("Each image must be under 5MB."); e.target.value = ''; return; }
+      if (!f.type.startsWith("image/")) { toast.error("Please select valid image files only."); return; }
+      if (f.size > 10 * 1024 * 1024) { toast.error("Each image must be under 10 MB."); return; }
     }
     setUploadingReturnId(returnId);
     const toastId = toast.loading(`Uploading ${fileArr.length} photo${fileArr.length > 1 ? 's' : ''}...`);

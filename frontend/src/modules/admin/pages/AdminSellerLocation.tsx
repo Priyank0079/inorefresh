@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getAllWarehouses, Warehouse as WarehouseType, updateWarehouseByAdmin } from '../../../services/api/warehouseService';
 import SellerServiceMap from '../components/SellerServiceMap';
 
@@ -34,6 +34,7 @@ export default function AdminSellerLocation() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [error, setError] = useState<string>('');
+  const geocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const fetchWarehouses = async () => {
@@ -84,9 +85,9 @@ export default function AdminSellerLocation() {
     });
   };
 
-  const handleGeocodeLocation = async () => {
-    if (!editWarehouse) return;
-    const query = editWarehouse.locationQuery.trim();
+  const handleGeocodeLocation = useCallback(async (queryOverride?: string) => {
+    if (!editWarehouse && !queryOverride) return;
+    const query = (queryOverride ?? editWarehouse?.locationQuery ?? '').trim();
     if (!query) {
       setError('Enter a location name (e.g. Silicon City, Indore).');
       return;
@@ -118,7 +119,22 @@ export default function AdminSellerLocation() {
     } finally {
       setGeocoding(false);
     }
-  };
+  }, [editWarehouse]);
+
+  // Auto-fetch coordinates while typing — 800 ms debounce
+  useEffect(() => {
+    const query = editWarehouse?.locationQuery?.trim();
+    if (!query) return;
+
+    if (geocodeTimerRef.current) clearTimeout(geocodeTimerRef.current);
+    geocodeTimerRef.current = setTimeout(() => {
+      handleGeocodeLocation(query);
+    }, 800);
+
+    return () => {
+      if (geocodeTimerRef.current) clearTimeout(geocodeTimerRef.current);
+    };
+  }, [editWarehouse?.locationQuery]);
 
   const handleSaveWarehouseDetails = async () => {
     if (!editWarehouse) return;
@@ -128,7 +144,7 @@ export default function AdminSellerLocation() {
     const serviceRadiusKm = Number(editWarehouse.serviceRadiusKm);
 
     if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
-      setError('Valid location coordinates are required. Use "Find on Map" first.');
+      setError('Valid coordinates required. Type a location name and wait for auto-fetch.');
       return;
     }
     if (Number.isNaN(serviceRadiusKm) || serviceRadiusKm < 0.1 || serviceRadiusKm > 100) {
@@ -439,11 +455,16 @@ export default function AdminSellerLocation() {
                     />
                     <button
                       type="button"
-                      onClick={handleGeocodeLocation}
+                      onClick={() => handleGeocodeLocation()}
                       disabled={geocoding}
                       className="rounded-lg bg-teal-600 px-4 py-2 text-xs font-semibold text-white hover:bg-teal-700 disabled:opacity-60 transition-colors shrink-0"
                     >
-                      {geocoding ? 'Finding...' : 'Find on Map'}
+                      {geocoding ? (
+                        <span className="flex items-center gap-1">
+                          <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                          Finding...
+                        </span>
+                      ) : 'Find on Map'}
                     </button>
                   </div>
                 </div>

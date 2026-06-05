@@ -925,12 +925,7 @@ export const timeoutAcceptDelivery = asyncHandler(async (req: Request, res: Resp
   order.riderStatusDuringInspection = "IDLE"; // Free the rider
   await order.save();
 
-  // Process delivery earning
-  const { processDeliveryEarning } = require('../services/earningProcessingService');
-  await processDeliveryEarning(order._id);
-
   // Emit socket updates
-  const { getIO } = require('../services/socketService');
   const io = getIO();
   
   // Notify Rider UI
@@ -963,14 +958,6 @@ export async function checkAndAutoCloseVerification(order: any) {
     order.isVerifiedByCustomer = true;
     order.riderStatusDuringInspection = "IDLE";
     await order.save();
-
-    // Process delivery earning safely
-    try {
-      const { processDeliveryEarning } = require('../services/earningProcessingService');
-      await processDeliveryEarning(order._id);
-    } catch (err) {
-      console.error("Failed to process earning during auto-close:", err);
-    }
 
     // 1. Notify the Rider
     if (order.deliveryBoy) {

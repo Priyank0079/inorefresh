@@ -4,6 +4,7 @@ import { Category } from '../../../services/api/categoryService';
 import { getHeaderCategoriesPublic, HeaderCategory } from '../../../services/api/headerCategoryService';
 import { uploadImage } from '../../../services/api/uploadService';
 import { validateImageFile, createImagePreview } from '../../../utils/imageUpload';
+import { compressImageFile } from '../../../utils/compressImageFile';
 import api from '../../../services/api/config';
 
 interface Product {
@@ -68,8 +69,10 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
     }, []);
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+        const raw = e.target.files?.[0];
+        e.target.value = '';
+        if (!raw) return;
+        const file = await compressImageFile(raw);
         const v = validateImageFile(file);
         if (!v.valid) { setError(v.error || 'Invalid image'); return; }
         setImageFile(file);
@@ -235,40 +238,14 @@ export default function WarehouseCategory() {
         try {
             const response = await api.get('/categories', { params: { status: 'Active' } });
             if (response.data.success && response.data.data) {
-                const grouped: Partial<Record<FishGroupKey, WarehouseFishCategory>> = {};
-
-                for (const cat of response.data.data || []) {
-                    const groupKey = getFishGroupKey(cat.name || '', cat.slug || '');
-                    if (!groupKey) continue;
-
-                    if (!grouped[groupKey]) {
-                        grouped[groupKey] = {
-                            _id: groupKey,
-                            name: FISH_GROUP_META[groupKey].label,
-                            image: cat.image || '',
-                            sourceCategoryIds: cat._id ? [cat._id] : [],
-                        };
-                        continue;
-                    }
-
-                    if (cat._id) {
-                        grouped[groupKey]!.sourceCategoryIds.push(cat._id);
-                    }
-                    if (!grouped[groupKey]!.image && cat.image) {
-                        grouped[groupKey]!.image = cat.image;
-                    }
-                }
-
-                const normalized = (Object.keys(FISH_GROUP_META) as FishGroupKey[])
-                    .map((key) => grouped[key])
-                    .filter(Boolean)
-                    .map((group) => ({
-                        ...group!,
-                        sourceCategoryIds: Array.from(new Set(group!.sourceCategoryIds)),
-                    }))
-                    .sort((a, b) => FISH_GROUP_META[a._id].order - FISH_GROUP_META[b._id].order);
-
-                setCategories(normalized);
+                // Show every active category as its own card — no keyword filtering
+                const all: WarehouseFishCategory[] = (response.data.data || []).map((cat: any) => ({
+                    _id: cat._id,
+                    name: cat.name,
+                    image: cat.image || '',
+                    sourceCategoryIds: [cat._id],
+                }));
+                setCategories(all);
             } else {
                 setError(response.data.message || 'Failed to fetch categories');
             }
@@ -287,8 +264,10 @@ export default function WarehouseCategory() {
         setProductsError('');
         setProducts([]);
         try {
+            // Use the real MongoDB category ID (sourceCategoryIds[0]) for the query
+            const categoryId = category.sourceCategoryIds[0] || category._id;
             const response = await api.get(`/products`, {
-                params: { category: category._id, limit: 200 }
+                params: { category: categoryId, limit: 200 }
             });
             if (response.data.success) {
                 setProducts(response.data.data || []);
@@ -353,7 +332,7 @@ export default function WarehouseCategory() {
                         </svg>
                         <input
                             type="text"
-                            placeholder="Search among the 3 fish types..."
+                            placeholder="Search categories..."
                             className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}

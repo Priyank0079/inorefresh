@@ -464,10 +464,11 @@ OrderSchema.pre("validate", async function (this: IOrder, next) {
 
 // Indexes for faster queries
 OrderSchema.index({ customer: 1, orderDate: -1 });
-OrderSchema.index({ status: 1 });
+OrderSchema.index({ status: 1, orderDate: -1 }); // compound for filtered list
 OrderSchema.index({ orderDate: -1 });
 OrderSchema.index({ deliveryBoy: 1 });
 OrderSchema.index({ orderNumber: 1 });
+OrderSchema.index({ orderNumber: "text", customerName: "text", customerEmail: "text", customerPhone: "text" }); // text search
 
 const Order =
   (mongoose.models.Order as mongoose.Model<IOrder>) ||

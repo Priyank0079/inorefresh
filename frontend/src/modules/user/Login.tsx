@@ -6,6 +6,7 @@ import OTPInput from '../../components/OTPInput';
 import { useThemeContext } from '../../context/ThemeContext';
 import api from '../../services/api/config';
 import GoogleMapsLocationPicker from '../../components/GoogleMapsLocationPicker';
+import { compressImageFile } from '../../utils/compressImageFile';
 
 type UserType = 'horeca' | 'retailer' | null;
 type FlowStep = 'accountType' | 'login' | 'signupHoreca' | 'signupRetailer';
@@ -636,11 +637,13 @@ export default function Login() {
                         <input
                           type="file"
                           accept="image/*,.pdf"
-                          onChange={e => {
-                            const file = e.target.files?.[0] || null;
-                            if (file && file.size > 5 * 1024 * 1024) {
-                              setError(`${doc.label}: File size must be under 5MB.`);
-                              e.target.value = '';
+                          onChange={async e => {
+                            const raw = e.target.files?.[0] || null;
+                            e.target.value = '';
+                            if (!raw) return;
+                            const file = await compressImageFile(raw);
+                            if (file.size > 10 * 1024 * 1024) {
+                              setError(`${doc.label}: File too large (max 10 MB).`);
                               return;
                             }
                             setDocFiles(prev => ({ ...prev, [doc.id]: file }));

@@ -38,7 +38,7 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
       onClose();
       // Optionally navigate to order detail or just close
       if (status === 'Accepted') {
-         navigate(`/Warehouse/orders/${notification.orderId}`);
+         navigate(`/warehouse/orders/${notification.orderId}`);
       }
     } catch (error) {
       console.error('Error updating status:', error);

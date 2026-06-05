@@ -28,8 +28,12 @@ export default function DeliveryReturnOrders() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Cancelled':
-        return 'bg-red-100 text-red-700';
       case 'Returned':
+      case 'Fully Returned':
+        return 'bg-red-100 text-red-700';
+      case 'Partially Returned':
+        return 'bg-orange-100 text-orange-700';
+      case 'Rejected':
         return 'bg-red-100 text-red-700';
       default:
         return 'bg-neutral-100 text-neutral-700';

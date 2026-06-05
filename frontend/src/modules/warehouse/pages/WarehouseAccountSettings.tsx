@@ -7,6 +7,7 @@ import { getCategories, Category } from '../../../services/api/categoryService';
 import GoogleMapsAutocomplete from '../../../components/GoogleMapsAutocomplete';
 import LocationPickerMap from '../../../components/LocationPickerMap';
 import ServiceAreaMap from '../../../components/ServiceAreaMap';
+import { compressImageFile } from '../../../utils/compressImageFile';
 
 const WarehouseAccountSettings = () => {
     const { user, updateUser } = useAuth();
@@ -107,6 +108,7 @@ const WarehouseAccountSettings = () => {
                 sanitized = value.replace(/\D/g, '').slice(0, 10);
                 break;
             // Names: letters and spaces only
+            case 'storeName':
             case 'WarehouseName':
             case 'accountName':
             case 'bankName':
@@ -140,13 +142,14 @@ const WarehouseAccountSettings = () => {
         field: 'profile' | 'logo' | 'storeBanner',
         e: React.ChangeEvent<HTMLInputElement>
     ) => {
-        const file = e.target.files?.[0];
-        e.target.value = ''; // allow re-selecting the same file
-        if (!file) return;
-        if (!file.type.startsWith('image/')) {
+        const raw = e.target.files?.[0];
+        e.target.value = '';
+        if (!raw) return;
+        if (!raw.type.startsWith('image/') && !/\.(heic|heif)$/i.test(raw.name)) {
             setError('Please select a valid image file');
             return;
         }
+        const file = await compressImageFile(raw);
         try {
             setUploadingField(field);
             setError('');

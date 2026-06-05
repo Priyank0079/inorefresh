@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import DeliveryHeader from '../components/DeliveryHeader';
 import DeliveryBottomNav from '../components/DeliveryBottomNav';
-import { getAllOrdersHistory } from '../../../services/api/delivery/deliveryService';
+import { getTodayOrders } from '../../../services/api/delivery/deliveryService';
 
 export default function DeliveryAllOrders() {
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ export default function DeliveryAllOrders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const data = await getAllOrdersHistory(); // Fetching page 1 by default
+        const data = await getTodayOrders();
         setOrders(data);
       } catch (err: any) {
         setError(err.message || 'Failed to load orders');
@@ -72,7 +72,7 @@ export default function DeliveryAllOrders() {
               />
             </svg>
           </button>
-          <h2 className="text-neutral-900 text-xl font-semibold">Delivery History</h2>
+          <h2 className="text-neutral-900 text-xl font-semibold">Today's All Orders</h2>
         </div>
 
         {error && <div className="p-4 mb-4 text-red-600 bg-red-50 rounded-lg">{error}</div>}

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import SellerServiceMap from '../components/SellerServiceMap';
 import {
     getAllWarehouses,
     deleteWarehouse as deleteWarehouseApi,
@@ -33,11 +32,11 @@ interface Warehouse {
 interface EditWarehouseState {
     id: string;
     warehouseName: string;
+    managerName: string;
+    mobile: string;
+    email: string;
+    password: string;
     address: string;
-    locationQuery: string;
-    latitude: string;
-    longitude: string;
-    serviceRadiusKm: string;
 }
 
 const mapWarehouseToFrontend = (warehouse: WarehouseType): Warehouse => {
@@ -86,7 +85,6 @@ export default function AdminManageWarehouseList() {
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [confirmDeleteWarehouse, setConfirmDeleteWarehouse] = useState<{ id: string; name: string } | null>(null);
     const [savingEdit, setSavingEdit] = useState(false);
-    const [geocoding, setGeocoding] = useState(false);
     const [editWarehouse, setEditWarehouse] = useState<EditWarehouseState | null>(null);
     const hasFetchedRef = useRef(false);
 
@@ -151,16 +149,14 @@ export default function AdminManageWarehouseList() {
     };
 
     const openEditModal = (warehouse: Warehouse) => {
-        const lat = warehouse.location?.coordinates?.[1];
-        const lng = warehouse.location?.coordinates?.[0];
         setEditWarehouse({
             id: warehouse._id,
-            warehouseName: warehouse.warehouseName,
+            warehouseName: warehouse.warehouseName || '',
+            managerName: warehouse.managerName || '',
+            mobile: warehouse.mobile || '',
+            email: warehouse.email || '',
+            password: '',
             address: warehouse.address || '',
-            locationQuery: warehouse.address || '',
-            latitude: lat !== undefined ? String(lat) : '',
-            longitude: lng !== undefined ? String(lng) : '',
-            serviceRadiusKm: String(warehouse.serviceRadiusKm || 10),
         });
     };
 
@@ -189,67 +185,32 @@ export default function AdminManageWarehouseList() {
         }
     };
 
-    const handleGeocodeLocation = async () => {
-        if (!editWarehouse) return;
-        const query = editWarehouse.locationQuery.trim();
-        if (!query) {
-            setError('Enter a location name (e.g. Silicon City, Indore).');
-            return;
-        }
-
-        try {
-            setGeocoding(true);
-            setError('');
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`);
-            const results = await response.json();
-
-            if (!Array.isArray(results) || results.length === 0) {
-                setError('Location not found. Try a more specific place name.');
-                return;
-            }
-
-            const first = results[0];
-            setEditWarehouse((prev) => {
-                if (!prev) return prev;
-                return {
-                    ...prev,
-                    latitude: String(first.lat),
-                    longitude: String(first.lon),
-                    address: prev.address || first.display_name || prev.address,
-                };
-            });
-        } catch {
-            setError('Unable to fetch location from map service right now.');
-        } finally {
-            setGeocoding(false);
-        }
-    };
-
     const handleSaveWarehouseDetails = async () => {
         if (!editWarehouse) return;
 
-        const latitude = Number(editWarehouse.latitude);
-        const longitude = Number(editWarehouse.longitude);
-        const serviceRadiusKm = Number(editWarehouse.serviceRadiusKm);
-
-        if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
-            setError('Valid location coordinates are required. Use "Find on Map" first.');
-            return;
-        }
-        if (Number.isNaN(serviceRadiusKm) || serviceRadiusKm < 0.1 || serviceRadiusKm > 100) {
-            setError('Service radius must be between 0.1 and 100 km.');
-            return;
+        if (!editWarehouse.warehouseName.trim()) { setError('Warehouse name is required.'); return; }
+        if (!editWarehouse.managerName.trim()) { setError('Manager name is required.'); return; }
+        if (!/^\d{10}$/.test(editWarehouse.mobile.trim())) { setError('Enter a valid 10-digit mobile number.'); return; }
+        if (!editWarehouse.email.trim()) { setError('Email is required.'); return; }
+        if (editWarehouse.password && editWarehouse.password.trim().length < 6) {
+            setError('Password must be at least 6 characters.'); return;
         }
 
         try {
             setSavingEdit(true);
             setError('');
-            const response = await updateWarehouseByAdmin(editWarehouse.id, {
-                address: editWarehouse.address,
-                latitude,
-                longitude,
-                serviceRadiusKm,
-            });
+            const payload: Parameters<typeof updateWarehouseByAdmin>[1] = {
+                warehouseName: editWarehouse.warehouseName.trim(),
+                managerName: editWarehouse.managerName.trim(),
+                mobile: editWarehouse.mobile.trim(),
+                email: editWarehouse.email.trim(),
+                address: editWarehouse.address.trim(),
+            };
+            if (editWarehouse.password.trim()) {
+                payload.password = editWarehouse.password.trim();
+            }
+
+            const response = await updateWarehouseByAdmin(editWarehouse.id, payload);
 
             if (!response?.success || !response?.data) {
                 setError(response?.message || 'Failed to update warehouse details.');
@@ -273,10 +234,6 @@ export default function AdminManageWarehouseList() {
         w.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const previewLat = editWarehouse ? Number(editWarehouse.latitude) : NaN;
-    const previewLng = editWarehouse ? Number(editWarehouse.longitude) : NaN;
-    const previewRadius = editWarehouse ? Number(editWarehouse.serviceRadiusKm) : NaN;
-    const showPreview = !Number.isNaN(previewLat) && !Number.isNaN(previewLng) && !Number.isNaN(previewRadius);
 
     return (
         <>
@@ -385,101 +342,117 @@ export default function AdminManageWarehouseList() {
             </div>
 
             {editWarehouse && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                    <div className="w-full max-w-4xl rounded-lg bg-white shadow-xl">
-                        <div className="flex items-center justify-between border-b px-5 py-3">
-                            <h3 className="text-lg font-semibold">Edit Warehouse Location: {editWarehouse.warehouseName}</h3>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl overflow-hidden">
+                        {/* Header */}
+                        <div className="bg-teal-600 text-white px-6 py-4 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-bold">Edit Warehouse</h3>
+                                <p className="text-sm text-teal-100">Admin onboarding for warehouse accounts</p>
+                            </div>
                             <button
                                 type="button"
-                                className="rounded px-2 py-1 text-sm text-neutral-600 hover:bg-neutral-100"
-                                onClick={() => setEditWarehouse(null)}
+                                onClick={() => { setEditWarehouse(null); setError(''); }}
+                                className="rounded-lg p-1.5 hover:bg-teal-700 transition-colors"
                             >
-                                Close
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
                             </button>
                         </div>
 
-                        <div className="grid gap-4 p-5 md:grid-cols-2">
-                            <div className="space-y-3">
-                                <label className="block text-sm font-medium text-neutral-700">Address</label>
-                                <input
-                                    className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-                                    value={editWarehouse.address}
-                                    onChange={(e) => setEditWarehouse((prev) => (prev ? { ...prev, address: e.target.value } : prev))}
-                                />
+                        {/* Body */}
+                        <div className="p-6 space-y-4">
+                            {error && (
+                                <div className="px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
+                            )}
 
-                                <label className="block text-sm font-medium text-neutral-700">Search Location</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-                                        placeholder="e.g. Silicon City, Indore"
-                                        value={editWarehouse.locationQuery}
-                                        onChange={(e) => setEditWarehouse((prev) => (prev ? { ...prev, locationQuery: e.target.value } : prev))}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleGeocodeLocation}
-                                        disabled={geocoding}
-                                        className="rounded bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-700 disabled:opacity-60"
-                                    >
-                                        {geocoding ? 'Finding...' : 'Find on Map'}
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label className="mb-1 block text-sm font-medium text-neutral-700">Latitude</label>
-                                        <input
-                                            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-                                            value={editWarehouse.latitude}
-                                            onChange={(e) => setEditWarehouse((prev) => (prev ? { ...prev, latitude: e.target.value } : prev))}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="mb-1 block text-sm font-medium text-neutral-700">Longitude</label>
-                                        <input
-                                            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-                                            value={editWarehouse.longitude}
-                                            onChange={(e) => setEditWarehouse((prev) => (prev ? { ...prev, longitude: e.target.value } : prev))}
-                                        />
-                                    </div>
-                                </div>
-
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="mb-1 block text-sm font-medium text-neutral-700">Service Radius (km)</label>
+                                    <label className="block text-sm font-medium text-neutral-700 mb-1">Warehouse Name <span className="text-red-500">*</span></label>
                                     <input
-                                        type="number"
-                                        min={0.1}
-                                        max={100}
-                                        step={0.1}
-                                        className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-                                        value={editWarehouse.serviceRadiusKm}
-                                        onChange={(e) => setEditWarehouse((prev) => (prev ? { ...prev, serviceRadiusKm: e.target.value } : prev))}
+                                        type="text"
+                                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        placeholder="Warehouse Name"
+                                        value={editWarehouse.warehouseName}
+                                        onChange={(e) => setEditWarehouse((prev) => prev ? { ...prev, warehouseName: e.target.value.replace(/[^a-zA-Z\s]/g, '') } : prev)}
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-700 mb-1">Manager Name <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="text"
+                                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        placeholder="Manager Name"
+                                        value={editWarehouse.managerName}
+                                        onChange={(e) => setEditWarehouse((prev) => prev ? { ...prev, managerName: e.target.value.replace(/[^a-zA-Z\s]/g, '') } : prev)}
+                                    />
+                                </div>
+                            </div>
 
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-700 mb-1">Mobile Number <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="tel"
+                                        maxLength={10}
+                                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        placeholder="Mobile Number"
+                                        value={editWarehouse.mobile}
+                                        onChange={(e) => setEditWarehouse((prev) => prev ? { ...prev, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) } : prev)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-700 mb-1">Email <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="email"
+                                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        placeholder="Email"
+                                        value={editWarehouse.email}
+                                        onChange={(e) => setEditWarehouse((prev) => prev ? { ...prev, email: e.target.value } : prev)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-700 mb-1">New Password</label>
+                                    <input
+                                        type="password"
+                                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        placeholder="Leave blank to keep current"
+                                        value={editWarehouse.password}
+                                        onChange={(e) => setEditWarehouse((prev) => prev ? { ...prev, password: e.target.value } : prev)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-700 mb-1">Address</label>
+                                    <input
+                                        type="text"
+                                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        placeholder="Address"
+                                        value={editWarehouse.address}
+                                        onChange={(e) => setEditWarehouse((prev) => prev ? { ...prev, address: e.target.value } : prev)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
                                 <button
                                     type="button"
                                     onClick={handleSaveWarehouseDetails}
                                     disabled={savingEdit}
-                                    className="rounded bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-60"
+                                    className="flex-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white py-2.5 text-sm font-semibold transition-colors disabled:opacity-60"
                                 >
-                                    {savingEdit ? 'Saving...' : 'Save Details'}
+                                    {savingEdit ? 'Saving...' : 'Update Warehouse'}
                                 </button>
-                            </div>
-
-                            <div>
-                                {showPreview ? (
-                                    <SellerServiceMap
-                                        latitude={previewLat}
-                                        longitude={previewLng}
-                                        radiusKm={previewRadius}
-                                        storeName={editWarehouse.warehouseName}
-                                    />
-                                ) : (
-                                    <div className="flex h-full min-h-[320px] items-center justify-center rounded border border-neutral-200 text-sm text-neutral-500">
-                                        Set location coordinates to preview map circle.
-                                    </div>
-                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => { setEditWarehouse(null); setError(''); }}
+                                    className="flex-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 py-2.5 text-sm font-semibold transition-colors border border-neutral-200"
+                                >
+                                    Cancel
+                                </button>
                             </div>
                         </div>
                     </div>

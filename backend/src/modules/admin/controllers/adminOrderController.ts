@@ -55,12 +55,12 @@ export const getAllOrders = asyncHandler(
 
     const [orders, total] = await Promise.all([
       Order.find(query)
-        .populate("customer", "name email phone")
+        .select("orderNumber customerName customerPhone deliveryAddress estimatedDeliveryDate orderDate status deliveryBoyStatus total paymentStatus paymentMethod deliveryBoy createdAt")
         .populate("deliveryBoy", "name mobile")
-        .populate("items")
         .sort({ orderDate: -1 })
         .skip(skip)
-        .limit(parseInt(limit as string)),
+        .limit(parseInt(limit as string))
+        .lean(),
       Order.countDocuments(query),
     ]);
 

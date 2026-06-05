@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   getAllOrders,
@@ -27,6 +27,7 @@ export default function AdminAllOrders() {
   const [status, setStatus] = useState("All Status");
   const [entriesPerPage, setEntriesPerPage] = useState("10");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   // Total order count from the server (used for real pagination). The list is
   // paginated on the BACKEND, so we must not re-slice or re-count locally.
@@ -35,6 +36,15 @@ export default function AdminAllOrders() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Debounce search — wait 400ms after the user stops typing before firing API
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   // Fetch warehouses for seller filter
   useEffect(() => {
@@ -62,8 +72,8 @@ export default function AdminAllOrders() {
           params.status = status;
         }
 
-        if (searchQuery) {
-          params.search = searchQuery;
+        if (debouncedSearch) {
+          params.search = debouncedSearch;
         }
 
         // Warehouse/seller filter
@@ -106,8 +116,9 @@ export default function AdminAllOrders() {
     currentPage,
     entriesPerPage,
     status,
-    searchQuery,
+    debouncedSearch,
     dateRange,
+    seller,
   ]);
 
   const handleClearDate = () => {

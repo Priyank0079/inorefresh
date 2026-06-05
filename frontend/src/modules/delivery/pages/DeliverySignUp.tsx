@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { compressImageFile } from "../../../utils/compressImageFile";
 import { useNavigate, Link } from "react-router-dom";
 import {
   register,
@@ -77,15 +78,14 @@ export default function DeliverySignUp() {
     return d.toISOString().split("T")[0];
   })();
 
-  const handleDocumentChange = (
+  const handleDocumentChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
     type: "drivingLicense" | "nationalId"
   ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    // Phone camera photos are often >5MB, so the old 5MB cap silently rejected
-    // images captured with the camera ("captured but not added"). Use 10MB to
-    // match the backend's document upload limit (MAX_DOCUMENT_SIZE).
+    const raw = e.target.files?.[0];
+    e.target.value = '';
+    if (!raw) return;
+    const file = await compressImageFile(raw);
     if (file.size > 10 * 1024 * 1024) {
       setError("Document file must be under 10MB");
       return;

@@ -150,7 +150,13 @@ export const getPendingOrders = asyncHandler(
   async (req: Request, res: Response) => {
     const deliveryId = req.user?.userId;
 
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
     // Pending statuses: Ready for pickup, Out for delivery, Picked Up, Assigned, In Transit
+    // Show orders that are active today (created or updated today)
     const orders = await Order.find({
       deliveryBoy: deliveryId,
       status: {
@@ -162,6 +168,10 @@ export const getPendingOrders = asyncHandler(
           "In Transit",
         ],
       },
+      $or: [
+        { createdAt: { $gte: todayStart, $lte: todayEnd } },
+        { updatedAt: { $gte: todayStart, $lte: todayEnd } },
+      ],
     })
       .populate("items")
       .sort({ createdAt: -1 });
@@ -373,9 +383,15 @@ export const getReturnOrders = asyncHandler(
   async (req: Request, res: Response) => {
     const deliveryId = req.user?.userId;
 
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
     const orders = await Order.find({
       deliveryBoy: deliveryId,
-      status: { $in: ["Returned", "Cancelled", "Rejected"] },
+      status: { $in: ["Returned", "Partially Returned", "Fully Returned", "Cancelled", "Rejected"] },
+      updatedAt: { $gte: todayStart, $lte: todayEnd },
     })
       .populate("items")
       .sort({ updatedAt: -1 });

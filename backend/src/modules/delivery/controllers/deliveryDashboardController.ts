@@ -54,20 +54,40 @@ export const getDashboardStats = asyncHandler(
       {
         $group: {
           _id: null,
-          // Pending: Active statuses
+          // Pending: Active statuses touched today (created or updated today)
           pendingOrders: {
             $sum: {
               $cond: [
                 {
-                  $in: [
-                    "$status",
-                    [
-                      "Ready for pickup",
-                      "Out for Delivery",
-                      "Picked Up",
-                      "Assigned",
-                      "In Transit",
-                    ],
+                  $and: [
+                    {
+                      $in: [
+                        "$status",
+                        [
+                          "Ready for pickup",
+                          "Out for Delivery",
+                          "Picked Up",
+                          "Assigned",
+                          "In Transit",
+                        ],
+                      ],
+                    },
+                    {
+                      $or: [
+                        {
+                          $and: [
+                            { $gte: ["$createdAt", todayStart] },
+                            { $lte: ["$createdAt", todayEnd] },
+                          ],
+                        },
+                        {
+                          $and: [
+                            { $gte: ["$updatedAt", todayStart] },
+                            { $lte: ["$updatedAt", todayEnd] },
+                          ],
+                        },
+                      ],
+                    },
                   ],
                 },
                 1,
@@ -75,14 +95,24 @@ export const getDashboardStats = asyncHandler(
               ],
             },
           },
-          // All Orders Today: Created today OR Updated today
+          // All Orders Today: Created today OR Updated today (matches getTodayOrders query)
           allOrdersToday: {
             $sum: {
               $cond: [
                 {
-                  $and: [
-                    { $gte: ["$updatedAt", todayStart] },
-                    { $lte: ["$updatedAt", todayEnd] },
+                  $or: [
+                    {
+                      $and: [
+                        { $gte: ["$createdAt", todayStart] },
+                        { $lte: ["$createdAt", todayEnd] },
+                      ],
+                    },
+                    {
+                      $and: [
+                        { $gte: ["$updatedAt", todayStart] },
+                        { $lte: ["$updatedAt", todayEnd] },
+                      ],
+                    },
                   ],
                 },
                 1,
@@ -96,7 +126,7 @@ export const getDashboardStats = asyncHandler(
               $cond: [
                 {
                   $and: [
-                    { $in: ["$status", ["Returned", "Partially Returned", "Fully Returned", "Cancelled"]] },
+                    { $in: ["$status", ["Returned", "Partially Returned", "Fully Returned", "Cancelled", "Rejected"]] },
                     { $gte: ["$updatedAt", todayStart] },
                     { $lte: ["$updatedAt", todayEnd] },
                   ],

@@ -19,6 +19,7 @@ export default function WarehouseOrders() {
   const [status, setStatus] = useState(initialStatus);
   const [entriesPerPage, setEntriesPerPage] = useState('10');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -32,6 +33,11 @@ export default function WarehouseOrders() {
       setStatus('All Status');
     }
   }, [location.search]);
+
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedSearch(searchQuery); setCurrentPage(1); }, 400);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   // Fetch orders from API
   useEffect(() => {
@@ -61,8 +67,8 @@ export default function WarehouseOrders() {
         }
 
         // Add search
-        if (searchQuery) {
-          params.search = searchQuery;
+        if (debouncedSearch) {
+          params.search = debouncedSearch;
         }
 
         const response = await getOrders(params);
@@ -79,7 +85,7 @@ export default function WarehouseOrders() {
     };
 
     fetchOrders();
-  }, [dateRange, status, entriesPerPage, searchQuery, currentPage, sortField, sortDirection]);
+  }, [dateRange, status, entriesPerPage, debouncedSearch, currentPage, sortField, sortDirection]);
 
   const handleClearDate = () => {
     setDateRange('');
@@ -285,7 +291,7 @@ export default function WarehouseOrders() {
                     setCurrentPage(1);
                   }}
                   className="flex-1 w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]"
-                  placeholder="Search by Order ID, Status, or Amount"
+                  placeholder="Search by Order ID, Customer Name, or Phone"
                 />
               </div>
 

@@ -35,12 +35,11 @@ export const getDashboardStats = asyncHandler(
             Order.countDocuments({ _id: { $in: WarehouseOrderIds }, status: "Pending" }),
             Order.countDocuments({ _id: { $in: WarehouseOrderIds }, status: "Cancelled" }),
             Product.countDocuments({ warehouse: WarehouseId }), // Fix uppercase W
-            // Count only categories that are non-null AND still exist (drops
-            // products with a missing category or referencing a deleted one).
-            Product.distinct("category", { warehouse: WarehouseId, category: { $ne: null } })
-                .then(ids => Category.countDocuments({ _id: { $in: ids } })),
-            Product.distinct("subcategory", { warehouse: WarehouseId, subcategory: { $ne: null } })
-                .then(ids => SubCategory.countDocuments({ _id: { $in: ids } })),
+            // Count exactly what the Category page shows: all Active top-level
+            // categories platform-wide (parentId: null, status: Active).
+            Category.countDocuments({ parentId: null, status: "Active" }),
+            // Count all subcategories platform-wide — matches the Subcategory page.
+            SubCategory.countDocuments({}),
             Order.distinct("customer", { _id: { $in: WarehouseOrderIds } }).then(ids => ids.length),
         ]);
 

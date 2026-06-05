@@ -98,6 +98,35 @@ export const useWarehouseSocket = (
             // Always re-join room on (re)connect so we never miss notifications
             newSocket.emit('join-warehouse-room', warehouseId);
 
+            // Catch-up: fetch any NEW_ORDER notifications saved in the bell while
+            // the socket was briefly disconnected and surface a popup for unseen ones.
+            if (onNotificationReceived) {
+                api.get('/warehouse/notifications?limit=5')
+                    .then((res: any) => {
+                        const list: any[] = res?.data?.data || [];
+                        const recent = list.filter((n: any) =>
+                            !n.isRead &&
+                            n.type === 'Order' &&
+                            n.title?.includes('New Order')
+                        );
+                        if (recent.length === 0) return;
+                        // Surface a synthetic notification for the newest unread order alert
+                        const newest = recent[0];
+                        onNotificationReceived({
+                            type: 'NEW_ORDER',
+                            orderId: newest.link?.split('/').pop() || '',
+                            orderNumber: newest.message?.match(/#(\S+)/)?.[1] || '',
+                            status: 'Pending',
+                            paymentStatus: '',
+                            customer: { name: '', email: '', phone: '', address: { address: '', city: '', pincode: '' } },
+                            items: [],
+                            totalAmount: 0,
+                            timestamp: new Date(newest.createdAt),
+                        });
+                    })
+                    .catch(() => { /* non-fatal */ });
+            }
+
             // Catch-up: a popup emitted while we were briefly disconnected is lost
             // (socket events aren't queued). On every (re)connect, pull returns
             // still awaiting approval and surface a popup for any we haven't shown.

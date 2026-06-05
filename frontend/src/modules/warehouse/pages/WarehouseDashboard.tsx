@@ -380,7 +380,7 @@ export default function WarehouseDashboard() {
                   <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900">₹ {order.amount}</td>
                   <td className="px-4 sm:px-6 py-3">
                     <button
-                      onClick={() => navigate(`/Warehouse/orders/${order.id}`)}
+                      onClick={() => navigate(`/warehouse/orders/${order.id}`)}
                       className="bg-[#12b2a2] hover:bg-[#0d9488] text-white p-2 rounded transition-colors"
                       aria-label="View order details"
                     >

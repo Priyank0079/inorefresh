@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { compressImageFile } from '../../utils/compressImageFile';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, Upload, XCircle, AlertCircle, Clock, Camera, Image as ImageIcon } from 'lucide-react';
 import api from '../../services/api/config'; // Wait, let's just mock it or assume simple fetch API
@@ -89,19 +90,18 @@ export default function RetailerReturnSession() {
 
   const handleFileUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
+    e.target.value = '';
     if (!files || files.length === 0) return;
 
-    const fileArr = Array.from(files);
-    // Validate each selected file
+    // Compress each file — converts HEIC→JPEG and shrinks large camera shots
+    const fileArr = await Promise.all(Array.from(files).map((f) => compressImageFile(f)));
     for (const f of fileArr) {
       if (!f.type.startsWith("image/")) {
         toast.error("Please select valid image files only.");
-        e.target.value = '';
         return;
       }
-      if (f.size > 5 * 1024 * 1024) {
-        toast.error("Each image must be under 5MB. Please choose smaller files.");
-        e.target.value = '';
+      if (f.size > 10 * 1024 * 1024) {
+        toast.error("Each image must be under 10 MB.");
         return;
       }
     }

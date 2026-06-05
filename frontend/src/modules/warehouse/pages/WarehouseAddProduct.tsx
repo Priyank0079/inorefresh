@@ -594,7 +594,7 @@ export default function WarehouseAddProduct() {
                       file/gallery picker instead of a camera-first chooser. A
                       web file input can't fully remove the OS camera option, but
                       this avoids the camera prompt on most Android devices. */}
-                  <input type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden" onChange={handleMainImageChange} />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleMainImageChange} />
                 </label>
                 <p className="text-xs text-neutral-400 mt-2">
                   JPG, PNG, or WebP. Max 5MB. 
