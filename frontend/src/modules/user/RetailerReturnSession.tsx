@@ -89,12 +89,15 @@ export default function RetailerReturnSession() {
   };
 
   const handleFileUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    e.target.value = '';
-    if (!files || files.length === 0) return;
+    // Convert FileList to a plain array BEFORE clearing the input.
+    // FileList is a live browser object — setting input.value='' empties it, so any
+    // reference saved after the clear would have length 0 and bail out early.
+    const rawFiles = Array.from(e.target.files || []);
+    e.target.value = ''; // allow re-selecting the same file on next tap
+    if (rawFiles.length === 0) return;
 
     // Compress each file — converts HEIC→JPEG and shrinks large camera shots
-    const fileArr = await Promise.all(Array.from(files).map((f) => compressImageFile(f)));
+    const fileArr = await Promise.all(rawFiles.map((f) => compressImageFile(f)));
     for (const f of fileArr) {
       if (!f.type.startsWith("image/")) {
         toast.error("Please select valid image files only.");
@@ -124,7 +127,6 @@ export default function RetailerReturnSession() {
       toast.error(msg, { id: toastId });
     } finally {
       setUploadingIndex(null);
-      e.target.value = ''; // allow re-selecting the same file
     }
   };
 
@@ -140,12 +142,17 @@ export default function RetailerReturnSession() {
     if (isExpired) {
       return toast.error("Verification time expired. Cannot submit return.");
     }
-    
+
     // Validate
     const itemsToReturn = returnItems.filter(item => item.returnedQuantity > 0);
+
+    if (itemsToReturn.length === 0) {
+      return toast.error("No items marked for return. Decrease a quantity to return items, or tap 'Accept All' to confirm everything was received.");
+    }
+
     const invalidItems = itemsToReturn.filter(item => !item.reason);
     const missingPhotos = itemsToReturn.filter(item => !item.images || item.images.length === 0);
-    
+
     if (invalidItems.length > 0) {
       return toast.error("Please provide a reason for all returned items.");
     }

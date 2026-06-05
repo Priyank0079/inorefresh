@@ -113,6 +113,7 @@ export interface Product {
   subcategory?: string | SubCategory;
   brand?: string | Brand;
   seller: string | { sellerName: string; storeName: string };
+  warehouse?: { _id: string; warehouseName: string; managerName: string } | string;
   mainImage?: string;
   galleryImages: string[];
   price: number;

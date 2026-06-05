@@ -110,10 +110,9 @@ export default function RiderInspectionControl() {
   };
 
   const handleRiderFileUpload = async (returnId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+    const rawArr = Array.from(e.target.files || []); // extract BEFORE clearing (FileList is live)
     e.target.value = '';
-    if (!files || files.length === 0) return;
-    const rawArr = Array.from(files);
+    if (rawArr.length === 0) return;
     // Compress every image (converts HEIC → JPEG, reduces large camera shots)
     const fileArr = await Promise.all(rawArr.map((f) => compressImageFile(f)));
     for (const f of fileArr) {

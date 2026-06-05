@@ -16,6 +16,14 @@ export interface UploadResponse {
   message?: string;
 }
 
+// The global axios instance defaults to Content-Type: application/json.
+// For FormData uploads we must override to multipart/form-data so that
+// the browser's XHR layer replaces it with the correct boundary string
+// (e.g. "multipart/form-data; boundary=----WebKitFormBoundary...").
+// Without this override multer never sees a multipart body and returns
+// "No image file provided".
+const MULTIPART_HEADERS = { "Content-Type": "multipart/form-data" };
+
 /**
  * Upload a single image to Cloudinary via backend
  */
@@ -30,9 +38,7 @@ export async function uploadImage(
   }
 
   const response = await api.post<UploadResponse>("/upload/image", formData, {
-    // Do NOT set Content-Type manually — the browser/XHR sets it with the correct
-    // multipart boundary when it detects a FormData body. Overriding it without
-    // the boundary causes multer to fail parsing the request.
+    headers: MULTIPART_HEADERS,
     timeout: 120000, // 2 min — override global 15 s; Cloudinary uploads on VPS can be slow
   });
 
@@ -61,6 +67,7 @@ export async function uploadImages(
   }
 
   const response = await api.post<UploadResponse>("/upload/images", formData, {
+    headers: MULTIPART_HEADERS,
     timeout: 120000, // 2 min — override global 15 s
   });
 
@@ -90,6 +97,7 @@ export async function uploadDocument(
     "/upload/document",
     formData,
     {
+      headers: MULTIPART_HEADERS,
       timeout: 120000, // 2 min — override global 15 s
     }
   );
@@ -122,6 +130,7 @@ export async function uploadDocuments(
     "/upload/documents",
     formData,
     {
+      headers: MULTIPART_HEADERS,
       timeout: 120000, // 2 min — override global 15 s
     }
   );

@@ -1251,6 +1251,7 @@ export default function OrderDetail() {
                 <div className="space-y-4">
                   {returns.map((ret: any) => {
                     const statusConfig: Record<string, { label: string; color: string; icon: string }> = {
+                      Pending: { label: "Submitted - Awaiting Review", color: "bg-amber-50 text-amber-700 border-amber-200", icon: "⏳" },
                       REQUESTED: { label: "Awaiting Wholesaler Approval", color: "bg-amber-50 text-amber-700 border-amber-200", icon: "⏳" },
                       UNDER_REVIEW: { label: "Under Verification Review", color: "bg-blue-50 text-blue-700 border-blue-200", icon: "🔍" },
                       Approved: { label: "Approved - Handover to Rider", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: "✅" },
@@ -1258,7 +1259,11 @@ export default function OrderDetail() {
                       COLLECTED_BY_RIDER: { label: "Collected by Rider", color: "bg-teal-50 text-teal-700 border-teal-200", icon: "🏍️" },
                       IN_TRANSIT_TO_WAREHOUSE: { label: "In Transit to Warehouse", color: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: "🚚" },
                       RECEIVED_AT_WAREHOUSE: { label: "Received at Warehouse", color: "bg-cyan-50 text-cyan-700 border-cyan-200", icon: "🏢" },
-                      REFUNDED: { label: "Refunded to Wallet", color: "bg-emerald-500 text-white border-emerald-600 shadow-sm", icon: "💰" }
+                      Processing: { label: "Processing Return", color: "bg-blue-50 text-blue-700 border-blue-200", icon: "⚙️" },
+                      REFUND_PENDING: { label: "Refund Processing", color: "bg-violet-50 text-violet-700 border-violet-200", icon: "💳" },
+                      REFUND_APPROVED: { label: "Refund Approved", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: "✅" },
+                      REFUNDED: { label: "Refunded to Wallet", color: "bg-emerald-500 text-white border-emerald-600 shadow-sm", icon: "💰" },
+                      Completed: { label: "Return Completed", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: "✔️" },
                     };
 
                     const currentItemStatus = statusConfig[ret.status] || { label: ret.status, color: "bg-gray-50 text-gray-700 border-gray-200", icon: "📦" };

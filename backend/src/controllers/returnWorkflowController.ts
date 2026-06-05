@@ -365,11 +365,15 @@ export const submitReturnRequest = asyncHandler(async (req: Request, res: Respon
     return res.status(400).json({ success: false, message: "Verification window has expired" });
   }
 
+  if (!items || items.length === 0) {
+    return res.status(400).json({ success: false, message: "No items provided. Mark items for return or use Accept All." });
+  }
+
   let totalAccepted = 0;
   let totalOrdered = 0;
 
   const returnRequests = [];
-  
+
   for (const item of items) {
     const orderItem = await OrderItem.findById(item.orderItemId);
     if (!orderItem) continue;

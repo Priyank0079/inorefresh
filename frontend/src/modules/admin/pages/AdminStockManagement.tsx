@@ -176,15 +176,15 @@ export default function AdminStockManagement() {
         }
       }
 
+      const wh = product.warehouse;
       const warehouseName =
-        (product as any).warehouse?.warehouseName ||
-        (product as any).warehouseName ||
+        (typeof wh === "object" && wh !== null ? wh.warehouseName : null) ||
         (typeof product.seller === "object" && product.seller !== null
           ? product.seller.storeName || product.seller.sellerName
           : product.seller) ||
         "Unknown Warehouse";
       const sellerId =
-        (product as any).warehouse?._id ||
+        (typeof wh === "object" && wh !== null ? wh._id : typeof wh === "string" ? wh : "") ||
         (typeof product.seller === "object" ? "" : product.seller) ||
         "";
 

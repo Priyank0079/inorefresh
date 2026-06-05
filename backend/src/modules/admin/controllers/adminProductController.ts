@@ -746,7 +746,7 @@ export const createProduct = asyncHandler(
           let adminWarehouse = await Warehouse.findOne({
             $or: [
               { email: "admin-warehouse@zetomart.com" },
-              { phone: "9999999999" },
+              { mobile: "9999999999" },
             ],
           });
 
@@ -756,7 +756,7 @@ export const createProduct = asyncHandler(
               warehouseName: "Zeto Mart Admin Warehouse",
               managerName: "Admin",
               email: "admin-warehouse@zetomart.com",
-              phone: "9999999999",
+              mobile: "9999999999",
               password: "Warehouse@123",
               address: "Admin HQ",
               location: {
