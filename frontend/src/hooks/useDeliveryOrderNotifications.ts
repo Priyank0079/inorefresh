@@ -261,6 +261,27 @@ export const useDeliveryOrderNotifications = () => {
         setState(prev => ({ ...prev, returnPickupAlert: null }));
     }, []);
 
+    // Listen for FCM foreground return-pickup events dispatched by DeliveryLayout.
+    // This fires when the socket is momentarily down but FCM still delivers the push.
+    useEffect(() => {
+        const handleFcmReturnPickup = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            if (!detail?.orderId) return;
+            setState(prev => ({
+                ...prev,
+                returnPickupAlert: {
+                    returnId: detail.returnId || '',
+                    orderId: detail.orderId,
+                    orderNumber: detail.orderNumber || '',
+                    customerName: detail.customerName || 'Customer',
+                    timestamp: new Date(),
+                },
+            }));
+        };
+        window.addEventListener('fcm:return-pickup', handleFcmReturnPickup);
+        return () => window.removeEventListener('fcm:return-pickup', handleFcmReturnPickup);
+    }, []);
+
     return {
         currentNotification: state.currentNotification,
         notificationQueue: state.notificationQueue,

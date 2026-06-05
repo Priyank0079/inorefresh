@@ -98,7 +98,7 @@ export default function RiderInspectionControl() {
       const res = await api.get(`/delivery/orders/${id}`);
       if (res.data.success) {
         setOrder(res.data.data);
-        if (['Partially Returned', 'Fully Returned'].includes(res.data.data.status)) {
+        if (['Partially Returned', 'Fully Returned', 'Return Under Review'].includes(res.data.data.status)) {
           fetchReturns();
         }
       }

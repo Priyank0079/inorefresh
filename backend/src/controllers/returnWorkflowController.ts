@@ -14,6 +14,7 @@ import Warehouse from "../models/Warehouse";
 import PlatformWallet from "../models/PlatformWallet";
 import axios from "axios";
 import { sendNotification } from "../services/notificationService";
+import { sendNotificationToUser } from "../services/firebaseAdmin";
 import { getIO } from "../socket/socketService";
 
 // startInspection removed: Verification is now triggered strictly by OTP delivery.
@@ -398,7 +399,7 @@ export const submitReturnRequest = asyncHandler(async (req: Request, res: Respon
         description: item.comment,
         images: item.images,
         videos: item.videos,
-        status: "REQUESTED",
+        status: "Pending",
         warehouse: (orderItem as any).warehouse || order.assignedWarehouse,
         deliveryBoy: order.deliveryBoy,
       });
@@ -414,7 +415,12 @@ export const submitReturnRequest = asyncHandler(async (req: Request, res: Respon
     order.status = "Delivered"; // Fully accepted
   }
 
-  order.riderStatusDuringInspection = "WAITING_FOR_RETURN_APPROVAL";
+  // Only put rider in "waiting" state when there are actual returns to approve
+  if (returnRequests.length > 0) {
+    order.riderStatusDuringInspection = "WAITING_FOR_RETURN_APPROVAL";
+  } else {
+    order.riderStatusDuringInspection = "IDLE";
+  }
   order.isVerifiedByCustomer = true;
   await order.save();
 
@@ -486,8 +492,8 @@ export const reviewReturnRequest = asyncHandler(async (req: Request, res: Respon
     returnReq.reverseLogisticsCode = `RET-${Date.now()}`;
     returnReq.warehouseVerificationOtp = Math.floor(1000 + Math.random() * 9000).toString();
     
-    // Check if order needs status update
-    if (order.status === 'Return Under Review') {
+    // Update order status on approval (covers both partial and full return cases)
+    if (order.status === 'Return Under Review' || order.status === 'Fully Returned') {
        order.status = 'Partially Returned';
        await order.save();
     }
@@ -533,6 +539,32 @@ export const reviewReturnRequest = asyncHandler(async (req: Request, res: Respon
         });
       } catch (e) {
         console.error('[Return Pickup] socket emit failed:', e);
+      }
+
+      // Also send a data-only FCM push so the rider gets an urgent notification
+      // even when the socket is disconnected (tab backgrounded / phone asleep).
+      // dataOnly=true bypasses the OS auto-display so our service worker shows
+      // it with requireInteraction + full vibration.
+      try {
+        await sendNotificationToUser(
+          returnReq.deliveryBoy.toString(),
+          'Delivery',
+          {
+            title: 'Return Pickup Approved!',
+            body: `Go collect returned goods for Order #${order.orderNumber} from the customer.`,
+            data: {
+              type: 'return_pickup',
+              orderId: order._id?.toString() || '',
+              orderNumber: String(order.orderNumber),
+              customerName: order.customerName || 'Customer',
+              returnId: (returnReq._id as any).toString(),
+              link: `/delivery/orders/${order._id}`,
+            },
+            dataOnly: true,
+          }
+        );
+      } catch (e) {
+        console.error('[Return Pickup] FCM push failed:', e);
       }
     }
   }

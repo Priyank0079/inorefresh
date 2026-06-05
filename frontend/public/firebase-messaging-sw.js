@@ -24,25 +24,23 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
     console.log('[firebase-messaging-sw.js] Received background message', payload);
 
-    const notificationTitle = payload.notification?.title || 'New Notification';
-    const notificationType = payload.data?.type || 'default';
+    // For data-only messages (dataOnly=true on backend), title/body are in payload.data.
+    // For notification+data messages they are in payload.notification.
+    const notificationTitle = payload.notification?.title || payload.data?.title || 'New Notification';
+    const notificationBody  = payload.notification?.body  || payload.data?.body  || '';
+    const notificationType  = payload.data?.type || 'default';
 
-    // New order notifications for delivery boys require user interaction
-    // so they are NOT auto-dismissed — the delivery boy must tap Accept/Reject
-    const isOrderNotification = notificationType === 'new_order';
+    // Urgent types: delivery boy must act before notification auto-dismisses.
+    const isUrgent = notificationType === 'new_order' || notificationType === 'return_pickup';
 
     const notificationOptions = {
-        body: payload.notification?.body || '',
-        icon: payload.notification?.icon || '/favicon.png',
+        body: notificationBody,
+        icon: payload.data?.icon || payload.notification?.icon || '/favicon.png',
         badge: '/favicon.png',
         data: payload.data || {},
         tag: notificationType,
-        // Keep the notification visible until the user taps it (for delivery orders)
-        requireInteraction: isOrderNotification,
-        // Vibrate pattern for order notifications: long-short-long
-        vibrate: isOrderNotification ? [300, 100, 300, 100, 300] : [200],
-        // Use a distinct notification icon for delivery
-        image: isOrderNotification ? '/favicon.png' : undefined,
+        requireInteraction: isUrgent,
+        vibrate: isUrgent ? [300, 100, 300, 100, 300] : [200],
     };
 
     self.registration.showNotification(notificationTitle, notificationOptions);
@@ -60,8 +58,9 @@ self.addEventListener('notificationclick', (event) => {
     // Route to the appropriate page based on notification type
     let urlToOpen = data.link || '/';
     if (notificationType === 'new_order') {
-        // Deep-link directly to the delivery dashboard so the order card shows
         urlToOpen = '/delivery';
+    } else if (notificationType === 'return_pickup') {
+        urlToOpen = data.link || '/delivery';
     }
 
     event.waitUntil(
@@ -69,8 +68,7 @@ self.addEventListener('notificationclick', (event) => {
             // If the app is already open on the target page, focus it
             for (const client of clientList) {
                 if ('focus' in client) {
-                    // Prefer an already-open delivery page
-                    if (notificationType === 'new_order' && client.url.includes('/delivery')) {
+                    if ((notificationType === 'new_order' || notificationType === 'return_pickup') && client.url.includes('/delivery')) {
                         return client.focus();
                     }
                     if (client.url.includes(urlToOpen)) {

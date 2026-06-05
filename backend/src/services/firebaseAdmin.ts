@@ -56,6 +56,7 @@ export async function sendPushNotification(
         body: string;
         data?: { [key: string]: string };
         icon?: string;
+        dataOnly?: boolean; // Skip notification key → service worker handles display (urgent use)
     }
 ) {
     if (!firebaseInitialized) {
@@ -77,12 +78,19 @@ export async function sendPushNotification(
             };
         }
 
-        const message = {
-            notification: {
-                title: payload.title,
-                body: payload.body
-            },
+        // dataOnly=true: no notification key so service worker handles display
+        // with custom urgency (requireInteraction, vibration).
+        // Always include title/body in data so SW can read them for data-only messages.
+        const message: any = {
+            ...(payload.dataOnly ? {} : {
+                notification: {
+                    title: payload.title,
+                    body: payload.body
+                }
+            }),
             data: {
+                title: payload.title,
+                body: payload.body,
                 ...(payload.data || {}),
                 ...(payload.icon && { icon: payload.icon })
             },
@@ -125,6 +133,7 @@ export async function sendNotificationToUser(
         body: string;
         data?: { [key: string]: string };
         icon?: string;
+        dataOnly?: boolean;
     },
     includeMobile: boolean = true
 ): Promise<any> {

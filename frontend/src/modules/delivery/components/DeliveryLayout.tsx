@@ -9,7 +9,7 @@ import OrderNotificationCard from './OrderNotificationCard';
 import DeliveryReturnPickupAlert from './DeliveryReturnPickupAlert';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../../../context/AuthContext';
-import { registerFCMToken } from '../../../services/pushNotificationService';
+import { registerFCMToken, setupForegroundNotificationHandler } from '../../../services/pushNotificationService';
 
 interface DeliveryLayoutContentProps {
   children: ReactNode;
@@ -61,7 +61,6 @@ function DeliveryLayoutContent({ children }: DeliveryLayoutContentProps) {
     registerFCMToken(forceUpdate)
       .then((token) => {
         if (token) {
-          // Remember which user registered so we don't force-update on every mount
           localStorage.setItem('fcm_token_user_id', userId);
           console.log('📲 FCM token registered for delivery boy:', userId);
         }
@@ -69,6 +68,19 @@ function DeliveryLayoutContent({ children }: DeliveryLayoutContentProps) {
       .catch((err) => {
         console.warn('⚠️ FCM token registration failed:', err);
       });
+
+    // Wire up the Firebase foreground message handler so pushes that arrive
+    // while the tab is open (socket momentarily down) still trigger the popup.
+    setupForegroundNotificationHandler((payload) => {
+      const type = payload.data?.type;
+      if (type === 'return_pickup') {
+        window.dispatchEvent(new CustomEvent('fcm:return-pickup', { detail: payload.data }));
+      } else if (type === 'new_order') {
+        // New-order foreground push: socket normally handles this, but dispatch
+        // a fallback refresh event so dashboard counts stay accurate.
+        window.dispatchEvent(new CustomEvent('delivery:orders-changed'));
+      }
+    });
   }, [isAuthenticated, user?.id, user?.userType]);
   // ────────────────────────────────────────────────────────────────────────
 

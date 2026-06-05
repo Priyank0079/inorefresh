@@ -185,19 +185,23 @@ export function setupForegroundNotificationHandler(handler?: (payload: any) => v
     onMessage(messaging, (payload) => {
         console.log('📬 Foreground message received:', payload);
 
-        // Show notification even when app is in focus
-        if ('Notification' in window && Notification.permission === 'granted') {
-            const notification = new Notification(payload.notification?.title || 'New Notification', {
-                body: payload.notification?.body || '',
+        const type = payload.data?.type;
+        const isHandledByApp = type === 'return_pickup' || type === 'new_order';
+
+        // For types the app handles via React popups, skip the browser notification
+        // to avoid a duplicate alert alongside the in-app popup.
+        if (!isHandledByApp && 'Notification' in window && Notification.permission === 'granted') {
+            const title = payload.notification?.title || payload.data?.title || 'New Notification';
+            const body  = payload.notification?.body  || payload.data?.body  || '';
+            const notification = new Notification(title, {
+                body,
                 icon: payload.notification?.icon || '/favicon.png',
                 badge: '/favicon.png',
-                tag: payload.data?.type || 'notification',
+                tag: type || 'notification',
                 requireInteraction: false,
                 silent: false,
-                data: payload.data
+                data: payload.data,
             });
-
-            // Handle notification click
             notification.onclick = (event) => {
                 event.preventDefault();
                 const link = payload.data?.link || '/';
@@ -205,11 +209,9 @@ export function setupForegroundNotificationHandler(handler?: (payload: any) => v
                 window.location.href = link;
                 notification.close();
             };
-
-            console.log('✅ Foreground notification displayed');
         }
 
-        // Call custom handler
+        // Always call the custom handler so the caller can trigger React popups
         if (handler) {
             handler(payload);
         }

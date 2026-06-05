@@ -11,7 +11,7 @@ export default function RetailerReturnSession() {
   const navigate = useNavigate();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [timeLeft, setTimeLeft] = useState<number>(-1);
   const [returnItems, setReturnItems] = useState<any[]>([]);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const [acceptingAll, setAcceptingAll] = useState(false);
@@ -135,7 +135,7 @@ export default function RetailerReturnSession() {
   };
 
   const handleSubmit = async () => {
-    const isExpired = (order?.status === 'Delivered' && !order?.isVerifiedByCustomer) && timeLeft <= 0;
+    const isExpired = (order?.status === 'Delivered' && !order?.isVerifiedByCustomer) && timeLeft !== -1 && timeLeft <= 0;
     if (isExpired) {
       return toast.error("Verification time expired. Cannot submit return.");
     }
@@ -199,7 +199,7 @@ export default function RetailerReturnSession() {
   if (loading) return <div className="p-8 text-center">Loading Verification Session...</div>;
   if (!order) return <div className="p-8 text-center">Order not found</div>;
 
-  if (order.isVerifiedByCustomer || ((order?.status === 'Delivered' && !order?.isVerifiedByCustomer) && order?.inspectionExpiresAt && timeLeft <= 0)) {
+  if (order.isVerifiedByCustomer || ((order?.status === 'Delivered' && !order?.isVerifiedByCustomer) && order?.inspectionExpiresAt && timeLeft !== -1 && timeLeft <= 0)) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
         <div className="bg-white p-8 rounded-2xl shadow-md max-w-md w-full space-y-4">
@@ -398,9 +398,9 @@ export default function RetailerReturnSession() {
         <div className="pt-2 space-y-3">
           <button 
             onClick={handleSubmit}
-            disabled={((order?.status === 'Delivered' && !order?.isVerifiedByCustomer) && timeLeft <= 0) || acceptingAll}
+            disabled={((order?.status === 'Delivered' && !order?.isVerifiedByCustomer) && timeLeft !== -1 && timeLeft <= 0) || acceptingAll}
             className={`w-full flex justify-center items-center gap-2 py-4 rounded-xl font-bold text-white transition-all text-sm ${
-              ((order?.status === 'Delivered' && !order?.isVerifiedByCustomer) && timeLeft <= 0)
+              ((order?.status === 'Delivered' && !order?.isVerifiedByCustomer) && timeLeft !== -1 && timeLeft <= 0)
                 ? 'bg-gray-400 cursor-not-allowed' 
                 : 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-lg shadow-red-200 active:scale-[0.98]'
             }`}
