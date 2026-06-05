@@ -120,7 +120,8 @@ export default function RetailerReturnSession() {
       toast.success(`${uploadedUrls.length} photo${uploadedUrls.length > 1 ? 's' : ''} uploaded!`, { id: toastId });
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || "Failed to upload photo", { id: toastId });
+      const msg = error.response?.data?.message || error.message || "Failed to upload photo";
+      toast.error(msg, { id: toastId });
     } finally {
       setUploadingIndex(null);
       e.target.value = ''; // allow re-selecting the same file

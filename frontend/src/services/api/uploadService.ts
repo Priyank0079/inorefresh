@@ -30,9 +30,9 @@ export async function uploadImage(
   }
 
   const response = await api.post<UploadResponse>("/upload/image", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    // Do NOT set Content-Type manually — the browser/XHR sets it with the correct
+    // multipart boundary when it detects a FormData body. Overriding it without
+    // the boundary causes multer to fail parsing the request.
     timeout: 120000, // 2 min — override global 15 s; Cloudinary uploads on VPS can be slow
   });
 
@@ -61,9 +61,6 @@ export async function uploadImages(
   }
 
   const response = await api.post<UploadResponse>("/upload/images", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
     timeout: 120000, // 2 min — override global 15 s
   });
 
@@ -93,9 +90,6 @@ export async function uploadDocument(
     "/upload/document",
     formData,
     {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
       timeout: 120000, // 2 min — override global 15 s
     }
   );
@@ -128,9 +122,6 @@ export async function uploadDocuments(
     "/upload/documents",
     formData,
     {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
       timeout: 120000, // 2 min — override global 15 s
     }
   );
