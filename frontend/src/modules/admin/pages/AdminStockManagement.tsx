@@ -350,6 +350,15 @@ export default function AdminStockManagement() {
   const endIndex = startIndex + rowsPerPage;
   const displayedProducts = sortedProducts.slice(startIndex, endIndex);
 
+  const handleClearFilters = () => {
+    setFilterCategory("All Category");
+    setFilterSeller("All Warehouses");
+    setFilterStatus("All Products");
+    setFilterStock("All Products");
+    setSearchTerm("");
+    setCurrentPage(1);
+  };
+
   const handleExport = () => {
     const headers = [
       "Variation Id",
@@ -499,6 +508,16 @@ export default function AdminStockManagement() {
                 </select>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={handleClearFilters}
+                  className="bg-neutral-500 hover:bg-neutral-600 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 transition-colors"
+                  title="Clear all filters">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Clear
+                </button>
                 <button
                   onClick={handleExport}
                   className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 transition-colors">

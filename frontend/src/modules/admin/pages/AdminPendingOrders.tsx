@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  getOrdersByStatus,
+  getAllOrders,
   type Order,
 } from "../../../services/api/admin/adminOrderService";
 import { getAllWarehouses } from "../../../services/api/warehouseService";
@@ -20,14 +20,41 @@ type SortField =
 type SortDirection = "asc" | "desc";
 
 export default function AdminPendingOrders() {
+  const navigate = useNavigate();
   const { isAuthenticated, token } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [dateRange, setDateRange] = useState("");
+  
+  const getLocalDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const today = getLocalDateString();
+
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  const handleDateChange = (value: string, setter: (val: string) => void) => {
+    if (!value) {
+      setter("");
+      return;
+    }
+    const parts = value.split("-");
+    const year = parts[0];
+    if (year && year.length > 4) {
+      return;
+    }
+    setter(value);
+  };
+
   const [seller, setSeller] = useState("All Sellers");
   const [warehouses, setWarehouses] = useState<{ _id: string; warehouseName: string }[]>([]);
   const [status, setStatus] = useState("Pending");
   const [entriesPerPage, setEntriesPerPage] = useState("10");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [sortField, setSortField] = useState<SortField | null>(null);
@@ -41,6 +68,15 @@ export default function AdminPendingOrders() {
   useEffect(() => {
     getAllWarehouses().then((r) => { if (r.success) setWarehouses(r.data as any); }).catch(() => {});
   }, []);
+
+  // Debounce search — wait 400ms after the user stops typing before firing API
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   // Fetch orders on component mount
   useEffect(() => {
@@ -57,34 +93,26 @@ export default function AdminPendingOrders() {
         const params: any = {
           page: currentPage,
           limit: parseInt(entriesPerPage),
+          status: "Pending",
         };
 
-        if (searchQuery) {
-          params.search = searchQuery;
+        if (debouncedSearch) {
+          params.search = debouncedSearch;
         }
 
         if (seller && seller !== "All Sellers") {
           params.warehouseId = seller;
         }
 
-        // Parse date range (dates already YYYY-MM-DD from date inputs)
-        if (dateRange && dateRange.includes(" - ")) {
-          const [dateFrom, dateTo] = dateRange.split(" - ").map((d) => {
-            // Convert MM/DD/YYYY to YYYY-MM-DD (legacy fallback)
-            const parts = d.trim().split("/");
-            if (parts.length === 3) {
-              return `${parts[2]}-${parts[0].padStart(
-                2,
-                "0"
-              )}-${parts[1].padStart(2, "0")}`;
-            }
-            return d.trim();
-          });
-          params.dateFrom = dateFrom;
-          params.dateTo = dateTo;
+        if (fromDate) {
+          params.dateFrom = fromDate;
         }
 
-        const response = await getOrdersByStatus("Pending", params);
+        if (toDate) {
+          params.dateTo = toDate;
+        }
+
+        const response = await getAllOrders(params);
         if (response.success) {
           setOrders(response.data);
           const pg = (response as any).pagination;
@@ -114,12 +142,15 @@ export default function AdminPendingOrders() {
     token,
     currentPage,
     entriesPerPage,
-    searchQuery,
-    dateRange,
+    debouncedSearch,
+    fromDate,
+    toDate,
+    seller,
   ]);
 
   const handleClearDate = () => {
-    setDateRange("");
+    setFromDate("");
+    setToDate("");
     setCurrentPage(1);
   };
 
@@ -326,21 +357,23 @@ export default function AdminPendingOrders() {
                   <input
                     type="date"
                     aria-label="From date"
-                    value={dateRange.split(' - ')[0] || ''}
-                    max={dateRange.split(' - ')[1] || undefined}
-                    onChange={(e) => { setDateRange(`${e.target.value} - ${dateRange.split(' - ')[1] || ''}`); setCurrentPage(1); }}
+                    value={fromDate}
+                    min="2020-01-01"
+                    max={toDate || today}
+                    onChange={(e) => { handleDateChange(e.target.value, setFromDate); setCurrentPage(1); }}
                     className="px-3 py-2 text-xs sm:text-sm border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]"
                   />
                   <span className="text-neutral-400 text-xs">to</span>
                   <input
                     type="date"
                     aria-label="To date"
-                    value={dateRange.split(' - ')[1] || ''}
-                    min={dateRange.split(' - ')[0] || undefined}
-                    onChange={(e) => { setDateRange(`${dateRange.split(' - ')[0] || ''} - ${e.target.value}`); setCurrentPage(1); }}
+                    value={toDate}
+                    min={fromDate || "2020-01-01"}
+                    max={today}
+                    onChange={(e) => { handleDateChange(e.target.value, setToDate); setCurrentPage(1); }}
                     className="px-3 py-2 text-xs sm:text-sm border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]"
                   />
-                  {dateRange.trim() !== '-' && dateRange && (
+                  {(fromDate || toDate) && (
                     <button
                       onClick={handleClearDate}
                       className="px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-200 hover:bg-neutral-300 rounded transition-colors flex-shrink-0">
@@ -377,10 +410,30 @@ export default function AdminPendingOrders() {
                 <select
                   value={status}
                   onChange={(e) => {
-                    setStatus(e.target.value);
-                    setCurrentPage(1);
+                    const nextStatus = e.target.value;
+                    setStatus(nextStatus);
+                    if (nextStatus === "All Status") {
+                      navigate("/admin/orders/all");
+                    } else if (nextStatus === "Pending") {
+                      navigate("/admin/orders/pending");
+                    } else if (nextStatus === "Received") {
+                      navigate("/admin/orders/received");
+                    } else if (nextStatus === "Processed") {
+                      navigate("/admin/orders/processed");
+                    } else if (nextStatus === "Shipped") {
+                      navigate("/admin/orders/shipped");
+                    } else if (nextStatus === "Out for Delivery" || nextStatus === "Out For Delivery") {
+                      navigate("/admin/orders/out-for-delivery");
+                    } else if (nextStatus === "Delivered") {
+                      navigate("/admin/orders/delivered");
+                    } else if (nextStatus === "Cancelled") {
+                      navigate("/admin/orders/cancelled");
+                    } else if (nextStatus === "Returned") {
+                      navigate("/admin/orders/all");
+                    }
                   }}
                   className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]">
+                  <option>All Status</option>
                   <option>Pending</option>
                   <option>Received</option>
                   <option>Processed</option>
@@ -956,9 +1009,13 @@ export default function AdminPendingOrders() {
               const params: any = {
                 page: currentPage,
                 limit: parseInt(entriesPerPage),
+                status: "Pending",
               };
-              if (searchQuery) params.search = searchQuery;
-              const response = await getOrdersByStatus("Pending", params);
+              if (debouncedSearch) params.search = debouncedSearch;
+              if (seller && seller !== "All Sellers") params.warehouseId = seller;
+              if (fromDate) params.dateFrom = fromDate;
+              if (toDate) params.dateTo = toDate;
+              const response = await getAllOrders(params);
               if (response.success) {
                 setOrders(response.data);
                 const pg = (response as any).pagination;

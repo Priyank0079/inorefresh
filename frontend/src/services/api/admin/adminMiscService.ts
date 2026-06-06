@@ -138,6 +138,8 @@ export interface GetMiscParams {
   type?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 /**

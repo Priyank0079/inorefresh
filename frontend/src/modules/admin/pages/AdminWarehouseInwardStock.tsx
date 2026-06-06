@@ -78,6 +78,14 @@ export default function AdminWarehouseInwardStock() {
         document.body.removeChild(link);
     };
 
+    const handleClearFilters = () => {
+        setFromDate('');
+        setToDate('');
+        setStatusFilter('All Status');
+        setSearchTerm('');
+        setCurrentPage(1);
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Received':
@@ -175,6 +183,14 @@ export default function AdminWarehouseInwardStock() {
                                 <option>Pending</option>
                                 <option>Cancelled</option>
                             </select>
+                        </div>
+                        <div className="flex flex-col justify-end mt-[18px]">
+                            <button
+                                onClick={handleClearFilters}
+                                className="px-4 py-2 bg-neutral-800 hover:bg-neutral-900 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+                            >
+                                Clear
+                            </button>
                         </div>
                     </div>
                     <input

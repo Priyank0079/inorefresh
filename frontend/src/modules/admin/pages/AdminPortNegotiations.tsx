@@ -196,13 +196,13 @@ export default function AdminPortNegotiations() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 300, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="lg:w-1/3 min-w-[400px] z-20"
+              className="lg:w-1/3 min-w-[320px] lg:min-w-[360px] z-20"
             >
-              <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden sticky top-6 flex flex-col max-h-[calc(100vh-80px)]">
+              <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden sticky top-6 flex flex-col max-h-[calc(100vh-120px)]">
                 {/* Header */}
-                <div className="px-6 py-4 bg-white border-b border-slate-100 flex justify-between items-center">
+                <div className="px-4 py-3 bg-white border-b border-slate-100 flex justify-between items-center">
                   <div>
-                    <h3 className="font-semibold text-lg text-slate-800">Negotiation Details</h3>
+                    <h3 className="font-semibold text-base text-slate-800">Negotiation Details</h3>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="px-2 py-0.5 bg-teal-50 text-teal-600 text-xs font-medium rounded-md">Active</span>
                       <span className="text-xs text-slate-400 font-medium">#{selectedOffer._id.slice(-6).toUpperCase()}</span>
@@ -216,32 +216,32 @@ export default function AdminPortNegotiations() {
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                   {/* Price Comparison */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
-                      <p className="text-xs font-medium text-slate-500 mb-1">Port's Offer</p>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[11px] font-medium text-slate-500 mb-1">Port's Offer</p>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-semibold text-slate-800">₹{selectedOffer.offeredPrice}</span>
-                        <span className="text-xs font-medium text-slate-400">/kg</span>
+                        <span className="text-xl font-semibold text-slate-800">₹{selectedOffer.offeredPrice}</span>
+                        <span className="text-[10px] font-medium text-slate-400">/kg</span>
                       </div>
                     </div>
-                    <div className="bg-teal-50/50 border border-teal-100/50 rounded-xl p-4">
-                      <p className="text-xs font-medium text-teal-700 mb-1">Your Counter</p>
+                    <div className="bg-teal-50/50 border border-teal-100/50 rounded-xl p-3">
+                      <p className="text-[11px] font-medium text-teal-700 mb-1">Your Counter</p>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-semibold text-teal-800">
+                        <span className="text-xl font-semibold text-teal-800">
                           {selectedOffer.counterPrice ? `₹${selectedOffer.counterPrice}` : '--'}
                         </span>
-                        {selectedOffer.counterPrice && <span className="text-xs font-medium text-teal-600">/kg</span>}
+                        {selectedOffer.counterPrice && <span className="text-[10px] font-medium text-teal-600">/kg</span>}
                       </div>
                     </div>
                   </div>
 
                   {/* Port Partner Profile */}
                   {typeof selectedOffer.portId === 'object' && selectedOffer.portId !== null && (
-                    <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center">
-                        <span className="material-icons-outlined">storefront</span>
+                    <div className="bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center">
+                        <span className="material-icons-outlined text-lg">storefront</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-semibold text-slate-800 truncate">{selectedOffer.portId.portName || selectedOffer.portId.name}</h4>
@@ -263,8 +263,8 @@ export default function AdminPortNegotiations() {
 
                   {/* Negotiation History */}
                   <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-sm font-semibold text-slate-800">History</h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-[13px] font-semibold text-slate-800">History</h4>
                       <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
                         {selectedOffer.negotiationHistory?.length || 0} updates
                       </span>
@@ -299,14 +299,12 @@ export default function AdminPortNegotiations() {
                       })}
                     </div>
                   </div>
-                </div>
-
-                {/* Action Form */}
-                {selectedOffer.status !== 'approved' && (
-                  <div className="p-6 bg-slate-50 border-t border-slate-200 space-y-4">
+                  {/* Action Form */}
+                  {selectedOffer.status !== 'approved' && (
+                    <div className="pt-4 border-t border-slate-200 space-y-3">
                     <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <label className="text-sm font-medium text-slate-700">Counter Price (₹)</label>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <label className="text-[13px] font-medium text-slate-700">Counter Price (₹)</label>
                         <button 
                           onClick={() => setCounterPrice(selectedOffer.offeredPrice.toString())}
                           className="text-xs text-teal-600 hover:text-teal-700 font-medium"
@@ -321,14 +319,14 @@ export default function AdminPortNegotiations() {
                           value={counterPrice}
                           onChange={(e) => setCounterPrice(e.target.value)}
                           placeholder="0.00"
-                          className="w-full pl-8 pr-4 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition-shadow"
+                          className="w-full pl-7 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition-shadow"
                         />
                       </div>
                     </div>
                     
                     <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <label className="text-sm font-medium text-slate-700">Notes</label>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <label className="text-[13px] font-medium text-slate-700">Notes</label>
                         <div className="flex gap-1.5">
                            {['Deal Done', 'Negotiate', 'Call Me'].map(msg => (
                              <button
@@ -346,37 +344,38 @@ export default function AdminPortNegotiations() {
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         placeholder="Add your note here..."
-                        className="w-full p-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none h-20 resize-none transition-shadow"
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none h-16 resize-none transition-shadow"
                       />
                     </div>
 
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex gap-3 pt-1">
                       <button
                         onClick={handleCounter}
                         disabled={submitting || !counterPrice}
-                        className="flex-1 bg-white border border-slate-300 text-slate-700 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50"
+                        className="flex-1 bg-white border border-slate-300 text-slate-700 py-2 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50"
                       >
                         Send Counter
                       </button>
                       <button
                         onClick={() => handleConfirm(selectedOffer._id)}
                         disabled={submitting}
-                        className="flex-1 bg-teal-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="flex-1 bg-teal-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
                       >
                          <span className="material-icons-outlined text-sm">check_circle</span>
                          Confirm Deal
                       </button>
                     </div>
                   </div>
-                )}
+                  )}
 
-                {selectedOffer.status === 'approved' && (
-                  <div className="p-6 bg-teal-50 text-center border-t border-teal-100">
-                    <span className="material-icons-outlined text-teal-500 text-3xl mb-2">check_circle</span>
-                    <h4 className="text-lg font-semibold text-teal-800 mb-1">Deal Finalized</h4>
-                    <p className="text-sm text-teal-600">This transaction is confirmed and moving to fulfillment.</p>
-                  </div>
-                )}
+                  {selectedOffer.status === 'approved' && (
+                    <div className="p-4 bg-teal-50 rounded-xl text-center border border-teal-100">
+                      <span className="material-icons-outlined text-teal-500 text-2xl mb-1.5">check_circle</span>
+                      <h4 className="text-base font-semibold text-teal-800 mb-0.5">Deal Finalized</h4>
+                      <p className="text-xs text-teal-600">This transaction is confirmed and moving to fulfillment.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}

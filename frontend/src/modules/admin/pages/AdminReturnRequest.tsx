@@ -4,16 +4,41 @@ import {
   updateReturnRequest,
   type MiscReturnRequest as ReturnRequest,
 } from "../../../services/api/admin/adminMiscService";
+import { getAllWarehouses } from "../../../services/api/warehouseService";
 import { useAuth } from "../../../context/AuthContext";
 
 export default function AdminReturnRequest() {
   const { isAuthenticated, token } = useAuth();
+  const getLocalDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const today = getLocalDateString();
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+
+  const handleDateChange = (value: string, setter: (val: string) => void) => {
+    if (!value) {
+      setter("");
+      return;
+    }
+    const parts = value.split("-");
+    const year = parts[0];
+    if (year && year.length > 4) {
+      return;
+    }
+    setter(value);
+  };
+
   const [selectedSeller, setSelectedSeller] = useState("all");
+  const [warehouses, setWarehouses] = useState<{ _id: string; warehouseName: string }[]>([]);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -26,6 +51,20 @@ export default function AdminReturnRequest() {
   const [rejectReason, setRejectReason] = useState('');
   const [viewingRequest, setViewingRequest] = useState<ReturnRequest | null>(null);
   const showReturnReqMsg = (text: string, type: 'success' | 'error') => { setReturnReqMessage({ text, type }); setTimeout(() => setReturnReqMessage(null), 3000); };
+
+  // Fetch warehouses for seller filter
+  useEffect(() => {
+    getAllWarehouses().then((r) => { if (r.success) setWarehouses(r.data as any); }).catch(() => {});
+  }, []);
+
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
   // Fetch return requests on component mount
   useEffect(() => {
@@ -48,8 +87,20 @@ export default function AdminReturnRequest() {
           params.status = selectedStatus;
         }
 
-        if (searchTerm) {
-          params.search = searchTerm;
+        if (selectedSeller !== "all") {
+          params.warehouseId = selectedSeller;
+        }
+
+        if (debouncedSearch) {
+          params.search = debouncedSearch;
+        }
+
+        if (fromDate) {
+          params.dateFrom = fromDate;
+        }
+
+        if (toDate) {
+          params.dateTo = toDate;
         }
 
         const response = await getReturnRequests(params);
@@ -77,7 +128,10 @@ export default function AdminReturnRequest() {
     currentPage,
     entriesPerPage,
     selectedStatus,
-    searchTerm,
+    selectedSeller,
+    debouncedSearch,
+    fromDate,
+    toDate,
   ]);
 
   const handleSort = (column: string) => {
@@ -195,9 +249,8 @@ export default function AdminReturnRequest() {
   const handleClearDate = () => {
     setFromDate("");
     setToDate("");
+    setCurrentPage(1);
   };
-
-  const sellers = ["All Seller", "Seller 1", "Seller 2", "Seller 3"];
 
   const statuses = [
     "All Status",
@@ -274,8 +327,9 @@ export default function AdminReturnRequest() {
                     <input
                       type="date"
                       value={fromDate}
-                      max={toDate || undefined}
-                      onChange={(e) => setFromDate(e.target.value)}
+                      min="2020-01-01"
+                      max={toDate || today}
+                      onChange={(e) => handleDateChange(e.target.value, setFromDate)}
                       className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[140px]"
                     />
                   </div>
@@ -305,8 +359,9 @@ export default function AdminReturnRequest() {
                     <input
                       type="date"
                       value={toDate}
-                      min={fromDate || undefined}
-                      onChange={(e) => setToDate(e.target.value)}
+                      min={fromDate || "2020-01-01"}
+                      max={today}
+                      onChange={(e) => handleDateChange(e.target.value, setToDate)}
                       className="pl-10 pr-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[140px]"
                     />
                   </div>
@@ -329,12 +384,11 @@ export default function AdminReturnRequest() {
                     setSelectedSeller(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-2 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2] min-w-[130px]">
-                  {sellers.map((seller) => (
-                    <option
-                      key={seller}
-                      value={seller === "All Seller" ? "all" : seller}>
-                      {seller}
+                  className="px-3 py-2 border border-neutral-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2] min-w-[130px]">
+                  <option value="all">All Sellers</option>
+                  {warehouses.map((w: any) => (
+                    <option key={w._id} value={w._id}>
+                      {w.warehouseName}
                     </option>
                   ))}
                 </select>

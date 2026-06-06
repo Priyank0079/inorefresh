@@ -1,24 +1,68 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { getOrdersByStatus, type Order } from '../../../services/api/admin/adminOrderService';
+import { Link, useNavigate } from 'react-router-dom';
+import { getAllOrders, type Order } from '../../../services/api/admin/adminOrderService';
+import { getAllWarehouses } from "../../../services/api/warehouseService";
 import { useAuth } from '../../../context/AuthContext';
 
 type SortField = 'orderId' | 'customerDetails' | 'address' | 'deliveryDate' | 'orderDate' | 'status' | 'deliveryBoyStatus' | 'amount';
 type SortDirection = 'asc' | 'desc';
 
 export default function AdminReceivedOrders() {
+  const navigate = useNavigate();
   const { isAuthenticated, token } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [dateRange, setDateRange] = useState('');
+  
+  const getLocalDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const today = getLocalDateString();
+
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  const handleDateChange = (value: string, setter: (val: string) => void) => {
+    if (!value) {
+      setter("");
+      return;
+    }
+    const parts = value.split("-");
+    const year = parts[0];
+    if (year && year.length > 4) {
+      return;
+    }
+    setter(value);
+  };
+
   const [seller, setSeller] = useState('All Sellers');
+  const [warehouses, setWarehouses] = useState<{ _id: string; warehouseName: string }[]>([]);
   const [status, setStatus] = useState('Received');
   const [entriesPerPage, setEntriesPerPage] = useState('10');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch warehouses for seller filter
+  useEffect(() => {
+    getAllWarehouses().then((r) => { if (r.success) setWarehouses(r.data as any); }).catch(() => {});
+  }, []);
+
+  // Debounce search — wait 400ms after the user stops typing before firing API
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   // Fetch orders on component mount
   useEffect(() => {
@@ -35,27 +79,30 @@ export default function AdminReceivedOrders() {
         const params: any = {
           page: currentPage,
           limit: parseInt(entriesPerPage),
+          status: "Received",
         };
 
-        if (searchQuery) {
-          params.search = searchQuery;
+        if (debouncedSearch) {
+          params.search = debouncedSearch;
         }
 
-        if (dateRange && dateRange.includes(' - ')) {
-          const [dateFrom, dateTo] = dateRange.split(' - ').map(d => {
-            const parts = d.trim().split('/');
-            if (parts.length === 3) {
-              return `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
-            }
-            return d.trim();
-          });
-          params.dateFrom = dateFrom;
-          params.dateTo = dateTo;
+        if (seller && seller !== "All Sellers") {
+          params.warehouseId = seller;
         }
 
-        const response = await getOrdersByStatus('Received', params);
+        if (fromDate) {
+          params.dateFrom = fromDate;
+        }
+
+        if (toDate) {
+          params.dateTo = toDate;
+        }
+
+        const response = await getAllOrders(params);
         if (response.success) {
           setOrders(response.data);
+          const pg = (response as any).pagination;
+          setTotalCount(typeof pg?.total === "number" ? pg.total : response.data.length);
         }
       } catch (err) {
         console.error('Error fetching orders:', err);
@@ -71,10 +118,20 @@ export default function AdminReceivedOrders() {
     };
 
     fetchOrders();
-  }, [isAuthenticated, token, currentPage, entriesPerPage, searchQuery, dateRange]);
+  }, [
+    isAuthenticated,
+    token,
+    currentPage,
+    entriesPerPage,
+    debouncedSearch,
+    fromDate,
+    toDate,
+    seller,
+  ]);
 
   const handleClearDate = () => {
-    setDateRange('');
+    setFromDate("");
+    setToDate("");
     setCurrentPage(1);
   };
 
@@ -178,10 +235,9 @@ export default function AdminReceivedOrders() {
     return filtered;
   }, [orders, sortField, sortDirection]);
 
-  const totalPages = Math.ceil(filteredAndSortedOrders.length / parseInt(entriesPerPage));
+  const totalPages = Math.max(1, Math.ceil(totalCount / parseInt(entriesPerPage)));
   const startIndex = (currentPage - 1) * parseInt(entriesPerPage);
-  const endIndex = startIndex + parseInt(entriesPerPage);
-  const paginatedOrders = filteredAndSortedOrders.slice(startIndex, endIndex);
+  const paginatedOrders = filteredAndSortedOrders;
 
   const handlePreviousPage = () => {
     setCurrentPage(prev => Math.max(1, prev - 1));
@@ -259,37 +315,30 @@ export default function AdminReceivedOrders() {
                 <label className="text-xs sm:text-sm font-medium text-neutral-700 whitespace-nowrap">
                   From - To Order Date
                 </label>
-                <div className="flex items-center gap-2 bg-white border border-neutral-300 rounded px-2 sm:px-3 py-1.5 sm:py-2 w-full sm:w-auto">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="text-neutral-500 flex-shrink-0"
-                  >
-                    <path
-                      d="M8 2V6M16 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <input
-                    type="text"
-                    value={dateRange}
-                    onChange={(e) => {
-                      setDateRange(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="flex-1 sm:w-48 text-xs sm:text-sm text-neutral-600 bg-transparent focus:outline-none placeholder:text-neutral-400"
-                    placeholder="MM/DD/YYYY - MM/DD/YYYY"
+                    type="date"
+                    aria-label="From date"
+                    value={fromDate}
+                    min="2020-01-01"
+                    max={toDate || today}
+                    onChange={(e) => { handleDateChange(e.target.value, setFromDate); setCurrentPage(1); }}
+                    className="px-3 py-2 text-xs sm:text-sm border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]"
                   />
-                  {dateRange && (
+                  <span className="text-neutral-400 text-xs">to</span>
+                  <input
+                    type="date"
+                    aria-label="To date"
+                    value={toDate}
+                    min={fromDate || "2020-01-01"}
+                    max={today}
+                    onChange={(e) => { handleDateChange(e.target.value, setToDate); setCurrentPage(1); }}
+                    className="px-3 py-2 text-xs sm:text-sm border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]"
+                  />
+                  {(fromDate || toDate) && (
                     <button
                       onClick={handleClearDate}
-                      className="ml-2 px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-200 hover:bg-neutral-300 rounded transition-colors flex-shrink-0"
+                      className="px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-200 hover:bg-neutral-300 rounded transition-colors flex-shrink-0"
                     >
                       Clear
                     </button>
@@ -308,12 +357,12 @@ export default function AdminReceivedOrders() {
                     setSeller(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2]"
+                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]"
                 >
-                  <option>All Sellers</option>
-                  <option>Seller 1</option>
-                  <option>Seller 2</option>
-                  <option>Seller 3</option>
+                  <option value="All Sellers">All Sellers</option>
+                  {warehouses.map((w: any) => (
+                    <option key={w._id} value={w._id}>{w.warehouseName}</option>
+                  ))}
                 </select>
               </div>
 
@@ -325,19 +374,39 @@ export default function AdminReceivedOrders() {
                 <select
                   value={status}
                   onChange={(e) => {
-                    setStatus(e.target.value);
-                    setCurrentPage(1);
+                    const nextStatus = e.target.value;
+                    setStatus(nextStatus);
+                    if (nextStatus === "All Status") {
+                      navigate("/admin/orders/all");
+                    } else if (nextStatus === "Pending") {
+                      navigate("/admin/orders/pending");
+                    } else if (nextStatus === "Received") {
+                      navigate("/admin/orders/received");
+                    } else if (nextStatus === "Processed") {
+                      navigate("/admin/orders/processed");
+                    } else if (nextStatus === "Shipped") {
+                      navigate("/admin/orders/shipped");
+                    } else if (nextStatus === "Out for Delivery" || nextStatus === "Out For Delivery") {
+                      navigate("/admin/orders/out-for-delivery");
+                    } else if (nextStatus === "Delivered") {
+                      navigate("/admin/orders/delivered");
+                    } else if (nextStatus === "Cancelled") {
+                      navigate("/admin/orders/cancelled");
+                    } else if (nextStatus === "Returned") {
+                      navigate("/admin/orders/all");
+                    }
                   }}
-                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-#12b2a2 focus:border-[#12b2a2]"
+                  className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded text-xs sm:text-sm text-neutral-900 bg-white focus:outline-none focus:ring-1 focus:ring-[#12b2a2] focus:border-[#12b2a2]"
                 >
-                  <option>Received</option>
                   <option>All Status</option>
-                  <option>Payment Pending</option>
+                  <option>Pending</option>
+                  <option>Received</option>
                   <option>Processed</option>
                   <option>Shipped</option>
-                  <option>Out For Delivery</option>
+                  <option>Out for Delivery</option>
                   <option>Delivered</option>
                   <option>Cancelled</option>
+                  <option>Returned</option>
                 </select>
               </div>
 
@@ -680,7 +749,7 @@ export default function AdminReceivedOrders() {
           {/* Pagination Footer */}
           <div className="px-4 sm:px-6 py-3 bg-neutral-50 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-2">
             <div className="text-xs sm:text-sm text-neutral-700">
-              Showing {filteredAndSortedOrders.length === 0 ? 0 : startIndex + 1} to {Math.min(endIndex, filteredAndSortedOrders.length)} of {filteredAndSortedOrders.length} entries
+              Showing {totalCount === 0 ? 0 : startIndex + 1} to {startIndex + filteredAndSortedOrders.length} of {totalCount} entries
             </div>
             <div className="flex items-center gap-1">
               <button

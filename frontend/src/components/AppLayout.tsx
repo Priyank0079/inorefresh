@@ -174,13 +174,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const isCheckoutPage = location.pathname === '/checkout' || location.pathname.startsWith('/checkout/');
   const isCartPage = location.pathname === '/cart';
   const isAccountPage = location.pathname === '/account';
+  const isNotificationPage = location.pathname === '/notifications' || location.pathname.startsWith('/notifications/');
   const isExploreCategoriesPage = location.pathname === '/categories';
-  const showOceanNavbar = !isCheckoutPage && !isCartPage && !isAccountPage && !isExploreCategoriesPage;
-  const showBackButton = !showLocationRequest && !showLocationChangeModal && !isAccountPage && !isHomePage && !isCheckoutPage;
+  const showOceanNavbar = !isCheckoutPage && !isCartPage && !isAccountPage && !isNotificationPage && !isExploreCategoriesPage;
+  const showBackButton = !showLocationRequest && !showLocationChangeModal && !isAccountPage && !isNotificationPage && !isHomePage && !isCheckoutPage;
   const showHeader = isSearchPage && !isCheckoutPage && !isCartPage;
   const showSearchBar = isSearchPage && !isCheckoutPage && !isCartPage;
-  // Hide bottom nav on product detail — the page has its own sticky "Add to Cart / Buy Now" footer
-  const showFooter = !isCheckoutPage && !isProductDetailPage;
+  // Hide bottom nav on product detail and notification pages — these have their own layouts
+  const showFooter = !isCheckoutPage && !isProductDetailPage && !isNotificationPage;
 
   // Perf: Disabled expensive animated ocean backgrounds (fish + underwater motion)
   // to avoid main-thread and GPU lag on the Home page, keeping a clean static look.

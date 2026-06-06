@@ -36,6 +36,8 @@ const ToyStore = lazy(() => import("./ToyStore"));
 const HobbyStore = lazy(() => import("./HobbyStore"));
 const StorePage = lazy(() => import("./StorePage"));
 const RetailerReturnSession = lazy(() => import("./RetailerReturnSession"));
+const NotificationDetail = lazy(() => import('./NotificationDetail'));
+const Notifications = lazy(() => import('./Notifications'));
 
 export default function CustomerRoutes() {
   return (
@@ -53,6 +55,8 @@ export default function CustomerRoutes() {
                 <Route path="/orders/:id/inspection" element={<RetailerReturnSession />} />
                 <Route path="/order-again" element={<OrderAgain />} />
                 <Route path="/account" element={<Account />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/notifications/:id" element={<NotificationDetail />} />
                 <Route path="/about-us" element={<AboutUs />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/wishlist" element={<Wishlist />} />

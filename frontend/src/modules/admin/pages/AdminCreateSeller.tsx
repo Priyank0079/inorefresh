@@ -187,7 +187,7 @@ export default function AdminCreateWarehouse() {
               className="rounded border border-neutral-300 px-3 py-2 text-sm"
               placeholder="Email"
               value={formData.email}
-              onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value.replace(/[^a-zA-Z0-9@._-]/g, '') }))}
             />
             <input
               type="password"

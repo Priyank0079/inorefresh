@@ -212,9 +212,8 @@ export default function Login() {
       setLoading(false);
       return;
     }
-    const nameRegex = /^[a-zA-Z\s]+$/;
-    if (!nameRegex.test(formData.ownerName)) {
-      setError('Owner name should only contain letters and spaces.');
+    if (!formData.ownerName || !formData.ownerName.trim()) {
+      setError('Owner name is required.');
       setLoading(false);
       return;
     }
@@ -328,13 +327,13 @@ export default function Login() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-4 relative"
+      className={`${flowStep.includes('signup') ? 'py-8 px-4' : 'min-h-screen p-4 flex flex-col items-center justify-center'} flex flex-col items-center relative`}
       style={{ background: `linear-gradient(to bottom right, ${currentTheme.primary[2]}20, ${currentTheme.primary[3]}30)` }}
     >
       {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-64 h-64 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" style={{ backgroundColor: currentTheme.primary[1] }}></div>
-      <div className="absolute top-[-10%] right-[-10%] w-64 h-64 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000" style={{ backgroundColor: currentTheme.secondary[1] }}></div>
-      <div className="absolute bottom-[-10%] left-[20%] w-64 h-64 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000" style={{ backgroundColor: currentTheme.primary[2] }}></div>
+      <div className="fixed top-[-10%] left-[-10%] w-64 h-64 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob pointer-events-none" style={{ backgroundColor: currentTheme.primary[1] }}></div>
+      <div className="fixed top-[-10%] right-[-10%] w-64 h-64 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000 pointer-events-none" style={{ backgroundColor: currentTheme.secondary[1] }}></div>
+      <div className="fixed bottom-[-10%] left-[20%] w-64 h-64 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000 pointer-events-none" style={{ backgroundColor: currentTheme.primary[2] }}></div>
 
       {renderLanguageSelector()}
 
@@ -342,7 +341,7 @@ export default function Login() {
       {flowStep !== 'accountType' && (
         <button
           onClick={() => flowStep !== 'login' ? setFlowStep('login') : setFlowStep('accountType')}
-          className="absolute top-4 left-4 z-20 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white transition-all text-neutral-600 hover:text-neutral-900"
+          className="fixed top-4 left-4 z-20 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white transition-all text-neutral-600 hover:text-neutral-900"
           aria-label="Back"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -352,21 +351,21 @@ export default function Login() {
       )}
 
       {/* Main Card */}
-      <div className={`w-full ${flowStep.includes('signup') ? 'max-w-2xl my-4 sm:my-8' : 'max-w-md max-h-[90vh] flex flex-col'} bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/50 relative z-10 transition-all duration-300`}>
+      <div className={`w-full ${flowStep.includes('signup') ? 'max-w-2xl' : 'max-w-md max-h-[90vh] flex flex-col'} bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/50 relative z-10 transition-all duration-300`}>
 
         {/* Header Section */}
-        <div className={`w-full bg-gradient-to-b from-white/50 to-transparent ${flowStep.includes('signup') ? 'p-4 pb-2' : 'p-8 pb-6'} flex flex-col items-center flex-shrink-0`}>
-          <button onClick={handleLogoClick} className={`hover:opacity-80 transition-opacity ${flowStep.includes('signup') ? 'mb-2' : 'mb-8'}`}>
-            <img src="/assets/Inor fresh.png" alt="Inor Fresh" className={`${flowStep.includes('signup') ? 'h-16' : 'h-28 sm:h-32'} w-auto object-contain drop-shadow-md`} loading="lazy" />
+        <div className={`w-full bg-gradient-to-b from-white/50 to-transparent ${flowStep.includes('signup') ? 'px-4 pt-4 pb-2' : 'p-8 pb-6'} flex flex-col items-center flex-shrink-0`}>
+          <button onClick={handleLogoClick} className={`hover:opacity-80 transition-opacity ${flowStep.includes('signup') ? 'mb-1' : 'mb-8'}`}>
+            <img src="/assets/Inor fresh.png" alt="Inor Fresh" className={`${flowStep.includes('signup') ? 'h-10' : 'h-28 sm:h-32'} w-auto object-contain drop-shadow-md`} loading="lazy" />
           </button>
 
-          <h2 className={`${flowStep.includes('signup') ? 'text-xl' : 'text-2xl sm:text-3xl'} font-bold text-neutral-800 text-center mb-2`}>
+          <h2 className={`${flowStep.includes('signup') ? 'text-lg' : 'text-2xl sm:text-3xl'} font-bold text-neutral-800 text-center mb-1`}>
             {flowStep === 'accountType' ? t.selectType : showOTP ? t.verification : flowStep.includes('signup') ? `Sign Up as ${userType?.toUpperCase()}` : userType === 'horeca' ? t.loginAsHoreca : t.loginAsRetailer}
           </h2>
         </div>
 
         {/* Content Section */}
-        <div className={`px-8 pb-8 ${flowStep.includes('signup') ? '' : 'overflow-y-auto flex-1 custom-scrollbar overscroll-contain'}`}>
+        <div className={`${flowStep.includes('signup') ? 'px-5 pb-5' : 'px-8 pb-8 overflow-y-auto flex-1 custom-scrollbar overscroll-contain'}`}>
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-sm text-red-600 animate-fadeIn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -542,10 +541,8 @@ export default function Login() {
                   required
                   placeholder="Shop Owner Name *"
                   className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl"
-                  pattern="[a-zA-Z\s]+"
-                  title="Owner name should only contain letters and spaces"
                   value={formData.ownerName}
-                  onChange={e => setFormData({ ...formData, ownerName: e.target.value.replace(/[^a-zA-Z\s]/g, '') })}
+                  onChange={e => setFormData({ ...formData, ownerName: e.target.value })}
                 />
                 <input
                   required
@@ -693,15 +690,25 @@ export default function Login() {
               </p>
             </div>
           )}
+        {/* Footer Branding - inside card at the bottom */}
+        {flowStep.includes('signup') && (
+          <div className="text-center py-3 border-t border-neutral-100">
+            <p className="text-xs font-medium text-neutral-400 uppercase tracking-widest">
+              {t.fueledBy}
+            </p>
+          </div>
+        )}
         </div>
       </div>
 
-      {/* Footer Branding */}
-      <div className="absolute bottom-6 left-0 right-0 text-center z-0 pointer-events-none">
-        <p className="text-xs font-medium text-neutral-500 opacity-60 uppercase tracking-widest">
-          {t.fueledBy}
-        </p>
-      </div>
+      {/* Footer Branding - for non-signup flows */}
+      {!flowStep.includes('signup') && (
+        <div className="absolute bottom-6 left-0 right-0 text-center z-0 pointer-events-none">
+          <p className="text-xs font-medium text-neutral-500 opacity-60 uppercase tracking-widest">
+            {t.fueledBy}
+          </p>
+        </div>
+      )}
 
       <style>{`
         @keyframes blob {

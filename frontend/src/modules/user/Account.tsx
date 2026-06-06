@@ -72,15 +72,9 @@ export default function Account() {
   const handleNotificationClick = (notification: any) => {
     // Mark as read when clicked
     markAsRead(notification._id);
-    
-    if (notification.link) {
-      // Navigate to the linked page (e.g. order details)
-      navigate(notification.link);
-      setShowNotifications(false);
-    } else {
-      // Show detailed text view modal if no link exists
-      setSelectedNotification(notification);
-    }
+    setShowNotifications(false);
+    // Always navigate to the detail page
+    navigate(`/notifications/${notification._id}`, { state: { notification } });
   };
 
   const handleImageClick = () => {
@@ -237,7 +231,7 @@ export default function Account() {
 
             <div className="relative z-50" ref={notificationsRef}>
               <button
-                onClick={() => setShowNotifications(!showNotifications)}
+                onClick={() => navigate('/notifications')}
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-all backdrop-blur-md relative"
                 aria-label="Notifications"
               >
@@ -323,21 +317,21 @@ export default function Account() {
       </div>
 
       {/* Main Content */}
-      <div className="px-6 -mt-12 mb-8 relative z-20">
-        <div className="max-w-2xl mx-auto space-y-6">
+      <div className="px-4 -mt-10 mb-6 relative z-20">
+        <div className="max-w-2xl mx-auto space-y-3">
           {/* Wallet Card */}
-          <div className="bg-white rounded-[24px] p-5 shadow-xl shadow-teal-900/5 border border-gray-50 relative overflow-hidden group">
+          <div className="bg-white rounded-2xl px-4 py-3 shadow-lg shadow-teal-900/5 border border-gray-50 relative overflow-hidden group">
             <div className="flex items-center justify-between relative z-10">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center group-hover:scale-105 transition-transform border border-teal-100">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2.5">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center border border-teal-100 flex-shrink-0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2.5">
                     <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
                     <path d="M1 10h22" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Inor Wallet</p>
-                  <p className="text-2xl font-black text-gray-900 tracking-tight leading-none">
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider leading-none mb-0.5">Inor Wallet</p>
+                  <p className="text-xl font-black text-gray-900 tracking-tight leading-none">
                     ₹{(profile?.walletAmount || user?.walletAmount || 0).toLocaleString('en-IN')}
                   </p>
                 </div>
@@ -346,7 +340,7 @@ export default function Account() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate('/')}
-                className="px-5 py-2.5 bg-teal-600 text-white rounded-xl font-bold text-xs tracking-wide shadow-lg shadow-teal-600/20 transition-all whitespace-nowrap"
+                className="px-4 py-2 bg-teal-600 text-white rounded-xl font-bold text-xs tracking-wide shadow-md shadow-teal-600/20 whitespace-nowrap"
               >
                 Use Balance
               </motion.button>
@@ -354,25 +348,25 @@ export default function Account() {
           </div>
 
           {/* Refer & Earn Section */}
-          <div className="bg-white rounded-[32px] p-6 shadow-xl shadow-teal-900/5 border border-white">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center border border-orange-100">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2.5">
+          <div className="bg-white rounded-2xl px-4 py-3 shadow-lg shadow-teal-900/5 border border-gray-50">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center border border-orange-100 flex-shrink-0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2.5">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                   </svg>
                 </div>
-                <div className="text-center sm:text-left">
-                  <p className="text-[10px] text-orange-600 font-bold uppercase tracking-wider mb-0.5">Refer & Earn ₹250</p>
-                  <p className="text-sm font-semibold text-gray-600">Share your code with friends</p>
+                <div className="min-w-0">
+                  <p className="text-[9px] text-orange-600 font-bold uppercase tracking-wider leading-none mb-0.5">Refer &amp; Earn ₹250</p>
+                  <p className="text-xs font-semibold text-gray-500 truncate">Share your code with friends</p>
                 </div>
               </div>
-              
-              <div className="flex items-center gap-3 bg-gray-50 p-2 pl-5 rounded-2xl border border-gray-100 border-dashed w-full sm:w-auto">
-                <span className="font-bold text-gray-900 tracking-widest text-lg">
+
+              <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-dashed border-gray-200 flex-shrink-0">
+                <span className="font-bold text-gray-900 tracking-widest text-sm">
                   {profile?.refCode || user?.refCode || 'WAITING...'}
                 </span>
                 <button
@@ -384,15 +378,15 @@ export default function Account() {
                       setTimeout(() => setRefCopied(false), 2000);
                     }
                   }}
-                  className="p-2.5 bg-white text-teal-600 rounded-xl hover:bg-teal-50 transition-colors shadow-sm border border-gray-100 relative"
+                  className="p-1.5 bg-white text-teal-600 rounded-lg hover:bg-teal-50 transition-colors shadow-sm border border-gray-100"
                   title={refCopied ? 'Copied!' : 'Copy code'}
                 >
                   {refCopied ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M20 6L9 17l-5-5" />
                     </svg>
                   ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                     </svg>
@@ -726,10 +720,8 @@ export default function Account() {
                             onClick={(e) => {
                               e.stopPropagation();
                               markAsRead(notification._id);
-                              // Open the full notification (detail view) instead
-                              // of navigating away — users want to read the whole
-                              // message, which was being truncated in the list.
-                              setSelectedNotification(notification);
+                              setShowNotifications(false);
+                              navigate(`/notifications/${notification._id}`, { state: { notification } });
                             }}
                             className="flex-1 px-3 py-2 text-xs font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors"
                             title="View full notification"
@@ -761,7 +753,10 @@ export default function Account() {
             <div className="sticky top-0 z-40 bg-gradient-to-b from-teal-600 to-teal-700 pb-6 pt-6 px-4 md:px-6 shadow-lg">
               <div className="max-w-2xl mx-auto flex items-center gap-4">
                 <button
-                  onClick={() => setSelectedNotification(null)}
+                  onClick={() => {
+                    setSelectedNotification(null);
+                    setShowNotifications(true);
+                  }}
                   className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-all min-h-[44px] min-w-[44px]"
                   aria-label="Back"
                 >

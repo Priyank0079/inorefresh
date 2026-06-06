@@ -245,13 +245,17 @@ export default function WarehouseOrderDetail() {
         item.qty.toString(),
         `Rs.${item.subtotal.toFixed(2)}`,
       ];
+      // Color alternating rows
+      if (orderDetail.items.indexOf(item) % 2 === 1) {
+        doc.setFillColor(249, 249, 249);
+        doc.rect(margin, yPos - 1, contentWidth, 10, 'F');
+      }
 
       rowData.forEach((data, index) => {
-        // Truncate long text
+        // Truncate ALL columns to their max width to prevent overflow
         const maxWidth = colWidths[index] - 4;
         let text = data;
-        if (doc.getTextWidth(text) > maxWidth && index === 1) {
-          // Truncate product name if too long
+        if (doc.getTextWidth(text) > maxWidth) {
           while (doc.getTextWidth(text + '...') > maxWidth && text.length > 0) {
             text = text.slice(0, -1);
           }
@@ -283,18 +287,22 @@ export default function WarehouseOrderDetail() {
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text('Subtotal:', pageWidth - margin - 60, yPos, { align: 'right' });
-    doc.text(`₹${totalSubtotal.toFixed(2)}`, pageWidth - margin, yPos, { align: 'right' });
+    doc.text('Subtotal:', pageWidth - margin - 55, yPos);
+    doc.text(`Rs. ${totalSubtotal.toFixed(2)}`, pageWidth - margin, yPos, { align: 'right' });
     yPos += 7;
 
-    doc.text('Tax:', pageWidth - margin - 60, yPos, { align: 'right' });
-    doc.text(`₹${totalTax.toFixed(2)}`, pageWidth - margin, yPos, { align: 'right' });
+    doc.text('Tax:', pageWidth - margin - 55, yPos);
+    doc.text(`Rs. ${totalTax.toFixed(2)}`, pageWidth - margin, yPos, { align: 'right' });
     yPos += 7;
 
+    // Grand Total background
+    doc.setFillColor(240, 250, 248);
+    doc.rect(margin, yPos - 4, contentWidth, 10, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text('Grand Total:', pageWidth - margin - 60, yPos, { align: 'right' });
-    doc.text(`₹${grandTotal.toFixed(2)}`, pageWidth - margin, yPos, { align: 'right' });
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Grand Total:', pageWidth - margin - 55, yPos + 3);
+    doc.text(`Rs. ${grandTotal.toFixed(2)}`, pageWidth - margin, yPos + 3, { align: 'right' });
     yPos += 15;
 
     // Footer
@@ -326,40 +334,114 @@ export default function WarehouseOrderDetail() {
     const w = window.open('', '_blank', 'width=900,height=700');
     if (!w) return;
 
+    const totalSubtotal = orderDetail.items.reduce((s, i) => s + i.subtotal, 0);
+    const totalTax = orderDetail.items.reduce((s, i) => s + i.tax, 0);
+    const grandTotal = totalSubtotal + totalTax;
+
     w.document.write(`<!DOCTYPE html><html><head>
       <title>Invoice ${orderDetail.invoiceNumber}</title>
       <style>
-        *{box-sizing:border-box;}
-        body{font-family:Arial,sans-serif;padding:24px;color:#111;background:#fff;margin:0;}
-        .bg-teal-600{background:#0d9488;color:#fff;}
-        .px-4{padding-left:16px;} .px-6{padding-left:24px;padding-right:24px;}
-        .py-3{padding-top:12px;padding-bottom:12px;}
-        .py-6{padding-top:24px;padding-bottom:24px;}
-        .text-base{font-size:16px;} .text-lg{font-size:18px;}
-        .font-semibold{font-weight:600;} .font-bold{font-weight:700;} .font-medium{font-weight:500;}
-        .text-2xl{font-size:24px;} .text-3xl{font-size:30px;}
-        .text-sm{font-size:14px;} .text-xs{font-size:12px;}
-        .text-neutral-600{color:#4b5563;} .text-neutral-700{color:#374151;} .text-neutral-900{color:#111827;}
-        .flex{display:flex;} .flex-col{flex-direction:column;} .flex-1{flex:1;}
-        .justify-between{justify-content:space-between;} .items-center{align-items:center;}
-        .gap-6{gap:24px;} .gap-2{gap:8px;} .mb-6{margin-bottom:24px;} .mb-4{margin-bottom:16px;} .mb-2{margin-bottom:8px;} .mb-1{margin-bottom:4px;} .mb-3{margin-bottom:12px;}
-        .mt-6{margin-top:24px;} .mt-4{margin-top:16px;} .mt-1{margin-top:4px;} .mt-2{margin-top:8px;}
-        .w-8{width:32px;} .h-8{height:32px;} .rounded{border-radius:4px;}
-        .rounded-full{border-radius:9999px;} .text-white{color:#fff;}
-        .text-teal-600,.text-\\[\\#12b2a2\\]{color:#0d9488;}
-        .space-y-1>*+*{margin-top:4px;}
-        .border-t{border-top:1px solid #e5e7eb;} .border-b{border-bottom:1px solid #e5e7eb;}
-        .border-dashed{border-style:dashed;} .border-neutral-300{border-color:#d1d5db;}
-        .pt-4{padding-top:16px;} .text-center{text-align:center;} .text-right{text-align:right;}
-        .lg\\:text-right{text-align:right;}
-        table{width:100%;border-collapse:collapse;font-size:13px;}
-        thead th{background:#f9fafb;padding:12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#374151;border-bottom:1px solid #e5e7eb;}
-        tbody td{padding:12px;color:#111827;border-bottom:1px solid #e5e7eb;}
-        .overflow-x-auto{overflow:visible;}
-        .inline-flex{display:inline-flex;} .items-center{align-items:center;} .px-3{padding-left:12px;padding-right:12px;} .py-1{padding-top:4px;padding-bottom:4px;} .text-xs{font-size:12px;}
-        @media print{body{padding:0;}}
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:Arial,sans-serif;padding:20px;color:#111;background:#fff;font-size:13px;}
+        /* Header banner */
+        .invoice-banner{background:#16a34a;color:#fff;padding:10px 16px;border-radius:4px 4px 0 0;font-size:18px;font-weight:700;margin-bottom:0;}
+        .invoice-card{border:1px solid #e5e7eb;border-radius:4px;margin-bottom:16px;overflow:hidden;}
+        .invoice-header{padding:16px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #e5e7eb;}
+        .company-info h2{font-size:18px;font-weight:700;color:#111;margin-bottom:4px;}
+        .company-info p{font-size:12px;color:#4b5563;line-height:1.6;}
+        .company-info a{color:#0d9488;text-decoration:none;}
+        .invoice-meta{text-align:right;font-size:12px;color:#4b5563;}
+        .invoice-meta .inv-num{font-size:15px;font-weight:700;color:#111;margin:4px 0;}
+        .invoice-meta p{line-height:1.7;}
+        .status-badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600;background:#3b82f6;color:#fff;margin-top:4px;}
+        /* Table */
+        .table-wrap{padding:0;overflow:auto;}
+        table{width:100%;border-collapse:collapse;font-size:12px;}
+        thead tr{background:#f3f4f6;}
+        thead th{padding:8px 10px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#374151;border-bottom:2px solid #e5e7eb;white-space:nowrap;}
+        tbody td{padding:8px 10px;color:#111;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+        tbody tr:nth-child(even){background:#fafafa;}
+        .td-num{color:#0d9488;font-size:11px;}
+        /* Totals */
+        .totals-section{padding:12px 16px;border-top:1px solid #e5e7eb;}
+        .totals-row{display:flex;justify-content:flex-end;gap:40px;padding:3px 0;font-size:13px;color:#374151;}
+        .totals-row.grand{font-weight:700;font-size:14px;color:#111;border-top:1px solid #e5e7eb;padding-top:8px;margin-top:4px;}
+        .totals-label{min-width:80px;text-align:right;}
+        .totals-value{min-width:90px;text-align:right;}
+        /* Footer */
+        .footer-note{text-align:center;font-size:11px;color:#9ca3af;padding:10px 0 4px;border-top:1px dashed #e5e7eb;margin-top:8px;}
+        @media print{
+          body{padding:8px;}
+          .invoice-banner{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+          thead tr{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+          tbody tr:nth-child(even){-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+          .totals-row.grand{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+        }
       </style>
-    </head><body>${printArea.innerHTML}</body></html>`);
+    </head><body>
+      <div class="invoice-banner">Inor fresh</div>
+      <div class="invoice-card">
+        <div class="invoice-header">
+          <div class="company-info">
+            <h2>Inor fresh</h2>
+            <p>From: Inor fresh</p>
+            <p>Phone: 8956656429</p>
+            <p>Email: <a>info@inorfresh.com</a></p>
+            <p>Website: https://inorfresh.com</p>
+          </div>
+          <div class="invoice-meta">
+            <p>Date: ${formatDate(orderDetail.orderDate)}</p>
+            <div class="inv-num">Invoice #${orderDetail.invoiceNumber}</div>
+            <p>Order ID: ${orderDetail.id}</p>
+            <p>Delivery Date: ${formatDate(orderDetail.deliveryDate)}</p>
+            <p>Time Slot: ${orderDetail.timeSlot ?? 'N/A'}</p>
+            <span class="status-badge">${orderStatus}</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Sr. No.</th>
+                <th>Product</th>
+                <th>Unit</th>
+                <th>Price</th>
+                <th>Tax (Rs)(%)</th>
+                <th>Qty</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orderDetail.items.map((item, idx) => `
+              <tr>
+                <td class="td-num">${item.srNo}</td>
+                <td>${item.product}</td>
+                <td>${formatUnit(item.unit, item.qty)}</td>
+                <td>Rs. ${item.price.toFixed(2)}</td>
+                <td>${item.tax.toFixed(2)} (${item.taxPercent.toFixed(2)}%)</td>
+                <td>${item.qty}</td>
+                <td><strong>Rs. ${item.subtotal.toFixed(2)}</strong></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="totals-section">
+          <div class="totals-row">
+            <span class="totals-label">Subtotal:</span>
+            <span class="totals-value">Rs. ${totalSubtotal.toFixed(2)}</span>
+          </div>
+          <div class="totals-row">
+            <span class="totals-label">Tax:</span>
+            <span class="totals-value">Rs. ${totalTax.toFixed(2)}</span>
+          </div>
+          <div class="totals-row grand">
+            <span class="totals-label">Grand Total:</span>
+            <span class="totals-value">Rs. ${grandTotal.toFixed(2)}</span>
+          </div>
+        </div>
+        <div class="footer-note">Bill Generated by Inor fresh</div>
+      </div>
+    </body></html>`);
     w.document.close();
     w.focus();
     setTimeout(() => { w.print(); w.close(); }, 400);
@@ -386,19 +468,19 @@ export default function WarehouseOrderDetail() {
     }
   };
 
-  const formatUnit = (unit: string, qty: number) => { // qty is kept for signature compatibility, but we shouldn't multiply base unit by qty in the 'Unit' column!
+  const formatUnit = (unit: string, qty: number) => { // qty is kept for signature compatibility
     if (!unit || unit === 'N/A') return 'N/A';
+
+    // Detect MongoDB ObjectId (24-char hex) — unit is an un-populated reference, show N/A
+    if (/^[a-f0-9]{24}$/i.test(unit.trim())) return 'N/A';
 
     // Check if the unit is purely numeric (e.g. '200') or has letters (e.g. '200g')
     const match = unit.match(/^(\d+(?:\.\d+)?)\s*([a-zA-Z]*)$/);
     if (match) {
       const val = parseFloat(match[1]);
-      let u = match[2];
-      
+      const u = match[2];
+
       if (!isNaN(val)) {
-        // Just format the base unit nicely, do NOT multiply by qty!
-        // If the database sends '200' and it means grams, it will just show '200'
-        // If it sends '200g', it will show '200g'
         const unitString = u ? (u.length > 2 && u.toLowerCase() !== 'pcs' ? ` ${u}` : u) : '';
         return `${parseFloat(val.toFixed(2))}${unitString}`;
       }
@@ -406,10 +488,10 @@ export default function WarehouseOrderDetail() {
 
     // Special case for fish if it somehow still says "fish"
     if (unit.toLowerCase().includes('fish')) {
-      return `1kg`; // Base unit for fish
+      return `1kg`;
     }
 
-    return unit; // Just return the unit string as is
+    return unit;
   };
 
   return (

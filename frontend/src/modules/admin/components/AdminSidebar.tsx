@@ -782,7 +782,7 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
           onClick={() => handleNavigation("/admin")}
           className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${isActive("/admin")
             ? "text-white"
-            : "text-white/70 hover:text-white"
+            : "text-white hover:bg-white/10"
             }`}
           style={{
             backgroundColor: isActive("/admin") ? 'rgba(255,255,255,0.1)' : 'transparent'
@@ -817,7 +817,7 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
           <div key={sectionIndex} className="mb-6">
             <h3
               className="px-4 mb-2 text-xs font-bold uppercase tracking-wider"
-              style={{ color: 'rgba(255,255,255,0.4)' }}
+              style={{ color: '#ffffff' }}
             >
               {section.title}
             </h3>
@@ -838,7 +838,7 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${active
                         ? "text-white"
-                        : "text-white/70 hover:text-white hover:bg-white/10"
+                        : "text-white hover:bg-white/10"
                         }`}
                       style={{
                         backgroundColor: (active && !item.hasSubmenu) ? 'rgba(255,255,255,0.1)' : 'transparent'
@@ -869,7 +869,7 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
                               onClick={() => handleNavigation(subItem.path)}
                               className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-left text-sm transition-colors ${location.pathname === subItem.path
                                 ? "text-white bg-white/20"
-                                : "text-white/60 hover:text-white hover:bg-white/10"
+                                : "text-white hover:bg-white/10"
                                 }`}>
                               {subItem.icon}
                               <span>{subItem.label}</span>
