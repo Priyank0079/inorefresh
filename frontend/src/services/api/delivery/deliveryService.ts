@@ -295,7 +295,7 @@ export const getNotifications = async () => {
 
 export const markNotificationRead = async (id: string) => {
   try {
-    const response = await api.put(`${BASE_URL}/notifications/${id}/read`);
+    const response = await api.patch(`${BASE_URL}/notifications/${id}/read`);
     return response.data;
   } catch (error) {
     throw handleApiError(error);

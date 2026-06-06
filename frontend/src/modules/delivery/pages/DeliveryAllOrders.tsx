@@ -46,8 +46,35 @@ export default function DeliveryAllOrders() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-100 flex items-center justify-center pb-20">
-        <p className="text-neutral-500">Loading orders...</p>
+      <div className="min-h-screen bg-neutral-100 pb-20">
+        <DeliveryHeader />
+        <div className="px-4 py-4">
+          <div className="flex items-center mb-4">
+            <div className="mr-3 w-9 h-9 rounded-full bg-neutral-200 animate-pulse" />
+            <div className="h-6 w-40 bg-neutral-200 rounded-lg animate-pulse" />
+          </div>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-neutral-200">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-28 bg-neutral-200 rounded animate-pulse" />
+                    <div className="h-3 w-36 bg-neutral-200 rounded animate-pulse" />
+                    <div className="h-3 w-24 bg-neutral-200 rounded animate-pulse" />
+                  </div>
+                  <div className="h-6 w-20 bg-neutral-200 rounded-full animate-pulse" />
+                </div>
+                <div className="border-t border-neutral-200 pt-3 mt-3 space-y-2">
+                  <div className="h-3 w-full bg-neutral-200 rounded animate-pulse" />
+                  <div className="flex justify-between">
+                    <div className="h-3 w-16 bg-neutral-200 rounded animate-pulse" />
+                    <div className="h-4 w-20 bg-neutral-200 rounded animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
         <DeliveryBottomNav />
       </div>
     );

@@ -150,13 +150,8 @@ export const getPendingOrders = asyncHandler(
   async (req: Request, res: Response) => {
     const deliveryId = req.user?.userId;
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-
-    // Pending statuses: Ready for pickup, Out for delivery, Picked Up, Assigned, In Transit
-    // Show orders that are active today (created or updated today)
+    // Show ALL currently active orders for this rider — no date filter so orders
+    // assigned on previous days that are still in progress don't disappear.
     const orders = await Order.find({
       deliveryBoy: deliveryId,
       status: {
@@ -168,10 +163,6 @@ export const getPendingOrders = asyncHandler(
           "In Transit",
         ],
       },
-      $or: [
-        { createdAt: { $gte: todayStart, $lte: todayEnd } },
-        { updatedAt: { $gte: todayStart, $lte: todayEnd } },
-      ],
     })
       .populate("items")
       .sort({ createdAt: -1 });
@@ -383,15 +374,10 @@ export const getReturnOrders = asyncHandler(
   async (req: Request, res: Response) => {
     const deliveryId = req.user?.userId;
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-
+    // All return-status orders ever assigned to this rider (no date filter).
     const orders = await Order.find({
       deliveryBoy: deliveryId,
       status: { $in: ["Returned", "Partially Returned", "Fully Returned", "Cancelled", "Rejected"] },
-      updatedAt: { $gte: todayStart, $lte: todayEnd },
     })
       .populate("items")
       .sort({ updatedAt: -1 });
@@ -409,9 +395,37 @@ export const getReturnOrders = asyncHandler(
       distance: null,
     }));
 
+    // Return pickup items from the Return collection assigned to this rider.
+    const { default: Return } = await import("../../../models/Return");
+    // Same active statuses as the dashboard card so the count always matches.
+    const returnPickups = await Return.find({
+      deliveryBoy: deliveryId,
+      status: { $in: ["Pending", "Approved", "Processing", "REQUESTED", "UNDER_REVIEW", "COLLECTED_BY_RIDER", "IN_TRANSIT_TO_WAREHOUSE"] },
+    })
+      .populate({ path: "order", select: "orderNumber customerName customerPhone deliveryAddress total" })
+      .sort({ createdAt: -1 });
+
+    const formattedPickups = returnPickups.map((item: any) => ({
+      id: item._id,
+      returnId: item._id,
+      orderId: item.order?.orderNumber || "—",
+      customerName: item.order?.customerName || "—",
+      customerPhone: item.order?.customerPhone || "",
+      status: item.status,
+      address: item.pickupAddress
+        ? `${item.pickupAddress.address}, ${item.pickupAddress.city}`
+        : item.order?.deliveryAddress
+          ? `${item.order.deliveryAddress.address || ""}, ${item.order.deliveryAddress.city || ""}`
+          : "",
+      quantity: item.quantity,
+      reason: item.reason,
+      createdAt: item.createdAt,
+    }));
+
     return res.status(200).json({
       success: true,
       data: formattedOrders,
+      returnPickups: formattedPickups,
     });
   },
 );

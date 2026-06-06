@@ -54,40 +54,21 @@ export const getDashboardStats = asyncHandler(
       {
         $group: {
           _id: null,
-          // Pending: Active statuses touched today (created or updated today)
+          // Pending: All currently active orders for this rider (no date filter —
+          // matches the getPendingOrders endpoint which also has no date filter).
           pendingOrders: {
             $sum: {
               $cond: [
                 {
-                  $and: [
-                    {
-                      $in: [
-                        "$status",
-                        [
-                          "Ready for pickup",
-                          "Out for Delivery",
-                          "Picked Up",
-                          "Assigned",
-                          "In Transit",
-                        ],
-                      ],
-                    },
-                    {
-                      $or: [
-                        {
-                          $and: [
-                            { $gte: ["$createdAt", todayStart] },
-                            { $lte: ["$createdAt", todayEnd] },
-                          ],
-                        },
-                        {
-                          $and: [
-                            { $gte: ["$updatedAt", todayStart] },
-                            { $lte: ["$updatedAt", todayEnd] },
-                          ],
-                        },
-                      ],
-                    },
+                  $in: [
+                    "$status",
+                    [
+                      "Ready for pickup",
+                      "Out for Delivery",
+                      "Picked Up",
+                      "Assigned",
+                      "In Transit",
+                    ],
                   ],
                 },
                 1,
@@ -120,17 +101,12 @@ export const getDashboardStats = asyncHandler(
               ],
             },
           },
-          // Return Orders Today — use the ACTUAL return statuses the system sets.
+          // Return Orders — all return-status orders for this rider (no date filter —
+          // matches the getReturnOrders endpoint which also has no date filter).
           returnOrdersToday: {
             $sum: {
               $cond: [
-                {
-                  $and: [
-                    { $in: ["$status", ["Returned", "Partially Returned", "Fully Returned", "Cancelled", "Rejected"]] },
-                    { $gte: ["$updatedAt", todayStart] },
-                    { $lte: ["$updatedAt", todayEnd] },
-                  ],
-                },
+                { $in: ["$status", ["Returned", "Partially Returned", "Fully Returned", "Cancelled", "Rejected"]] },
                 1,
                 0,
               ],
@@ -207,17 +183,18 @@ export const getDashboardStats = asyncHandler(
       totalDeliveredCount: 0,
     };
 
-    // Real return-item workload for this rider (replaces the old hardcoded 0).
-    // - returnItemsTotal: all returns ever assigned to the rider
-    // - returnItemsActive: returns still in the rider's pipeline to handle
+    // Active return-item workload for this rider — statuses where the rider
+    // still has something to do. Completed/refunded ones are excluded.
     const { default: Return } = await import("../../../models/Return");
-    const [returnItemsTotal, returnItemsActive] = await Promise.all([
-      Return.countDocuments({ deliveryBoy: objectId }),
-      Return.countDocuments({
-        deliveryBoy: objectId,
-        status: { $in: ["Approved", "COLLECTED_BY_RIDER", "IN_TRANSIT_TO_WAREHOUSE"] },
-      }),
-    ]);
+    const ACTIVE_RETURN_STATUSES = [
+      "Pending", "Approved", "Processing",
+      "REQUESTED", "UNDER_REVIEW",
+      "COLLECTED_BY_RIDER", "IN_TRANSIT_TO_WAREHOUSE",
+    ];
+    const returnItemsActive = await Return.countDocuments({
+      deliveryBoy: objectId,
+      status: { $in: ACTIVE_RETURN_STATUSES },
+    });
 
     // Calculate Earnings (Real Logic from Commission Collection)
     const { default: Commission } = await import("../../../models/Commission");
@@ -337,9 +314,7 @@ export const getDashboardStats = asyncHandler(
         pendingOrders: result.pendingOrders,
         allOrders: result.allOrdersToday,
         returnOrders: result.returnOrdersToday,
-        // "Total return item have" = active returns still to handle; falls back
-        // to lifetime total so it reflects real return activity, not a stub 0.
-        returnItems: returnItemsActive > 0 ? returnItemsActive : returnItemsTotal,
+        returnItems: returnItemsActive,
         todayEarning: todayEarning,
         totalEarning: totalEarning,
         walletBalance: walletBalance,
@@ -392,10 +367,10 @@ export const getHelpSupport = asyncHandler(
     ];
 
     const contactOptions = [
-      { label: "Call Support", value: "+91 7846940429", icon: "phone" },
+      { label: "Call Support", value: "+91 9481214922", icon: "phone" },
       {
         label: "Email Support",
-        value: "support@dhakadsnazzy.com",
+        value: "support@inorfresh.com",
         icon: "email",
       },
       { label: "Live Chat", value: "Available 24/7", icon: "chat" },

@@ -6,7 +6,6 @@ import { useNotifications } from '../../context/NotificationContext';
 import { getProfile, updateProfile, CustomerProfile } from '../../services/api/customerService';
 import { uploadImage } from '../../services/api/uploadService';
 import LocationPermissionRequest from '../../components/LocationPermissionRequest';
-import api from '../../services/api/config';
 import { registerFCMToken } from '../../services/pushNotificationService';
 
 export default function Account() {
@@ -61,7 +60,12 @@ export default function Account() {
 
       // Step 3: Show notification directly via service worker — this is the
       // most reliable path on all browsers regardless of foreground/background state.
-      const reg = await navigator.serviceWorker.ready;
+      // Race against a 10-second timeout so the button never hangs permanently
+      // if the service worker fails to activate.
+      const swTimeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('SW not ready')), 10_000)
+      );
+      const reg = await Promise.race([navigator.serviceWorker.ready, swTimeout]);
       await reg.showNotification('🔔 Notification Test', {
         body: 'Push notifications are working on this device!',
         icon: '/favicon.png',

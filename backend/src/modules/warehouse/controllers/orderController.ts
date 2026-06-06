@@ -323,7 +323,7 @@ export const updateOrderStatus = asyncHandler(
                   id,
                   "🚚 New Order Available",
                   `Order #${order.orderNumber} is ready for pickup — ₹${order.total?.toFixed(2)}`,
-                  { type: "Order", priority: "High", link: `/delivery/orders` }
+                  { type: "Order", priority: "High", link: `/delivery` }
                 );
               }
             } catch (bellErr) {
