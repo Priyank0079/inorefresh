@@ -193,22 +193,27 @@ export function setupForegroundNotificationHandler(handler?: (payload: any) => v
         if (!isHandledByApp && 'Notification' in window && Notification.permission === 'granted') {
             const title = payload.notification?.title || payload.data?.title || 'New Notification';
             const body  = payload.notification?.body  || payload.data?.body  || '';
-            const notification = new Notification(title, {
+            const options: NotificationOptions = {
                 body,
                 icon: payload.notification?.icon || '/favicon.png',
                 badge: '/favicon.png',
                 tag: type || 'notification',
                 requireInteraction: false,
                 silent: false,
-                data: payload.data,
-            });
-            notification.onclick = (event) => {
-                event.preventDefault();
-                const link = payload.data?.link || '/';
-                window.focus();
-                window.location.href = link;
-                notification.close();
+                data: { ...payload.data, link: payload.data?.link || '/' },
             };
+            // Chrome silently drops new Notification() when a service worker is active.
+            // Always use registration.showNotification() so the OS tray receives it.
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready
+                    .then((reg) => reg.showNotification(title, options))
+                    .catch(() => {
+                        // SW not ready — fall back to basic Notification API
+                        new Notification(title, options);
+                    });
+            } else {
+                new Notification(title, options);
+            }
         }
 
         // Always call the custom handler so the caller can trigger React popups

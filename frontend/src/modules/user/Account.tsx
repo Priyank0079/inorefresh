@@ -6,6 +6,8 @@ import { useNotifications } from '../../context/NotificationContext';
 import { getProfile, updateProfile, CustomerProfile } from '../../services/api/customerService';
 import { uploadImage } from '../../services/api/uploadService';
 import LocationPermissionRequest from '../../components/LocationPermissionRequest';
+import api from '../../services/api/config';
+import { registerFCMToken } from '../../services/pushNotificationService';
 
 export default function Account() {
   const navigate = useNavigate();
@@ -29,6 +31,54 @@ export default function Account() {
   const [editProfileError, setEditProfileError] = useState('');
   const [editProfileSaving, setEditProfileSaving] = useState(false);
   const [refCopied, setRefCopied] = useState(false);
+  const [testingFcm, setTestingFcm] = useState(false);
+  const [fcmResult, setFcmResult] = useState<'sent' | 'no-token' | 'error' | 'permission-denied' | null>(null);
+
+  const handleTestFcm = async () => {
+    if (testingFcm) return;
+    setTestingFcm(true);
+    setFcmResult(null);
+    try {
+      // Step 1: Ensure notification permission is granted
+      if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+        setFcmResult('error');
+        return;
+      }
+      if (Notification.permission === 'denied') {
+        setFcmResult('permission-denied');
+        return;
+      }
+      if (Notification.permission !== 'granted') {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          setFcmResult('permission-denied');
+          return;
+        }
+      }
+
+      // Step 2: Register / refresh FCM token
+      await registerFCMToken(true).catch(() => null);
+
+      // Step 3: Show notification directly via service worker — this is the
+      // most reliable path on all browsers regardless of foreground/background state.
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification('🔔 Notification Test', {
+        body: 'Push notifications are working on this device!',
+        icon: '/favicon.png',
+        badge: '/favicon.png',
+        tag: 'fcm-test',
+        requireInteraction: false,
+        data: { link: '/account' },
+      });
+
+      setFcmResult('sent');
+    } catch {
+      setFcmResult('error');
+    } finally {
+      setTestingFcm(false);
+      setTimeout(() => setFcmResult(null), 5000);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -228,6 +278,35 @@ export default function Account() {
             <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-all backdrop-blur-md">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18L9 12L15 6" /></svg>
             </button>
+
+            {/* FCM Test Button */}
+            <div className="flex flex-col items-center gap-1">
+              <button
+                onClick={handleTestFcm}
+                disabled={testingFcm}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold transition-all backdrop-blur-md disabled:opacity-60"
+              >
+                {testingFcm ? (
+                  <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                )}
+                Test FCM
+              </button>
+              {fcmResult && (
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                  fcmResult === 'sent' ? 'bg-emerald-400/80 text-white' :
+                  fcmResult === 'no-token' ? 'bg-amber-400/80 text-white' :
+                  fcmResult === 'permission-denied' ? 'bg-orange-500/90 text-white' :
+                  'bg-rose-400/80 text-white'
+                }`}>
+                  {fcmResult === 'sent' ? '✓ Check notification bar!' :
+                   fcmResult === 'no-token' ? '⚠ Token failed' :
+                   fcmResult === 'permission-denied' ? '✗ Allow notifications in browser' :
+                   '✗ Failed'}
+                </span>
+              )}
+            </div>
 
             <div className="relative z-50" ref={notificationsRef}>
               <button
