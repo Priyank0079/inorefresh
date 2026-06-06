@@ -83,17 +83,6 @@ export default function WarehouseDashboard() {
     </svg>
   );
 
-  const subcategoryIcon = (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M8 6H21M8 12H21M8 18H21M3 6H3.01M3 12H3.01M3 18H3.01"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
 
   const productIcon = (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -225,7 +214,6 @@ export default function WarehouseDashboard() {
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <DashboardCard icon={categoryIcon} title="Total Category" value={stats.totalCategory} accentColor="#eab308" onClick={() => navigate('/warehouse/category')} />
-        <DashboardCard icon={subcategoryIcon} title="Total Subcategory" value={stats.totalSubcategory} accentColor="#ec4899" onClick={() => navigate('/warehouse/subcategory')} />
         <DashboardCard icon={productIcon} title="Total Product" value={stats.totalProduct} accentColor="#f97316" onClick={() => navigate('/warehouse/product/list')} />
         <DashboardCard icon={ordersIcon} title="Total Orders" value={stats.totalOrders} accentColor="#3b82f6" onClick={() => navigate('/warehouse/orders')} />
         <DashboardCard icon={completedOrdersIcon} title="Completed Orders" value={stats.completedOrders} accentColor="#16a34a" onClick={() => navigate('/warehouse/orders?status=Delivered')} />
