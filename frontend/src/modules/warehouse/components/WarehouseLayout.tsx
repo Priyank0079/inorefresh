@@ -9,6 +9,7 @@ import WarehouseReturnRequestAlert from './WarehouseReturnRequestAlert';
 import GlobalBackButton from '../../../components/GlobalBackButton';
 import { useAuth } from '../../../context/AuthContext';
 import { registerFCMToken } from '../../../services/pushNotificationService';
+import { getAuthToken } from '../../../services/api/config';
 
 interface WarehouseLayoutProps {
   children: ReactNode;
@@ -59,6 +60,15 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
         if (token) {
           localStorage.setItem('fcm_token_user_id', userId);
           console.log('📲 FCM token registered for warehouse:', userId);
+        }
+        // Tell Flutter to register its native FCM token for background notifications.
+        // FlutterMobileBridge is a JS channel injected by the Flutter WebView wrapper.
+        // Safe to call even in a plain browser — the channel simply won't exist there.
+        const authToken = getAuthToken();
+        if (authToken && (window as any).FlutterMobileBridge) {
+          (window as any).FlutterMobileBridge.postMessage(
+            JSON.stringify({ type: 'REGISTER_MOBILE_FCM', authToken })
+          );
         }
       })
       .catch((err) => console.warn('⚠️ Warehouse FCM token registration failed:', err));

@@ -474,13 +474,7 @@ export default function AdminDashboard() {
           accentColor="#eab308"
           onClick={() => navigate("/admin/category")}
         />
-        <DashboardCard
-          icon={subcategoryIcon}
-          title="Total Subcategory"
-          value={stats.totalSubcategory ?? 0}
-          accentColor="#ec4899"
-          onClick={() => navigate("/admin/subcategory")}
-        />
+
         <DashboardCard
           icon={productIcon}
           title="Total Product"

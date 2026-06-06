@@ -268,7 +268,7 @@ export default function ProductDetail() {
       setTimeout(() => setCartError(''), 4000);
       return;
     }
-    if (!isVariantAvailable && variantStock !== 0) {
+    if (!isVariantAvailable) {
       setCartError("This variant is currently out of stock.");
       setTimeout(() => setCartError(''), 4000);
       return;
@@ -649,8 +649,8 @@ export default function ProductDetail() {
           </div>
 
           {/* Stock Status */}
-          {variantStock !== 0 && variantStock !== undefined && variantStock !== null && (
-            <p className="text-sm text-neutral-600 mb-1">
+          {variantStock !== undefined && variantStock !== null && (
+            <p className={`text-sm mb-1 ${variantStock > 0 ? "text-neutral-600" : "text-red-500 font-medium"}`}>
               {variantStock > 0 ? `${variantStock} in stock` : "Out of stock"}
             </p>
           )}

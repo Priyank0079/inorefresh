@@ -69,8 +69,24 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
         status: { $in: ["Received", "Pending", "Processed"] },
       }).catch(() => 0),
       Order.countDocuments({ status: "Cancelled" }).catch(() => 0),
-      Product.countDocuments({ stock: 0, status: "Active" }).catch(() => 0),
-      Product.countDocuments({ stock: { $lte: 10, $gt: 0 }, status: "Active" }).catch(() => 0),
+      Product.countDocuments({
+        status: "Active",
+        $or: [
+          // Simple product: top-level stock is 0
+          { "variations.0": { $exists: false }, stock: 0 },
+          // Product with variations: no variation has stock > 0
+          { "variations.0": { $exists: true }, variations: { $not: { $elemMatch: { stock: { $gt: 0 } } } } },
+        ],
+      }).catch(() => 0),
+      Product.countDocuments({
+        status: "Active",
+        $or: [
+          // Simple product: top-level stock is low
+          { "variations.0": { $exists: false }, stock: { $gt: 0, $lte: 10 } },
+          // Product with variations: at least one variation has low stock
+          { "variations.0": { $exists: true }, variations: { $elemMatch: { stock: { $gt: 0, $lte: 10 } } } },
+        ],
+      }).catch(() => 0),
       Order.aggregate([
         { $match: { status: "Delivered" } },
         { $group: { _id: null, total: { $sum: { $ifNull: ["$total", 0] } } } },
