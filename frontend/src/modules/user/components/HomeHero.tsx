@@ -20,7 +20,7 @@ export default function HomeHero({ activeTab = 'all', onTabChange }: HomeHeroPro
   };
 
   return (
-    <div className="relative w-full overflow-hidden font-sans -mt-[70px]">
+    <div className="relative w-full overflow-hidden font-sans -mt-[52px]">
       {/* Home-only high-priority preload for the hero background (CSS bg can't
           carry fetchpriority, so this hidden eager <img> warms the cache). */}
       <img

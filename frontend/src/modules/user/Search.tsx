@@ -94,7 +94,7 @@ export default function Search() {
   return (
     <div className="pb-24 md:pb-8 bg-white min-h-screen">
       {/* Search Input */}
-      <div className="sticky top-[70px] z-40 bg-white px-4 md:px-6 lg:px-8 py-4 md:py-5 border-b border-neutral-100">
+      <div className="sticky top-[52px] z-40 bg-white px-4 md:px-6 lg:px-8 py-4 md:py-5 border-b border-neutral-100">
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
           <div className="relative flex-1">
             <input

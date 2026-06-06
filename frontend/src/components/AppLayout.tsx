@@ -208,7 +208,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
 
             {/* Scrollable Main Content */}
-            <main ref={mainRef} className={`flex-1 overflow-x-hidden scrollbar-hide pb-24 md:pb-8 relative ${showOceanNavbar ? 'pt-[70px]' : ''}`}>
+            <main ref={mainRef} className={`flex-1 overflow-x-hidden scrollbar-hide pb-24 md:pb-8 relative ${showOceanNavbar ? 'pt-[52px]' : ''}`}>
               {/* Global Underwater Atmosphere Layer (Home only, motion-safe) */}
               {showAmbientFx && (
                 <div className="fixed inset-0 pointer-events-none z-0 opacity-40">
