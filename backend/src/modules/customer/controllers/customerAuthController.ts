@@ -6,7 +6,8 @@ import {
 } from "../../../services/otpService";
 import { generateToken } from "../../../services/jwtService";
 import { asyncHandler } from "../../../utils/asyncHandler";
-import Notification from "../../../models/Notification";
+import Admin from "../../../models/Admin";
+import { sendNotification } from "../../../services/notificationService";
 
 /**
  * Send SMS OTP to customer mobile number
@@ -94,15 +95,42 @@ export const verifySmsOtp = asyncHandler(
       });
       isNewUser = true;
 
-      // Create notification for Admin
-      await Notification.create({
-        recipientType: "Admin",
-        title: "New Customer Registration",
-        message: `New customer with phone ${mobile} has registered.`,
-        type: "System",
-        priority: "Medium",
-        link: "/admin/customers",
-      });
+      // Notify all admins: new customer registered (DB persist + live socket
+      // popup + push, matching the delivery-boy registration pattern so the
+      // alert actually shows up in real time, not just on next refresh).
+      try {
+        const { getIO } = await import("../../../socket/socketService");
+        let io: any = null;
+        try {
+          io = getIO();
+        } catch {
+          /* socket not yet running in tests */
+        }
+
+        const title = "🧑 New Customer Registration";
+        const message = `New customer with phone ${mobile} has registered.`;
+        const admins = await Admin.find({}).select("_id").lean();
+
+        for (const admin of admins) {
+          await sendNotification("Admin", admin._id.toString(), title, message, {
+            type: "System",
+            priority: "Medium",
+            link: "/admin/customers",
+          });
+        }
+
+        if (io) {
+          io.to("admin-notifications").emit("new-customer-registration", {
+            title,
+            message,
+            phone: mobile,
+            link: "/admin/customers",
+            timestamp: new Date(),
+          });
+        }
+      } catch (notifyErr) {
+        console.error("Failed to notify admin of customer registration:", notifyErr);
+      }
 
       // Process Signup Rewards (1000 bonus + referral check)
       const { processSignupRewards } = require("../../../services/rewardService");

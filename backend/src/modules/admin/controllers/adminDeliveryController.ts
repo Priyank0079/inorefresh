@@ -4,6 +4,7 @@ import Delivery from "../../../models/Delivery";
 import DeliveryAssignment from "../../../models/DeliveryAssignment";
 import CashCollection from "../../../models/CashCollection";
 import WalletTransaction from "../../../models/WalletTransaction";
+import { sendNotification } from "../../../services/notificationService";
 
 /**
  * Create a new delivery boy
@@ -234,6 +235,8 @@ export const updateDeliveryStatus = asyncHandler(
       });
     }
 
+    const previous = await Delivery.findById(id).select("status");
+
     const deliveryBoy = await Delivery.findByIdAndUpdate(
       id,
       { status },
@@ -245,6 +248,47 @@ export const updateDeliveryStatus = asyncHandler(
         success: false,
         message: "Delivery boy not found",
       });
+    }
+
+    // Tell the delivery boy when their approval state actually changes —
+    // otherwise they have no way to know they can now log in (or that
+    // their access was revoked) until they retry on their own.
+    if (previous && previous.status !== status) {
+      try {
+        const { getIO } = await import("../../../socket/socketService");
+        let io: any = null;
+        try {
+          io = getIO();
+        } catch {
+          /* socket not yet running in tests */
+        }
+
+        const title =
+          status === "Active"
+            ? "✅ Account Approved"
+            : "⛔ Account Deactivated";
+        const message =
+          status === "Active"
+            ? "Your delivery partner account has been approved. You can now log in and start accepting deliveries."
+            : "Your delivery partner account has been deactivated by the admin. Contact support for more details.";
+
+        await sendNotification("Delivery", deliveryBoy._id.toString(), title, message, {
+          type: "System",
+          priority: "High",
+          link: "/delivery",
+        });
+
+        if (io) {
+          io.to(`delivery-${deliveryBoy._id.toString()}`).emit("account-status-changed", {
+            title,
+            message,
+            status,
+            timestamp: new Date(),
+          });
+        }
+      } catch (notifyErr) {
+        console.error("Failed to notify delivery boy of status change:", notifyErr);
+      }
     }
 
     return res.status(200).json({

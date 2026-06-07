@@ -97,6 +97,18 @@ export const verifySmsOtp = asyncHandler(
       });
     }
 
+    // Block login until an admin approves the account — registration sets
+    // status to "Inactive" and the dashboard's approval toggle is the only
+    // thing that flips it to "Active". Without this check the approval step
+    // is purely cosmetic.
+    if (delivery.status !== "Active") {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Your account is pending admin approval. You will be able to log in once it is approved.",
+      });
+    }
+
     // Generate JWT token
     const token = generateToken(delivery._id.toString(), "Delivery");
 
