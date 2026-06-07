@@ -4,7 +4,8 @@ import RetailerUser from '../models/RetailerUser';
 import { uploadDocumentFromBuffer } from '../services/cloudinaryService';
 import { CLOUDINARY_FOLDERS } from '../config/cloudinary';
 import { generateToken } from '../services/jwtService';
-import Notification from '../models/Notification';
+import Admin from '../models/Admin';
+import { sendNotification } from '../services/notificationService';
 
 
 // Mock SMS OTP integration
@@ -84,15 +85,32 @@ export const signupHoreca = async (req: Request, res: Response): Promise<any> =>
         const newHoreca = new HorecaUser(userData);
         await newHoreca.save();
 
-        // Create notification for Admin
-        await Notification.create({
-            recipientType: 'Admin',
-            title: 'New HORECA Registration',
-            message: `New HORECA user ${newHoreca.shopName} (${newHoreca.ownerName}) has registered.`,
-            type: 'System',
-            priority: 'High',
-            link: '/admin/customers'
-        });
+        // Notify all admins in real time (DB persist + socket popup + push)
+        try {
+            const { getIO } = await import('../socket/socketService');
+            let io: any = null;
+            try { io = getIO(); } catch { /* socket not yet running in tests */ }
+
+            const title = 'New HORECA Registration';
+            const message = `New HORECA user ${newHoreca.shopName} (${newHoreca.ownerName}) has registered.`;
+            const admins = await Admin.find({}).select('_id').lean();
+
+            for (const admin of admins) {
+                await sendNotification('Admin', admin._id.toString(), title, message, {
+                    type: 'System',
+                    priority: 'High',
+                    link: '/admin/customers',
+                });
+            }
+
+            if (io) {
+                io.to('admin-notifications').emit('new-horeca-registration', {
+                    title, message, shopName: newHoreca.shopName, link: '/admin/customers', timestamp: new Date(),
+                });
+            }
+        } catch (notifyErr) {
+            console.error('Failed to notify admin of HORECA registration:', notifyErr);
+        }
 
         // Process Signup Rewards (1000 bonus + referral check)
         const { processSignupRewards } = require('../services/rewardService');
@@ -142,15 +160,32 @@ export const signupRetailer = async (req: Request, res: Response): Promise<any> 
         const newRetailer = new RetailerUser(userData);
         await newRetailer.save();
 
-        // Create notification for Admin
-        await Notification.create({
-            recipientType: 'Admin',
-            title: 'New Retailer Registration',
-            message: `New Retailer user ${newRetailer.shopName} (${newRetailer.ownerName}) has registered.`,
-            type: 'System',
-            priority: 'High',
-            link: '/admin/customers'
-        });
+        // Notify all admins in real time (DB persist + socket popup + push)
+        try {
+            const { getIO } = await import('../socket/socketService');
+            let io: any = null;
+            try { io = getIO(); } catch { /* socket not yet running in tests */ }
+
+            const title = 'New Retailer Registration';
+            const message = `New Retailer user ${newRetailer.shopName} (${newRetailer.ownerName}) has registered.`;
+            const admins = await Admin.find({}).select('_id').lean();
+
+            for (const admin of admins) {
+                await sendNotification('Admin', admin._id.toString(), title, message, {
+                    type: 'System',
+                    priority: 'High',
+                    link: '/admin/customers',
+                });
+            }
+
+            if (io) {
+                io.to('admin-notifications').emit('new-retailer-registration', {
+                    title, message, shopName: newRetailer.shopName, link: '/admin/customers', timestamp: new Date(),
+                });
+            }
+        } catch (notifyErr) {
+            console.error('Failed to notify admin of Retailer registration:', notifyErr);
+        }
 
         // Process Signup Rewards (1000 bonus + referral check)
         const { processSignupRewards } = require('../services/rewardService');

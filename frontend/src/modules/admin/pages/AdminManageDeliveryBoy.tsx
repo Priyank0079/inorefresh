@@ -25,6 +25,7 @@ export default function AdminManageDeliveryBoy() {
     const [totalDeliveryBoys, setTotalDeliveryBoys] = useState(0);
     const [successMessage, setSuccessMessage] = useState('');
     const [confirmDeleteDeliveryId, setConfirmDeleteDeliveryId] = useState<string | null>(null);
+    const [viewDeliveryBoy, setViewDeliveryBoy] = useState<DeliveryBoy | null>(null);
 
     // Debounce search term and fetch delivery boys
     useEffect(() => {
@@ -43,7 +44,7 @@ export default function AdminManageDeliveryBoy() {
                     limit: rowsPerPage,
                     search: searchTerm || undefined,
                     sortBy: sortColumn || undefined,
-                    sortOrder: sortDirection,
+                    sortOrder: sortColumn ? sortDirection : undefined,
                 };
 
                 if (statusFilter !== 'All') {
@@ -125,7 +126,7 @@ export default function AdminManageDeliveryBoy() {
                     limit: rowsPerPage,
                     search: searchTerm,
                     sortBy: sortColumn || undefined,
-                    sortOrder: sortDirection,
+                    sortOrder: sortColumn ? sortDirection : undefined,
                 };
                 if (statusFilter !== 'All') params.status = statusFilter;
                 if (availabilityFilter !== 'All') params.available = availabilityFilter;
@@ -168,7 +169,7 @@ export default function AdminManageDeliveryBoy() {
                     limit: rowsPerPage,
                     search: searchTerm,
                     sortBy: sortColumn || undefined,
-                    sortOrder: sortDirection,
+                    sortOrder: sortColumn ? sortDirection : undefined,
                 };
                 if (statusFilter !== 'All') params.status = statusFilter;
                 if (availabilityFilter !== 'All') params.available = availabilityFilter;
@@ -214,7 +215,7 @@ export default function AdminManageDeliveryBoy() {
                     limit: rowsPerPage,
                     search: searchTerm,
                     sortBy: sortColumn || undefined,
-                    sortOrder: sortDirection,
+                    sortOrder: sortColumn ? sortDirection : undefined,
                 };
                 if (statusFilter !== 'All') params.status = statusFilter;
                 if (availabilityFilter !== 'All') params.available = availabilityFilter;
@@ -566,6 +567,16 @@ export default function AdminManageDeliveryBoy() {
                                             <td className="p-4 align-middle">
                                                 <div className="flex items-center gap-2">
                                                     <button
+                                                        onClick={() => setViewDeliveryBoy(deliveryBoy)}
+                                                        className="p-1.5 text-neutral-600 hover:bg-neutral-100 rounded transition-colors"
+                                                        title="View Details & Documents"
+                                                    >
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                            <circle cx="12" cy="12" r="3"></circle>
+                                                        </svg>
+                                                    </button>
+                                                    <button
                                                         onClick={() => handleStatusChange(deliveryBoy._id, deliveryBoy.status === 'Active' ? 'Inactive' : 'Active')}
                                                         disabled={processing === deliveryBoy._id}
                                                         className={`p-1.5 rounded transition-colors ${deliveryBoy.status === 'Active'
@@ -712,6 +723,113 @@ export default function AdminManageDeliveryBoy() {
                 Copyright © 2026. Developed By{' '}
                 <a href="#" className="text-blue-600 hover:underline">Inor fresh</a>
             </footer>
+
+            {viewDeliveryBoy && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setViewDeliveryBoy(null)} />
+                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl relative z-10 max-h-[90vh] flex flex-col">
+                        {/* Header */}
+                        <div className="bg-[#12b2a2] text-white px-6 py-4 rounded-t-2xl flex items-center justify-between">
+                            <div>
+                                <h3 className="font-semibold text-lg">{viewDeliveryBoy.name}</h3>
+                                <p className="text-xs text-teal-50">Registration Details & Documents</p>
+                            </div>
+                            <button onClick={() => setViewDeliveryBoy(null)} className="text-white/80 hover:text-white text-xl leading-none">×</button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto space-y-6">
+                            {/* Status badge */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-neutral-500">Approval Status:</span>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${viewDeliveryBoy.status === 'Active'
+                                    ? 'bg-teal-50 text-[#12b2a2]'
+                                    : 'bg-red-100 text-red-800'
+                                    }`}>
+                                    {viewDeliveryBoy.status === 'Active' ? 'Approved (Active)' : 'Pending Approval (Inactive)'}
+                                </span>
+                            </div>
+
+                            {/* Personal info */}
+                            <div>
+                                <h4 className="text-xs font-bold uppercase text-neutral-500 mb-2">Personal Information</h4>
+                                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                                    <div><span className="text-neutral-500">Mobile:</span> <span className="font-medium">{viewDeliveryBoy.mobile}</span></div>
+                                    <div><span className="text-neutral-500">Email:</span> <span className="font-medium">{viewDeliveryBoy.email || '—'}</span></div>
+                                    <div><span className="text-neutral-500">Date of Birth:</span> <span className="font-medium">{viewDeliveryBoy.dateOfBirth ? new Date(viewDeliveryBoy.dateOfBirth).toLocaleDateString() : '—'}</span></div>
+                                    <div><span className="text-neutral-500">City:</span> <span className="font-medium">{viewDeliveryBoy.city}</span></div>
+                                    <div><span className="text-neutral-500">Pincode:</span> <span className="font-medium">{viewDeliveryBoy.pincode || '—'}</span></div>
+                                    <div className="col-span-2"><span className="text-neutral-500">Address:</span> <span className="font-medium">{viewDeliveryBoy.address}</span></div>
+                                </div>
+                            </div>
+
+                            {/* Documents */}
+                            <div>
+                                <h4 className="text-xs font-bold uppercase text-neutral-500 mb-2">Documents</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {(['drivingLicense', 'nationalIdentityCard'] as const).map((field) => {
+                                        const url = viewDeliveryBoy[field];
+                                        const label = field === 'drivingLicense' ? 'Driving License' : 'National Identity Card';
+                                        return (
+                                            <div key={field} className="border border-neutral-200 rounded-lg p-3">
+                                                <p className="text-xs text-neutral-500 mb-2">{label}</p>
+                                                {url ? (
+                                                    <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                                                        {/\.(jpe?g|png|gif|webp)$/i.test(url) ? (
+                                                            <img src={url} alt={label} className="h-28 w-full object-cover rounded border border-neutral-200" />
+                                                        ) : (
+                                                            <span className="text-sm text-[#12b2a2] hover:underline font-medium">View Document ↗</span>
+                                                        )}
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-sm text-neutral-400">Not uploaded</span>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Bank details */}
+                            <div>
+                                <h4 className="text-xs font-bold uppercase text-neutral-500 mb-2">Bank / Payment Details</h4>
+                                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                                    <div><span className="text-neutral-500">Account Holder:</span> <span className="font-medium">{viewDeliveryBoy.accountName || '—'}</span></div>
+                                    <div><span className="text-neutral-500">Bank Name:</span> <span className="font-medium">{viewDeliveryBoy.bankName || '—'}</span></div>
+                                    <div><span className="text-neutral-500">Account Number:</span> <span className="font-medium">{viewDeliveryBoy.bankAccountNumber || '—'}</span></div>
+                                    <div><span className="text-neutral-500">IFSC Code:</span> <span className="font-medium">{viewDeliveryBoy.ifscCode || '—'}</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Approve / Reject actions */}
+                        <div className="px-6 py-4 border-t border-neutral-200 flex items-center justify-end gap-2">
+                            <button
+                                onClick={() => setViewDeliveryBoy(null)}
+                                className="px-4 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors"
+                            >
+                                Close
+                            </button>
+                            {viewDeliveryBoy.status === 'Active' ? (
+                                <button
+                                    onClick={async () => { await handleStatusChange(viewDeliveryBoy._id, 'Inactive'); setViewDeliveryBoy(null); }}
+                                    disabled={processing === viewDeliveryBoy._id}
+                                    className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-60"
+                                >
+                                    Reject / Deactivate
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={async () => { await handleStatusChange(viewDeliveryBoy._id, 'Active'); setViewDeliveryBoy(null); }}
+                                    disabled={processing === viewDeliveryBoy._id}
+                                    className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#12b2a2] text-white hover:bg-[#0d9488] transition-colors disabled:opacity-60"
+                                >
+                                    Approve / Activate
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {confirmDeleteDeliveryId && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

@@ -31,6 +31,7 @@ export default function AdminUsers() {
     const [totalPages, setTotalPages] = useState(1);
     const [totalUsers, setTotalUsers] = useState(0);
     const [activeTab, setActiveTab] = useState<'Customer' | 'Retailer' | 'Horeca'>('Customer');
+    const [viewUser, setViewUser] = useState<any | null>(null);
     const [retailers, setRetailers] = useState<any[]>([]);
     const [horecaUsers, setHorecaUsers] = useState<any[]>([]);
     const [userMessage, setUserMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -417,6 +418,16 @@ export default function AdminUsers() {
                                             <td className="p-4 align-middle">
                                                 <div className="flex items-center gap-2">
                                                     <button
+                                                        onClick={() => setViewUser(user)}
+                                                        className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                                                        title="View Details & Documents"
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                            <circle cx="12" cy="12" r="3"></circle>
+                                                        </svg>
+                                                    </button>
+                                                    <button
                                                         onClick={() => handleStatusChange(user._id, user.status === 'Active' ? 'Suspended' : 'Active')}
                                                         className={`p-1.5 text-white rounded transition-colors ${user.status === 'Active'
                                                             ? 'bg-red-600 hover:bg-red-700'
@@ -539,6 +550,126 @@ export default function AdminUsers() {
                 Copyright © 2026. Developed By{' '}
                 <a href="#" className="text-blue-600 hover:underline">Inor fresh</a>
             </footer>
+
+            {/* View Details & Documents Modal */}
+            {viewUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setViewUser(null)} />
+                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl relative z-10 max-h-[90vh] flex flex-col">
+                        {/* Header */}
+                        <div className="bg-[#12b2a2] text-white px-6 py-4 rounded-t-2xl flex items-center justify-between">
+                            <div>
+                                <h3 className="font-semibold text-lg">{viewUser.name || viewUser.ownerName}</h3>
+                                <p className="text-xs text-teal-50">
+                                    {activeTab === 'Customer' ? 'Customer Details' : 'Registration Details & Documents'}
+                                </p>
+                            </div>
+                            <button onClick={() => setViewUser(null)} className="text-white/80 hover:text-white text-xl leading-none">×</button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto space-y-6">
+                            {/* Status badge */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-neutral-500">Status:</span>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${viewUser.status === 'Active'
+                                    ? 'bg-teal-50 text-[#12b2a2]'
+                                    : viewUser.status === 'Suspended'
+                                        ? 'bg-red-100 text-red-800'
+                                        : 'bg-yellow-100 text-yellow-800'
+                                    }`}>
+                                    {viewUser.status}
+                                </span>
+                            </div>
+
+                            {activeTab === 'Customer' ? (
+                                <div>
+                                    <h4 className="text-xs font-bold uppercase text-neutral-500 mb-2">Personal Information</h4>
+                                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                                        <div><span className="text-neutral-500">Name:</span> <span className="font-medium">{viewUser.name || '—'}</span></div>
+                                        <div><span className="text-neutral-500">Email:</span> <span className="font-medium">{viewUser.email || '—'}</span></div>
+                                        <div><span className="text-neutral-500">Phone:</span> <span className="font-medium">{viewUser.phone || '—'}</span></div>
+                                        <div><span className="text-neutral-500">Ref Code:</span> <span className="font-medium">{viewUser.refCode || '—'}</span></div>
+                                        <div><span className="text-neutral-500">Wallet Balance:</span> <span className="font-medium">₹{(viewUser.walletAmount || 0).toFixed(2)}</span></div>
+                                        <div><span className="text-neutral-500">Total Spent:</span> <span className="font-medium">₹{(viewUser.totalSpent || 0).toFixed(2)}</span></div>
+                                        <div className="col-span-2"><span className="text-neutral-500">Registered On:</span> <span className="font-medium">{new Date(viewUser.registrationDate || viewUser.createdAt).toLocaleString()}</span></div>
+                                        {viewUser.address && (
+                                            <div className="col-span-2"><span className="text-neutral-500">Address:</span> <span className="font-medium">{viewUser.address}, {viewUser.city}, {viewUser.state} - {viewUser.pincode}</span></div>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Shop / business info */}
+                                    <div>
+                                        <h4 className="text-xs font-bold uppercase text-neutral-500 mb-2">Shop Information</h4>
+                                        <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                                            <div><span className="text-neutral-500">Shop Name:</span> <span className="font-medium">{viewUser.shopName || '—'}</span></div>
+                                            <div><span className="text-neutral-500">Shop Phone:</span> <span className="font-medium">{viewUser.shopPhone || '—'}</span></div>
+                                            <div><span className="text-neutral-500">Payment Mode:</span> <span className="font-medium">{viewUser.paymentMode || '—'}</span></div>
+                                            <div><span className="text-neutral-500">Delivery Time:</span> <span className="font-medium">{viewUser.deliveryTime || '—'}</span></div>
+                                            <div><span className="text-neutral-500">Inor Representative:</span> <span className="font-medium">{viewUser.inorRepresentative || '—'}</span></div>
+                                            <div><span className="text-neutral-500">High Value Products:</span> <span className="font-medium">{Array.isArray(viewUser.highValueProducts) && viewUser.highValueProducts.length > 0 ? viewUser.highValueProducts.join(', ') : '—'}</span></div>
+                                            <div className="col-span-2"><span className="text-neutral-500">Address:</span> <span className="font-medium">{viewUser.address || '—'}</span></div>
+                                            {viewUser.googleMapLink && (
+                                                <div className="col-span-2">
+                                                    <span className="text-neutral-500">Google Maps:</span>{' '}
+                                                    <a href={viewUser.googleMapLink} target="_blank" rel="noopener noreferrer" className="text-[#12b2a2] hover:underline font-medium">Open Location ↗</a>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Owner info */}
+                                    <div>
+                                        <h4 className="text-xs font-bold uppercase text-neutral-500 mb-2">Owner Information</h4>
+                                        <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                                            <div><span className="text-neutral-500">Owner Name:</span> <span className="font-medium">{viewUser.ownerName || '—'}</span></div>
+                                            <div><span className="text-neutral-500">Owner Phone:</span> <span className="font-medium">{viewUser.ownerPhone || '—'}</span></div>
+                                            <div><span className="text-neutral-500">Email:</span> <span className="font-medium">{viewUser.email || '—'}</span></div>
+                                            <div><span className="text-neutral-500">Ref Code:</span> <span className="font-medium">{viewUser.refCode || '—'}</span></div>
+                                            <div><span className="text-neutral-500">Wallet Balance:</span> <span className="font-medium">₹{(viewUser.walletAmount || 0).toFixed(2)}</span></div>
+                                            <div><span className="text-neutral-500">Total Spent:</span> <span className="font-medium">₹{(viewUser.totalSpent || 0).toFixed(2)}</span></div>
+                                            <div className="col-span-2"><span className="text-neutral-500">Registered On:</span> <span className="font-medium">{new Date(viewUser.registrationDate || viewUser.createdAt).toLocaleString()}</span></div>
+                                        </div>
+                                    </div>
+
+                                    {/* Documents */}
+                                    <div>
+                                        <h4 className="text-xs font-bold uppercase text-neutral-500 mb-2">Uploaded Documents</h4>
+                                        {Array.isArray(viewUser.documents) && viewUser.documents.length > 0 ? (
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {viewUser.documents.map((url: string, idx: number) => (
+                                                    <div key={idx} className="border border-neutral-200 rounded-lg p-3">
+                                                        <p className="text-xs text-neutral-500 mb-2">Document {idx + 1}</p>
+                                                        <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                                                            {/\.(jpe?g|png|gif|webp)$/i.test(url) ? (
+                                                                <img src={url} alt={`Document ${idx + 1}`} className="h-28 w-full object-cover rounded border border-neutral-200" />
+                                                            ) : (
+                                                                <span className="text-sm text-[#12b2a2] hover:underline font-medium">View Document ↗</span>
+                                                            )}
+                                                        </a>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="text-sm text-neutral-400">No documents uploaded</span>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="px-6 py-4 border-t border-neutral-200 flex items-center justify-end gap-2">
+                            <button
+                                onClick={() => setViewUser(null)}
+                                className="px-4 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

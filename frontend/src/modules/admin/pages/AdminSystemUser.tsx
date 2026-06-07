@@ -59,8 +59,8 @@ export default function AdminSystemUser() {
         page: currentPage,
         limit: entriesPerPage,
         search: searchTerm || undefined,
-        sortBy: sortColumn || 'createdAt',
-        sortOrder: sortDirection,
+        sortBy: sortColumn || undefined,
+        sortOrder: sortColumn ? sortDirection : undefined,
       });
 
       if (response.success && response.data) {

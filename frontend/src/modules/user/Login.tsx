@@ -647,7 +647,6 @@ export default function Login() {
                           }}
                           className="hidden"
                           id={`file-${doc.id}`}
-                          required={doc.id !== 'gst' && doc.id !== 'cheque'}
                         />
                         <label
                           htmlFor={`file-${doc.id}`}

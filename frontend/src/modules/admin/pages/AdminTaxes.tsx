@@ -45,7 +45,7 @@ export default function AdminTaxes() {
           page: currentPage,
           limit: rowsPerPage,
           sortBy: sortColumn || undefined,
-          sortOrder: sortDirection,
+          sortOrder: sortColumn ? sortDirection : undefined,
         });
 
         if (response.success) {
