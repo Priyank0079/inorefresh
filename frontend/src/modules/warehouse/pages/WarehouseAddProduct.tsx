@@ -6,6 +6,7 @@ import { createProduct, updateProduct, getProductById, ProductVariation } from "
 import { getSubcategories, SubCategory } from "../../../services/api/categoryService";
 import api from "../../../services/api/config";
 import ProductLabelCard from "../components/ProductLabelCard";
+import CameraCapture from "../../../components/CameraCapture";
 import { useAuth } from "../../../context/AuthContext";
 
 interface Category {
@@ -59,6 +60,7 @@ export default function WarehouseAddProduct() {
   // ── Image ────────────────────────────────────────────────────
   const [mainImageFile, setMainImageFile] = useState<File | null>(null);
   const [mainImagePreview, setMainImagePreview] = useState<string>("");
+  const [showMainImageCamera, setShowMainImageCamera] = useState(false);
 
   // ── Status ───────────────────────────────────────────────────
   const [uploading, setUploading] = useState(false);
@@ -168,9 +170,7 @@ export default function WarehouseAddProduct() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleMainImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processMainImageFile = async (file: File) => {
     const validation = validateImageFile(file);
     if (!validation.valid) { setUploadError(validation.error || "Invalid image"); return; }
     // Compress/resize large photos (e.g. from a phone camera) so the upload
@@ -189,6 +189,16 @@ export default function WarehouseAddProduct() {
       const preview = await createImagePreview(compressed);
       setMainImagePreview(preview);
     } catch { setUploadError("Failed to preview image"); }
+  };
+
+  const handleMainImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processMainImageFile(file);
+  };
+
+  const handleMainImageCameraCapture = (file: File) => {
+    void processMainImageFile(file);
   };
 
   const addVariation = () => {
@@ -585,17 +595,30 @@ export default function WarehouseAddProduct() {
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                   Upload Image <span className="text-red-500">*</span>
                 </label>
-                <label className="cursor-pointer inline-flex items-center gap-2 bg-teal-50 border border-teal-300 text-teal-700 hover:bg-teal-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A1.5 1.5 0 004.5 20.25h15a1.5 1.5 0 001.5-1.5V16.5m-12-9l3-3m0 0l3 3m-3-3v12.25" />
-                  </svg>
-                   Choose Image
-                  {/* Use explicit extensions (not image/*) so the OS opens the
-                      file/gallery picker instead of a camera-first chooser. A
-                      web file input can't fully remove the OS camera option, but
-                      this avoids the camera prompt on most Android devices. */}
-                  <input type="file" accept="image/*" className="hidden" onChange={handleMainImageChange} />
-                </label>
+                <div className="flex flex-wrap gap-2">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-teal-50 border border-teal-300 text-teal-700 hover:bg-teal-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A1.5 1.5 0 004.5 20.25h15a1.5 1.5 0 001.5-1.5V16.5m-12-9l3-3m0 0l3 3m-3-3v12.25" />
+                    </svg>
+                     Choose Image
+                    {/* Use explicit extensions (not image/*) so the OS opens the
+                        file/gallery picker instead of a camera-first chooser. A
+                        web file input can't fully remove the OS camera option, but
+                        this avoids the camera prompt on most Android devices. */}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleMainImageChange} />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowMainImageCamera(true)}
+                    className="inline-flex items-center gap-2 bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25a2.25 2.25 0 012.25-2.25h1.046c.625 0 1.198-.353 1.477-.911.323-.646.997-1.09 1.777-1.09h2.4c.78 0 1.454.444 1.777 1.09a1.65 1.65 0 001.477.911h1.046a2.25 2.25 0 012.25 2.25v8.25a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V8.25z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                    </svg>
+                    Camera
+                  </button>
+                </div>
                 <p className="text-xs text-neutral-400 mt-2">
                   JPG, PNG, or WebP. Max 5MB. 
                   <span className="block mt-1 text-[#12b2a2] font-semibold italic">Recommended: 800x800px or higher (1:1 square ratio)</span>
@@ -927,6 +950,13 @@ export default function WarehouseAddProduct() {
             </div>
           </div>
         </div>
+      )}
+
+      {showMainImageCamera && (
+        <CameraCapture
+          onCapture={handleMainImageCameraCapture}
+          onClose={() => setShowMainImageCamera(false)}
+        />
       )}
     </div>
   );

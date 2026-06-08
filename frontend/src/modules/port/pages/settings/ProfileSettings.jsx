@@ -3,6 +3,7 @@ import PageTitle from '../../components/common/PageTitle';
 import { useAuth } from '@/context/AuthContext';
 import { getPortProfile, updatePortProfile } from '@/services/api/auth/portAuthService';
 import { uploadImage } from '@/services/api/uploadService';
+import CameraCapture from '@/components/CameraCapture';
 import { useRef } from 'react';
 
 const ProfileSettings = () => {
@@ -12,6 +13,7 @@ const ProfileSettings = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [showImageCamera, setShowImageCamera] = useState(false);
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     portName: '',
@@ -140,10 +142,7 @@ const ProfileSettings = () => {
     fileInputRef.current?.click();
   };
 
-  const handleImageChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processProfileImageFile = async (file) => {
     // Basic validation
     if (!file.type.startsWith('image/')) {
       setError("Please select an image file.");
@@ -166,6 +165,16 @@ const ProfileSettings = () => {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processProfileImageFile(file);
+  };
+
+  const handleImageCameraCapture = (file) => {
+    void processProfileImageFile(file);
   };
 
   if (loading) {
@@ -219,12 +228,21 @@ const ProfileSettings = () => {
                   </div>
                 )}
               </div>
-              <button 
+              <button
                 type="button"
                 onClick={handleImageClick}
                 disabled={uploading}
                 className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg border border-slate-100 text-slate-500 hover:text-teal-600 transition-all z-10"
-                title="Change profile picture"
+                title="Choose from gallery"
+              >
+                <span className="material-icons-outlined text-lg">photo_library</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowImageCamera(true)}
+                disabled={uploading}
+                className="absolute bottom-0 left-0 p-2 bg-white rounded-full shadow-lg border border-slate-100 text-slate-500 hover:text-teal-600 transition-all z-10"
+                title="Take a photo"
               >
                 <span className="material-icons-outlined text-lg">photo_camera</span>
               </button>
@@ -363,6 +381,13 @@ const ProfileSettings = () => {
           </div>
         </div>
       </div>
+
+      {showImageCamera && (
+        <CameraCapture
+          onCapture={handleImageCameraCapture}
+          onClose={() => setShowImageCamera(false)}
+        />
+      )}
     </div>
   );
 };

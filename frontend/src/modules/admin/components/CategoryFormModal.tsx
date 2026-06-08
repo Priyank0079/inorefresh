@@ -5,6 +5,7 @@ import {
   UpdateCategoryData,
 } from "../../../services/api/admin/adminProductService";
 import { uploadImage } from "../../../services/api/uploadService";
+import CameraCapture from "../../../components/CameraCapture";
 import {
   validateImageFile,
   createImagePreview,
@@ -62,6 +63,7 @@ export default function CategoryFormModal({
   );
   const [loadingHeaderCategories, setLoadingHeaderCategories] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showImageCamera, setShowImageCamera] = useState(false);
 
   // Flatten categories for search and parent selection
   const flatCategories = useMemo(
@@ -211,6 +213,10 @@ export default function CategoryFormModal({
     const file = e.target.files?.[0];
     if (!file) return;
     await processFile(file);
+  };
+
+  const handleCameraCapture = (file: File) => {
+    void processFile(file);
   };
 
   const processFile = async (file: File) => {
@@ -478,12 +484,24 @@ export default function CategoryFormModal({
               )}
               <input
                 type="file"
-                accept="image/*" capture="environment"
+                accept="image/*"
                 onChange={handleFileChange}
                 className="hidden"
                 disabled={submitting || uploading}
               />
             </label>
+            <button
+              type="button"
+              onClick={() => setShowImageCamera(true)}
+              disabled={submitting || uploading}
+              className="mt-2 w-full inline-flex items-center justify-center gap-2 bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 px-3 py-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25a2.25 2.25 0 012.25-2.25h1.046c.625 0 1.198-.353 1.477-.911.323-.646.997-1.09 1.777-1.09h2.4c.78 0 1.454.444 1.777 1.09a1.65 1.65 0 001.477.911h1.046a2.25 2.25 0 012.25 2.25v8.25a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V8.25z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+              </svg>
+              Use Camera
+            </button>
             {errors.image && (
               <p className="mt-1 text-sm text-red-600">{errors.image}</p>
             )}
@@ -517,6 +535,13 @@ export default function CategoryFormModal({
           </button>
         </div>
       </div>
+
+      {showImageCamera && (
+        <CameraCapture
+          onCapture={handleCameraCapture}
+          onClose={() => setShowImageCamera(false)}
+        />
+      )}
     </div>
   );
 }

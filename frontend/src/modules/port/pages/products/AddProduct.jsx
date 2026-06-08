@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { createProduct } from '../../../../services/api/portProductService';
 import { uploadImage } from '../../../../services/api/uploadService';
 import { useToast } from '../../../../context/ToastContext';
+import CameraCapture from '../../../../components/CameraCapture';
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const AddProduct = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [showImageCamera, setShowImageCamera] = useState(false);
   const [formData, setFormData] = useState({
     productName: '',
     category: 'Premium',
@@ -33,10 +35,7 @@ const AddProduct = () => {
     }));
   };
 
-  const handleImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
+  const processProductImageFile = async (file) => {
     // Local preview
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -56,6 +55,16 @@ const AddProduct = () => {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    await processProductImageFile(file);
+  };
+
+  const handleImageCameraCapture = (file) => {
+    void processProductImageFile(file);
   };
 
   const handleSubmit = async (e) => {
@@ -99,14 +108,14 @@ const AddProduct = () => {
           {/* Image Upload Area */}
           <div className="space-y-3">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Product Image</label>
-            <input 
-              type="file" 
+            <input
+              type="file"
               ref={fileInputRef}
               onChange={handleImageChange}
               accept="image/*"
-              className="hidden" 
+              className="hidden"
             />
-            <div 
+            <div
               onClick={() => fileInputRef.current.click()}
               className={`border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100/50 transition-all cursor-pointer group relative overflow-hidden h-48 ${uploading ? 'opacity-50 pointer-events-none' : ''} ${imagePreview ? 'border-teal-500/50' : 'border-slate-200 hover:border-teal-500/50'}`}
             >
@@ -126,13 +135,33 @@ const AddProduct = () => {
                   <p className="text-xs text-slate-400 mt-1">PNG, JPG or WebP (max. 2MB)</p>
                 </>
               )}
-              
+
               {uploading && (
                 <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center">
                   <div className="w-8 h-8 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin mb-2"></div>
                   <span className="text-xs font-bold text-teal-600">Uploading...</span>
                 </div>
               )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-2 bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+              >
+                <span className="material-icons-outlined text-base">photo_library</span>
+                Gallery
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowImageCamera(true)}
+                disabled={uploading}
+                className="inline-flex items-center gap-2 bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+              >
+                <span className="material-icons-outlined text-base">photo_camera</span>
+                Camera
+              </button>
             </div>
           </div>
 
@@ -285,6 +314,13 @@ const AddProduct = () => {
           </button>
         </div>
       </form>
+
+      {showImageCamera && (
+        <CameraCapture
+          onCapture={handleImageCameraCapture}
+          onClose={() => setShowImageCamera(false)}
+        />
+      )}
     </div>
   );
 };

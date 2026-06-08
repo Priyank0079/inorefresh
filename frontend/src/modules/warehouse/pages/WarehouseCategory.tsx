@@ -5,6 +5,7 @@ import { getHeaderCategoriesPublic, HeaderCategory } from '../../../services/api
 import { uploadImage } from '../../../services/api/uploadService';
 import { validateImageFile, createImagePreview } from '../../../utils/imageUpload';
 import { compressImageFile } from '../../../utils/compressImageFile';
+import CameraCapture from '../../../components/CameraCapture';
 import api from '../../../services/api/config';
 
 interface Product {
@@ -61,6 +62,7 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
     const [imagePreview, setImagePreview] = useState('');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const [showImageCamera, setShowImageCamera] = useState(false);
 
     useEffect(() => {
         getHeaderCategoriesPublic()
@@ -68,16 +70,24 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
             .catch(() => setHeaderCategories([]));
     }, []);
 
-    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const raw = e.target.files?.[0];
-        e.target.value = '';
-        if (!raw) return;
+    const processImageFile = async (raw: File) => {
         const file = await compressImageFile(raw);
         const v = validateImageFile(file);
         if (!v.valid) { setError(v.error || 'Invalid image'); return; }
         setImageFile(file);
         setError('');
         try { setImagePreview(await createImagePreview(file)); } catch { setError('Failed to preview image'); }
+    };
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.files?.[0];
+        e.target.value = '';
+        if (!raw) return;
+        await processImageFile(raw);
+    };
+
+    const handleImageCameraCapture = (file: File) => {
+        void processImageFile(file);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -184,7 +194,7 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
                                     <span className="text-2xl">📦</span>
                                 )}
                             </div>
-                            <div>
+                            <div className="flex flex-wrap gap-2">
                                 <label className="cursor-pointer inline-flex items-center gap-2 bg-teal-50 border border-teal-300 text-teal-700 hover:bg-teal-100 px-3 py-2 rounded-lg text-sm font-medium transition-colors">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A1.5 1.5 0 004.5 20.25h15a1.5 1.5 0 001.5-1.5V16.5m-12-9l3-3m0 0l3 3m-3-3v12.25" />
@@ -192,6 +202,17 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
                                     Upload Image
                                     <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                                 </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowImageCamera(true)}
+                                    className="inline-flex items-center gap-2 bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25a2.25 2.25 0 012.25-2.25h1.046c.625 0 1.198-.353 1.477-.911.323-.646.997-1.09 1.777-1.09h2.4c.78 0 1.454.444 1.777 1.09a1.65 1.65 0 001.477.911h1.046a2.25 2.25 0 012.25 2.25v8.25a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V8.25z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                                    </svg>
+                                    Camera
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -213,6 +234,12 @@ function AddCategoryModal({ onClose, onSuccess }: AddCategoryModalProps) {
                     </div>
                 </form>
             </div>
+            {showImageCamera && (
+                <CameraCapture
+                    onCapture={handleImageCameraCapture}
+                    onClose={() => setShowImageCamera(false)}
+                />
+            )}
         </div>
     );
 }

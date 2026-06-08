@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { uploadImage } from "../../../services/api/uploadService";
+import CameraCapture from "../../../components/CameraCapture";
 import {
   validateImageFile,
   createImagePreview,
@@ -19,6 +20,7 @@ export default function AdminShopByStore() {
   const [storeName, setStoreName] = useState("");
   const [storeImageFile, setStoreImageFile] = useState<File | null>(null);
   const [storeImagePreview, setStoreImagePreview] = useState<string>("");
+  const [showStoreImageCamera, setShowStoreImageCamera] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -189,10 +191,7 @@ export default function AdminShopByStore() {
   const endIndex = startIndex + entriesPerPage;
   const displayedStores = sortedStores.slice(startIndex, endIndex);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processStoreImageFile = async (file: File) => {
     const validation = validateImageFile(file);
     if (!validation.valid) {
       setUploadError(validation.error || "Invalid image file");
@@ -208,6 +207,16 @@ export default function AdminShopByStore() {
     } catch (error) {
       setUploadError("Failed to create image preview");
     }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processStoreImageFile(file);
+  };
+
+  const handleStoreImageCameraCapture = (file: File) => {
+    void processStoreImageFile(file);
   };
 
   const toggleProductSelection = (productId: string) => {
@@ -718,12 +727,24 @@ export default function AdminShopByStore() {
                 )}
                 <input
                   type="file"
-                  accept="image/*" capture="environment"
+                  accept="image/*"
                   onChange={handleFileChange}
                   className="hidden"
                   disabled={uploading}
                 />
               </label>
+              <button
+                type="button"
+                onClick={() => setShowStoreImageCamera(true)}
+                disabled={uploading}
+                className="mt-2 w-full inline-flex items-center justify-center gap-2 bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 px-3 py-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25a2.25 2.25 0 012.25-2.25h1.046c.625 0 1.198-.353 1.477-.911.323-.646.997-1.09 1.777-1.09h2.4c.78 0 1.454.444 1.777 1.09a1.65 1.65 0 001.477.911h1.046a2.25 2.25 0 012.25 2.25v8.25a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V8.25z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                </svg>
+                Use Camera
+              </button>
             </div>
 
             {/* Action Buttons */}
@@ -1077,6 +1098,13 @@ export default function AdminShopByStore() {
             </div>
           </div>
         </div>
+      )}
+
+      {showStoreImageCamera && (
+        <CameraCapture
+          onCapture={handleStoreImageCameraCapture}
+          onClose={() => setShowStoreImageCamera(false)}
+        />
       )}
     </div>
   );

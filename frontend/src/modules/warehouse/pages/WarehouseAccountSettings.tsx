@@ -8,6 +8,7 @@ import GoogleMapsAutocomplete from '../../../components/GoogleMapsAutocomplete';
 import LocationPickerMap from '../../../components/LocationPickerMap';
 import ServiceAreaMap from '../../../components/ServiceAreaMap';
 import { compressImageFile } from '../../../utils/compressImageFile';
+import CameraCapture from '../../../components/CameraCapture';
 
 const WarehouseAccountSettings = () => {
     const { user, updateUser } = useAuth();
@@ -52,6 +53,7 @@ const WarehouseAccountSettings = () => {
         password: ''
     });
     const [uploadingField, setUploadingField] = useState<string | null>(null);
+    const [cameraField, setCameraField] = useState<'profile' | 'logo' | null>(null);
 
     useEffect(() => {
         fetchProfile();
@@ -138,13 +140,10 @@ const WarehouseAccountSettings = () => {
     };
 
     // Upload a profile / logo / banner image and store its URL in the form state.
-    const handlePhotoUpload = async (
+    const processPhotoFile = async (
         field: 'profile' | 'logo' | 'storeBanner',
-        e: React.ChangeEvent<HTMLInputElement>
+        raw: File
     ) => {
-        const raw = e.target.files?.[0];
-        e.target.value = '';
-        if (!raw) return;
         if (!raw.type.startsWith('image/') && !/\.(heic|heif)$/i.test(raw.name)) {
             setError('Please select a valid image file');
             return;
@@ -165,6 +164,20 @@ const WarehouseAccountSettings = () => {
         } finally {
             setUploadingField(null);
         }
+    };
+
+    const handlePhotoUpload = async (
+        field: 'profile' | 'logo' | 'storeBanner',
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const raw = e.target.files?.[0];
+        e.target.value = '';
+        if (!raw) return;
+        await processPhotoFile(field, raw);
+    };
+
+    const handlePhotoCameraCapture = (field: 'profile' | 'logo' | 'storeBanner', file: File) => {
+        void processPhotoFile(field, file);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -465,9 +478,23 @@ const WarehouseAccountSettings = () => {
                                                                 <input type="file" accept="image/*" className="hidden" disabled={uploadingField !== null} onChange={(e) => handlePhotoUpload('profile', e)} />
                                                                 <span className="text-white text-xs font-bold uppercase tracking-wider flex flex-col items-center gap-1">
                                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                                                    {uploadingField === 'profile' ? 'Uploading…' : 'Change'}
+                                                                    {uploadingField === 'profile' ? 'Uploading…' : 'Gallery'}
                                                                 </span>
                                                             </label>
+                                                        )}
+                                                        {isEditing && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setCameraField('profile')}
+                                                                disabled={uploadingField !== null}
+                                                                title="Take Photo"
+                                                                className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-white shadow-lg flex items-center justify-center text-teal-600 hover:text-teal-700 border border-gray-100 z-20 disabled:opacity-50"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25a2.25 2.25 0 012.25-2.25h1.046c.625 0 1.198-.353 1.477-.911.323-.646.997-1.09 1.777-1.09h2.4c.78 0 1.454.444 1.777 1.09a1.65 1.65 0 001.477.911h1.046a2.25 2.25 0 012.25 2.25v8.25a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V8.25z" />
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                                                                </svg>
+                                                            </button>
                                                         )}
                                                     </div>
                                                     <div className="text-center sm:text-left">
@@ -516,8 +543,22 @@ const WarehouseAccountSettings = () => {
                                                         {isEditing && (
                                                             <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm">
                                                                 <input type="file" accept="image/*" className="hidden" disabled={uploadingField !== null} onChange={(e) => handlePhotoUpload('logo', e)} />
-                                                                <span className="text-white text-xs font-bold">{uploadingField === 'logo' ? 'UPLOADING…' : 'UPLOAD'}</span>
+                                                                <span className="text-white text-xs font-bold">{uploadingField === 'logo' ? 'UPLOADING…' : 'GALLERY'}</span>
                                                             </label>
+                                                        )}
+                                                        {isEditing && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setCameraField('logo')}
+                                                                disabled={uploadingField !== null}
+                                                                title="Take Photo"
+                                                                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center text-teal-600 hover:text-teal-700 border border-gray-100 z-20 disabled:opacity-50"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25a2.25 2.25 0 012.25-2.25h1.046c.625 0 1.198-.353 1.477-.911.323-.646.997-1.09 1.777-1.09h2.4c.78 0 1.454.444 1.777 1.09a1.65 1.65 0 001.477.911h1.046a2.25 2.25 0 012.25 2.25v8.25a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V8.25z" />
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                                                                </svg>
+                                                            </button>
                                                         )}
                                                     </div>
                                                     <div>
@@ -770,6 +811,12 @@ const WarehouseAccountSettings = () => {
                     </div>
                 </div>
             </div>
+            {cameraField && (
+                <CameraCapture
+                    onCapture={(file) => { handlePhotoCameraCapture(cameraField, file); setCameraField(null); }}
+                    onClose={() => setCameraField(null)}
+                />
+            )}
         </div>
     );
 };
