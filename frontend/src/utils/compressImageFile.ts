@@ -12,8 +12,15 @@ export const compressImageFile = (
   quality = 0.85
 ): Promise<File> =>
   new Promise((resolve) => {
+    // Camera captures on some Android browsers/WebViews hand back a File with
+    // an empty `type` (no MIME metadata from the camera intent). The input's
+    // `accept="image/*"` already guarantees it's an image, so treat a blank
+    // type as "try to decode it" rather than skipping compression — which
+    // would leave the file with an empty type and fail the upload's image
+    // MIME check downstream ("Please select valid image files only").
     const isImage =
       file.type.startsWith('image/') ||
+      file.type === '' ||
       /\.(heic|heif)$/i.test(file.name);
 
     if (!isImage) {

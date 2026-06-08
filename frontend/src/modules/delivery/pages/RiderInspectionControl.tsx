@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { compressImageFile } from '../../../utils/compressImageFile';
+import CameraCapture from '../../../components/CameraCapture';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Camera, CheckCircle, Clock, MapPin, Package,
@@ -24,6 +25,7 @@ export default function RiderInspectionControl() {
   const [uploadingReturnId, setUploadingReturnId] = useState<string | null>(null);
   const [pickupEvidence, setPickupEvidence] = useState<Record<string, string[]>>({});
   const [riderRemarks, setRiderRemarks] = useState<Record<string, string>>({});
+  const [cameraTargetReturnId, setCameraTargetReturnId] = useState<string | null>(null);
 
   // OTP flow state per return item
   const [otpSentFor, setOtpSentFor] = useState<Record<string, boolean>>({});
@@ -109,9 +111,7 @@ export default function RiderInspectionControl() {
     }
   };
 
-  const handleRiderFileUpload = async (returnId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawArr = Array.from(e.target.files || []); // extract BEFORE clearing (FileList is live)
-    e.target.value = '';
+  const uploadRiderPhotos = async (returnId: string, rawArr: File[]) => {
     if (rawArr.length === 0) return;
     // Compress every image (converts HEIC → JPEG, reduces large camera shots)
     const fileArr = await Promise.all(rawArr.map((f) => compressImageFile(f)));
@@ -135,8 +135,17 @@ export default function RiderInspectionControl() {
       toast.error(error.message || "Failed to upload photo", { id: toastId });
     } finally {
       setUploadingReturnId(null);
-      e.target.value = '';
     }
+  };
+
+  const handleRiderFileUpload = (returnId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawArr = Array.from(e.target.files || []); // extract BEFORE clearing (FileList is live)
+    e.target.value = '';
+    void uploadRiderPhotos(returnId, rawArr);
+  };
+
+  const handleRiderCameraCapture = (returnId: string, file: File) => {
+    void uploadRiderPhotos(returnId, [file]);
   };
 
   const handleRiderRemovePhoto = (returnId: string, imgIdx: number) => {
@@ -490,19 +499,16 @@ export default function RiderInspectionControl() {
                                   onChange={(e) => handleRiderFileUpload(ret._id, e)}
                                 />
                               </label>
-                              {/* Camera — opens the device camera to take a live photo */}
-                              <label className="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-teal-300 bg-teal-50/40 rounded-lg text-xs font-bold text-teal-700 hover:bg-teal-50 cursor-pointer">
+                              {/* Camera — opens an in-app camera overlay (live preview + shutter), not an external camera app */}
+                              <button
+                                type="button"
+                                onClick={() => setCameraTargetReturnId(ret._id)}
+                                disabled={uploadingReturnId !== null}
+                                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-teal-300 bg-teal-50/40 rounded-lg text-xs font-bold text-teal-700 hover:bg-teal-50 cursor-pointer disabled:opacity-50"
+                              >
                                 <Camera className="w-4 h-4" />
                                 Camera
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  capture="environment"
-                                  className="hidden"
-                                  disabled={uploadingReturnId !== null}
-                                  onChange={(e) => handleRiderFileUpload(ret._id, e)}
-                                />
-                              </label>
+                              </button>
                             </div>
                           )}
                           {pickupEvidence[ret._id] && pickupEvidence[ret._id].length > 0 && (
@@ -747,6 +753,13 @@ export default function RiderInspectionControl() {
         )}
 
       </div>
+
+      {cameraTargetReturnId && (
+        <CameraCapture
+          onCapture={(file) => handleRiderCameraCapture(cameraTargetReturnId, file)}
+          onClose={() => setCameraTargetReturnId(null)}
+        />
+      )}
     </div>
   );
 }

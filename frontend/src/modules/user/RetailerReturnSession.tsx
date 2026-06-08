@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { compressImageFile } from '../../utils/compressImageFile';
+import CameraCapture from '../../components/CameraCapture';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, Upload, XCircle, AlertCircle, Clock, Camera, Image as ImageIcon } from 'lucide-react';
 import api from '../../services/api/config'; // Wait, let's just mock it or assume simple fetch API
@@ -14,6 +15,7 @@ export default function RetailerReturnSession() {
   const [timeLeft, setTimeLeft] = useState<number>(-1);
   const [returnItems, setReturnItems] = useState<any[]>([]);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [cameraTargetIndex, setCameraTargetIndex] = useState<number | null>(null);
   const [acceptingAll, setAcceptingAll] = useState(false);
   const [showAcceptAllConfirm, setShowAcceptAllConfirm] = useState(false);
 
@@ -88,12 +90,7 @@ export default function RetailerReturnSession() {
     setReturnItems(updated);
   };
 
-  const handleFileUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    // Convert FileList to a plain array BEFORE clearing the input.
-    // FileList is a live browser object — setting input.value='' empties it, so any
-    // reference saved after the clear would have length 0 and bail out early.
-    const rawFiles = Array.from(e.target.files || []);
-    e.target.value = ''; // allow re-selecting the same file on next tap
+  const uploadReturnPhotos = async (index: number, rawFiles: File[]) => {
     if (rawFiles.length === 0) return;
 
     // Compress each file — converts HEIC→JPEG and shrinks large camera shots
@@ -128,6 +125,19 @@ export default function RetailerReturnSession() {
     } finally {
       setUploadingIndex(null);
     }
+  };
+
+  const handleFileUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    // Convert FileList to a plain array BEFORE clearing the input.
+    // FileList is a live browser object — setting input.value='' empties it, so any
+    // reference saved after the clear would have length 0 and bail out early.
+    const rawFiles = Array.from(e.target.files || []);
+    e.target.value = ''; // allow re-selecting the same file on next tap
+    void uploadReturnPhotos(index, rawFiles);
+  };
+
+  const handleCameraCapture = (index: number, file: File) => {
+    void uploadReturnPhotos(index, [file]);
   };
 
   const handleRemovePhoto = (itemIndex: number, photoIndex: number) => {
@@ -351,19 +361,16 @@ export default function RetailerReturnSession() {
                             onChange={(e) => handleFileUpload(index, e)}
                           />
                         </label>
-                        {/* Camera — opens the device camera to take a live photo */}
-                        <label className="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-teal-300 bg-teal-50/40 rounded-lg text-sm text-teal-700 hover:bg-teal-50 cursor-pointer">
+                        {/* Camera — opens an in-app camera overlay (live preview + shutter), not an external camera app */}
+                        <button
+                          type="button"
+                          onClick={() => setCameraTargetIndex(index)}
+                          disabled={uploadingIndex !== null}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-teal-300 bg-teal-50/40 rounded-lg text-sm text-teal-700 hover:bg-teal-50 cursor-pointer disabled:opacity-50"
+                        >
                           <Camera className="w-4 h-4" />
                           Camera
-                          <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            className="hidden"
-                            disabled={uploadingIndex !== null}
-                            onChange={(e) => handleFileUpload(index, e)}
-                          />
-                        </label>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -453,6 +460,13 @@ export default function RetailerReturnSession() {
             </div>
           </div>
         </div>
+      )}
+
+      {cameraTargetIndex !== null && (
+        <CameraCapture
+          onCapture={(file) => handleCameraCapture(cameraTargetIndex, file)}
+          onClose={() => setCameraTargetIndex(null)}
+        />
       )}
     </div>
   );

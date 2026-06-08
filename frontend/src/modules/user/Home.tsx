@@ -9,6 +9,7 @@ import { getHomeContent } from "../../services/api/customerHomeService";
 import { getProducts as getCustomerProducts } from "../../services/api/customerProductService";
 import { getHeaderCategoriesPublic } from "../../services/api/headerCategoryService";
 import PageLoader from "../../components/PageLoader";
+import Footer from "../../components/Footer";
 import FishCategoryCards from "./components/FishCategoryCards";
 import ProductCard from "./components/ProductCard";
 
@@ -836,6 +837,11 @@ export default function Home() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Site footer — desktop/web only; mobile keeps the bottom nav instead */}
+      <div className="hidden md:block">
+        <Footer />
       </div>
     </div>
   );
