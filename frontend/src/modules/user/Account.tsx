@@ -373,22 +373,11 @@ export default function Account() {
                   </div>
                 </div>
 
-                {/* Gallery Button */}
-                <button
-                  onClick={handleImageClick}
-                  title="Choose from Gallery"
-                  className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center text-teal-600 hover:text-teal-700 transition-colors border border-gray-100"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                    <circle cx="12" cy="13" r="4" />
-                  </svg>
-                </button>
-                {/* Camera Button */}
+                {/* Camera Button — clicking the photo itself (or its hover overlay) already opens Gallery */}
                 <button
                   onClick={() => setShowImageCamera(true)}
                   title="Take Photo"
-                  className="absolute -bottom-1 right-8 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center text-teal-600 hover:text-teal-700 transition-colors border border-gray-100"
+                  className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center text-teal-600 hover:text-teal-700 transition-colors border border-gray-100"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M2.25 8.25a2.25 2.25 0 012.25-2.25h1.046c.625 0 1.198-.353 1.477-.911.323-.646.997-1.09 1.777-1.09h2.4c.78 0 1.454.444 1.777 1.09a1.65 1.65 0 001.477.911h1.046a2.25 2.25 0 012.25 2.25v8.25a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V8.25z" />
