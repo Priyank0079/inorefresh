@@ -94,7 +94,7 @@ function ProductCard({ product, badgeText = '' }: ProductCardProps) {
       style={{ background: 'linear-gradient(160deg, #EBF9FF 0%, #D6F1FA 60%, #C4EAF7 100%)' }}
     >
       {/* ── Image ─────────────────────────────── */}
-      <div className="relative w-full overflow-hidden bg-[#F4F7F9]" style={{ aspectRatio: '1 / 1' }}>
+      <div className="relative w-full overflow-hidden bg-[#F4F7F9]">
         {/* Discount badge */}
         {discount > 0 && (
           <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-red-500 to-pink-600 text-white text-[8px] font-black uppercase tracking-wider shadow-sm leading-none">
@@ -121,7 +121,7 @@ function ProductCard({ product, badgeText = '' }: ProductCardProps) {
         <img
           src={imgSrc}
           alt={product.name || 'Product'}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="w-full h-auto block transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
           onError={(e) => {
             const t = e.target as HTMLImageElement;
@@ -134,7 +134,7 @@ function ProductCard({ product, badgeText = '' }: ProductCardProps) {
 
         {/* Sold-out overlay */}
         {isSoldOut && (
-          <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] flex items-center justify-center z-10">
+          <div className="absolute inset-0 w-full h-full bg-white/50 backdrop-blur-[2px] flex items-center justify-center z-10">
             <span className="px-2.5 py-1 bg-neutral-900/85 text-white text-[9px] font-black rounded-full tracking-widest uppercase shadow-xl">
               {product.isAvailable === false ? 'Out of Range' : 'Sold Out'}
             </span>
@@ -155,9 +155,16 @@ function ProductCard({ product, badgeText = '' }: ProductCardProps) {
         </div>
 
         {/* Product name */}
-        <h3 className="text-[12px] font-bold text-[#072F4A] line-clamp-2 leading-tight group-hover:text-teal-600 transition-colors duration-200">
+        <h3 className="text-[12px] font-bold text-[#072F4A] line-clamp-1 leading-tight">
           {product.name || product.productName || ''}
         </h3>
+
+        {/* Description */}
+        {(product.smallDescription || product.description) && (
+          <p className="text-[9.5px] text-[#3a7a94] leading-snug line-clamp-2 font-medium mt-0.5">
+            {product.smallDescription || product.description}
+          </p>
+        )}
 
         {/* Price + Add button */}
         <div className="flex items-center justify-between mt-0.5 pt-1 border-t border-[#9FD8EE]/50">

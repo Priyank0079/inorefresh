@@ -332,10 +332,10 @@ export default function ProductDetail() {
       </div>
 
       {/* Scrollable content */}
-      <div className="pt-16">
+      <div className="md:pt-16">
         {/* Location Availability Banner */}
         {!isAvailableAtLocation && (
-          <div className="bg-amber-50 border-l-4 border-amber-500 px-4 py-3 mx-4 mt-4 rounded-r-lg">
+          <div className="bg-amber-50 border-l-4 border-amber-500 px-4 py-3 mx-4 mt-20 rounded-r-lg">
             <div className="flex items-start gap-2">
               <svg
                 width="20"
@@ -366,10 +366,10 @@ export default function ProductDetail() {
         )}
 
         {/* Product Image Gallery */}
-        <div className="relative w-full bg-gradient-to-br from-neutral-100 to-neutral-200 overflow-hidden">
+        <div className="relative w-full overflow-hidden">
           {/* Main Product Image - Swipeable on mobile */}
           <div
-            className="w-full aspect-square relative overflow-hidden"
+            className="w-full relative overflow-hidden"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -380,7 +380,7 @@ export default function ProductDetail() {
           >
             {/* Image Container with swipe animation - Mobile swipe carousel */}
             <div
-              className="w-full h-full flex transition-transform duration-300 ease-out md:hidden"
+              className="flex transition-transform duration-300 ease-out md:hidden"
               style={{
                 transform: `translateX(-${selectedImageIndex * 100}%)`,
               }}
@@ -388,19 +388,19 @@ export default function ProductDetail() {
               {allImages.map((image: string, index: number) => (
                 <div
                   key={index}
-                  className="w-full h-full flex-shrink-0 flex items-center justify-center relative"
+                  className="w-full flex-shrink-0"
                   style={{ minWidth: '100%' }}
                 >
                   {image ? (
                     <img
                       src={image}
                       alt={`${product.name} - Image ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-auto block"
                       referrerPolicy="no-referrer"
                       draggable={false}
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-neutral-400 text-6xl">
+                    <div className="w-full h-64 flex items-center justify-center bg-neutral-100 text-neutral-400 text-6xl">
                       {(product.name || product.productName || "?")
                         .charAt(0)
                         .toUpperCase()}
@@ -410,17 +410,17 @@ export default function ProductDetail() {
               ))}
             </div>
 
-            {/* Desktop: Single image display */}
-            <div className="hidden md:flex w-full h-full items-center justify-center">
+            {/* Desktop: Single image display — capped height, centered */}
+            <div className="hidden md:flex md:justify-center md:items-center md:bg-neutral-50 md:h-[480px] md:overflow-hidden">
               {currentImage ? (
                 <img
                   src={currentImage}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="h-full w-auto object-contain block"
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-neutral-400 text-6xl">
+                <div className="w-full h-full flex items-center justify-center bg-neutral-100 text-neutral-400 text-6xl">
                   {(product.name || product.productName || "?")
                     .charAt(0)
                     .toUpperCase()}
@@ -535,7 +535,7 @@ export default function ProductDetail() {
                     <img
                       src={image}
                       alt={`${product.name} - Image ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                       referrerPolicy="no-referrer"
                     />
                   </button>
@@ -653,6 +653,15 @@ export default function ProductDetail() {
             <p className={`text-sm mb-1 ${variantStock > 0 ? "text-neutral-600" : "text-red-500 font-medium"}`}>
               {variantStock > 0 ? `${variantStock} in stock` : "Out of stock"}
             </p>
+          )}
+
+          {/* Description */}
+          {(product.description || product.smallDescription) && (
+            <div className="mb-2 w-full overflow-hidden">
+              <p className="text-sm text-neutral-600 leading-relaxed break-words whitespace-pre-wrap">
+                {product.description || product.smallDescription}
+              </p>
+            </div>
           )}
 
           {/* Divider line */}
@@ -874,16 +883,6 @@ export default function ProductDetail() {
               {isInfoExpanded && (
                 <div className="bg-white px-2 py-2">
                   <div className="space-y-1.5">
-                    {product.description && (
-                      <div className="flex items-start">
-                        <span className="text-xs font-semibold text-neutral-800 w-[180px] flex-shrink-0">
-                          Description:
-                        </span>
-                        <span className="text-xs text-neutral-600 leading-relaxed flex-1">
-                          {product.description}
-                        </span>
-                      </div>
-                    )}
                     <div className="flex items-start">
                       <span className="text-xs font-semibold text-neutral-800 w-[180px] flex-shrink-0">
                         Unit:
@@ -926,8 +925,9 @@ export default function ProductDetail() {
                       <span className="text-xs font-semibold text-neutral-800 w-[180px] flex-shrink-0">
                         Customer Care Details:
                       </span>
-                      <span className="text-xs text-neutral-600">
-                        Email: help@dhakadsnazzy.com
+                      <span className="text-xs text-neutral-600 flex-1">
+                        <span className="block">Email: inorfresh@gmail.com</span>
+                        <span className="block">Phone: +91 94812 14922</span>
                       </span>
                     </div>
                     <div className="flex items-start">
@@ -955,10 +955,7 @@ export default function ProductDetail() {
                         Return Policy:
                       </span>
                       <span className="text-xs text-neutral-600 leading-relaxed flex-1">
-                        {product.isReturnable
-                          ? `This product is returnable within ${product.maxReturnDays || 2
-                          } days.`
-                          : "This product is non-returnable."}
+                        Instant return at the door — our delivery partner waits up to 20 minutes so you can inspect your order. If anything is wrong, damaged, or not as expected, simply hand it back on the spot. Your refund is credited instantly to your Inorfresh wallet — no forms, no delays.
                       </span>
                     </div>
                     {product.sellerId && (

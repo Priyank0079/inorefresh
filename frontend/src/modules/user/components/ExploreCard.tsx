@@ -58,7 +58,7 @@ const ExploreCard: React.FC<ExploreCardProps> = ({ id, name, image, iconName, li
                                 <img
                                     src={image}
                                     alt={name}
-                                    className="w-full h-full object-cover relative z-10 transition-transform duration-500 group-hover:scale-110"
+                                    className="w-full h-full object-contain relative z-10 transition-transform duration-500 group-hover:scale-110"
                                     loading="lazy"
                                     decoding="async"
                                     onError={(e) => {

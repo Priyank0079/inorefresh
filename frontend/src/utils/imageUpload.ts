@@ -157,6 +157,48 @@ export function isPdfFile(file: File): boolean {
 }
 
 /**
+ * Compress and center-crop image to a square — use for product main images
+ * so they always display without cropping in the 1:1 UI container.
+ */
+export function compressToSquare(
+  file: File,
+  size: number = 1080,
+  quality: number = 0.85
+): Promise<File> {
+  return new Promise((resolve, reject) => {
+    if (!isImageFile(file)) { resolve(file); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { reject(new Error("Failed to get canvas context")); return; }
+        // Center-crop: take the largest centered square from the source image
+        const srcSize = Math.min(img.width, img.height);
+        const srcX = (img.width - srcSize) / 2;
+        const srcY = (img.height - srcSize) / 2;
+        ctx.drawImage(img, srcX, srcY, srcSize, srcSize, 0, 0, size, size);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) { reject(new Error("Failed to compress image")); return; }
+            resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() }));
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error("Failed to load image"));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
  * Compress image before upload (optional optimization)
  */
 export function compressImage(

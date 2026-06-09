@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { uploadImage } from "../../../services/api/uploadService";
-import { validateImageFile, createImagePreview } from "../../../utils/imageUpload";
+import { validateImageFile, createImagePreview, compressToSquare } from "../../../utils/imageUpload";
 import { createProduct, updateProduct, getProductById } from "../../../services/api/admin/adminProductService";
 import { ProductVariation } from "../../../services/api/productService";
 import { getSubcategories, SubCategory } from "../../../services/api/categoryService";
@@ -163,10 +163,12 @@ export default function AdminEditProduct() {
   const processMainImageFile = async (file: File) => {
     const validation = validateImageFile(file);
     if (!validation.valid) { setUploadError(validation.error || "Invalid image"); return; }
-    setMainImageFile(file);
+    let compressed = file;
+    try { compressed = await compressToSquare(file); } catch { compressed = file; }
+    setMainImageFile(compressed);
     setUploadError("");
     try {
-      const preview = await createImagePreview(file);
+      const preview = await createImagePreview(compressed);
       setMainImagePreview(preview);
     } catch { setUploadError("Failed to preview image"); }
   };
@@ -506,8 +508,9 @@ export default function AdminEditProduct() {
                   </button>
                 </div>
                 <p className="text-xs text-neutral-400 mt-2">
-                  JPG, PNG, or WebP. Max 5MB. 
-                  <span className="block mt-1 text-[#12b2a2] font-semibold italic">Recommended: 800x800px or higher (1:1 square ratio)</span>
+                  JPG, PNG, or WebP. Max 5MB.
+                  <span className="block mt-1 text-[#12b2a2] font-semibold">📐 Best: 1080×1080 px — Square (1:1 ratio)</span>
+                  <span className="block text-[11px] text-neutral-400">Non-square images will be auto center-cropped to square on upload.</span>
                 </p>
                 {mainImageFile && (
                   <p className="text-xs text-teal-600 mt-1">✓ {mainImageFile.name} selected</p>
