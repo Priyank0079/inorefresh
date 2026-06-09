@@ -22,7 +22,6 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    "ignoreDeprecations": "6.0",
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
