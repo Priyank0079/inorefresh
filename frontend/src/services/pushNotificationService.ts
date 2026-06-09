@@ -4,6 +4,16 @@ import { getAuthToken } from './api/config';
 const VAPID_KEY = 'BNtQ-yWzXEuz_T9O0xQeEGi52R4-8nNjVbBao1oT4VuASPq0uiLhfPk81_ULMXl3eTsmpMQDhzKDSk47fgohgVQ';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.inorfresh.com/api/v1';
 
+function getDevicePlatform(): 'web' | 'mobile' {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        ? 'mobile'
+        : 'web';
+}
+
+function getFCMStorageKey(): string {
+    return `fcm_token_${getDevicePlatform()}`;
+}
+
 /**
  * Register service worker for Firebase messaging
  */
@@ -113,8 +123,11 @@ async function getFCMToken(): Promise<string | null> {
  */
 export async function registerFCMToken(forceUpdate: boolean = false): Promise<string | null> {
     try {
+        const platform = getDevicePlatform();
+        const storageKey = getFCMStorageKey();
+
         // Check if already registered (skip only when NOT forcing an update)
-        const savedToken = localStorage.getItem('fcm_token_web');
+        const savedToken = localStorage.getItem(storageKey);
         if (savedToken && !forceUpdate) {
             console.log('ℹ️ FCM token already registered (cached)');
             return savedToken;
@@ -122,7 +135,7 @@ export async function registerFCMToken(forceUpdate: boolean = false): Promise<st
 
         // Clear cached token when force-updating so we always fetch a fresh one
         if (forceUpdate && savedToken) {
-            localStorage.removeItem('fcm_token_web');
+            localStorage.removeItem(storageKey);
         }
 
         // Request permission
@@ -154,12 +167,12 @@ export async function registerFCMToken(forceUpdate: boolean = false): Promise<st
             },
             body: JSON.stringify({
                 token: token,
-                platform: 'web'
+                platform: platform
             })
         });
 
         if (response.ok) {
-            localStorage.setItem('fcm_token_web', token);
+            localStorage.setItem(storageKey, token);
             console.log('✅ FCM token registered with backend');
             return token;
         } else {
@@ -240,7 +253,9 @@ export async function initializePushNotifications(): Promise<void> {
  */
 export async function removeFCMToken(): Promise<void> {
     try {
-        const savedToken = localStorage.getItem('fcm_token_web');
+        const platform = getDevicePlatform();
+        const storageKey = getFCMStorageKey();
+        const savedToken = localStorage.getItem(storageKey);
         if (!savedToken) {
             return;
         }
@@ -258,11 +273,11 @@ export async function removeFCMToken(): Promise<void> {
             },
             body: JSON.stringify({
                 token: savedToken,
-                platform: 'web'
+                platform: platform
             })
         });
 
-        localStorage.removeItem('fcm_token_web');
+        localStorage.removeItem(storageKey);
         console.log('✅ FCM token removed');
     } catch (error) {
         console.error('❌ Error removing FCM token:', error);
