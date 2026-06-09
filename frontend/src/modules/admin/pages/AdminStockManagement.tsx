@@ -8,6 +8,7 @@ import {
   type Category,
 } from "../../../services/api/admin/adminProductService";
 import { useAuth } from "../../../context/AuthContext";
+import WriteAction from "../components/WriteAction";
 
 interface ProductVariation {
   id: string;
@@ -685,26 +686,30 @@ export default function AdminStockManagement() {
                       </td>
                       <td className="p-4 align-middle">
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleEdit(product.productId)}
-                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                            title="Edit">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(product.productId)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded"
-                            title="Delete">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="3 6 5 6 21 6"></polyline>
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                              <line x1="10" y1="11" x2="10" y2="17"></line>
-                              <line x1="14" y1="11" x2="14" y2="17"></line>
-                            </svg>
-                          </button>
+                          <WriteAction>
+                            <button
+                              onClick={() => handleEdit(product.productId)}
+                              className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                              title="Edit">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                              </svg>
+                            </button>
+                          </WriteAction>
+                          <WriteAction>
+                            <button
+                              onClick={() => handleDelete(product.productId)}
+                              className="p-1 text-red-600 hover:bg-red-50 rounded"
+                              title="Delete">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                              </svg>
+                            </button>
+                          </WriteAction>
                         </div>
                       </td>
                     </tr>
@@ -797,7 +802,9 @@ export default function AdminStockManagement() {
             <p className="text-sm text-neutral-500 mb-4">Are you sure you want to delete this product?</p>
             <div className="flex gap-2">
               <button onClick={() => setConfirmDeleteProductId(null)} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors">Cancel</button>
-              <button onClick={handleConfirmDeleteProduct} className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">Delete</button>
+              <WriteAction className="flex-1">
+                <button onClick={handleConfirmDeleteProduct} className="w-full py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">Delete</button>
+              </WriteAction>
             </div>
           </div>
         </div>

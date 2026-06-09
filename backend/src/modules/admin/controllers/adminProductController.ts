@@ -275,25 +275,16 @@ export const deleteCategory = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    // Check if category has child categories (using parentId)
-    const childrenCount = await Category.countDocuments({ parentId: id });
-    if (childrenCount > 0) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Cannot delete category with subcategories. Please delete or move subcategories first.",
-      });
+    // Cascade-delete child categories (parentId-style) and their subcategories
+    const childCategories = await Category.find({ parentId: id }).select("_id");
+    if (childCategories.length > 0) {
+      const childIds = childCategories.map(c => c._id);
+      await SubCategory.deleteMany({ category: { $in: childIds } });
+      await Category.deleteMany({ parentId: id });
     }
 
-    // Check if category has old-style subcategories (backward compatibility)
-    const subcategoryCount = await SubCategory.countDocuments({ category: id });
-    if (subcategoryCount > 0) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Cannot delete category with subcategories. Please delete or move subcategories first.",
-      });
-    }
+    // Cascade-delete old-style subcategories linked directly to this category
+    await SubCategory.deleteMany({ category: id });
 
     // Check if category has products
     const productCount = await Product.countDocuments({ category: id });

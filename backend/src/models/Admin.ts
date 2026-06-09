@@ -1,18 +1,42 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
+export type AdminRole = 'Super Admin' | 'Admin' | 'Investor' | 'Staff';
+
+export const ADMIN_MODULES = [
+  'dashboard',
+  'products',
+  'orders',
+  'customers',
+  'delivery',
+  'warehouse',
+  'port',
+  'finance',
+  'marketing',
+  'returns',
+  'notifications',
+  'settings',
+] as const;
+
+export type AdminModule = typeof ADMIN_MODULES[number];
+
 export interface IAdmin extends Document {
   firstName: string;
   lastName: string;
   mobile: string;
   email: string;
-  role: 'Super Admin' | 'Admin';
+  role: AdminRole;
   password: string;
+  isActive: boolean;
+  createdBy?: mongoose.Types.ObjectId;
+  // RBAC — only used when role is 'Staff'
+  viewModules: AdminModule[];
+  writeModules: AdminModule[];
   createdAt: Date;
   updatedAt: Date;
   // FCM Push Notification Tokens
-  fcmTokens?: string[];        // Web push notification tokens
-  fcmTokenMobile?: string[];   // Mobile push notification tokens
+  fcmTokens?: string[];
+  fcmTokenMobile?: string[];
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -56,14 +80,30 @@ const AdminSchema = new Schema<IAdmin>(
     role: {
       type: String,
       required: [true, 'Role is required'],
-      enum: ['Super Admin', 'Admin'],
+      enum: ['Super Admin', 'Admin', 'Investor', 'Staff'],
       default: 'Admin',
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Admin',
+    },
+    viewModules: {
+      type: [String],
+      default: [],
+    },
+    writeModules: {
+      type: [String],
+      default: [],
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: false,
       minlength: [6, 'Password must be at least 6 characters'],
-      select: false, // Don't return password by default
+      select: false,
     },
     // FCM Push Notification Tokens
     fcmTokens: {

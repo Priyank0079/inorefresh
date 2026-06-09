@@ -38,6 +38,7 @@ import paymentRoutes from "./paymentRoutes";
 import warehouseWalletRoutes from "./warehouseWalletRoutes";
 import deliveryWalletRoutes from "./deliveryWalletRoutes";
 import adminWithdrawalRoutes from "./adminWithdrawalRoutes";
+import adminTeamRoutes from "./adminTeamRoutes";
 // Port routes are now mounted directly in server.ts
 
 
@@ -124,5 +125,6 @@ router.use("/payment", paymentRoutes);
 router.use("/warehouse/wallet-new", authenticate, requireUserType("Warehouse"), warehouseWalletRoutes);
 router.use("/delivery/wallet", authenticate, requireUserType("Delivery"), deliveryWalletRoutes);
 router.use("/admin/withdrawals", authenticate, requireUserType("Admin"), adminWithdrawalRoutes);
+router.use("/admin/team", adminTeamRoutes);
 
 export default router;

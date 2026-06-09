@@ -138,3 +138,87 @@ export const requireAdminAuth = (
 
   next();
 };
+
+/** Only the main Admin role can call team management endpoints */
+export const requireAdminRole = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const role = req.user?.role;
+  if (role !== "Admin" && role !== "Super Admin") {
+    res.status(403).json({
+      success: false,
+      message: "Access denied. Only Admin can manage the team.",
+    });
+    return;
+  }
+  next();
+};
+
+/** Block Investor from any mutation. For Staff, caller must additionally check module. */
+export const requireAdminWrite = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const role = req.user?.role;
+  if (role === "Investor") {
+    res.status(403).json({
+      success: false,
+      message: "Read-only access. Investors cannot modify data.",
+    });
+    return;
+  }
+  next();
+};
+
+/** Block Investor AND Staff-without-write-permission from a specific module's mutations */
+export const requireWriteModule = (module: string) => (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const role = req.user?.role;
+  if (!role || role === "Investor") {
+    res.status(403).json({
+      success: false,
+      message: "Read-only access.",
+    });
+    return;
+  }
+  if (role === "Staff") {
+    const writeModules: string[] = req.user?.writeModules ?? [];
+    if (!writeModules.includes(module)) {
+      res.status(403).json({
+        success: false,
+        message: `No write permission for module: ${module}`,
+      });
+      return;
+    }
+  }
+  next();
+};
+
+/** Block Staff from viewing a module they have no view access to */
+export const requireViewModule = (module: string) => (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const role = req.user?.role;
+  // Admin, Super Admin, Investor: full view
+  if (!role || role !== "Staff") {
+    next();
+    return;
+  }
+  const viewModules: string[] = req.user?.viewModules ?? [];
+  if (!viewModules.includes(module)) {
+    res.status(403).json({
+      success: false,
+      message: `No view permission for module: ${module}`,
+    });
+    return;
+  }
+  next();
+};

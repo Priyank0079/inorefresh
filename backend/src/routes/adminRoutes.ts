@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate, requireUserType } from "../middleware/auth";
+import { authenticate, requireUserType, requireWriteModule, requireViewModule } from "../middleware/auth";
 
 // Dashboard Controllers
 import * as dashboardController from "../modules/admin/controllers/adminDashboardController";
@@ -103,238 +103,201 @@ router.get(
 );
 
 // ==================== Category Routes ====================
-router.post("/categories", productController.createCategory);
-router.get("/categories", productController.getCategories);
-router.put("/categories/:id", productController.updateCategory);
-router.delete("/categories/:id", productController.deleteCategory);
-router.patch("/categories/:id/status", productController.toggleCategoryStatus);
-router.post("/categories/bulk-delete", productController.bulkDeleteCategories);
-router.put("/categories/reorder", productController.updateCategoryOrder);
+router.get("/categories", requireViewModule("products"), productController.getCategories);
+router.post("/categories", requireWriteModule("products"), productController.createCategory);
+router.put("/categories/:id", requireWriteModule("products"), productController.updateCategory);
+router.delete("/categories/:id", requireWriteModule("products"), productController.deleteCategory);
+router.patch("/categories/:id/status", requireWriteModule("products"), productController.toggleCategoryStatus);
+router.post("/categories/bulk-delete", requireWriteModule("products"), productController.bulkDeleteCategories);
+router.put("/categories/reorder", requireWriteModule("products"), productController.updateCategoryOrder);
 
 // ==================== SubCategory Routes ====================
-router.post("/subcategories", productController.createSubCategory);
-router.get("/subcategories", productController.getSubCategories);
-router.put("/subcategories/:id", productController.updateSubCategory);
-router.delete("/subcategories/:id", productController.deleteSubCategory);
+router.get("/subcategories", requireViewModule("products"), productController.getSubCategories);
+router.post("/subcategories", requireWriteModule("products"), productController.createSubCategory);
+router.put("/subcategories/:id", requireWriteModule("products"), productController.updateSubCategory);
+router.delete("/subcategories/:id", requireWriteModule("products"), productController.deleteSubCategory);
 
 // ==================== Brand Routes ====================
-router.post("/brands", productController.createBrand);
-router.get("/brands", productController.getBrands);
-router.put("/brands/:id", productController.updateBrand);
-router.delete("/brands/:id", productController.deleteBrand);
+router.get("/brands", requireViewModule("products"), productController.getBrands);
+router.post("/brands", requireWriteModule("products"), productController.createBrand);
+router.put("/brands/:id", requireWriteModule("products"), productController.updateBrand);
+router.delete("/brands/:id", requireWriteModule("products"), productController.deleteBrand);
 
 // ==================== Product Routes ====================
-router.get("/products", productController.getProducts);
-router.get("/products/:id", productController.getProductById);
-router.put("/products/:id", productController.updateProduct);
-router.delete("/products/:id", productController.deleteProduct);
-router.post("/products/bulk-import", productController.bulkImportProducts);
-router.put("/products/bulk-update", productController.bulkUpdateProducts);
+router.get("/products", requireViewModule("products"), productController.getProducts);
+router.get("/products/:id", requireViewModule("products"), productController.getProductById);
+router.put("/products/:id", requireWriteModule("products"), productController.updateProduct);
+router.delete("/products/:id", requireWriteModule("products"), productController.deleteProduct);
+router.post("/products/bulk-import", requireWriteModule("products"), productController.bulkImportProducts);
+router.put("/products/bulk-update", requireWriteModule("products"), productController.bulkUpdateProducts);
 
 // ==================== Order Routes ====================
-router.get("/orders", orderController.getAllOrders);
-router.get("/orders/status/:status", orderController.getOrdersByStatus);
-router.get("/orders/:id", orderController.getOrderById);
-router.patch("/orders/:id/status", orderController.updateOrderStatus);
-router.patch("/orders/:id/assign-delivery", orderController.assignDeliveryBoy);
-router.get("/orders/export/csv", orderController.exportOrders);
+router.get("/orders", requireViewModule("orders"), orderController.getAllOrders);
+router.get("/orders/status/:status", requireViewModule("orders"), orderController.getOrdersByStatus);
+router.get("/orders/:id", requireViewModule("orders"), orderController.getOrderById);
+router.patch("/orders/:id/status", requireWriteModule("orders"), orderController.updateOrderStatus);
+router.patch("/orders/:id/assign-delivery", requireWriteModule("orders"), orderController.assignDeliveryBoy);
+router.get("/orders/export/csv", requireViewModule("orders"), orderController.exportOrders);
 
 // ==================== Return Request Routes ====================
-router.get("/return-requests", orderController.getReturnRequests);
-router.get("/return-requests/:id", orderController.getReturnRequestById);
-router.put("/return-requests/:id", orderController.processReturnRequest);
-router.patch("/returns/:id/process", orderController.processReturnRequest);
+router.get("/return-requests", requireViewModule("returns"), orderController.getReturnRequests);
+router.get("/return-requests/:id", requireViewModule("returns"), orderController.getReturnRequestById);
+router.put("/return-requests/:id", requireWriteModule("returns"), orderController.processReturnRequest);
+router.patch("/returns/:id/process", requireWriteModule("returns"), orderController.processReturnRequest);
 
 // ==================== Customer Routes ====================
-router.get("/customers", customerController.getAllCustomers);
-router.get("/customers/:id", customerController.getCustomerById);
-router.post("/customers/:id/add-wallet", customerController.addWalletBalance);
-router.patch("/customers/:id/status", customerController.updateCustomerStatus);
-router.put("/customers/:id", customerController.updateCustomer);
-router.get("/customers/:id/orders", customerController.getCustomerOrders);
-router.get("/retailers", customerController.getAllRetailers);
-router.get("/horeca", customerController.getAllHorecaUsers);
+router.get("/customers", requireViewModule("customers"), customerController.getAllCustomers);
+router.get("/customers/:id", requireViewModule("customers"), customerController.getCustomerById);
+router.post("/customers/:id/add-wallet", requireWriteModule("customers"), customerController.addWalletBalance);
+router.patch("/customers/:id/status", requireWriteModule("customers"), customerController.updateCustomerStatus);
+router.put("/customers/:id", requireWriteModule("customers"), customerController.updateCustomer);
+router.get("/customers/:id/orders", requireViewModule("customers"), customerController.getCustomerOrders);
+router.get("/retailers", requireViewModule("customers"), customerController.getAllRetailers);
+router.get("/horeca", requireViewModule("customers"), customerController.getAllHorecaUsers);
 
 // ==================== Delivery Routes ====================
-router.post("/delivery", deliveryController.createDeliveryBoy);
-router.get("/delivery", deliveryController.getAllDeliveryBoys);
-router.get("/delivery/:id", deliveryController.getDeliveryBoyById);
-router.put("/delivery/:id", deliveryController.updateDeliveryBoy);
-router.patch("/delivery/:id/status", deliveryController.updateDeliveryStatus);
-router.patch(
-  "/delivery/:id/availability",
-  deliveryController.updateDeliveryBoyAvailability
-);
-router.delete("/delivery/:id", deliveryController.deleteDeliveryBoy);
-router.get(
-  "/delivery/:id/assignments",
-  deliveryController.getDeliveryAssignments
-);
-router.post("/delivery/:id/collect-cash", deliveryController.collectCash);
-router.get(
-  "/delivery/:id/cash-collections",
-  deliveryController.getDeliveryBoyCashCollections
-);
-router.get("/delivery-fund-transfers", deliveryController.getDeliveryBoyFundTransfers);
-router.post("/delivery-fund-transfers", deliveryController.addDeliveryBoyFundTransfer);
+router.get("/delivery", requireViewModule("delivery"), deliveryController.getAllDeliveryBoys);
+router.get("/delivery/:id", requireViewModule("delivery"), deliveryController.getDeliveryBoyById);
+router.get("/delivery/:id/assignments", requireViewModule("delivery"), deliveryController.getDeliveryAssignments);
+router.get("/delivery/:id/cash-collections", requireViewModule("delivery"), deliveryController.getDeliveryBoyCashCollections);
+router.get("/delivery-fund-transfers", requireViewModule("delivery"), deliveryController.getDeliveryBoyFundTransfers);
+router.post("/delivery", requireWriteModule("delivery"), deliveryController.createDeliveryBoy);
+router.put("/delivery/:id", requireWriteModule("delivery"), deliveryController.updateDeliveryBoy);
+router.patch("/delivery/:id/status", requireWriteModule("delivery"), deliveryController.updateDeliveryStatus);
+router.patch("/delivery/:id/availability", requireWriteModule("delivery"), deliveryController.updateDeliveryBoyAvailability);
+router.delete("/delivery/:id", requireWriteModule("delivery"), deliveryController.deleteDeliveryBoy);
+router.post("/delivery/:id/collect-cash", requireWriteModule("delivery"), deliveryController.collectCash);
+router.post("/delivery-fund-transfers", requireWriteModule("delivery"), deliveryController.addDeliveryBoyFundTransfer);
 
 // ==================== Payment Routes ====================
-router.get("/payment-methods", paymentController.getPaymentMethods);
-router.get("/payment-methods/:id", paymentController.getPaymentMethodById);
-router.put("/payment-methods/:id", paymentController.updatePaymentMethod);
-router.patch(
-  "/payment-methods/:id/status",
-  paymentController.updatePaymentMethodStatus
-);
+router.get("/payment-methods", requireViewModule("finance"), paymentController.getPaymentMethods);
+router.get("/payment-methods/:id", requireViewModule("finance"), paymentController.getPaymentMethodById);
+router.put("/payment-methods/:id", requireWriteModule("finance"), paymentController.updatePaymentMethod);
+router.patch("/payment-methods/:id/status", requireWriteModule("finance"), paymentController.updatePaymentMethodStatus);
 
 // ==================== Settings Routes ====================
-router.get("/settings", settingsController.getAppSettings);
-router.put("/settings", settingsController.updateAppSettings);
-router.get("/settings/payment-methods", settingsController.getPaymentMethods);
-router.put(
-  "/settings/payment-methods",
-  settingsController.updatePaymentMethods
-);
-router.get("/settings/sms-gateway", settingsController.getSMSGatewaySettings);
-router.put(
-  "/settings/sms-gateway",
-  settingsController.updateSMSGatewaySettings
-);
+router.get("/settings", requireViewModule("settings"), settingsController.getAppSettings);
+router.put("/settings", requireWriteModule("settings"), settingsController.updateAppSettings);
+router.get("/settings/payment-methods", requireViewModule("settings"), settingsController.getPaymentMethods);
+router.put("/settings/payment-methods", requireWriteModule("settings"), settingsController.updatePaymentMethods);
+router.get("/settings/sms-gateway", requireViewModule("settings"), settingsController.getSMSGatewaySettings);
+router.put("/settings/sms-gateway", requireWriteModule("settings"), settingsController.updateSMSGatewaySettings);
 
 // ==================== Coupon Routes ====================
-router.post("/coupons", couponController.createCoupon);
-router.get("/coupons", couponController.getCoupons);
-router.get("/coupons/:id", couponController.getCouponById);
-router.put("/coupons/:id", couponController.updateCoupon);
-router.delete("/coupons/:id", couponController.deleteCoupon);
-router.post("/coupons/validate", couponController.validateCoupon);
+router.get("/coupons", requireViewModule("marketing"), couponController.getCoupons);
+router.get("/coupons/:id", requireViewModule("marketing"), couponController.getCouponById);
+router.post("/coupons/validate", requireViewModule("marketing"), couponController.validateCoupon);
+router.post("/coupons", requireWriteModule("marketing"), couponController.createCoupon);
+router.put("/coupons/:id", requireWriteModule("marketing"), couponController.updateCoupon);
+router.delete("/coupons/:id", requireWriteModule("marketing"), couponController.deleteCoupon);
 
 // ==================== Notification Routes ====================
-router.post("/notifications", notificationController.createNotification);
-router.get("/notifications", notificationController.getNotifications);
-router.get("/notifications/:id", notificationController.getNotificationById);
-router.put("/notifications/:id", notificationController.updateNotification);
-router.delete("/notifications/:id", notificationController.deleteNotification);
-router.post("/notifications/:id/send", notificationController.sendNotification);
-router.patch("/notifications/:id/read", notificationController.markAsRead);
-router.patch(
-  "/notifications/read-all",
-  notificationController.markMultipleAsRead
-);
-router.patch(
-  "/notifications/mark-read",
-  notificationController.markMultipleAsRead
-);
+router.get("/notifications", requireViewModule("notifications"), notificationController.getNotifications);
+router.get("/notifications/:id", requireViewModule("notifications"), notificationController.getNotificationById);
+router.patch("/notifications/:id/read", requireViewModule("notifications"), notificationController.markAsRead);
+router.patch("/notifications/read-all", requireViewModule("notifications"), notificationController.markMultipleAsRead);
+router.patch("/notifications/mark-read", requireViewModule("notifications"), notificationController.markMultipleAsRead);
+router.post("/notifications", requireWriteModule("notifications"), notificationController.createNotification);
+router.put("/notifications/:id", requireWriteModule("notifications"), notificationController.updateNotification);
+router.delete("/notifications/:id", requireWriteModule("notifications"), notificationController.deleteNotification);
+router.post("/notifications/:id/send", requireWriteModule("notifications"), notificationController.sendNotification);
 
 // ==================== Wallet & Withdrawal Routes ====================
-router.get("/financial/dashboard", walletController.getFinancialDashboard);
-router.get("/wallet/earnings", walletController.getAdminEarnings);
-router.get("/wallet/transactions", walletController.getWalletTransactions);
-router.get("/wallet/withdrawals", withdrawalController.getAllWithdrawals);
-router.post("/wallet/withdrawal/process", walletController.processWithdrawalWrapper);
-
-// Direct withdrawal routes
-router.put("/withdrawals/:id/approve", withdrawalController.approveWithdrawal);
-router.put("/withdrawals/:id/reject", withdrawalController.rejectWithdrawal);
-router.put("/withdrawals/:id/complete", withdrawalController.completeWithdrawal);
+router.get("/financial/dashboard", requireViewModule("finance"), walletController.getFinancialDashboard);
+router.get("/wallet/earnings", requireViewModule("finance"), walletController.getAdminEarnings);
+router.get("/wallet/transactions", requireViewModule("finance"), walletController.getWalletTransactions);
+router.get("/wallet/withdrawals", requireViewModule("finance"), withdrawalController.getAllWithdrawals);
+router.post("/wallet/withdrawal/process", requireWriteModule("finance"), walletController.processWithdrawalWrapper);
+router.put("/withdrawals/:id/approve", requireWriteModule("finance"), withdrawalController.approveWithdrawal);
+router.put("/withdrawals/:id/reject", requireWriteModule("finance"), withdrawalController.rejectWithdrawal);
+router.put("/withdrawals/:id/complete", requireWriteModule("finance"), withdrawalController.completeWithdrawal);
 
 // ==================== Tax Routes ====================
-router.get("/taxes", taxController.getTaxes);
-router.get("/taxes/:id", taxController.getTaxById);
-router.post("/taxes", taxController.createTax);
-router.put("/taxes/:id", taxController.updateTax);
-router.patch("/taxes/:id/status", taxController.updateTaxStatus);
-router.delete("/taxes/:id", taxController.deleteTax);
+router.get("/taxes", requireViewModule("products"), taxController.getTaxes);
+router.get("/taxes/:id", requireViewModule("products"), taxController.getTaxById);
+router.post("/taxes", requireWriteModule("products"), taxController.createTax);
+router.put("/taxes/:id", requireWriteModule("products"), taxController.updateTax);
+router.patch("/taxes/:id/status", requireWriteModule("products"), taxController.updateTaxStatus);
+router.delete("/taxes/:id", requireWriteModule("products"), taxController.deleteTax);
 
 // ==================== Cash Collection Routes ====================
-router.get("/cash-collections", cashCollectionController.getCashCollections);
-router.get(
-  "/cash-collections/:id",
-  cashCollectionController.getCashCollectionById
-);
-router.post("/cash-collections", cashCollectionController.createCashCollection);
-router.put(
-  "/cash-collections/:id",
-  cashCollectionController.updateCashCollection
-);
-router.delete(
-  "/cash-collections/:id",
-  cashCollectionController.deleteCashCollection
-);
+router.get("/cash-collections", requireViewModule("delivery"), cashCollectionController.getCashCollections);
+router.get("/cash-collections/:id", requireViewModule("delivery"), cashCollectionController.getCashCollectionById);
+router.post("/cash-collections", requireWriteModule("delivery"), cashCollectionController.createCashCollection);
+router.put("/cash-collections/:id", requireWriteModule("delivery"), cashCollectionController.updateCashCollection);
+router.delete("/cash-collections/:id", requireWriteModule("delivery"), cashCollectionController.deleteCashCollection);
 
 // ==================== FAQ Routes ====================
-router.get("/faqs", faqController.getFAQs);
-router.get("/faqs/:id", faqController.getFAQById);
-router.post("/faqs", faqController.createFAQ);
-router.put("/faqs/:id", faqController.updateFAQ);
-router.patch("/faqs/:id/status", faqController.updateFAQStatus);
-router.delete("/faqs/:id", faqController.deleteFAQ);
-router.put("/faqs/order", faqController.updateFAQOrder);
+router.get("/faqs", requireViewModule("settings"), faqController.getFAQs);
+router.get("/faqs/:id", requireViewModule("settings"), faqController.getFAQById);
+router.post("/faqs", requireWriteModule("settings"), faqController.createFAQ);
+router.put("/faqs/:id", requireWriteModule("settings"), faqController.updateFAQ);
+router.patch("/faqs/:id/status", requireWriteModule("settings"), faqController.updateFAQStatus);
+router.delete("/faqs/:id", requireWriteModule("settings"), faqController.deleteFAQ);
+router.put("/faqs/order", requireWriteModule("settings"), faqController.updateFAQOrder);
 
 // ==================== Policy Routes ====================
-router.post("/policies", policyController.createPolicy);
-router.get("/policies", policyController.getPolicies);
-router.put("/policies/:id", policyController.updatePolicy);
-router.delete("/policies/:id", policyController.deletePolicy);
+router.get("/policies", requireViewModule("settings"), policyController.getPolicies);
+router.post("/policies", requireWriteModule("settings"), policyController.createPolicy);
+router.put("/policies/:id", requireWriteModule("settings"), policyController.updatePolicy);
+router.delete("/policies/:id", requireWriteModule("settings"), policyController.deletePolicy);
 
 // ==================== Warehouse Routes ====================
-router.get("/warehouses", warehouseController.getAllWarehouses);
-router.get("/warehouse", warehouseController.getAllWarehouses); // alias
-router.post("/create-warehouse", warehouseController.createWarehouse);
-router.post("/warehouse", warehouseController.createWarehouse); // alias
-router.get("/warehouse/:warehouseId/inward-stock", warehouseController.getWarehouseInwardStockSummary);
-router.get("/warehouses/inward-stock/all", warehouseController.getAllWarehousesInwardStock);
+router.get("/warehouses", requireViewModule("warehouse"), warehouseController.getAllWarehouses);
+router.get("/warehouse", requireViewModule("warehouse"), warehouseController.getAllWarehouses);
+router.get("/warehouse/:warehouseId/inward-stock", requireViewModule("warehouse"), warehouseController.getWarehouseInwardStockSummary);
+router.get("/warehouses/inward-stock/all", requireViewModule("warehouse"), warehouseController.getAllWarehousesInwardStock);
+router.post("/create-warehouse", requireWriteModule("warehouse"), warehouseController.createWarehouse);
+router.post("/warehouse", requireWriteModule("warehouse"), warehouseController.createWarehouse);
 
 // ==================== Shop Management ====================
-router.post("/shop/create", createShop);
-router.get("/shops", getAllShops);
-router.get("/shop/:id", getShopById);
-router.put("/shop/:id", updateShop);
-router.delete("/shop/:id", deleteShop);
-
-// Shop by Store routes
-router.post("/shop-by-stores", createShop);
-router.get("/shop-by-stores", getAllShops);
-router.get("/shop-by-stores/:id", getShopById);
-router.put("/shop-by-stores/:id", updateShop);
-router.delete("/shop-by-stores/:id", deleteShop);
+router.get("/shops", requireViewModule("marketing"), getAllShops);
+router.get("/shop-by-stores", requireViewModule("marketing"), getAllShops);
+router.get("/shop/:id", requireViewModule("marketing"), getShopById);
+router.get("/shop-by-stores/:id", requireViewModule("marketing"), getShopById);
+router.post("/shop/create", requireWriteModule("marketing"), createShop);
+router.post("/shop-by-stores", requireWriteModule("marketing"), createShop);
+router.put("/shop/:id", requireWriteModule("marketing"), updateShop);
+router.put("/shop-by-stores/:id", requireWriteModule("marketing"), updateShop);
+router.delete("/shop/:id", requireWriteModule("marketing"), deleteShop);
+router.delete("/shop-by-stores/:id", requireWriteModule("marketing"), deleteShop);
 
 // ==================== System User Routes ====================
-router.get("/system-users", systemUserController.getAllSystemUsers);
-router.get("/system-users/:id", systemUserController.getSystemUserById);
-router.post("/system-users", systemUserController.createSystemUser);
-router.put("/system-users/:id", systemUserController.updateSystemUser);
-router.delete("/system-users/:id", systemUserController.deleteSystemUser);
+router.get("/system-users", requireViewModule("settings"), systemUserController.getAllSystemUsers);
+router.get("/system-users/:id", requireViewModule("settings"), systemUserController.getSystemUserById);
+router.post("/system-users", requireWriteModule("settings"), systemUserController.createSystemUser);
+router.put("/system-users/:id", requireWriteModule("settings"), systemUserController.updateSystemUser);
+router.delete("/system-users/:id", requireWriteModule("settings"), systemUserController.deleteSystemUser);
 
 // ==================== Home Section Routes ====================
-router.get("/home-sections", homeSectionController.getHomeSections);
-router.get("/home-sections/:id", homeSectionController.getHomeSectionById);
-router.post("/home-sections", homeSectionController.createHomeSection);
-router.put("/home-sections/:id", homeSectionController.updateHomeSection);
-router.delete("/home-sections/:id", homeSectionController.deleteHomeSection);
-router.put("/home-sections/reorder", homeSectionController.reorderHomeSections);
+router.get("/home-sections", requireViewModule("marketing"), homeSectionController.getHomeSections);
+router.get("/home-sections/:id", requireViewModule("marketing"), homeSectionController.getHomeSectionById);
+router.post("/home-sections", requireWriteModule("marketing"), homeSectionController.createHomeSection);
+router.put("/home-sections/:id", requireWriteModule("marketing"), homeSectionController.updateHomeSection);
+router.delete("/home-sections/:id", requireWriteModule("marketing"), homeSectionController.deleteHomeSection);
+router.put("/home-sections/reorder", requireWriteModule("marketing"), homeSectionController.reorderHomeSections);
 
 // ==================== Bestseller Card Routes ====================
-router.get("/bestseller-cards", bestsellerCardController.getBestsellerCards);
-router.get("/bestseller-cards/:id", bestsellerCardController.getBestsellerCardById);
-router.post("/bestseller-cards", bestsellerCardController.createBestsellerCard);
-router.put("/bestseller-cards/:id", bestsellerCardController.updateBestsellerCard);
-router.delete("/bestseller-cards/:id", bestsellerCardController.deleteBestsellerCard);
-router.put("/bestseller-cards/reorder", bestsellerCardController.reorderBestsellerCards);
+router.get("/bestseller-cards", requireViewModule("marketing"), bestsellerCardController.getBestsellerCards);
+router.get("/bestseller-cards/:id", requireViewModule("marketing"), bestsellerCardController.getBestsellerCardById);
+router.post("/bestseller-cards", requireWriteModule("marketing"), bestsellerCardController.createBestsellerCard);
+router.put("/bestseller-cards/:id", requireWriteModule("marketing"), bestsellerCardController.updateBestsellerCard);
+router.delete("/bestseller-cards/:id", requireWriteModule("marketing"), bestsellerCardController.deleteBestsellerCard);
+router.put("/bestseller-cards/reorder", requireWriteModule("marketing"), bestsellerCardController.reorderBestsellerCards);
 
 // ==================== Lowest Prices Product Routes ====================
-router.get("/lowest-prices-products", lowestPricesController.getLowestPricesProducts);
-router.get("/lowest-prices-products/:id", lowestPricesController.getLowestPricesProductById);
-router.post("/lowest-prices-products", lowestPricesController.createLowestPricesProduct);
-router.put("/lowest-prices-products/:id", lowestPricesController.updateLowestPricesProduct);
-router.delete("/lowest-prices-products/:id", lowestPricesController.deleteLowestPricesProduct);
-router.put("/lowest-prices-products/reorder", lowestPricesController.reorderLowestPricesProducts);
+router.get("/lowest-prices-products", requireViewModule("marketing"), lowestPricesController.getLowestPricesProducts);
+router.get("/lowest-prices-products/:id", requireViewModule("marketing"), lowestPricesController.getLowestPricesProductById);
+router.post("/lowest-prices-products", requireWriteModule("marketing"), lowestPricesController.createLowestPricesProduct);
+router.put("/lowest-prices-products/:id", requireWriteModule("marketing"), lowestPricesController.updateLowestPricesProduct);
+router.delete("/lowest-prices-products/:id", requireWriteModule("marketing"), lowestPricesController.deleteLowestPricesProduct);
+router.put("/lowest-prices-products/reorder", requireWriteModule("marketing"), lowestPricesController.reorderLowestPricesProducts);
 
 // ==================== PromoStrip Routes ====================
-router.get("/promo-strips", promoStripController.getAllPromoStrips);
-router.get("/promo-strips/:id", promoStripController.getPromoStripById);
-router.post("/promo-strips", promoStripController.createPromoStrip);
-router.put("/promo-strips/:id", promoStripController.updatePromoStrip);
-router.delete("/promo-strips/:id", promoStripController.deletePromoStrip);
+router.get("/promo-strips", requireViewModule("marketing"), promoStripController.getAllPromoStrips);
+router.get("/promo-strips/:id", requireViewModule("marketing"), promoStripController.getPromoStripById);
+router.post("/promo-strips", requireWriteModule("marketing"), promoStripController.createPromoStrip);
+router.put("/promo-strips/:id", requireWriteModule("marketing"), promoStripController.updatePromoStrip);
+router.delete("/promo-strips/:id", requireWriteModule("marketing"), promoStripController.deletePromoStrip);
 
 export default router;

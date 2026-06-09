@@ -7,9 +7,21 @@ import {
 import { generateToken } from "../../../services/jwtService";
 import { asyncHandler } from "../../../utils/asyncHandler";
 
-/**
- * Send OTP to admin mobile number
- */
+function buildUserPayload(admin: any) {
+  return {
+    id: admin._id,
+    firstName: admin.firstName,
+    lastName: admin.lastName,
+    mobile: admin.mobile,
+    email: admin.email,
+    role: admin.role,
+    isActive: admin.isActive,
+    viewModules: admin.viewModules ?? [],
+    writeModules: admin.writeModules ?? [],
+    userType: "Admin",
+  };
+}
+
 export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
   const { mobile } = req.body;
 
@@ -20,7 +32,6 @@ export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Check if admin exists with this mobile
   const admin = await Admin.findOne({ mobile });
   if (!admin) {
     return res.status(404).json({
@@ -29,7 +40,13 @@ export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Send OTP - for login, always use default OTP
+  if (!admin.isActive) {
+    return res.status(403).json({
+      success: false,
+      message: "Your account has been deactivated. Contact the admin.",
+    });
+  }
+
   const result = await sendOTPService(mobile, "Admin", true);
 
   return res.status(200).json({
@@ -38,9 +55,6 @@ export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-/**
- * Verify OTP and login admin
- */
 export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
   const { mobile, otp } = req.body;
 
@@ -58,7 +72,6 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Verify OTP
   const isValid = await verifyOTPService(mobile, otp, "Admin");
   if (!isValid) {
     return res.status(401).json({
@@ -67,7 +80,6 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Find admin
   const admin = await Admin.findOne({ mobile }).select("-password");
   if (!admin) {
     return res.status(404).json({
@@ -76,34 +88,34 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Generate JWT token
-  const token = generateToken(admin._id.toString(), "Admin", admin.role);
+  if (!admin.isActive) {
+    return res.status(403).json({
+      success: false,
+      message: "Your account has been deactivated. Contact the admin.",
+    });
+  }
+
+  const token = generateToken(
+    admin._id.toString(),
+    "Admin",
+    admin.role,
+    admin.viewModules,
+    admin.writeModules,
+  );
 
   return res.status(200).json({
     success: true,
     message: "Login successful",
     data: {
       token,
-      user: {
-        id: admin._id,
-        firstName: admin.firstName,
-        lastName: admin.lastName,
-        mobile: admin.mobile,
-        email: admin.email,
-        role: admin.role,
-        userType: "Admin",
-      },
+      user: buildUserPayload(admin),
     },
   });
 });
 
-/**
- * Register new admin (optional - typically admins are created by super admin)
- */
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const { firstName, lastName, mobile, email, password, role } = req.body;
 
-  // Validation
   if (!firstName || !lastName || !mobile || !email || !password) {
     return res.status(400).json({
       success: false,
@@ -118,7 +130,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Check if admin already exists
   const existingAdmin = await Admin.findOne({
     $or: [{ mobile }, { email }],
   });
@@ -130,7 +141,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Create new admin
   const admin = await Admin.create({
     firstName,
     lastName,
@@ -140,7 +150,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     role: role || "Admin",
   });
 
-  // Generate token
   const token = generateToken(admin._id.toString(), "Admin", admin.role);
 
   return res.status(201).json({
@@ -148,15 +157,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     message: "Admin registered successfully",
     data: {
       token,
-      user: {
-        id: admin._id,
-        firstName: admin.firstName,
-        lastName: admin.lastName,
-        mobile: admin.mobile,
-        email: admin.email,
-        role: admin.role,
-        userType: "Admin",
-      },
+      user: buildUserPayload(admin),
     },
   });
 });

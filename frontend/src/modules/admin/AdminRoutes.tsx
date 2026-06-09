@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import IconLoader from "../../components/loaders/IconLoader";
+import PermissionGuard from "./components/PermissionGuard";
 
 // Lazy load layout
 const AdminLayout = lazy(() => import("./components/AdminLayout"));
@@ -59,6 +60,7 @@ const AdminPayments = lazy(() => import("./pages/AdminPayments"));
 const AdminWallet = lazy(() => import("./pages/AdminWallet"));
 const AdminBillingSettings = lazy(() => import("./pages/AdminBillingSettings"));
 const AdminRefundApproval = lazy(() => import("./pages/AdminRefundApproval"));
+const AdminTeamManagement = lazy(() => import("./pages/AdminTeamManagement"));
 
 export default function AdminRoutes() {
   return (
@@ -68,59 +70,70 @@ export default function AdminRoutes() {
           <Routes>
           <Route index element={<AdminDashboard />} />
           <Route path="profile" element={<AdminProfile />} />
-          <Route path="category" element={<AdminCategory />} />
-          <Route path="category/header" element={<AdminHeaderCategory />} />
-          <Route path="subcategory" element={<AdminSubCategory />} />
-          <Route path="subcategory-order" element={<AdminSubcategoryOrder />} />
-          <Route path="brand" element={<AdminBrand />} />
-          <Route path="product/taxes" element={<AdminTaxes />} />
-          <Route path="product/list" element={<AdminStockManagement />} />
-          <Route path="product/edit/:id" element={<AdminEditProduct />} />
-          <Route path="manage-warehouse/list" element={<AdminManageSellerList />} />
-          <Route path="manage-warehouse/create" element={<AdminCreateSeller />} />
-          <Route path="manage-warehouse/inward-stock" element={<AdminWarehouseInwardStock />} />
-          <Route path="manage-warehouse/port-negotiations" element={<AdminPortNegotiations />} />
-          <Route path="manage-warehouse/port-shipments" element={<AdminPortShipments />} />
-          <Route path="manage-warehouse/transaction" element={<AdminSellerTransaction />} />
-          <Route path="delivery-boy/manage" element={<AdminManageDeliveryBoy />} />
-          <Route path="delivery-boy/fund-transfer" element={<AdminFundTransfer />} />
-          <Route path="delivery-boy/cash-collection" element={<AdminCashCollection />} />
-          <Route path="manage-location/warehouse-location" element={<AdminSellerLocation />} />
-
-          <Route path="coupon" element={<AdminCoupon />} />
-          <Route path="return" element={<AdminReturnRequest />} />
-          <Route path="return/refunds" element={<AdminRefundApproval />} />
-          <Route path="notification" element={<AdminNotification />} />
-          <Route path="orders" element={<AdminOrders />} />
-          <Route path="customers" element={<AdminManageCustomer />} />
-          <Route path="collect-cash" element={<AdminCashCollection />} />
-          <Route path="payment-list" element={<AdminPaymentList />} />
-          <Route path="sms-gateway" element={<AdminSmsGateway />} />
-          <Route path="system-user" element={<AdminSystemUser />} />
-          <Route path="customer-app-policy" element={<AdminCustomerAppPolicy />} />
-          <Route path="delivery-app-policy" element={<AdminDeliveryAppPolicy />} />
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="faq" element={<AdminFAQ />} />
-          <Route path="home-section" element={<AdminHomeSection />} />
-          <Route path="bestseller-cards" element={<AdminBestsellerCards />} />
-          <Route path="promo-strip" element={<AdminPromoStrip />} />
-          <Route path="lowest-prices" element={<AdminLowestPrices />} />
-          <Route path="shop-by-store" element={<AdminShopByStore />} />
-          <Route path="orders/all" element={<AdminAllOrders />} />
-          <Route path="orders/pending" element={<AdminPendingOrders />} />
-          <Route path="orders/received" element={<AdminReceivedOrders />} />
-          <Route path="orders/processed" element={<AdminProcessedOrders />} />
-          <Route path="orders/shipped" element={<AdminShippedOrders />} />
-          <Route path="orders/out-for-delivery" element={<AdminOutForDeliveryOrders />} />
-          <Route path="orders/delivered" element={<AdminDeliveredOrders />} />
-          <Route path="orders/cancelled" element={<AdminCancelledOrders />} />
-          <Route path="orders/:id" element={<AdminOrderDetail />} />
-
-          <Route path="withdrawals" element={<AdminWithdrawals />} />
-          <Route path="payments" element={<AdminPayments />} />
-          <Route path="wallet" element={<AdminWallet />} />
-          <Route path="billing-settings" element={<AdminBillingSettings />} />
-          <Route path="explore" element={<AdminExploreProducts />} />
+          {/* Products */}
+          <Route path="category" element={<PermissionGuard module="products"><AdminCategory /></PermissionGuard>} />
+          <Route path="category/header" element={<PermissionGuard module="products"><AdminHeaderCategory /></PermissionGuard>} />
+          <Route path="subcategory" element={<PermissionGuard module="products"><AdminSubCategory /></PermissionGuard>} />
+          <Route path="subcategory-order" element={<PermissionGuard module="products"><AdminSubcategoryOrder /></PermissionGuard>} />
+          <Route path="brand" element={<PermissionGuard module="products"><AdminBrand /></PermissionGuard>} />
+          <Route path="product/taxes" element={<PermissionGuard module="products"><AdminTaxes /></PermissionGuard>} />
+          <Route path="product/list" element={<PermissionGuard module="products"><AdminStockManagement /></PermissionGuard>} />
+          <Route path="product/edit/:id" element={<PermissionGuard module="products"><AdminEditProduct /></PermissionGuard>} />
+          {/* Warehouse */}
+          <Route path="manage-warehouse/list" element={<PermissionGuard module="warehouse"><AdminManageSellerList /></PermissionGuard>} />
+          <Route path="manage-warehouse/create" element={<PermissionGuard module="warehouse"><AdminCreateSeller /></PermissionGuard>} />
+          <Route path="manage-warehouse/inward-stock" element={<PermissionGuard module="warehouse"><AdminWarehouseInwardStock /></PermissionGuard>} />
+          <Route path="manage-warehouse/transaction" element={<PermissionGuard module="warehouse"><AdminSellerTransaction /></PermissionGuard>} />
+          {/* Port */}
+          <Route path="manage-warehouse/port-negotiations" element={<PermissionGuard module="port"><AdminPortNegotiations /></PermissionGuard>} />
+          <Route path="manage-warehouse/port-shipments" element={<PermissionGuard module="port"><AdminPortShipments /></PermissionGuard>} />
+          <Route path="explore" element={<PermissionGuard module="port"><AdminExploreProducts /></PermissionGuard>} />
+          {/* Delivery */}
+          <Route path="delivery-boy/manage" element={<PermissionGuard module="delivery"><AdminManageDeliveryBoy /></PermissionGuard>} />
+          <Route path="delivery-boy/fund-transfer" element={<PermissionGuard module="delivery"><AdminFundTransfer /></PermissionGuard>} />
+          <Route path="delivery-boy/cash-collection" element={<PermissionGuard module="delivery"><AdminCashCollection /></PermissionGuard>} />
+          <Route path="collect-cash" element={<PermissionGuard module="delivery"><AdminCashCollection /></PermissionGuard>} />
+          <Route path="manage-location/warehouse-location" element={<PermissionGuard module="delivery"><AdminSellerLocation /></PermissionGuard>} />
+          {/* Marketing */}
+          <Route path="coupon" element={<PermissionGuard module="marketing"><AdminCoupon /></PermissionGuard>} />
+          <Route path="home-section" element={<PermissionGuard module="marketing"><AdminHomeSection /></PermissionGuard>} />
+          <Route path="bestseller-cards" element={<PermissionGuard module="marketing"><AdminBestsellerCards /></PermissionGuard>} />
+          <Route path="promo-strip" element={<PermissionGuard module="marketing"><AdminPromoStrip /></PermissionGuard>} />
+          <Route path="lowest-prices" element={<PermissionGuard module="marketing"><AdminLowestPrices /></PermissionGuard>} />
+          <Route path="shop-by-store" element={<PermissionGuard module="marketing"><AdminShopByStore /></PermissionGuard>} />
+          {/* Returns */}
+          <Route path="return" element={<PermissionGuard module="returns"><AdminReturnRequest /></PermissionGuard>} />
+          <Route path="return/refunds" element={<PermissionGuard module="returns"><AdminRefundApproval /></PermissionGuard>} />
+          {/* Notifications */}
+          <Route path="notification" element={<PermissionGuard module="notifications"><AdminNotification /></PermissionGuard>} />
+          {/* Orders */}
+          <Route path="orders" element={<PermissionGuard module="orders"><AdminOrders /></PermissionGuard>} />
+          <Route path="orders/all" element={<PermissionGuard module="orders"><AdminAllOrders /></PermissionGuard>} />
+          <Route path="orders/pending" element={<PermissionGuard module="orders"><AdminPendingOrders /></PermissionGuard>} />
+          <Route path="orders/received" element={<PermissionGuard module="orders"><AdminReceivedOrders /></PermissionGuard>} />
+          <Route path="orders/processed" element={<PermissionGuard module="orders"><AdminProcessedOrders /></PermissionGuard>} />
+          <Route path="orders/shipped" element={<PermissionGuard module="orders"><AdminShippedOrders /></PermissionGuard>} />
+          <Route path="orders/out-for-delivery" element={<PermissionGuard module="orders"><AdminOutForDeliveryOrders /></PermissionGuard>} />
+          <Route path="orders/delivered" element={<PermissionGuard module="orders"><AdminDeliveredOrders /></PermissionGuard>} />
+          <Route path="orders/cancelled" element={<PermissionGuard module="orders"><AdminCancelledOrders /></PermissionGuard>} />
+          <Route path="orders/:id" element={<PermissionGuard module="orders"><AdminOrderDetail /></PermissionGuard>} />
+          {/* Customers */}
+          <Route path="customers" element={<PermissionGuard module="customers"><AdminManageCustomer /></PermissionGuard>} />
+          <Route path="users" element={<PermissionGuard module="customers"><AdminUsers /></PermissionGuard>} />
+          {/* Finance */}
+          <Route path="payment-list" element={<PermissionGuard module="finance"><AdminPaymentList /></PermissionGuard>} />
+          <Route path="withdrawals" element={<PermissionGuard module="finance"><AdminWithdrawals /></PermissionGuard>} />
+          <Route path="payments" element={<PermissionGuard module="finance"><AdminPayments /></PermissionGuard>} />
+          <Route path="wallet" element={<PermissionGuard module="finance"><AdminWallet /></PermissionGuard>} />
+          <Route path="billing-settings" element={<PermissionGuard module="finance"><AdminBillingSettings /></PermissionGuard>} />
+          {/* Settings */}
+          <Route path="sms-gateway" element={<PermissionGuard module="settings"><AdminSmsGateway /></PermissionGuard>} />
+          <Route path="system-user" element={<PermissionGuard module="settings"><AdminSystemUser /></PermissionGuard>} />
+          <Route path="customer-app-policy" element={<PermissionGuard module="settings"><AdminCustomerAppPolicy /></PermissionGuard>} />
+          <Route path="delivery-app-policy" element={<PermissionGuard module="settings"><AdminDeliveryAppPolicy /></PermissionGuard>} />
+          <Route path="faq" element={<PermissionGuard module="settings"><AdminFAQ /></PermissionGuard>} />
+          {/* Team (Admin-only) */}
+          <Route path="team" element={<PermissionGuard module="team"><AdminTeamManagement /></PermissionGuard>} />
           </Routes>
         </AdminLayout>
       </Suspense>

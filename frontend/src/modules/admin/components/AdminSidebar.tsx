@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useThemeContext } from "../../../context/ThemeContext";
+import { useAdminPermission, AdminModule } from "../../../context/AdminPermissionContext";
 
 interface SubMenuItem {
   label: string;
@@ -17,11 +18,13 @@ interface MenuItem {
   submenuItems?: SubMenuItem[];
   icon?: JSX.Element;
   badge?: string;
+  module?: AdminModule;
 }
 
 interface MenuSection {
   title: string;
   items: MenuItem[];
+  module?: AdminModule;
 }
 
 interface AdminSidebarProps {
@@ -31,10 +34,12 @@ interface AdminSidebarProps {
 const menuSections: MenuSection[] = [
   {
     title: "Product Section",
+    module: "products",
     items: [
       {
         label: "Category",
         path: "/admin/category",
+        module: "products",
         icon: (
           <svg
             width="18"
@@ -60,6 +65,7 @@ const menuSections: MenuSection[] = [
       {
         label: "Product",
         path: "/admin/product",
+        module: "products",
         hasSubmenu: true,
         icon: (
           <svg
@@ -123,6 +129,7 @@ const menuSections: MenuSection[] = [
       {
         label: "Manage Warehouse",
         path: "/admin/manage-warehouse",
+        module: "warehouse",
         hasSubmenu: true,
         icon: (
           <svg
@@ -199,11 +206,9 @@ const menuSections: MenuSection[] = [
         ],
       },
       {
-        // Dedicated Port section — consolidates all port-related admin pages
-        // (negotiations, shipments, products) under one clear menu. Routes are
-        // unchanged; only the navigation grouping was tidied.
         label: "Manage Port",
         path: "/admin/manage-port",
+        module: "port",
         hasSubmenu: true,
         icon: (
           <svg
@@ -260,10 +265,12 @@ const menuSections: MenuSection[] = [
   },
   {
     title: "Delivery Section",
+    module: "delivery",
     items: [
       {
         label: "Manage Location",
         path: "/admin/manage-location",
+        module: "delivery",
         hasSubmenu: true,
         icon: (
           <svg
@@ -305,6 +312,7 @@ const menuSections: MenuSection[] = [
       {
         label: "Coupon",
         path: "/admin/coupon",
+        module: "marketing",
         icon: (
           <svg
             width="18"
@@ -324,6 +332,7 @@ const menuSections: MenuSection[] = [
       {
         label: "Delivery Boy",
         path: "/admin/delivery-boy",
+        module: "delivery",
         hasSubmenu: true,
         icon: (
           <svg
@@ -418,6 +427,7 @@ const menuSections: MenuSection[] = [
       {
         label: "Users",
         path: "/admin/users",
+        module: "customers",
         icon: (
           <svg
             width="18"
@@ -436,6 +446,7 @@ const menuSections: MenuSection[] = [
       {
         label: "Notification",
         path: "/admin/notification",
+        module: "notifications",
         icon: (
           <svg
             width="18"
@@ -454,6 +465,7 @@ const menuSections: MenuSection[] = [
       {
         label: "FAQ",
         path: "/admin/faq",
+        module: "settings",
         icon: (
           <svg
             width="18"
@@ -480,10 +492,12 @@ const menuSections: MenuSection[] = [
   },
   {
     title: "Order Section",
+    module: "orders",
     items: [
       {
         label: "Order List",
         path: "/admin/orders",
+        module: "orders",
         hasSubmenu: true,
         icon: (
           <svg
@@ -543,6 +557,7 @@ const menuSections: MenuSection[] = [
       {
         label: "Return Request",
         path: "/admin/return",
+        module: "returns",
         icon: (
           <svg
             width="18"
@@ -580,10 +595,12 @@ const menuSections: MenuSection[] = [
   },
   {
     title: "Finance",
+    module: "finance",
     items: [
       {
         label: "Wallet & Earnings",
         path: "/admin/wallet",
+        module: "finance",
         icon: (
           <svg
             width="18"
@@ -602,10 +619,12 @@ const menuSections: MenuSection[] = [
   },
   {
     title: "Promotion",
+    module: "marketing",
     items: [
       {
         label: "Home Section",
         path: "/admin/home-section",
+        module: "marketing",
         icon: (
           <svg
             width="18"
@@ -624,10 +643,12 @@ const menuSections: MenuSection[] = [
   },
   {
     title: "Setting",
+    module: "settings",
     items: [
       {
         label: "Billing & Charges",
         path: "/admin/billing-settings",
+        module: "settings",
         icon: (
           <svg
             width="18"
@@ -647,10 +668,30 @@ const menuSections: MenuSection[] = [
   },
 ];
 
+const teamSection: MenuSection = {
+  title: "Administration",
+  module: "team",
+  items: [
+    {
+      label: "Team Management",
+      path: "/admin/team",
+      module: "team",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      ),
+    },
+  ],
+};
+
 export default function AdminSidebar({ onClose }: AdminSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentTheme } = useThemeContext();
+  const { canView, isAdmin } = useAdminPermission();
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -704,14 +745,21 @@ export default function AdminSidebar({ onClose }: AdminSidebarProps) {
     );
   };
 
-  const filteredSections = menuSections
+  const allSections = isAdmin ? [...menuSections, teamSection] : menuSections;
+
+  const filteredSections = allSections
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) =>
-        item.label.toLowerCase().includes(searchQuery.toLowerCase())
-      ),
+      items: section.items.filter((item) => {
+        const matchesSearch = item.label.toLowerCase().includes(searchQuery.toLowerCase());
+        const hasAccess = !item.module || canView(item.module);
+        return matchesSearch && hasAccess;
+      }),
     }))
-    .filter((section) => section.items.length > 0);
+    .filter((section) => {
+      if (section.module && !canView(section.module)) return false;
+      return section.items.length > 0;
+    });
 
   return (
     <aside

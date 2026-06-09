@@ -4,9 +4,9 @@ import { getAuthToken } from './api/config';
 const VAPID_KEY = 'BNtQ-yWzXEuz_T9O0xQeEGi52R4-8nNjVbBao1oT4VuASPq0uiLhfPk81_ULMXl3eTsmpMQDhzKDSk47fgohgVQ';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.inorfresh.com/api/v1';
 
-function getDevicePlatform(): 'web' | 'mobile' {
+function getDevicePlatform(): 'web' | 'app' {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-        ? 'mobile'
+        ? 'app'
         : 'web';
 }
 
