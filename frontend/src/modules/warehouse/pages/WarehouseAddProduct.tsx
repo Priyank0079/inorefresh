@@ -61,6 +61,7 @@ export default function WarehouseAddProduct() {
   const [mainImageFile, setMainImageFile] = useState<File | null>(null);
   const [mainImagePreview, setMainImagePreview] = useState<string>("");
   const [showMainImageCamera, setShowMainImageCamera] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   // ── Status ───────────────────────────────────────────────────
   const [uploading, setUploading] = useState(false);
@@ -276,9 +277,13 @@ export default function WarehouseAddProduct() {
       return;
     }
 
-    // Description validation (optional, but if provided, check length)
-    if (formData.smallDescription && formData.smallDescription.length > 500) {
-      setUploadError("Short description cannot exceed 500 characters");
+    // Description is required
+    if (!formData.smallDescription.trim()) {
+      setUploadError("Description is required. Please describe the product.");
+      return;
+    }
+    if (formData.smallDescription.length > 500) {
+      setUploadError("Description cannot exceed 500 characters");
       return;
     }
 
@@ -502,16 +507,18 @@ export default function WarehouseAddProduct() {
             {/* Short Description */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Short Description <span className="text-neutral-400 text-xs">(optional)</span>
+                Description <span className="text-red-500">*</span>
               </label>
               <textarea
                 name="smallDescription"
                 value={formData.smallDescription}
                 onChange={handleChange}
-                placeholder="Brief description of the product..."
-                rows={2}
+                placeholder="Describe the product — taste, freshness, best use, size, etc."
+                rows={3}
+                required
                 className="w-full px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
               />
+              <p className="text-xs text-neutral-400 mt-1">{formData.smallDescription.length}/500 characters</p>
             </div>
 
             {/* Publish & Max Quantity */}
@@ -884,6 +891,17 @@ export default function WarehouseAddProduct() {
             Cancel
           </button>
           <button
+            type="button"
+            onClick={() => setShowPreview(true)}
+            className="px-6 py-2.5 rounded-lg border-2 border-teal-500 text-teal-700 hover:bg-teal-50 font-semibold text-sm transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            Preview
+          </button>
+          <button
             type="submit"
             disabled={uploading || !!successMessage}
             className={`px-8 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm ${uploading || successMessage
@@ -952,6 +970,120 @@ export default function WarehouseAddProduct() {
           </div>
         </div>
       )}
+
+      {/* ── User Panel Preview Modal ─────────────────────────── */}
+      {showPreview && (() => {
+        const previewVariation = variations[0];
+        const previewPrice = previewVariation?.discPrice > 0 ? previewVariation.discPrice : previewVariation?.price;
+        const previewMrp = previewVariation?.price;
+        const previewDiscount = previewMrp && previewPrice && previewMrp > previewPrice
+          ? Math.round(((previewMrp - previewPrice) / previewMrp) * 100) : 0;
+        const previewStock = previewVariation?.stock ?? 0;
+        const previewPack = previewVariation?.title || 'Standard';
+        const previewCat = categories.find(c => c._id === formData.category)?.name || 'FRESH';
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowPreview(false)}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+              {/* Modal header */}
+              <div className="bg-teal-600 text-white px-5 py-3 flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-base">User Panel Preview</p>
+                  <p className="text-teal-100 text-xs">This is exactly how the product card looks to customers</p>
+                </div>
+                <button onClick={() => setShowPreview(false)} className="hover:bg-white/20 rounded-lg p-1.5 transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+
+              {/* Card preview — exact replica of ProductCard */}
+              <div className="p-6 bg-[#d0eff9]">
+                <p className="text-xs text-center text-teal-700 font-semibold mb-3 uppercase tracking-wider">Product Card (User View)</p>
+                <div className="max-w-[180px] mx-auto">
+                  <div className="rounded-2xl flex flex-col overflow-hidden border border-[#A8E6F5]/40 shadow-[0_2px_8px_rgba(17,111,146,0.15)]"
+                    style={{ background: 'linear-gradient(160deg, #EBF9FF 0%, #D6F1FA 60%, #C4EAF7 100%)' }}>
+                    {/* Image box */}
+                    <div className="relative w-full h-40 bg-[#EAF6FB] flex items-center justify-center overflow-hidden">
+                      {previewDiscount > 0 && (
+                        <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-red-500 to-pink-600 text-white text-[8px] font-black uppercase tracking-wider shadow-sm leading-none">
+                          {previewDiscount}% OFF
+                        </div>
+                      )}
+                      {previewStock === 0 && (
+                        <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+                          <span className="px-2 py-0.5 bg-neutral-900/80 text-white text-[9px] font-black rounded-full uppercase">Sold Out</span>
+                        </div>
+                      )}
+                      {mainImagePreview ? (
+                        <img src={mainImagePreview} alt="preview" className="w-full h-full object-contain" />
+                      ) : (
+                        <div className="text-5xl font-black text-[#072F4A]/10">
+                          {(formData.productName || '?').charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    {/* Info box */}
+                    <div className="px-2.5 pt-2 pb-2 flex flex-col gap-0.5" style={{ background: 'linear-gradient(180deg, #D6F1FA 0%, #C4EAF7 100%)' }}>
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="text-[7.5px] font-extrabold text-teal-600 uppercase tracking-[0.07em] px-1.5 py-[2px] bg-teal-50 rounded leading-none flex-shrink-0">
+                          {previewCat}
+                        </span>
+                        <span className="text-[8.5px] text-neutral-400 font-medium truncate leading-none">{previewPack}</span>
+                      </div>
+                      <h3 className="text-[12px] font-bold text-[#072F4A] line-clamp-1 leading-tight">
+                        {formData.productName || 'Product Name'}
+                      </h3>
+                      {formData.smallDescription && (
+                        <p className="text-[9.5px] text-[#3a7a94] leading-snug line-clamp-1 font-medium mt-0.5">
+                          {formData.smallDescription}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between mt-0.5 pt-1 border-t border-[#9FD8EE]/50">
+                        <div className="flex flex-col leading-none">
+                          {previewDiscount > 0 && previewMrp && (
+                            <span className="text-[8px] text-neutral-300 line-through font-medium leading-none mb-0.5">₹{previewMrp}</span>
+                          )}
+                          <div className="flex items-baseline gap-0.5">
+                            <span className="text-[9px] font-bold text-neutral-500">₹</span>
+                            <span className="text-[15px] font-black text-neutral-900 tracking-tight leading-none">
+                              {previewPrice ? previewPrice.toLocaleString('en-IN') : '—'}
+                            </span>
+                          </div>
+                        </div>
+                        <button className="h-[26px] px-3 rounded-lg bg-teal-600 text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                          ADD
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5"><path d="M12 5v14M5 12h14"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Missing fields warning */}
+              {(!formData.productName || !mainImagePreview || variations.length === 0) && (
+                <div className="mx-5 mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                  <p className="font-semibold mb-1">⚠️ Preview is incomplete — fill in:</p>
+                  <ul className="list-disc list-inside space-y-0.5 text-amber-700">
+                    {!formData.productName && <li>Product name</li>}
+                    {!mainImagePreview && <li>Product image</li>}
+                    {variations.length === 0 && <li>At least one variant with price</li>}
+                  </ul>
+                </div>
+              )}
+
+              <div className="px-5 pb-5">
+                <button onClick={() => setShowPreview(false)}
+                  className="w-full py-2.5 rounded-xl bg-teal-600 text-white font-semibold text-sm hover:bg-teal-700 transition-colors">
+                  Close Preview
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {showMainImageCamera && (
         <CameraCapture

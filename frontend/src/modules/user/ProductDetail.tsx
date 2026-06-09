@@ -577,46 +577,42 @@ export default function ProductDetail() {
           )}
 
           {/* Product name */}
-          <h2 className="text-lg md:text-2xl font-bold text-neutral-900 mb-0 leading-tight">
+          <h2 className="text-xl md:text-2xl font-extrabold text-neutral-900 leading-tight">
             {product.name}
           </h2>
 
-          {/* Variant Selection - Only show if multiple variants */}
+          {/* Variant Selection */}
           {product.variations && product.variations.length > 1 && (
-            <div className="mb-2">
-              <label className="block text-xs md:text-sm font-medium text-neutral-700 mb-1.5">
-                Select {product.variationType || "Variant"}:
-              </label>
+            <div className="mt-3">
+              <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">
+                Select {product.variationType || "Variant"}
+              </p>
               <div className="flex flex-wrap gap-2">
                 {product.variations.map((variant: any, index: number) => {
                   const variantTitle = variant.title || variant.value || `Variant ${index + 1}`;
                   const isOutOfStock = variant.status === "Sold out" || (variant.stock === 0 && variant.stock !== undefined && variant.stock !== null);
                   const isSelected = index === selectedVariantIndex;
-
                   return (
                     <button
                       key={index}
                       onClick={() => setSelectedVariantIndex(index)}
                       disabled={isOutOfStock}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border-2`}
+                      className="px-4 py-1.5 rounded-full text-sm font-semibold transition-all border-2"
                       style={isSelected ? {
                         borderColor: currentTheme.primary[3],
-                        backgroundColor: `${currentTheme.primary[3]}10`,
+                        backgroundColor: `${currentTheme.primary[3]}15`,
                         color: currentTheme.primary[3]
                       } : isOutOfStock ? {
                         borderColor: '#e5e7eb',
-                        backgroundColor: '#f3f4f6',
-                        color: '#9ca3af'
+                        backgroundColor: '#f9fafb',
+                        color: '#d1d5db'
                       } : {
-                        borderColor: '#d1d5db',
+                        borderColor: '#e5e7eb',
                         backgroundColor: 'white',
                         color: '#374151'
                       }}
                     >
-                      {variantTitle}
-                      {isOutOfStock && (
-                        <span className="ml-1 text-xs">(Out of Stock)</span>
-                      )}
+                      {variantTitle}{isOutOfStock && <span className="ml-1 text-[10px] opacity-60">sold out</span>}
                     </button>
                   );
                 })}
@@ -624,75 +620,61 @@ export default function ProductDetail() {
             </div>
           )}
 
-          {/* Quantity/Pack */}
-          <p className="text-sm md:text-base text-neutral-600 mb-1">
-            {variantTitle}
-          </p>
-
-          {/* Price section */}
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <span className="text-xl font-bold text-neutral-900">
-              ₹{variantPrice.toLocaleString('en-IN')}
-            </span>
-            {hasDiscount && (
-              <>
-                <span className="text-sm text-neutral-500 line-through">
-                  ₹{variantMrp.toLocaleString('en-IN')}
-                </span>
-                {discount > 0 && (
-                  <Badge className="!bg-blue-500 !text-white !border-blue-500 text-xs px-1.5 py-0.5 rounded-full font-semibold">
-                    {discount}% OFF
-                  </Badge>
+          {/* Pack size + Price row */}
+          <div className="mt-3 flex items-end justify-between gap-2">
+            <div>
+              <p className="text-xs text-neutral-400 font-medium mb-0.5">{variantTitle}</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black text-neutral-900">₹{variantPrice.toLocaleString('en-IN')}</span>
+                {hasDiscount && (
+                  <>
+                    <span className="text-sm text-neutral-400 line-through">₹{variantMrp.toLocaleString('en-IN')}</span>
+                    {discount > 0 && (
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        {discount}% OFF
+                      </span>
+                    )}
+                  </>
                 )}
-              </>
+              </div>
+              <p className="text-[10px] text-neutral-400 mt-0.5">Inclusive of all taxes</p>
+            </div>
+
+            {/* Stock pill */}
+            {variantStock !== undefined && variantStock !== null && (
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${
+                variantStock > 5 ? 'bg-green-50 text-green-700 border border-green-200'
+                : variantStock > 0 ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                : 'bg-red-50 text-red-600 border border-red-200'
+              }`}>
+                {variantStock > 0 ? `${variantStock} in stock` : 'Out of stock'}
+              </span>
             )}
           </div>
 
-          {/* Stock Status */}
-          {variantStock !== undefined && variantStock !== null && (
-            <p className={`text-sm mb-1 ${variantStock > 0 ? "text-neutral-600" : "text-red-500 font-medium"}`}>
-              {variantStock > 0 ? `${variantStock} in stock` : "Out of stock"}
-            </p>
-          )}
-
           {/* Description */}
           {(product.description || product.smallDescription) && (
-            <div className="mb-2 w-full overflow-hidden">
-              <p className="text-sm text-neutral-600 leading-relaxed break-words whitespace-pre-wrap">
+            <div className="mt-3 pt-3 border-t border-neutral-100 w-full overflow-hidden">
+              <p className="text-sm text-neutral-600 leading-relaxed break-words">
                 {product.description || product.smallDescription}
               </p>
             </div>
           )}
 
-          {/* Divider line */}
-          <div className="border-t border-neutral-200 mb-1.5"></div>
-
           {/* View product details link */}
-          <button
-            onClick={() =>
-              setIsProductDetailsExpanded(!isProductDetailsExpanded)
-            }
-            className="flex items-center gap-0.5 text-sm font-medium"
-            style={{ color: currentTheme.primary[3] }}
-          >
-            View product details
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className={`transition-transform ${isProductDetailsExpanded ? "rotate-180" : ""
-                }`}>
-              <path
-                d="M6 9l6 6 6-6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+          <div className="mt-3 pt-3 border-t border-neutral-100">
+            <button
+              onClick={() => setIsProductDetailsExpanded(!isProductDetailsExpanded)}
+              className="flex items-center gap-1 text-sm font-semibold"
+              style={{ color: currentTheme.primary[3] }}
+            >
+              View product details
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                className={`transition-transform ${isProductDetailsExpanded ? "rotate-180" : ""}`}>
+                <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Expanded Product Details Section */}

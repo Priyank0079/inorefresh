@@ -254,6 +254,8 @@ export default function AdminEditProduct() {
 
     if (!formData.productName.trim()) { setUploadError("Product name is required"); return; }
     if (!formData.category) { setUploadError("Please select a category"); return; }
+    if (!formData.smallDescription.trim()) { setUploadError("Description is required. Please describe the product."); return; }
+    if (formData.smallDescription.length > 500) { setUploadError("Description cannot exceed 500 characters"); return; }
 
     if (!id && !mainImageFile) {
       setUploadError("Product image is required. Please choose a high-quality image.");
@@ -419,16 +421,18 @@ export default function AdminEditProduct() {
             {/* Short Description */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Short Description <span className="text-neutral-400 text-xs">(optional)</span>
+                Description <span className="text-red-500">*</span>
               </label>
               <textarea
                 name="smallDescription"
                 value={formData.smallDescription}
                 onChange={handleChange}
-                placeholder="Brief description of the product..."
-                rows={2}
+                placeholder="Describe the product — taste, freshness, best use, size, etc."
+                rows={3}
+                required
                 className="w-full px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
               />
+              <p className="text-xs text-neutral-400 mt-1">{formData.smallDescription.length}/500 characters</p>
             </div>
 
             {/* Publish & Max Quantity */}

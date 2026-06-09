@@ -94,7 +94,7 @@ function ProductCard({ product, badgeText = '' }: ProductCardProps) {
       style={{ background: 'linear-gradient(160deg, #EBF9FF 0%, #D6F1FA 60%, #C4EAF7 100%)' }}
     >
       {/* ── Image ─────────────────────────────── */}
-      <div className="relative w-full overflow-hidden bg-[#F4F7F9]">
+      <div className="relative w-full h-40 overflow-hidden bg-[#EAF6FB] flex items-center justify-center">
         {/* Discount badge */}
         {discount > 0 && (
           <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-red-500 to-pink-600 text-white text-[8px] font-black uppercase tracking-wider shadow-sm leading-none">
@@ -121,7 +121,7 @@ function ProductCard({ product, badgeText = '' }: ProductCardProps) {
         <img
           src={imgSrc}
           alt={product.name || 'Product'}
-          className="w-full h-auto block transition-transform duration-500 group-hover:scale-105"
+          className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
           onError={(e) => {
             const t = e.target as HTMLImageElement;
@@ -161,7 +161,7 @@ function ProductCard({ product, badgeText = '' }: ProductCardProps) {
 
         {/* Description */}
         {(product.smallDescription || product.description) && (
-          <p className="text-[9.5px] text-[#3a7a94] leading-snug line-clamp-2 font-medium mt-0.5">
+          <p className="text-[9.5px] text-[#3a7a94] leading-snug line-clamp-1 font-medium mt-0.5">
             {product.smallDescription || product.description}
           </p>
         )}
