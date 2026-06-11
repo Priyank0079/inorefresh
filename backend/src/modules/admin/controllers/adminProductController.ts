@@ -102,6 +102,7 @@ export const createCategory = asyncHandler(
     cache.delete("customer-categories-list");
     cache.delete("customer-categories-tree");
     cache.invalidatePattern(/^customer-category-/);
+    cache.invalidatePattern(/^promoStrip-/);
 
     return res.status(201).json({
       success: true,
@@ -259,6 +260,7 @@ export const updateCategory = asyncHandler(
     cache.delete("customer-categories-list");
     cache.delete("customer-categories-tree");
     cache.invalidatePattern(/^customer-category-/);
+    cache.invalidatePattern(/^promoStrip-/);
 
     return res.status(200).json({
       success: true,
@@ -308,6 +310,7 @@ export const deleteCategory = asyncHandler(
     cache.delete("customer-categories-list");
     cache.delete("customer-categories-tree");
     cache.invalidatePattern(/^customer-category-/);
+    cache.invalidatePattern(/^promoStrip-/);
 
     return res.status(200).json({
       success: true,

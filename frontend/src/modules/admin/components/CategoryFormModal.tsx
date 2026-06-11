@@ -8,6 +8,7 @@ import { uploadImage } from "../../../services/api/uploadService";
 import CameraCapture from "../../../components/CameraCapture";
 import {
   validateImageFile,
+  validateImageRatio,
   createImagePreview,
 } from "../../../utils/imageUpload";
 import {
@@ -220,30 +221,28 @@ export default function CategoryFormModal({
   };
 
   const processFile = async (file: File) => {
+    // 1. Type + size check
     const validation = validateImageFile(file);
     if (!validation.valid) {
-      setErrors((prev) => ({
-        ...prev,
-        image: validation.error || "Invalid image file",
-      }));
+      setErrors((prev) => ({ ...prev, image: validation.error || "Invalid image file" }));
+      return;
+    }
+
+    // 2. 16:9 ratio check — only accepted size for category images
+    const ratioCheck = await validateImageRatio(file);
+    if (!ratioCheck.valid) {
+      setErrors((prev) => ({ ...prev, image: ratioCheck.error || "Invalid image ratio" }));
       return;
     }
 
     setImageFile(file);
-    setErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors.image;
-      return newErrors;
-    });
+    setErrors((prev) => { const e = { ...prev }; delete e.image; return e; });
 
     try {
       const preview = await createImagePreview(file);
       setImagePreview(preview);
-    } catch (error) {
-      setErrors((prev) => ({
-        ...prev,
-        image: "Failed to create image preview",
-      }));
+    } catch {
+      setErrors((prev) => ({ ...prev, image: "Failed to create image preview" }));
     }
   };
 
@@ -428,60 +427,33 @@ export default function CategoryFormModal({
 
           {/* Category Image */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Category Image
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-neutral-700">
+                Category Image
+              </label>
+              <span className="text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-200 rounded px-2 py-0.5">
+                Required: 16:9 ratio · e.g. 1200×675 px
+              </span>
+            </div>
+
+            {/* Upload area */}
             <label
-              className={`block border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${isDragging
-                ? "border-teal-500 bg-teal-50"
-                : "border-neutral-300 hover:border-teal-500"
-                }`}
+              className={`block border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${isDragging ? "border-teal-500 bg-teal-50" : "border-neutral-300 hover:border-teal-500"}`}
               onDragEnter={handleDragEnter}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}>
-              {imagePreview ? (
-                <div className="space-y-2">
-                  <img
-                    src={imagePreview}
-                    alt="Category preview"
-                    className="max-h-32 mx-auto rounded-lg object-cover"
-                  />
-                  <p className="text-xs text-neutral-600">
-                    {imageFile?.name || "Current image"}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setImageFile(null);
-                      setImagePreview("");
-                      setFormData((prev) => ({ ...prev, image: "" }));
-                    }}
-                    className="text-xs text-red-600 hover:text-red-700">
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="mx-auto mb-2 text-neutral-400">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                  <p className="text-xs text-neutral-600">
-                    {isDragging ? "Drop image here" : "Choose File or Drag & Drop"}
-                  </p>
-                  <p className="text-xs text-neutral-500 mt-1">Max 5MB</p>
-                </div>
-              )}
+              <div className="flex flex-col items-center gap-1.5">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-400">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <p className="text-xs text-neutral-600 font-medium">
+                  {isDragging ? "Drop image here" : "Choose File or Drag & Drop"}
+                </p>
+                <p className="text-[11px] text-neutral-400">JPG · PNG · WEBP · Max 5MB · 16:9 only</p>
+              </div>
               <input
                 type="file"
                 accept="image/*"
@@ -490,20 +462,83 @@ export default function CategoryFormModal({
                 disabled={submitting || uploading}
               />
             </label>
+
+            {/* Camera button */}
             <button
               type="button"
               onClick={() => setShowImageCamera(true)}
               disabled={submitting || uploading}
-              className="mt-2 w-full inline-flex items-center justify-center gap-2 bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 px-3 py-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
-            >
+              className="mt-2 w-full inline-flex items-center justify-center gap-2 bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 px-3 py-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25a2.25 2.25 0 012.25-2.25h1.046c.625 0 1.198-.353 1.477-.911.323-.646.997-1.09 1.777-1.09h2.4c.78 0 1.454.444 1.777 1.09a1.65 1.65 0 001.477.911h1.046a2.25 2.25 0 012.25 2.25v8.25a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V8.25z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
               </svg>
               Use Camera
             </button>
+
             {errors.image && (
-              <p className="mt-1 text-sm text-red-600">{errors.image}</p>
+              <p className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{errors.image}</p>
+            )}
+
+            {/* Preview — shown once a valid image is selected */}
+            {imagePreview && (
+              <div className="mt-4 space-y-3">
+
+                {/* 16:9 image preview */}
+                <div>
+                  <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1.5">Image Preview (16:9)</p>
+                  <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                    <img
+                      src={imagePreview}
+                      alt="Category preview"
+                      className="absolute inset-0 w-full h-full object-cover object-top rounded-xl border border-neutral-200"
+                    />
+                  </div>
+                </div>
+
+                {/* Card preview — how it looks in the PromoStrip card */}
+                <div>
+                  <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1.5">Card Preview</p>
+                  <div className="bg-white rounded-2xl border border-neutral-200 shadow overflow-hidden max-w-[260px]">
+                    {/* card image */}
+                    <div className="relative w-full" style={{ paddingBottom: '57%' }}>
+                      <img
+                        src={imagePreview}
+                        alt="Card image"
+                        className="absolute inset-0 w-full h-full object-cover object-top"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent opacity-40 pointer-events-none" />
+                      <span className="absolute top-2 left-2 bg-white/95 text-[#002D4A] text-[9px] font-bold px-2 py-0.5 rounded-md shadow">
+                        Up to 55% OFF
+                      </span>
+                    </div>
+                    {/* card content */}
+                    <div className="p-3">
+                      <p className="text-[13px] font-black text-[#002D4A] uppercase leading-tight line-clamp-2 min-h-[34px]">
+                        {formData.name || "Category Name"}
+                      </p>
+                      <p className="text-[11px] text-[#003B5C]/60 mt-1 line-clamp-1">
+                        Explore our premium {formData.name || "category"} range.
+                      </p>
+                      <div className="mt-2 bg-[#072F4A] text-white text-[11px] font-bold py-1.5 rounded-lg text-center">
+                        Explore →
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Remove button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageFile(null);
+                    setImagePreview("");
+                    setFormData((prev) => ({ ...prev, image: "" }));
+                  }}
+                  className="text-xs text-red-600 hover:text-red-700 font-medium">
+                  ✕ Remove image
+                </button>
+              </div>
             )}
           </div>
 

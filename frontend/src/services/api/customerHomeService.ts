@@ -28,7 +28,7 @@ export const getHomeContent = async (
   latitude?: number,
   longitude?: number,
   useCache: boolean = true,
-  cacheTTL: number = 5 * 60 * 1000, // 5 minutes
+  cacheTTL: number = 60 * 1000, // 1 minute
   skipLoader: boolean = false
 ): Promise<HomeContentResponse> => {
   const cacheKey = `home-content-${headerCategorySlug || 'all'}-${latitude || 0}-${longitude || 0}`;

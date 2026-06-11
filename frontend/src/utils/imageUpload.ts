@@ -157,6 +157,43 @@ export function isPdfFile(file: File): boolean {
 }
 
 /**
+ * Validate image aspect ratio.
+ * targetRatio defaults to 16/9. tolerance is ±8% of that ratio.
+ */
+export function validateImageRatio(
+  file: File,
+  targetRatio: number = 16 / 9,
+  tolerance: number = 0.08
+): Promise<{ valid: boolean; error?: string }> {
+  const isSquare = Math.abs(targetRatio - 1) < 0.01;
+  const is16x9 = Math.abs(targetRatio - 16 / 9) < 0.01;
+  const ratioLabel = isSquare ? "1:1 (square)" : is16x9 ? "16:9" : `${targetRatio.toFixed(2)}:1`;
+  const exampleDims = isSquare ? "1080×1080 px" : is16x9 ? "1200×675 px" : "";
+
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const ratio = img.width / img.height;
+      if (Math.abs(ratio - targetRatio) <= tolerance) {
+        resolve({ valid: true });
+      } else {
+        resolve({
+          valid: false,
+          error: `Image must be ${ratioLabel} ratio${exampleDims ? ` (e.g. ${exampleDims})` : ""}. Your image is ${img.width}×${img.height} px (${ratio.toFixed(2)}:1). Please crop or resize it before uploading.`,
+        });
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve({ valid: false, error: "Failed to read image dimensions." });
+    };
+    img.src = url;
+  });
+}
+
+/**
  * Compress and center-crop image to a square — use for product main images
  * so they always display without cropping in the 1:1 UI container.
  */

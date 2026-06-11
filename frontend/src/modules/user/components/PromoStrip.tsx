@@ -124,7 +124,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
           location?.latitude,
           location?.longitude,
           true,
-          5 * 60 * 1000
+          60 * 1000
         );
         setCurrentProductIndex(0);
         let fetchedCards: PromoCard[] = [];
@@ -358,17 +358,15 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent opacity-60 pointer-events-none" />
                 
-                {/* Discount Badge - Floating over image */}
-                <div className="absolute top-[20px] left-[20px] z-20 bg-white/95 backdrop-blur-md text-[#002D4A] text-[12px] px-[14px] py-[6px] rounded-[12px] font-[800] tracking-wider shadow-lg border border-white/20">
-                  {category.badge}
-                </div>
               </div>
 
               {/* Card Content with Padding */}
               <div className="p-8 pt-6 flex flex-col flex-1 bg-white">
-                <h3 className="text-[24px] font-[900] text-[#002D4A] tracking-tight uppercase group-hover:text-[#1CA7C7] transition-colors duration-300">
-                  {category.title}
-                </h3>
+                <div className="h-[64px] overflow-hidden">
+                  <h3 className="text-[24px] font-[900] text-[#002D4A] tracking-tight uppercase group-hover:text-[#1CA7C7] transition-colors duration-300 leading-tight line-clamp-2">
+                    {category.title}
+                  </h3>
+                </div>
                 <p className={`text-[16px] text-[#003B5C]/70 mt-[8px] leading-relaxed font-medium ${expandedDescriptions.has(category.id) ? '' : 'line-clamp-1'}`}>
                   {category.description || `Explore our premium ${category.title} range for the best quality.`}
                 </p>
@@ -395,7 +393,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
             <div key={category.id} className="flex-shrink-0 w-full px-5 snap-center">
               <motion.div
                 onClick={() => navigate(category.slug ? `/?tab=${category.slug}` : `/category/${category.categoryId || category.id}`)}
-                className="bg-white rounded-[32px] flex flex-col relative transition-all duration-300 overflow-hidden border border-[#BEEFFF]/30"
+                className="bg-white rounded-[32px] flex flex-col relative transition-all duration-300 overflow-hidden border border-[#BEEFFF]/30 h-[460px]"
                 style={{ boxShadow: '0 12px 30px rgba(0,45,74,0.12)' }}
               >
                 {/* Full Width Image at Top */}
@@ -413,15 +411,11 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent opacity-40 pointer-events-none" />
                   
-                  {/* Badge */}
-                  <div className="absolute top-[16px] left-[16px] z-20 bg-white/95 backdrop-blur-md text-[#002D4A] text-[10px] px-[12px] py-[5px] rounded-[10px] font-bold tracking-wide shadow-md">
-                    {category.badge}
-                  </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 flex flex-col flex-1">
-                  <h3 className="text-[22px] font-[800] text-[#002D4A] uppercase tracking-tight">
+                <div className="p-6 flex flex-col flex-1 overflow-hidden">
+                  <h3 className="text-[22px] font-[800] text-[#002D4A] uppercase tracking-tight min-h-[56px]">
                     {category.title}
                   </h3>
                   <p className={`text-[14px] text-[#003B5C]/70 mt-[6px] leading-relaxed font-medium ${expandedDescriptions.has(category.id) ? '' : 'line-clamp-1'}`}>

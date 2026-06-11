@@ -592,6 +592,34 @@ export const getHomeContent = async (req: Request, res: Response) => {
       }
     }
 
+    // Supplement PromoStrip categoryCards with newest Active root categories when < 3 are configured
+    if (promoStrip && Array.isArray(promoStrip.categoryCards) && promoStrip.categoryCards.length < 3) {
+      const existingIds = promoStrip.categoryCards
+        .map((card: any) => (card.categoryId?._id || card.categoryId)?.toString())
+        .filter(Boolean);
+      const needed = 3 - promoStrip.categoryCards.length;
+      const latestCats = await Category.find({
+        status: "Active",
+        parentId: null,
+        ...(existingIds.length > 0 ? { _id: { $nin: existingIds } } : {}),
+      })
+        .select("name slug image _id")
+        .sort({ createdAt: -1 })
+        .limit(needed)
+        .lean();
+      if (latestCats.length > 0) {
+        const syntheticCards = latestCats.map((cat: any, i: number) => ({
+          _id: cat._id,
+          categoryId: { _id: cat._id, name: cat.name, slug: cat.slug, image: cat.image },
+          title: cat.name,
+          badge: "New Arrival",
+          discountPercentage: 0,
+          order: 999 + i,
+        }));
+        promoStrip = { ...promoStrip, categoryCards: [...promoStrip.categoryCards, ...syntheticCards] };
+      }
+    }
+
     res.status(200).json({
       success: true,
       data: {

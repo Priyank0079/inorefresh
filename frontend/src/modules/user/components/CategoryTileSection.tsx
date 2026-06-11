@@ -144,7 +144,7 @@ export default function CategoryTileSection({
                       handleTileClick(tile);
                     }
                   }}
-                  className={`block bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.03)] border border-neutral-100 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 h-full overflow-hidden relative group ${showProductCount ? "px-2.5 pt-2.5 pb-3" : "p-1.5"
+                  className={`block bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.03)] border border-neutral-100 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 h-full overflow-hidden relative group ${showProductCount ? "px-2.5 pt-2.5 pb-3" : "p-0"
                     }`}>
                   {/* 🌊 UNDERWATER CARD ENHANCEMENTS */}
                   {/* 1. Very faint top highlight reflection */}
@@ -157,7 +157,7 @@ export default function CategoryTileSection({
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.1] to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none z-20" />
                   {/* Image - Single image for non-bestsellers, 2x2 grid for bestsellers */}
                   <div
-                    className={`w-full rounded-xl overflow-hidden relative ${showProductCount ? "h-32 md:h-36 mb-2" : "aspect-square"
+                    className={`w-full overflow-hidden relative ${showProductCount ? "rounded-xl h-32 md:h-36 mb-2" : "aspect-video"
                       } ${tile.bgColor || "bg-neutral-50/50"}`}>
 
                     {/* Subtle Overlay Gradient for Depth */}
@@ -189,22 +189,20 @@ export default function CategoryTileSection({
                           )}
                         </div>
                       ) : (
-                        // Other sections: Single image
-                        <div className="w-full h-full p-2 flex items-center justify-center bg-white transform group-hover:scale-105 transition-transform duration-500">
-                          <img
-                            src={images[0]}
-                            alt={tile.name}
-                            className="w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.05)]"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const parent = target.parentElement;
-                              if (parent) {
-                                parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-2xl font-bold text-neutral-200">${tile.name.charAt(0)}</div>`;
-                              }
-                            }}
-                          />
-                        </div>
+                        // Other sections: Single image full-bleed 16:9
+                        <img
+                          src={images[0]}
+                          alt={tile.name}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-2xl font-bold text-neutral-200">${tile.name.charAt(0)}</div>`;
+                            }
+                          }}
+                        />
                       )
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-neutral-200">

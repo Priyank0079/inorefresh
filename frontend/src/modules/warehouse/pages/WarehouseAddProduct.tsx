@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { uploadImage } from "../../../services/api/uploadService";
-import { validateImageFile, createImagePreview, compressToSquare } from "../../../utils/imageUpload";
+import { validateImageFile, validateImageRatio, createImagePreview, compressImage } from "../../../utils/imageUpload";
 import { createProduct, updateProduct, getProductById, ProductVariation } from "../../../services/api/productService";
 import { getSubcategories, SubCategory } from "../../../services/api/categoryService";
 import api from "../../../services/api/config";
@@ -174,13 +174,17 @@ export default function WarehouseAddProduct() {
   const processMainImageFile = async (file: File) => {
     const validation = validateImageFile(file);
     if (!validation.valid) { setUploadError(validation.error || "Invalid image"); return; }
-    // Compress/resize large photos (e.g. from a phone camera) so the upload
-    // stays under the backend's 5MB limit — otherwise the upload fails with a
-    // "network error" on the app while small web images worked. Fall back to
-    // the original file if compression fails for any reason.
+    // Enforce 16:9 ratio — same as category images.
+    const ratioCheck = await validateImageRatio(file, 16 / 9, 0.08);
+    if (!ratioCheck.valid) {
+      setUploadError(ratioCheck.error || "Image must be 16:9 ratio.");
+      return;
+    }
+    // Compress/resize large photos while preserving 16:9 ratio so the upload
+    // stays under the backend limit. Fall back to the original file if compression fails.
     let compressed = file;
     try {
-      compressed = await compressToSquare(file);
+      compressed = await compressImage(file, 1920, 0.85);
     } catch {
       compressed = file;
     }
@@ -628,8 +632,8 @@ export default function WarehouseAddProduct() {
                 </div>
                 <p className="text-xs text-neutral-400 mt-2">
                   JPG, PNG, or WebP. Max 5MB.
-                  <span className="block mt-1 text-[#12b2a2] font-semibold">📐 Best: 1080×1080 px — Square (1:1 ratio)</span>
-                  <span className="block text-[11px] text-neutral-400">Non-square images will be auto center-cropped to square on upload.</span>
+                  <span className="block mt-1 text-[#12b2a2] font-semibold">📐 Required: 16:9 ratio — e.g. 1200×675 px</span>
+                  <span className="block text-[11px] text-neutral-400">Non 16:9 images will be rejected. Crop your image to 16:9 before uploading.</span>
                 </p>
                 {mainImageFile && (
                   <p className="text-xs text-teal-600 mt-1">✓ {mainImageFile.name} selected</p>
