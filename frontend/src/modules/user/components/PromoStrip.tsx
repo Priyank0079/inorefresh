@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, useEffect, useCallback } from "react";
+import { useLayoutEffect, useRef, useState, useEffect, useCallback, MouseEvent } from "react";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import { Link, useNavigate } from "react-router-dom";
@@ -65,6 +65,16 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
   const productImageRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [hasData, setHasData] = useState(false);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
+
+  const toggleDescription = (id: string, e: MouseEvent) => {
+    e.stopPropagation();
+    setExpandedDescriptions(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   // Fetch subcategory images for category cards - DEFERRED for faster initial load
   const fetchSubcategoryImages = useCallback(async (cards: PromoCard[]) => {
@@ -338,7 +348,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                 <img
                   src={category.imageUrl}
                   alt={category.title}
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                  className="w-full h-full object-cover object-top transition-transform duration-1000 group-hover:scale-110"
                   loading="lazy"
                   decoding="async"
                   onError={(e) => {
@@ -359,9 +369,15 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                 <h3 className="text-[24px] font-[900] text-[#002D4A] tracking-tight uppercase group-hover:text-[#1CA7C7] transition-colors duration-300">
                   {category.title}
                 </h3>
-                <p className="text-[16px] text-[#003B5C]/70 mt-[8px] leading-relaxed font-medium line-clamp-2">
+                <p className={`text-[16px] text-[#003B5C]/70 mt-[8px] leading-relaxed font-medium ${expandedDescriptions.has(category.id) ? '' : 'line-clamp-1'}`}>
                   {category.description || `Explore our premium ${category.title} range for the best quality.`}
                 </p>
+                <button
+                  onClick={(e) => toggleDescription(category.id, e)}
+                  className="text-[#1CA7C7] text-[13px] font-semibold mt-1 text-left hover:underline"
+                >
+                  {expandedDescriptions.has(category.id) ? 'View less' : 'View more'}
+                </button>
 
                 <div className="mt-auto pt-6">
                   <button className="bg-[#072F4A] hover:bg-[#003B5C] text-white text-[16px] font-[800] py-[14px] px-[20px] rounded-[18px] flex items-center justify-center gap-[10px] transition-all w-full shadow-xl shadow-[#072F4A]/25 group-hover:translate-y-[-2px] group-active:scale-95">
@@ -387,7 +403,7 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                   <img
                     src={category.imageUrl}
                     alt={category.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-top"
                     loading="lazy"
                     decoding="async"
                     onError={(e) => {
@@ -408,9 +424,15 @@ export default function PromoStrip({ activeTab = "all" }: PromoStripProps) {
                   <h3 className="text-[22px] font-[800] text-[#002D4A] uppercase tracking-tight">
                     {category.title}
                   </h3>
-                  <p className="text-[14px] text-[#003B5C]/70 mt-[6px] leading-relaxed font-medium line-clamp-2">
+                  <p className={`text-[14px] text-[#003B5C]/70 mt-[6px] leading-relaxed font-medium ${expandedDescriptions.has(category.id) ? '' : 'line-clamp-1'}`}>
                     {category.description || `Explore our premium ${category.title} range.`}
                   </p>
+                  <button
+                    onClick={(e) => toggleDescription(category.id, e)}
+                    className="text-[#1CA7C7] text-[13px] font-semibold mt-1 text-left hover:underline"
+                  >
+                    {expandedDescriptions.has(category.id) ? 'View less' : 'View more'}
+                  </button>
                   
                   <div className="mt-auto pt-5">
                     <button className="bg-[#072F4A] active:bg-[#0B3C5D] text-white text-[15px] font-bold py-[14px] px-[16px] rounded-[16px] flex items-center justify-center gap-[8px] w-full shadow-lg shadow-[#072F4A]/20">

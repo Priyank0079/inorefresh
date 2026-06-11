@@ -13,7 +13,7 @@ const router = Router();
 /**
  * Save FCM token for authenticated user
  * POST /api/v1/fcm-tokens/save
- * Body: { token: string, platform: 'web' | 'app' }
+ * Body: { token: string, platform: 'web' | 'mobile' }
  */
 router.post("/save", async (req: Request, res: Response): Promise<void> => {
   try {
@@ -86,8 +86,8 @@ router.post("/save", async (req: Request, res: Response): Promise<void> => {
     // longer receive this account's notifications. Without this, two
     // warehouses tested on the same browser both end up with the token and
     // each receives the other's order pushes.
-    if (platform === "web" || platform === "app") {
-      const field = platform === "app" ? "fcmTokenMobile" : "fcmTokens";
+    if (platform === "web" || platform === "mobile") {
+      const field = platform === "mobile" ? "fcmTokenMobile" : "fcmTokens";
       const allModels = [
         Customer,
         Admin,
@@ -120,7 +120,7 @@ router.post("/save", async (req: Request, res: Response): Promise<void> => {
           user.fcmTokens = user.fcmTokens.slice(-10);
         }
       }
-    } else if (platform === "app") {
+    } else if (platform === "mobile") {
       if (!user.fcmTokenMobile) {
         user.fcmTokenMobile = [];
       }
@@ -133,7 +133,7 @@ router.post("/save", async (req: Request, res: Response): Promise<void> => {
     } else {
       res.status(400).json({
         success: false,
-        message: 'Platform must be either "web" or "app"',
+        message: 'Platform must be either "web" or "mobile"',
       });
       return;
     }
@@ -162,7 +162,7 @@ router.post("/save", async (req: Request, res: Response): Promise<void> => {
 /**
  * Remove FCM token for authenticated user
  * DELETE /api/v1/fcm-tokens/remove
- * Body: { token: string, platform: 'web' | 'app' }
+ * Body: { token: string, platform: 'web' | 'mobile' }
  */
 router.delete("/remove", async (req: Request, res: Response): Promise<void> => {
   try {
@@ -232,7 +232,7 @@ router.delete("/remove", async (req: Request, res: Response): Promise<void> => {
     // Remove token from appropriate array
     if (platform === "web" && user.fcmTokens) {
       user.fcmTokens = user.fcmTokens.filter((t: string) => t !== token);
-    } else if (platform === "app" && user.fcmTokenMobile) {
+    } else if (platform === "mobile" && user.fcmTokenMobile) {
       user.fcmTokenMobile = user.fcmTokenMobile.filter(
         (t: string) => t !== token,
       );
