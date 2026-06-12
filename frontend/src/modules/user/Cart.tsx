@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import Button from '../../components/ui/button';
@@ -7,9 +8,13 @@ import { useThemeContext } from '../../context/ThemeContext';
 import WishlistButton from '../../components/WishlistButton';
 
 export default function Cart() {
-  const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, refreshCart, loading } = useCart();
   const navigate = useNavigate();
   const { currentTheme } = useThemeContext();
+
+  useEffect(() => {
+    refreshCart();
+  }, []);
 
   // Free delivery removed: delivery is always charged.
   const deliveryFee = appConfig.deliveryFee;
@@ -21,6 +26,14 @@ export default function Cart() {
   const handleCheckout = () => {
     navigate('/checkout');
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: currentTheme.primary[3] }} />
+      </div>
+    );
+  }
 
   if (cart.items.length === 0) {
     return (

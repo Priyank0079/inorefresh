@@ -13,7 +13,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 export default function Wishlist() {
   const navigate = useNavigate();
   const { location } = useLocation();
-  const { addToCart } = useCart();
+  const { cart, addToCart, updateQuantity } = useCart();
   const { showToast } = useToast();
   const { currentTheme } = useThemeContext();
   const [products, setProducts] = useState<Product[]>([]);
@@ -73,7 +73,13 @@ export default function Wishlist() {
           </div>
         ) : products.length > 0 ? (
           <div className="grid grid-cols-2 gap-4">
-            {products.map((product) => (
+            {products.map((product) => {
+              const cartItem = cart.items.find((item) => {
+                if (!item?.product) return false;
+                return String(item.product.id || item.product._id) === String(product.id || product._id);
+              });
+              const inCartQty = cartItem?.quantity || 0;
+              return (
               <motion.div
                 key={product.id}
                 layout
@@ -112,23 +118,55 @@ export default function Wishlist() {
                         </div>
                       );
                     })()}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addToCart(product)}
-                      className="w-full rounded-lg h-8 text-xs font-bold hover:opacity-90 transition-opacity"
-                      style={{
-                        borderColor: currentTheme.primary[3],
-                        color: currentTheme.primary[3],
-                        backgroundColor: 'transparent'
-                      }}
-                    >
-                      ADD TO CART
-                    </Button>
+                    {inCartQty > 0 ? (
+                      <div
+                        className="w-full h-8 flex items-center justify-between rounded-lg overflow-hidden"
+                        style={{ backgroundColor: currentTheme.primary[3] }}
+                      >
+                        <button
+                          onClick={() => {
+                            const variantId = (cartItem?.product as any)?.variantId || (cartItem?.product as any)?.selectedVariant?._id;
+                            const variantTitle = (cartItem?.product as any)?.variantTitle || (cartItem?.product as any)?.pack;
+                            updateQuantity(String(product.id || product._id), inCartQty - 1, variantId, variantTitle);
+                          }}
+                          className="w-9 h-full flex items-center justify-center text-white hover:opacity-80 transition-opacity"
+                          aria-label="Decrease quantity"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14" /></svg>
+                        </button>
+                        <span className="text-xs font-bold text-white">{inCartQty}</span>
+                        <button
+                          onClick={() => {
+                            const variantId = (cartItem?.product as any)?.variantId || (cartItem?.product as any)?.selectedVariant?._id;
+                            const variantTitle = (cartItem?.product as any)?.variantTitle || (cartItem?.product as any)?.pack;
+                            updateQuantity(String(product.id || product._id), inCartQty + 1, variantId, variantTitle);
+                          }}
+                          className="w-9 h-full flex items-center justify-center text-white hover:opacity-80 transition-opacity"
+                          aria-label="Increase quantity"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 5v14M5 12h14" /></svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addToCart(product)}
+                        className="w-full rounded-lg h-8 text-xs font-bold hover:opacity-90 transition-opacity"
+                        style={{
+                          borderColor: currentTheme.primary[3],
+                          color: currentTheme.primary[3],
+                          backgroundColor: 'transparent'
+                        }}
+                      >
+                        ADD TO CART
+                      </Button>
+                    )}
                   </div>
                 </div>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-20 text-neutral-500">
