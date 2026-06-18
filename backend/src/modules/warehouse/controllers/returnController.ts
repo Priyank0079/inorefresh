@@ -22,9 +22,10 @@ export const getReturnRequests = asyncHandler(
       })
       .populate({
         path: 'order',
-        select: 'orderNumber customerName'
+        select: 'orderNumber customerName customerPhone',
+        populate: { path: 'customer', select: 'name phone shopName' }
       })
-      .populate('customer', 'name email mobile')
+      .populate('customer', 'name email mobile phone shopName')
       .sort({ createdAt: -1 })
       .skip((Number(page) - 1) * Number(limit))
       .limit(Number(limit));
@@ -39,8 +40,8 @@ export const getReturnRequests = asyncHandler(
         id: ret._id,
         orderItemId: item?._id?.toString().slice(-6) || 'N/A', // Short ID for UI
         productName: item?.productName || 'Unknown Product',
-        shopName: order?.customerName || 'N/A',
-        customerName: order?.customerName || 'Unknown Customer',
+        shopName: order?.customerName || order?.customer?.shopName || order?.customer?.name || (ret.customer as any)?.shopName || (ret.customer as any)?.name || 'N/A',
+        customerName: order?.customerName || order?.customer?.name || (ret.customer as any)?.name || 'Unknown Customer',
         orderId: order?.orderNumber || 'Unknown Order',
         price: item?.unitPrice || 0,
         discPrice: 0, // Disc price logic if available

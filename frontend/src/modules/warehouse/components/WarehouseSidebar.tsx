@@ -26,6 +26,7 @@ const menuItems: MenuItem[] = [
   { label: "Orders", path: "/warehouse/orders" },
   { label: "Route Planning", path: "/warehouse/route-planning" },
   { label: "Live Delivery", path: "/warehouse/live-tracking" },
+  { label: "Stock Overview", path: "/warehouse/stock-overview" },
   { label: "Category", path: "/warehouse/category" },
   {
     label: "Product",

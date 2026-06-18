@@ -124,6 +124,7 @@ router.use("/warehouse/reports", reportRoutes);
 router.use("/warehouse/wallet", walletRoutes);
 router.use("/warehouse/taxes", taxRoutes);
 router.use("/warehouse/inward-stock", inwardStockRoutes);
+router.get("/warehouse/stock-overview", authenticate, requireUserType("Warehouse", "Admin"), require("../modules/warehouse/controllers/stockController").getStockOverview);
 router.use("/payment", paymentRoutes);
 router.use("/warehouse/wallet-new", authenticate, requireUserType("Warehouse"), warehouseWalletRoutes);
 router.use("/delivery/wallet", authenticate, requireUserType("Delivery"), deliveryWalletRoutes);
