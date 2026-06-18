@@ -312,6 +312,12 @@ export async function notifyDeliveryBoysOfNewOrder(
     io: SocketIOServer,
     orderOrId: any
 ): Promise<void> {
+    // New route-based flow: drivers receive a planned Route, NOT instant
+    // on-demand order broadcasts. This legacy broadcast is retired by default;
+    // set LEGACY_ONDEMAND_NOTIFY=true to re-enable the old behavior.
+    if (process.env.LEGACY_ONDEMAND_NOTIFY !== 'true') {
+        return;
+    }
     try {
         let order = orderOrId;
 

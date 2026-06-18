@@ -1,27 +1,19 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import Return from "../../../models/Return";
-import OrderItem from "../../../models/OrderItem";
 import { sendNotification } from "../../../services/notificationService";
 import { getIO } from "../../../socket/socketService";
 
 export const getReturnRequests = asyncHandler(
   async (req: Request, res: Response) => {
-    const WarehouseId = req.user?.userId;
     const { status, page = 1, limit = 10 } = req.query;
 
     const query: any = {};
     if (status && status !== 'All Status') {
       query.status = status;
     }
-
-    // Find return requests where the associated OrderItem belongs to this Warehouse
-    // 1. Find OrderItems for this Warehouse
-    const WarehouseOrderItems = await OrderItem.find({ warehouse: WarehouseId }).select('_id');
-    const WarehouseOrderItemIds = WarehouseOrderItems.map(item => item._id);
-
-    // 2. Filter Returns by these OrderItem IDs
-    query.orderItem = { $in: WarehouseOrderItemIds };
+    // Show ALL returns to the warehouse head — InorFresh uses a
+    // single-warehouse-head model where one manager handles all returns.
 
     const returns = await Return.find(query)
       .populate({

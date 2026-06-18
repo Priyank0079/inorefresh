@@ -39,6 +39,7 @@ import warehouseWalletRoutes from "./warehouseWalletRoutes";
 import deliveryWalletRoutes from "./deliveryWalletRoutes";
 import adminWithdrawalRoutes from "./adminWithdrawalRoutes";
 import adminTeamRoutes from "./adminTeamRoutes";
+import routeManagementRoutes from "./routeManagementRoutes";
 // Port routes are now mounted directly in server.ts
 
 
@@ -48,6 +49,7 @@ import {
   getOrderById,
   cancelOrder,
   updateOrderNotes,
+  getOrderWindowStatus,
 } from "../modules/customer/controllers/customerOrderController";
 
 const router = Router();
@@ -85,6 +87,7 @@ router.use("/customer/categories", customerCategoryRoutes);
 router.use("/customer", customerTrackingRoutes);
 
 // Customer orders
+router.get("/customer/order-window", authenticate, getOrderWindowStatus);
 router.post("/customer/orders", authenticate, requireUserType("Customer", "horeca", "retailer"), createOrder);
 router.get("/customer/orders", authenticate, requireUserType("Customer", "horeca", "retailer"), getMyOrders);
 router.get("/customer/orders/:id", authenticate, requireUserType("Customer", "horeca", "retailer"), getOrderById);
@@ -126,5 +129,8 @@ router.use("/warehouse/wallet-new", authenticate, requireUserType("Warehouse"), 
 router.use("/delivery/wallet", authenticate, requireUserType("Delivery"), deliveryWalletRoutes);
 router.use("/admin/withdrawals", authenticate, requireUserType("Admin"), adminWithdrawalRoutes);
 router.use("/admin/team", adminTeamRoutes);
+
+// Route-based logistics planning (Phase 2) — Warehouse Head + Admin
+router.use("/routes", authenticate, requireUserType("Warehouse", "Admin"), routeManagementRoutes);
 
 export default router;

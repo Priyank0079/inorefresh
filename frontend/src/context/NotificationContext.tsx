@@ -197,19 +197,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             console.error("Audio beep failed:", audioErr);
           }
 
-          // Text-to-speech voice alert
-          try {
-            if ('speechSynthesis' in window) {
-              window.speechSynthesis.cancel(); // Cancel any ongoing speech
-              const textToSpeak = `${notification.title}. ${notification.message}`;
-              const utterance = new SpeechSynthesisUtterance(textToSpeak);
-              utterance.rate = 1.0;
-              utterance.pitch = 1.0;
-              window.speechSynthesis.speak(utterance);
-            }
-          } catch (speechError) {
-            console.error("Speech Synthesis failed:", speechError);
-          }
+          // AI voice removed — sound-only alerts
         });
 
         setSocket(newSocket);

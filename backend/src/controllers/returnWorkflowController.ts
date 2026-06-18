@@ -14,7 +14,6 @@ import Warehouse from "../models/Warehouse";
 import PlatformWallet from "../models/PlatformWallet";
 import axios from "axios";
 import { sendNotification } from "../services/notificationService";
-import { sendNotificationToUser } from "../services/firebaseAdmin";
 import { getIO } from "../socket/socketService";
 
 // startInspection removed: Verification is now triggered strictly by OTP delivery.
@@ -428,30 +427,33 @@ export const submitReturnRequest = asyncHandler(async (req: Request, res: Respon
   order.isVerifiedByCustomer = true;
   await order.save();
 
-  // Notify Warehouse
+  // Notify Warehouse — send to ALL active warehouses so at least someone sees it
+  // (the specific warehouse on the order item may have been deleted)
   if (returnRequests.length > 0) {
-    // Persisted bell notification + push
-    await sendNotification(
-      "Warehouse",
-      returnRequests[0].warehouse?.toString() || "",
-      "New Return Request",
-      `A return request has been submitted for Order #${order.orderNumber}.`,
-      { type: "Order", priority: "High" }
-    );
+    const allWarehouses = await Warehouse.find({ status: "ACTIVE" }).select("_id").lean();
+    for (const wh of allWarehouses) {
+      try {
+        await sendNotification(
+          "Warehouse",
+          String(wh._id),
+          "🔔 New Return Request",
+          `Return request for Order #${order.orderNumber} from ${(order as any).customerName || "Customer"}. ${returnRequests.length} item(s). Please review.`,
+          { type: "Order", priority: "Urgent" }
+        );
+      } catch (e: any) {
+        console.error(`[Return] Failed to notify warehouse ${wh._id}:`, e?.message);
+      }
+    }
 
-    // Immediate real-time popup (with sound) at every involved warehouse so the
-    // manager can approve the return right away — emitted per unique warehouse.
+    // Real-time popup (with sound) to all warehouses
     try {
       const io = getIO();
-      const warehouseIds = Array.from(
-        new Set(returnRequests.map((r) => r.warehouse?.toString()).filter(Boolean))
-      );
-      for (const whId of warehouseIds) {
-        io.to(`warehouse-${whId}`).emit("return-request-alert", {
+      for (const wh of allWarehouses) {
+        io.to(`warehouse-${String(wh._id)}`).emit("return-request-alert", {
           orderId: order._id?.toString(),
           orderNumber: order.orderNumber,
           customerName: (order as any).customerName || "Customer",
-          itemCount: returnRequests.filter((r) => r.warehouse?.toString() === whId).length,
+          itemCount: returnRequests.length,
           timestamp: new Date(),
         });
       }
@@ -459,8 +461,18 @@ export const submitReturnRequest = asyncHandler(async (req: Request, res: Respon
       console.error("[Return Request] socket emit failed:", e);
     }
 
-    // Admin: silent bell only — admin does NOT need a popup for every return submit.
-    // They get a popup only on escalation or failed refund (see those paths below).
+    // Also notify the delivery boy so they know returns were submitted
+    if (order.deliveryBoy) {
+      await sendNotification(
+        "Delivery",
+        order.deliveryBoy.toString(),
+        "Return Submitted",
+        `Customer submitted ${returnRequests.length} return(s) for Order #${order.orderNumber}. Waiting for warehouse approval.`,
+        { type: "Order", priority: "High" }
+      );
+    }
+
+    // Admin: silent bell
     try {
       const io = getIO();
       io.to('admin-notifications').emit('new-notification', {
@@ -519,19 +531,50 @@ export const reviewReturnRequest = asyncHandler(async (req: Request, res: Respon
 
   await returnReq.save();
 
-  // Notify Rider
+  // Notify Rider + Warehouse
   if (returnReq.deliveryBoy) {
-    await sendNotification(
-      "Delivery",
-      returnReq.deliveryBoy.toString(),
-      "Return Request Update",
-      `Return request for Order #${order.orderNumber} has been ${action}d.`,
-      { type: "Order", priority: "High" }
-    );
-
-    // On approval, fire an instant popup (with sound) so the rider knows to
-    // go collect the returned goods from the customer right away.
     if (action === 'Approve') {
+      const returnOtp = returnReq.warehouseVerificationOtp;
+
+      // Send OTP to warehouse bell too (so they can find it later)
+      const warehouseId = returnReq.warehouse?.toString();
+      if (warehouseId) {
+        await sendNotification(
+          "Warehouse",
+          warehouseId,
+          `🔐 Return OTP: ${returnOtp}`,
+          `Return approved for Order #${order.orderNumber}. OTP: ${returnOtp}. Share with delivery boy.`,
+          { type: "Order", priority: "Urgent", link: "/warehouse/return/inbox" }
+        );
+      }
+      // Also notify ALL warehouses (in case the item's warehouse was deleted)
+      const allWarehouses = await Warehouse.find({ status: "ACTIVE" }).select("_id").lean();
+      for (const wh of allWarehouses) {
+        if (String(wh._id) !== warehouseId) {
+          try {
+            await sendNotification(
+              "Warehouse",
+              String(wh._id),
+              `🔐 Return OTP: ${returnOtp}`,
+              `Return approved for Order #${order.orderNumber}. OTP: ${returnOtp}. Share with delivery boy.`,
+              { type: "Order", priority: "High", link: "/warehouse/return/inbox" }
+            );
+          } catch (e: any) {
+            console.error(`[Return OTP] Failed to notify warehouse ${wh._id}:`, e?.message);
+          }
+        }
+      }
+
+      // Send OTP to delivery boy
+      await sendNotification(
+        "Delivery",
+        returnReq.deliveryBoy.toString(),
+        `🔐 Return OTP: ${returnOtp}`,
+        `Return approved for Order #${order.orderNumber}. Enter OTP ${returnOtp} to confirm return & process refund.`,
+        { type: "Order", priority: "Urgent" }
+      );
+
+      // Socket popup with sound
       try {
         const io = getIO();
         io.to(`delivery-${returnReq.deliveryBoy.toString()}`).emit('return-pickup-alert', {
@@ -539,37 +582,22 @@ export const reviewReturnRequest = asyncHandler(async (req: Request, res: Respon
           orderId: order._id?.toString(),
           orderNumber: order.orderNumber,
           customerName: order.customerName || 'Customer',
+          otp: returnOtp,
           timestamp: new Date(),
         });
       } catch (e) {
         console.error('[Return Pickup] socket emit failed:', e);
       }
 
-      // Also send a data-only FCM push so the rider gets an urgent notification
-      // even when the socket is disconnected (tab backgrounded / phone asleep).
-      // dataOnly=true bypasses the OS auto-display so our service worker shows
-      // it with requireInteraction + full vibration.
-      try {
-        await sendNotificationToUser(
-          returnReq.deliveryBoy.toString(),
-          'Delivery',
-          {
-            title: 'Return Pickup Approved!',
-            body: `Go collect returned goods for Order #${order.orderNumber} from the customer.`,
-            data: {
-              type: 'return_pickup',
-              orderId: order._id?.toString() || '',
-              orderNumber: String(order.orderNumber),
-              customerName: order.customerName || 'Customer',
-              returnId: (returnReq._id as any).toString(),
-              link: `/delivery/orders/${order._id}`,
-            },
-            dataOnly: true,
-          }
-        );
-      } catch (e) {
-        console.error('[Return Pickup] FCM push failed:', e);
-      }
+      // FCM push handled by sendNotification above — no duplicate needed
+    } else {
+      await sendNotification(
+        "Delivery",
+        returnReq.deliveryBoy.toString(),
+        "Return Request Update",
+        `Return request for Order #${order.orderNumber} has been ${action}d.`,
+        { type: "Order", priority: "High" }
+      );
     }
   }
 
@@ -786,10 +814,10 @@ export const sendWarehouseOtp = asyncHandler(async (req: Request, res: Response)
     return res.status(403).json({ success: false, message: "Unauthorized" });
   }
 
-  if (returnReq.status !== 'IN_TRANSIT_TO_WAREHOUSE') {
+  if (returnReq.status !== 'IN_TRANSIT_TO_WAREHOUSE' && returnReq.status !== 'Approved') {
     return res.status(400).json({
       success: false,
-      message: "Return is not in transit to warehouse"
+      message: "Return is not ready for OTP verification"
     });
   }
 
@@ -872,8 +900,8 @@ export const riderVerifyWarehouseOtp = asyncHandler(async (req: Request, res: Re
   if (returnReq.deliveryBoy?.toString() !== riderId) {
     return res.status(403).json({ success: false, message: "Unauthorized" });
   }
-  if (returnReq.status !== 'IN_TRANSIT_TO_WAREHOUSE') {
-    return res.status(400).json({ success: false, message: "Return is not in transit to warehouse" });
+  if (returnReq.status !== 'IN_TRANSIT_TO_WAREHOUSE' && returnReq.status !== 'Approved') {
+    return res.status(400).json({ success: false, message: "Return is not ready for verification" });
   }
 
   // Strict OTP validation (no mock / no bypass).

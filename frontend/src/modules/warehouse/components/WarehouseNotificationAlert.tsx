@@ -1,20 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { WarehouseNotification } from '../hooks/useWarehouseSocket';
-import { updateOrderStatus } from '../../../services/api/orderService';
-import { useNavigate } from 'react-router-dom';
 
 interface WarehouseNotificationAlertProps {
   notification: WarehouseNotification | null;
   onClose: () => void;
 }
 
+// New flow: the warehouse is only NOTIFIED of incoming orders. Fulfilment is
+// handled via Route Planning, so there is no per-order Accept/Reject here.
 const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({ notification, onClose }) => {
   const [volume, setVolume] = useState(0.8);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
-  const [statusError, setStatusError] = useState('');
 
   // Stop the looping alert sound immediately (don't wait for unmount / network).
   const stopSound = () => {
@@ -27,26 +23,6 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
   const handleClose = () => {
     stopSound();
     onClose();
-  };
-
-  const handleStatusUpdate = async (status: string) => {
-    if (!notification) return;
-    stopSound(); // kill the sound the instant the manager acts, before the API call
-    setLoading(true);
-    try {
-      await updateOrderStatus(notification.orderId, { status: status as any });
-      onClose();
-      // Optionally navigate to order detail or just close
-      if (status === 'Accepted') {
-         navigate(`/warehouse/orders/${notification.orderId}`);
-      }
-    } catch (error) {
-      console.error('Error updating status:', error);
-      setStatusError('Failed to update order status. Please try again.');
-      setTimeout(() => setStatusError(''), 3000);
-    } finally {
-      setLoading(false);
-    }
   };
 
   useEffect(() => {
@@ -196,71 +172,21 @@ const WarehouseNotificationAlert: React.FC<WarehouseNotificationAlertProps> = ({
           </section>
         </div>
 
-        {/* Footer */}
+        {/* Footer — info only: warehouse acknowledges; fulfilment via Route Planning */}
         <div className="p-6 bg-neutral-50 border-t border-neutral-200">
-
-          {notification.type === 'NEW_ORDER' ? (
-             <div className="flex gap-4">
-               <button
-                 onClick={() => handleStatusUpdate('Accepted')}
-                 disabled={loading}
-                 className="flex-1 py-4 rounded-xl font-bold text-white shadow-lg bg-teal-600 hover:bg-teal-700 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-               >
-                 {loading ? 'Please wait...' : 'Accept Order'}
-               </button>
-               <button
-                 onClick={() => { stopSound(); setShowRejectConfirm(true); }}
-                 disabled={loading}
-                 className="flex-1 py-4 rounded-xl font-bold text-white shadow-lg bg-red-600 hover:bg-red-700 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-               >
-                 {loading ? 'Please wait...' : 'Reject Order'}
-               </button>
-             </div>
-          ) : (
-            <button
-              onClick={handleClose}
-              className="w-full py-4 rounded-xl font-bold text-white shadow-lg transition-transform active:scale-95 bg-blue-600 hover:bg-blue-700"
-            >
-              Acknowledge & Dismiss
-            </button>
+          {notification.type === 'NEW_ORDER' && (
+            <p className="text-center text-sm text-neutral-500 mb-3">
+              This order will be fulfilled through <span className="font-semibold text-neutral-700">Route Planning</span>.
+            </p>
           )}
-
-          {statusError && (
-            <div className="mt-3 px-4 py-2.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 text-center font-medium">
-              {statusError}
-            </div>
-          )}
+          <button
+            onClick={handleClose}
+            className="w-full py-4 rounded-xl font-bold text-white shadow-lg transition-transform active:scale-95 bg-teal-600 hover:bg-teal-700"
+          >
+            Acknowledge & Dismiss
+          </button>
         </div>
       </div>
-
-      {/* Reject Confirmation */}
-      {showRejectConfirm && (
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10 rounded-xl p-4">
-          <div className="bg-white rounded-xl p-5 w-full max-w-xs shadow-xl text-center">
-            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
-              </svg>
-            </div>
-            <h4 className="font-bold text-neutral-800 mb-1">Reject Order?</h4>
-            <p className="text-sm text-neutral-500 mb-4">Are you sure you want to reject this order?</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowRejectConfirm(false)}
-                className="flex-1 py-2 rounded-lg text-sm font-semibold bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => { setShowRejectConfirm(false); handleStatusUpdate('Rejected'); }}
-                className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors"
-              >
-                Reject
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

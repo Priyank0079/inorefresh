@@ -964,7 +964,7 @@ export default function OrderDetail() {
       </motion.div>
 
       {/* Verification Pending Banner — urgent CTA for retailer */}
-      {(orderStatus === "Delivered" && !order?.isVerifiedByCustomer) && (
+      {(orderStatus === "Delivered" && !order?.isVerifiedByCustomer && !['Return Under Review', 'Partially Returned', 'Fully Returned'].includes(orderStatus)) && (
         <div className="mx-4 my-4 bg-gradient-to-br from-orange-500 via-red-500 to-rose-600 text-white p-5 rounded-2xl shadow-lg border border-orange-400/20 relative z-30">
           <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
@@ -982,13 +982,22 @@ export default function OrderDetail() {
                 )}
               </div>
               <p className="text-sm opacity-95 font-medium">
-                {!order?.inspectionExpiresAt 
+                {!order?.inspectionExpiresAt
                   ? "Waiting for the rider to start the verification process."
-                  : (timeLeft > 0 
-                    ? "Please verify your items before the rider leaves." 
+                  : (timeLeft > 0
+                    ? "Please verify your items before the rider leaves."
                     : "The verification window has closed. The order is automatically being accepted.")}
               </p>
-              {order?.inspectionExpiresAt && timeLeft > 0 && <p className="text-xs opacity-80">Note: Returns cannot be requested after completing verification.</p>}
+              {order?.deliveryOtp && (
+                <div className="mt-3 bg-white/20 backdrop-blur-sm rounded-xl p-3 border border-white/30">
+                  <p className="text-[10px] font-bold uppercase tracking-wider opacity-80 mb-1">Your Delivery OTP</p>
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl font-black tracking-[0.3em] text-white">{order.deliveryOtp}</span>
+                    <span className="text-xs opacity-80">Share with rider</span>
+                  </div>
+                </div>
+              )}
+              {order?.inspectionExpiresAt && timeLeft > 0 && <p className="text-xs opacity-80 mt-2">Note: Returns cannot be requested after completing verification.</p>}
             </div>
             
             {order?.inspectionExpiresAt && timeLeft > 0 && (

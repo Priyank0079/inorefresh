@@ -1,11 +1,11 @@
 import { ReactNode, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import DeliveryBottomNav from './DeliveryBottomNav';
 import { DeliveryStatusProvider, useDeliveryStatus } from '../context/DeliveryStatusContext';
 import { DeliveryUserProvider, useDeliveryUser } from '../context/DeliveryUserContext';
 import { getDeliveryProfile } from '../../../services/api/delivery/deliveryService';
 import { useDeliveryOrderNotifications } from '../../../hooks/useDeliveryOrderNotifications';
-import OrderNotificationCard from './OrderNotificationCard';
+// OrderNotificationCard (instant on-demand order popup) retired — drivers now
+// receive a planned Route instead of accepting/rejecting individual orders.
 import DeliveryReturnPickupAlert from './DeliveryReturnPickupAlert';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../../../context/AuthContext';
@@ -16,14 +16,10 @@ interface DeliveryLayoutContentProps {
 }
 
 function DeliveryLayoutContent({ children }: DeliveryLayoutContentProps) {
-  const navigate = useNavigate();
   const { isOnline } = useDeliveryStatus();
   const { setUserName } = useDeliveryUser();
   const { isAuthenticated, user } = useAuth();
   const {
-    currentNotification,
-    acceptOrder,
-    rejectOrder,
     returnPickupAlert,
     clearReturnPickupAlert,
     isConnected,
@@ -118,17 +114,7 @@ function DeliveryLayoutContent({ children }: DeliveryLayoutContentProps) {
         )}
       </AnimatePresence>
 
-      {/* Order Notification Card */}
-      <AnimatePresence>
-        {currentNotification && (
-          <OrderNotificationCard
-            key={currentNotification.orderId}
-            notification={currentNotification}
-            onAccept={(orderId) => acceptOrder(orderId, navigate)}
-            onReject={rejectOrder}
-          />
-        )}
-      </AnimatePresence>
+      {/* Instant on-demand order popup retired — drivers use the Route tab. */}
 
       {/* Return pickup popup (warehouse approved a return → go collect) */}
       <DeliveryReturnPickupAlert

@@ -1,8 +1,24 @@
 import { messaging, getToken, onMessage } from './firebase';
 import { getAuthToken } from './api/config';
 
-const VAPID_KEY = 'BNtQ-yWzXEuz_T9O0xQeEGi52R4-8nNjVbBao1oT4VuASPq0uiLhfPk81_ULMXl3eTsmpMQDhzKDSk47fgohgVQ';
+// VAPID key must match the dhakadsnazzy2 Firebase project.
+// Get it from: Firebase Console → dhakadsnazzy2 → Project Settings → Cloud Messaging → Web Push certificates
+const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.inorfresh.com/api/v1';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Flutter WebView detection
+//
+// Flutter inappwebview sets the user agent to include "InorFreshApp" (set this
+// in your Flutter project — see instructions at the bottom of this file).
+// As a fallback we also check for the flutter_inappwebview JS object.
+// ─────────────────────────────────────────────────────────────────────────────
+export function isFlutterWebView(): boolean {
+    return (
+        navigator.userAgent.includes('InorFreshApp') ||
+        !!(window as any).flutter_inappwebview
+    );
+}
 
 function getDevicePlatform(): 'web' | 'mobile' {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -14,8 +30,72 @@ function getFCMStorageKey(): string {
     return `fcm_token_${getDevicePlatform()}`;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Flutter → Web bridge
+//
+// Exposes window.registerNativeFCMToken(token) so the Flutter app can call:
+//   webViewController.evaluateJavascript("window.registerNativeFCMToken('$fcmToken')")
+//
+// Also sets window.__awaitingNativeFCMToken = true so Flutter knows the web
+// app is ready to receive the token (poll this flag from Flutter side).
+// ─────────────────────────────────────────────────────────────────────────────
+export function exposeFlutterBridge(): void {
+    // Signal to Flutter that the web app is waiting for the native FCM token.
+    (window as any).__awaitingNativeFCMToken = true;
+
+    // Guard: don't re-register if already set up
+    if ((window as any).registerNativeFCMToken) return;
+
+    (window as any).registerNativeFCMToken = async (token: string): Promise<boolean> => {
+        if (!token) {
+            console.warn('⚠️ registerNativeFCMToken called with empty token');
+            return false;
+        }
+
+        const authToken = getAuthToken();
+        if (!authToken) {
+            console.warn('⚠️ registerNativeFCMToken: user not authenticated yet, token will be stored and sent on next login');
+            // Store for later — AuthContext.login() will call registerFCMToken(true)
+            // which will pick this up via localStorage.
+            localStorage.setItem('flutter_pending_fcm_token', token);
+            return false;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/fcm-tokens/save`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({ token, platform: 'mobile' })
+            });
+
+            if (response.ok) {
+                localStorage.setItem('fcm_token_mobile', token);
+                localStorage.removeItem('flutter_pending_fcm_token');
+                (window as any).__awaitingNativeFCMToken = false;
+                console.log('✅ Native FCM token registered from Flutter bridge');
+                return true;
+            } else {
+                const err = await response.json();
+                console.error('❌ Failed to register Flutter FCM token with backend:', err);
+                return false;
+            }
+        } catch (err) {
+            console.error('❌ registerNativeFCMToken network error:', err);
+            return false;
+        }
+    };
+
+    // Also expose auth token getter so Flutter can read it if needed
+    (window as any).getWebAuthToken = () => getAuthToken();
+
+    console.log('📱 Flutter FCM bridge ready — window.registerNativeFCMToken() exposed');
+}
+
 /**
- * Register service worker for Firebase messaging
+ * Register service worker for Firebase messaging (web-only)
  */
 async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
     if ('serviceWorker' in navigator) {
@@ -37,7 +117,7 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null
 }
 
 /**
- * Request notification permission from user
+ * Request notification permission from user (web-only)
  */
 async function requestNotificationPermission(): Promise<boolean> {
     if ('Notification' in window) {
@@ -60,11 +140,16 @@ async function requestNotificationPermission(): Promise<boolean> {
 }
 
 /**
- * Get FCM token from Firebase
+ * Get FCM token from Firebase (web-only)
  */
 async function getFCMToken(): Promise<string | null> {
     if (!messaging) {
         console.warn('⚠️ Firebase Messaging not initialized');
+        return null;
+    }
+
+    if (!VAPID_KEY) {
+        console.error('❌ VITE_FIREBASE_VAPID_KEY is not set. Get it from Firebase Console → dhakadsnazzy2 → Project Settings → Cloud Messaging → Web Push certificates.');
         return null;
     }
 
@@ -119,9 +204,36 @@ async function getFCMToken(): Promise<string | null> {
 }
 
 /**
- * Register FCM token with backend
+ * Register FCM token with backend.
+ *
+ * In Flutter WebView: skips the web-push flow entirely and exposes the
+ * native token bridge instead. Flutter calls window.registerNativeFCMToken()
+ * with the native Android/iOS FCM token.
+ *
+ * In web browsers: uses Service Worker + VAPID as before.
  */
 export async function registerFCMToken(forceUpdate: boolean = false): Promise<string | null> {
+    // ── Flutter WebView path ─────────────────────────────────────────────────
+    // Service Workers, Notification.requestPermission, and VAPID-based web push
+    // tokens all fail silently in Android/iOS WebViews. The correct approach is
+    // for the Flutter native side to obtain a native FCM token and inject it.
+    if (isFlutterWebView()) {
+        exposeFlutterBridge();
+
+        // Check if Flutter already sent us a pending token (before auth was ready)
+        const pendingToken = localStorage.getItem('flutter_pending_fcm_token');
+        if (pendingToken) {
+            console.log('📱 Registering previously pending Flutter FCM token');
+            const result = await (window as any).registerNativeFCMToken(pendingToken);
+            if (result) return pendingToken;
+        }
+
+        // Otherwise signal Flutter to send the token now (Flutter polls __awaitingNativeFCMToken)
+        console.log('📱 Flutter WebView: web push skipped — waiting for native FCM token from Flutter');
+        return null;
+    }
+
+    // ── Web browser path ─────────────────────────────────────────────────────
     try {
         const platform = getDevicePlatform();
         const storageKey = getFCMStorageKey();
@@ -187,9 +299,15 @@ export async function registerFCMToken(forceUpdate: boolean = false): Promise<st
 }
 
 /**
- * Setup foreground notification handler
+ * Setup foreground notification handler (web-only — Flutter handles natively)
  */
 export function setupForegroundNotificationHandler(handler?: (payload: any) => void): void {
+    // In Flutter WebView, foreground messages are handled by the Flutter app natively.
+    if (isFlutterWebView()) {
+        console.log('📱 Flutter WebView: foreground notification handler skipped (handled natively)');
+        return;
+    }
+
     if (!messaging) {
         console.warn('⚠️ Firebase Messaging not initialized');
         return;
@@ -221,7 +339,6 @@ export function setupForegroundNotificationHandler(handler?: (payload: any) => v
                 navigator.serviceWorker.ready
                     .then((reg) => reg.showNotification(title, options))
                     .catch(() => {
-                        // SW not ready — fall back to basic Notification API
                         new Notification(title, options);
                     });
             } else {
@@ -229,7 +346,6 @@ export function setupForegroundNotificationHandler(handler?: (payload: any) => v
             }
         }
 
-        // Always call the custom handler so the caller can trigger React popups
         if (handler) {
             handler(payload);
         }
@@ -237,10 +353,18 @@ export function setupForegroundNotificationHandler(handler?: (payload: any) => v
 }
 
 /**
- * Initialize push notifications
+ * Initialize push notifications.
+ *
+ * Flutter WebView: only exposes the JS bridge (no service worker).
+ * Web browser:     registers the service worker.
  */
 export async function initializePushNotifications(): Promise<void> {
     try {
+        if (isFlutterWebView()) {
+            exposeFlutterBridge();
+            console.log('📱 Flutter WebView: push notification bridge initialized');
+            return;
+        }
         await registerServiceWorker();
         console.log('✅ Push notifications initialized');
     } catch (error) {
@@ -254,7 +378,7 @@ export async function initializePushNotifications(): Promise<void> {
 export async function removeFCMToken(): Promise<void> {
     try {
         const platform = getDevicePlatform();
-        const storageKey = getFCMStorageKey();
+        const storageKey = isFlutterWebView() ? 'fcm_token_mobile' : getFCMStorageKey();
         const savedToken = localStorage.getItem(storageKey);
         if (!savedToken) {
             return;
@@ -273,7 +397,7 @@ export async function removeFCMToken(): Promise<void> {
             },
             body: JSON.stringify({
                 token: savedToken,
-                platform: platform
+                platform: isFlutterWebView() ? 'mobile' : platform
             })
         });
 

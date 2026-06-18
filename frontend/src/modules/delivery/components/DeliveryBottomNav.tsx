@@ -29,6 +29,17 @@ export default function DeliveryBottomNav() {
       ),
     },
     {
+      path: '/delivery/route/today',
+      label: 'Route',
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="6" cy="19" r="2" stroke={isActive('/delivery/route/today') ? activeColor : inactiveColor} strokeWidth="2" fill="none" />
+          <circle cx="18" cy="5" r="2" stroke={isActive('/delivery/route/today') ? activeColor : inactiveColor} strokeWidth="2" fill="none" />
+          <path d="M6 17V9a4 4 0 0 1 4-4h6" stroke={isActive('/delivery/route/today') ? activeColor : inactiveColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </svg>
+      ),
+    },
+    {
       path: '/delivery/orders',
       label: 'Orders',
       icon: (

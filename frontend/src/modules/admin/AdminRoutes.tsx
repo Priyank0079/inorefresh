@@ -61,6 +61,9 @@ const AdminWallet = lazy(() => import("./pages/AdminWallet"));
 const AdminBillingSettings = lazy(() => import("./pages/AdminBillingSettings"));
 const AdminRefundApproval = lazy(() => import("./pages/AdminRefundApproval"));
 const AdminTeamManagement = lazy(() => import("./pages/AdminTeamManagement"));
+// Shared route-planning page (reused from warehouse module, layout-agnostic)
+const RoutePlanning = lazy(() => import("../warehouse/pages/WarehouseRoutePlanning"));
+const LiveTracking = lazy(() => import("../warehouse/pages/WarehouseLiveTracking"));
 
 export default function AdminRoutes() {
   return (
@@ -94,6 +97,8 @@ export default function AdminRoutes() {
           <Route path="delivery-boy/cash-collection" element={<PermissionGuard module="delivery"><AdminCashCollection /></PermissionGuard>} />
           <Route path="collect-cash" element={<PermissionGuard module="delivery"><AdminCashCollection /></PermissionGuard>} />
           <Route path="manage-location/warehouse-location" element={<PermissionGuard module="delivery"><AdminSellerLocation /></PermissionGuard>} />
+          <Route path="route-planning" element={<PermissionGuard module="delivery"><RoutePlanning /></PermissionGuard>} />
+          <Route path="live-tracking" element={<PermissionGuard module="delivery"><LiveTracking /></PermissionGuard>} />
           {/* Marketing */}
           <Route path="coupon" element={<PermissionGuard module="marketing"><AdminCoupon /></PermissionGuard>} />
           <Route path="home-section" element={<PermissionGuard module="marketing"><AdminHomeSection /></PermissionGuard>} />

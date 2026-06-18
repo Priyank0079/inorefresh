@@ -17,6 +17,13 @@ export interface Order {
   customerName?: string;
   customerPhone?: string;
   deliveryBoyName?: string;
+  route?: {
+    routeNumber: string;
+    routeStatus: string;
+    stopSequence: number;
+    stopStatus: string;
+    delivered?: string;
+  };
 }
 
 export interface OrderItem {

@@ -10,6 +10,7 @@ export interface ReturnPickupAlert {
     orderId: string;
     orderNumber: string;
     customerName: string;
+    otp?: string;
     timestamp: Date;
 }
 

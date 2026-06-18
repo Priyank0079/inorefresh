@@ -22,16 +22,17 @@ export async function generateDeliveryOtp(orderId: string): Promise<{ success: b
     // Generate dynamic 4-digit OTP
     const dynamicOtp = Math.floor(1000 + Math.random() * 9000).toString();
     order.deliveryOtp = dynamicOtp;
+    order.deliveryOtpSentAt = new Date();
     await order.save();
 
-    // Send notification to customer with the OTP (in-app + push).
+    // Send notification to customer (bell + socket + FCM push — single send).
     const { sendNotification } = require('./notificationService');
     await sendNotification(
       "Customer",
       order.customer.toString(),
-      "Delivery Verification OTP",
-      `Your delivery OTP for Order #${order.orderNumber} is ${dynamicOtp}. Please share this with the delivery partner to begin the quality check.`,
-      { type: "Order", priority: "High", link: `/orders/${order._id}` }
+      `🔐 Delivery OTP: ${dynamicOtp}`,
+      `Your delivery OTP for Order #${order.orderNumber} is ${dynamicOtp}. Please share this with the delivery partner.`,
+      { type: "Order", priority: "Urgent", link: `/orders/${order._id}` }
     );
 
     // Also send the OTP by SMS — the reliable channel. Push/in-app delivery is

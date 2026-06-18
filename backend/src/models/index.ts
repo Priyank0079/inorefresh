@@ -34,6 +34,11 @@ export { default as Commission } from "./Commission";
 export { default as DeliveryArea } from "./DeliveryArea";
 export { default as DeliveryAssignment } from "./DeliveryAssignment";
 export { default as DeliveryTracking } from "./DeliveryTracking";
+
+// Logistics Flow Models (route-based delivery)
+export { default as DeliveryRoute } from "./DeliveryRoute";
+export { default as RouteStop } from "./RouteStop";
+export { default as ReturnableAsset } from "./ReturnableAsset";
 export { default as PaymentMethod } from "./PaymentMethod";
 export { default as CashCollection } from "./CashCollection";
 export { default as FAQ } from "./FAQ";

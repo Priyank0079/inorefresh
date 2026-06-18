@@ -98,7 +98,9 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen, onRefresh 
     } else {
       // Fallback navigation based on notification title or type
       const title = (notification.title || '').toLowerCase();
-      if (title.includes('return')) {
+      if (title.includes('return otp') || title.includes('return request') || title.includes('return approved')) {
+        navigate('/warehouse/return/inbox');
+      } else if (title.includes('return')) {
         navigate('/warehouse/return-order');
       } else if (title.includes('order')) {
         navigate('/warehouse/orders');
@@ -302,8 +304,8 @@ export default function WarehouseHeader({ onMenuClick, isSidebarOpen, onRefresh 
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-xs font-bold text-neutral-900 truncate ${!n.isRead ? 'font-black' : ''}`}>{n.title}</p>
-                          <p className="text-[10px] text-neutral-500 line-clamp-2 mt-0.5">{n.message}</p>
+                          <p className={`text-xs font-bold text-neutral-900 ${!n.isRead ? 'font-black' : ''}`}>{n.title}</p>
+                          <p className="text-[10px] text-neutral-500 line-clamp-3 mt-0.5">{n.message}</p>
                           <p className="text-[9px] text-neutral-400 mt-1">{new Date(n.createdAt).toLocaleDateString()}</p>
                         </div>
                         {!n.isRead && <div className="w-2 h-2 bg-teal-500 rounded-full mt-2"></div>}

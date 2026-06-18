@@ -23,6 +23,12 @@ const DeliverySettings = lazy(() => import("./pages/DeliverySettings"));
 const DeliveryHelp = lazy(() => import("./pages/DeliveryHelp"));
 const DeliveryAbout = lazy(() => import("./pages/DeliveryAbout"));
 const DeliverySellersInRange = lazy(() => import("./pages/DeliverySellersInRange"));
+// Route-based logistics flow (Phase 3)
+const DriverRouteToday = lazy(() => import("./pages/DriverRouteToday"));
+const DriverLoadingVerify = lazy(() => import("./pages/DriverLoadingVerify"));
+const DriverRouteStops = lazy(() => import("./pages/DriverRouteStops"));
+const DriverStopDetail = lazy(() => import("./pages/DriverStopDetail"));
+const DriverRouteComplete = lazy(() => import("./pages/DriverRouteComplete"));
 
 export default function DeliveryRoutes() {
   return (
@@ -46,6 +52,12 @@ export default function DeliveryRoutes() {
             <Route path="help" element={<DeliveryHelp />} />
             <Route path="about" element={<DeliveryAbout />} />
             <Route path="sellers-in-range" element={<DeliverySellersInRange />} />
+            {/* Route-based logistics flow (Phase 3) */}
+            <Route path="route/today" element={<DriverRouteToday />} />
+            <Route path="route/:id/load" element={<DriverLoadingVerify />} />
+            <Route path="route/:id/stops" element={<DriverRouteStops />} />
+            <Route path="route/:id/complete" element={<DriverRouteComplete />} />
+            <Route path="stop/:stopId" element={<DriverStopDetail />} />
           </Routes>
         </DeliveryLayout>
       </Suspense>

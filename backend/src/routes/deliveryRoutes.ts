@@ -6,6 +6,7 @@ import { getProfile } from "../modules/delivery/controllers/deliveryAuthControll
 
 import * as deliveryProfileController from "../modules/delivery/controllers/deliveryProfileController";
 import * as deliveryNotificationController from "../modules/delivery/controllers/deliveryNotificationController";
+import * as deliveryRouteController from "../modules/delivery/controllers/deliveryRouteController";
 
 const router = Router();
 
@@ -48,5 +49,22 @@ router.post("/orders/:id/check-customer-proximity", deliveryOrderController.chec
 // Earnings
 router.get("/earnings", deliveryEarningController.getEarningsHistory);
 router.post("/withdraw", deliveryEarningController.requestWithdrawal);
+
+// ── Route-based logistics flow (Phase 3) ──────────────────────────────────
+router.get("/routes/today", deliveryRouteController.getTodayRoute);
+router.post("/routes/:id/accept", deliveryRouteController.acceptRoute);
+router.post("/routes/:id/loading-otp", deliveryRouteController.sendLoadingOtp);
+router.post("/routes/:id/verify-load", deliveryRouteController.verifyLoad);
+router.post("/routes/:id/start", deliveryRouteController.startRoute);
+router.post("/stops/:stopId/arrived", deliveryRouteController.arriveAtStop);
+router.put("/stops/:stopId/deliver", deliveryRouteController.deliverStop);
+router.post("/stops/:stopId/send-otp", deliveryRouteController.sendStopOtp);
+router.post("/stops/:stopId/confirm", deliveryRouteController.confirmStop);
+
+// Phase 4: payment, returns, returnable assets, route completion
+router.post("/stops/:stopId/payment", deliveryRouteController.recordPayment);
+router.post("/stops/:stopId/return", deliveryRouteController.recordReturn);
+router.post("/stops/:stopId/assets", deliveryRouteController.recordAssets);
+router.post("/routes/:id/complete", deliveryRouteController.completeRoute);
 
 export default router;

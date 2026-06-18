@@ -30,8 +30,8 @@ messaging.onBackgroundMessage((payload) => {
     const notificationBody  = payload.notification?.body  || payload.data?.body  || '';
     const notificationType  = payload.data?.type || 'default';
 
-    // Urgent types: delivery boy must act before notification auto-dismisses.
-    const isUrgent = notificationType === 'new_order' || notificationType === 'return_pickup';
+    // Urgent types: must act before notification auto-dismisses.
+    const isUrgent = notificationType === 'new_order' || notificationType === 'return_pickup' || notificationType === 'delivery_otp' || notificationType === 'loading_otp';
 
     const notificationOptions = {
         body: notificationBody,

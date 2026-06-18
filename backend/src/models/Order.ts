@@ -52,6 +52,7 @@ export interface IOrder extends Document {
   // Order Status
   status:
   | "Received"
+  | "Confirmed"
   | "Accepted"
   | "Pending"
   | "Processed"
@@ -67,6 +68,10 @@ export interface IOrder extends Document {
   | "Partially Returned"
   | "Fully Returned"
   | "Return Under Review";
+
+  // Logistics flow: how delivery was confirmed at the retailer (additive)
+  confirmationMethod?: "OTP" | "Signature" | "Photo";
+  confirmationProofUrl?: string;
 
   // Delivery Assignment
   deliveryBoy?: mongoose.Types.ObjectId;
@@ -287,6 +292,7 @@ const OrderSchema = new Schema<IOrder>(
       type: String,
       enum: [
         "Received",
+        "Confirmed",
         "Accepted",
         "Pending",
         "Processed",
@@ -304,6 +310,16 @@ const OrderSchema = new Schema<IOrder>(
         "Return Under Review",
       ],
       default: "Received",
+    },
+
+    // Logistics flow: delivery confirmation method/proof (additive)
+    confirmationMethod: {
+      type: String,
+      enum: ["OTP", "Signature", "Photo"],
+    },
+    confirmationProofUrl: {
+      type: String,
+      trim: true,
     },
 
     // Delivery Assignment

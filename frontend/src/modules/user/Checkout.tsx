@@ -24,6 +24,7 @@ import {
   validateCoupon,
   Coupon as ApiCoupon,
 } from "../../services/api/customerCouponService";
+import { getOrderWindow, OrderWindow } from "../../services/api/customerOrderService";
 import { appConfig } from "../../services/configService";
 import {
   getAddresses,
@@ -120,6 +121,13 @@ export default function Checkout() {
   const [showRazorpayCheckout, setShowRazorpayCheckout] = useState(false);
   const [useWallet, setUseWallet] = useState<boolean>(false);
   const [checkoutError, setCheckoutError] = useState<string>('');
+  const [orderWindow, setOrderWindow] = useState<OrderWindow | null>(null);
+  const orderingClosed = !!orderWindow && orderWindow.enabled && !orderWindow.open;
+
+  // Fetch the daily ordering-window status (06:00–20:00 IST by default).
+  useEffect(() => {
+    getOrderWindow().then(setOrderWindow).catch(() => setOrderWindow(null));
+  }, []);
   const [gstinError, setGstinError] = useState<string>('');
 
   // Check if user has placeholder data (needs profile completion)
@@ -508,6 +516,13 @@ export default function Checkout() {
     const bypassProfileCheck = arg === true;
 
     if (!selectedAddress || cart.items.length === 0) {
+      return;
+    }
+
+    // Daily ordering cut-off (06:00–20:00 IST). Backend also enforces this.
+    if (orderingClosed) {
+      setCheckoutError(orderWindow?.message || "Ordering is closed right now.");
+      setTimeout(() => setCheckoutError(''), 5000);
       return;
     }
 
@@ -2356,19 +2371,26 @@ export default function Checkout() {
         </div>
       )}
 
+      {/* Daily ordering cut-off banner */}
+      {orderingClosed && (
+        <div className="fixed bottom-[52px] left-0 right-0 z-[61] bg-amber-50 border-t border-amber-200 text-amber-800 text-xs px-4 py-2 text-center">
+          ⏰ {orderWindow?.message}
+        </div>
+      )}
+
       {/* Bottom Sticky Button */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-[60] shadow-lg">
         {selectedAddress ? (
           <button
             onClick={isMinWeightMet ? handlePlaceOrder : () => setShowMinWeightPopup(true)}
-            disabled={cart.items.length === 0 || !isAllowedToOrder}
-            className={`w-full py-2.5 px-4 font-bold text-sm uppercase tracking-wide transition-colors ${cart.items.length > 0 && isMinWeightMet && isAllowedToOrder
+            disabled={cart.items.length === 0 || !isAllowedToOrder || orderingClosed}
+            className={`w-full py-2.5 px-4 font-bold text-sm uppercase tracking-wide transition-colors ${cart.items.length > 0 && isMinWeightMet && isAllowedToOrder && !orderingClosed
               ? "text-white hover:opacity-90"
               : "bg-neutral-300 text-neutral-500"
               }`}
-            style={cart.items.length > 0 && isMinWeightMet && isAllowedToOrder ? { backgroundColor: currentTheme.primary[3] } : {}}
+            style={cart.items.length > 0 && isMinWeightMet && isAllowedToOrder && !orderingClosed ? { backgroundColor: currentTheme.primary[3] } : {}}
           >
-            {isInactiveUser ? "Account Inactive" : "Place Order"}
+            {orderingClosed ? "Ordering Closed" : isInactiveUser ? "Account Inactive" : "Place Order"}
           </button>
         ) : (
           <button

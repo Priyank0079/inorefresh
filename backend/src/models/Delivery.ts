@@ -26,6 +26,10 @@ export interface IDelivery extends Document {
   vehicleNumber?: string;
   vehicleType?: string;
 
+  // Logistics flow (additive)
+  currentRoute?: mongoose.Types.ObjectId; // ref DeliveryRoute (today's route)
+  isPartner?: boolean; // onboarded partner driver vs own driver
+
   // Commission & Payment
   bonusType?: string; // 'Fixed' | 'Salaried' | 'Commission Based'
   commissionRate?: number; // Individual commission rate (overrides global setting)
@@ -145,6 +149,16 @@ const DeliverySchema = new Schema<IDelivery>(
     vehicleType: {
       type: String,
       trim: true,
+    },
+
+    // Logistics flow (additive)
+    currentRoute: {
+      type: Schema.Types.ObjectId,
+      ref: "DeliveryRoute",
+    },
+    isPartner: {
+      type: Boolean,
+      default: false,
     },
 
     // Commission & Payment

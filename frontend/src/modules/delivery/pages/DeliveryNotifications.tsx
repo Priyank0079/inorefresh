@@ -26,22 +26,33 @@ export default function DeliveryNotifications() {
 
   const resolveLink = (notification: any): string | null => {
     const link: string = notification.link || '';
+    const title = (notification.title || '').toLowerCase();
 
-    // Old notifications stored `/delivery/orders` for "New Order Available" —
-    // that page shows today's assigned orders (empty), not available ones.
-    // Redirect to the dashboard where available orders are shown.
+    // Return OTP → go to route stops (driver enters OTP on stop page)
+    if (title.includes('return otp') || title.includes('return pickup')) {
+      return '/delivery/route/today';
+    }
+
+    // Route assigned / delivery confirmed → route page
+    if (title.includes('route assigned') || title.includes('delivery confirmed') || title.includes('vehicle loaded')) {
+      return '/delivery/route/today';
+    }
+
+    // Loading OTP / delivery OTP → route page
+    if (title.includes('loading otp') || title.includes('delivery otp') || title.includes('otp requested')) {
+      return '/delivery/route/today';
+    }
+
+    // Return submitted → route page
+    if (title.includes('return submitted')) {
+      return '/delivery/route/today';
+    }
+
     if (link === '/delivery/orders') return '/delivery';
-
-    // If link points somewhere valid, use it.
     if (link && link.startsWith('/delivery')) return link;
 
-    // Last resort: extract an order ID from the message text and deep-link it.
-    // Notification messages look like "Order #ORD123 is ready for pickup …"
     const orderIdMatch = (notification.message || '').match(/#(ORD[A-Z0-9]+)/);
-    if (orderIdMatch) {
-      // We only have the orderNumber, not the Mongo _id, so go to dashboard.
-      return '/delivery';
-    }
+    if (orderIdMatch) return '/delivery';
 
     return null;
   };

@@ -29,6 +29,15 @@
     "seed:sub-subcategories": "tsx src/scripts/seedSubSubcategories.ts",
     "add:products-from-paths": "tsx src/scripts/addProductsFromImagePaths.ts",
     "generate:delivery-otp": "tsx src/scripts/generateDeliveryOtpForCustomers.ts",
+    "verify:phase1": "tsx src/scripts/verify-phase1-models.ts",
+    "verify:phase2": "tsx src/scripts/verify-phase2-routes.ts",
+    "verify:phase3": "tsx src/scripts/verify-phase3-driver.ts",
+    "verify:phase4": "tsx src/scripts/verify-phase4-collection.ts",
+    "check:logistics": "tsx src/scripts/check-logistics-state.ts",
+    "verify:cutoff": "tsx src/scripts/verify-order-cutoff.ts",
+    "verify:notify": "tsx src/scripts/verify-route-notify.ts",
+    "check:weights": "tsx src/scripts/check-product-weights.ts",
+    "verify:bundles": "tsx src/scripts/verify-route-bundles.ts",
     "postinstall": "npm run build"
   },
   "keywords": [

@@ -122,6 +122,13 @@ export interface IAppSettings extends Document {
   inspectionDurationMinutes?: number;
   riderMaxWaitingTimeMinutes?: number;
 
+  // Route-based logistics flow settings (additive)
+  orderCutOffTime?: string; // e.g. "20:00" — daily ordering closes (IST)
+  orderOpenTime?: string; // e.g. "06:00" — daily ordering opens (IST)
+  orderCutOffEnabled?: boolean; // master switch for the daily ordering window
+  routePlanningCutOffTime?: string; // e.g. "22:00"
+  minOrdersPerRoute?: number; // default 10
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -156,6 +163,32 @@ const AppSettingsSchema = new Schema<IAppSettings>(
     riderMaxWaitingTimeMinutes: {
       type: Number,
       default: 10
+    },
+
+    // Route-based logistics flow settings (additive)
+    orderCutOffTime: {
+      type: String,
+      default: "20:00",
+      trim: true,
+    },
+    orderOpenTime: {
+      type: String,
+      default: "06:00",
+      trim: true,
+    },
+    orderCutOffEnabled: {
+      type: Boolean,
+      default: true,
+    },
+    routePlanningCutOffTime: {
+      type: String,
+      default: "22:00",
+      trim: true,
+    },
+    minOrdersPerRoute: {
+      type: Number,
+      default: 10,
+      min: [1, "Minimum orders per route must be at least 1"],
     },
 
     // App Info

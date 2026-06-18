@@ -20,11 +20,39 @@ import WalletTransaction from "../../../models/WalletTransaction";
 import { findNearestWarehouseWithStock } from "../../../services/warehouseFulfillmentService";
 import { calculateItemPrice } from "../../../utils/priceUtils";
 import { checkAndAutoCloseVerification } from "../../../controllers/returnWorkflowController";
+import { getOrderWindow } from "../../../utils/orderWindow";
+
+/**
+ * GET /customer/order-window — current ordering window status (for checkout UI).
+ */
+export const getOrderWindowStatus = async (_req: Request, res: Response) => {
+    try {
+        const settings = await AppSettings.getSettings();
+        const win = getOrderWindow(settings);
+        return res.json({ success: true, data: win });
+    } catch (e: any) {
+        // Fail open so the UI never blocks ordering on an error.
+        return res.json({ success: true, data: { open: true, enabled: false, message: "", opensAt: "06:00", closesAt: "20:00" } });
+    }
+};
 
 // Create a new order
 export const createOrder = async (req: Request, res: Response) => {
     let session: mongoose.ClientSession | null = null;
     try {
+        // ── Daily ordering cut-off (PRD: orders only 06:00–20:00 IST) ──────────
+        // Hard block outside the window when enabled. Checked before any work.
+        try {
+            const windowSettings = await AppSettings.getSettings();
+            const win = getOrderWindow(windowSettings);
+            if (!win.open) {
+                return res.status(403).json({ success: false, message: win.message, code: "ORDERING_CLOSED" });
+            }
+        } catch (winErr) {
+            // Never block ordering due to a settings read failure — fail open.
+            console.warn("Order window check skipped:", (winErr as any)?.message);
+        }
+
         // Only start session if we are on a replica set (required for transactions)
         // For simplicity in local dev, we check and fallback if it fails
         try {

@@ -59,6 +59,22 @@ export const createOrder = async (data: CreateOrderData): Promise<OrderResponse>
     return response.data;
 };
 
+export interface OrderWindow {
+    open: boolean;
+    enabled: boolean;
+    message: string;
+    opensAt: string;
+    closesAt: string;
+}
+
+/**
+ * Get the current daily ordering-window status (06:00–20:00 IST by default).
+ */
+export const getOrderWindow = async (): Promise<OrderWindow> => {
+    const response = await api.get('/customer/order-window');
+    return response.data.data;
+};
+
 /**
  * Get my orders
  */

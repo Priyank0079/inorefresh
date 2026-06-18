@@ -91,11 +91,24 @@ const DeliveryReturnPickupAlert: React.FC<DeliveryReturnPickupAlertProps> = ({ a
 
         {/* Content */}
         <div className="p-6 text-center">
-          <p className="text-neutral-700 mb-6">
-            The warehouse approved the return for{' '}
+          <p className="text-neutral-700 mb-4">
+            Return approved for{' '}
             <span className="font-semibold">{alert.customerName}</span> (Order #{alert.orderNumber}).
-            Please go collect the returned goods from the customer.
           </p>
+
+          {alert.otp && (
+            <div className="mb-4">
+              <p className="text-xs text-neutral-500 uppercase font-bold tracking-wider mb-2">Return OTP</p>
+              <div className="flex justify-center gap-3 mb-2">
+                {String(alert.otp).split('').map((d, i) => (
+                  <div key={i} className="w-14 h-16 rounded-xl border-2 border-emerald-200 bg-emerald-50 flex items-center justify-center text-3xl font-black text-emerald-700">
+                    {d}
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-neutral-500">Enter this OTP on the stop page to confirm return</p>
+            </div>
+          )}
 
           {/* Volume control */}
           <div className="mb-4 bg-neutral-50 p-3 rounded-lg flex items-center gap-4">

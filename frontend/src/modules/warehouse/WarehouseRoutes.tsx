@@ -28,6 +28,8 @@ const WarehouseInwardReport = lazy(() => import("./pages/WarehouseInwardReport")
 const WarehouseAccountSettings = lazy(() => import("./pages/WarehouseAccountSettings"));
 const WarehouseExploreProducts = lazy(() => import("./pages/WarehouseExploreProducts"));
 const WarehousePortShipments = lazy(() => import("./pages/WarehousePortShipments"));
+const WarehouseRoutePlanning = lazy(() => import("./pages/WarehouseRoutePlanning"));
+const WarehouseLiveTracking = lazy(() => import("./pages/WarehouseLiveTracking"));
 
 export default function WarehouseRoutes() {
   return (
@@ -38,6 +40,8 @@ export default function WarehouseRoutes() {
             <Route index element={<WarehouseDashboard />} />
             <Route path="orders" element={<WarehouseOrders />} />
             <Route path="orders/:id" element={<WarehouseOrderDetail />} />
+            <Route path="route-planning" element={<WarehouseRoutePlanning />} />
+            <Route path="live-tracking" element={<WarehouseLiveTracking />} />
             <Route path="category" element={<WarehouseCategory />} />
             <Route path="subcategory" element={<WarehouseSubCategory />} />
             <Route path="product/add" element={<WarehouseAddProduct />} />

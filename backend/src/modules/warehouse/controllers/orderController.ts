@@ -86,21 +86,46 @@ export const getOrders = asyncHandler(
     // Get total count for pagination
     const total = await Order.countDocuments(query);
 
+    // Look up which orders are in routes (for route badge)
+    const orderIds = orders.map((o) => o._id);
+    const RouteStop = require("../../../models/RouteStop").default;
+    const DeliveryRoute = require("../../../models/DeliveryRoute").default;
+    const routeStops = await RouteStop.find({ order: { $in: orderIds } })
+      .select("order route sequence status")
+      .lean();
+    const routeIds = [...new Set(routeStops.map((rs: any) => String(rs.route)))];
+    const routeDocs = await DeliveryRoute.find({ _id: { $in: routeIds } })
+      .select("routeNumber status totals")
+      .lean();
+    const routeMap = new Map(routeDocs.map((r: any) => [String(r._id), r]));
+    const stopByOrder = new Map(routeStops.map((rs: any) => [String(rs.order), rs]));
+
     // Format response for frontend
-    const formattedOrders = orders.map(order => ({
-      id: order._id,
-      orderId: order.orderNumber,
-      shopName: order.customerName || 'N/A',
-      deliveryDate: order.estimatedDeliveryDate
-        ? order.estimatedDeliveryDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
-        : order.orderDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
-      orderDate: order.orderDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
-      status: order.status === 'On the way' ? 'On the way' : order.status,
-      amount: order.total,
-      customerName: (order.customer as any)?.name || order.customerName || '',
-      customerPhone: (order.customer as any)?.phone || order.customerPhone || '',
-      deliveryBoyName: (order.deliveryBoy as any)?.name || '',
-    }));
+    const formattedOrders = orders.map(order => {
+      const rs = stopByOrder.get(String(order._id)) as any;
+      const rt = rs ? (routeMap.get(String(rs.route)) as any) : null;
+      return {
+        id: order._id,
+        orderId: order.orderNumber,
+        shopName: order.customerName || 'N/A',
+        deliveryDate: order.estimatedDeliveryDate
+          ? order.estimatedDeliveryDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+          : order.orderDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+        orderDate: order.orderDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+        status: order.status === 'On the way' ? 'On the way' : order.status,
+        amount: order.total,
+        customerName: (order.customer as any)?.name || order.customerName || '',
+        customerPhone: (order.customer as any)?.phone || order.customerPhone || '',
+        deliveryBoyName: (order.deliveryBoy as any)?.name || '',
+        route: rt ? {
+          routeNumber: rt.routeNumber,
+          routeStatus: rt.status,
+          stopSequence: rs.sequence,
+          stopStatus: rs.status,
+          delivered: rt.totals?.orderCount ? `${routeStops.filter((s: any) => String(s.route) === String(rt._id) && s.status === "Delivered").length}/${rt.totals.orderCount}` : undefined,
+        } : undefined,
+      };
+    });
 
     return res.status(200).json({
       success: true,
@@ -312,22 +337,25 @@ export const updateOrderStatus = asyncHandler(
             await notifyDeliveryBoysOfNewOrder(io, fullOrder);
             console.log(`✅ Delivery notification complete for order ${order.orderNumber}`);
 
-            // Persisted bell + FCM push for ALL nearby riders (covers those
-            // not currently connected — they see it when they open the app).
-            try {
-              const nearbyIds = await findDeliveryBoysNearwarehouseLocations(fullOrder);
-              for (const item of nearbyIds) {
-                const id = ((item as any).deliveryBoyId || item).toString();
-                await sendNotification(
-                  "Delivery",
-                  id,
-                  "🚚 New Order Available",
-                  `Order #${order.orderNumber} is ready for pickup — ₹${order.total?.toFixed(2)}`,
-                  { type: "Order", priority: "High", link: `/delivery` }
-                );
+            // Persisted bell + FCM push for ALL nearby riders (legacy on-demand
+            // flow). Retired by default — drivers now get a planned Route.
+            // Set LEGACY_ONDEMAND_NOTIFY=true to re-enable.
+            if (process.env.LEGACY_ONDEMAND_NOTIFY === 'true') {
+              try {
+                const nearbyIds = await findDeliveryBoysNearwarehouseLocations(fullOrder);
+                for (const item of nearbyIds) {
+                  const id = ((item as any).deliveryBoyId || item).toString();
+                  await sendNotification(
+                    "Delivery",
+                    id,
+                    "🚚 New Order Available",
+                    `Order #${order.orderNumber} is ready for pickup — ₹${order.total?.toFixed(2)}`,
+                    { type: "Order", priority: "High", link: `/delivery` }
+                  );
+                }
+              } catch (bellErr) {
+                console.error("Failed to send delivery bell notifications:", bellErr);
               }
-            } catch (bellErr) {
-              console.error("Failed to send delivery bell notifications:", bellErr);
             }
           } else {
             console.error(`❌ Could not re-fetch order ${order._id} for delivery notification`);

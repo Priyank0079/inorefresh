@@ -8,6 +8,7 @@ export default function WholesalerReturnInbox() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
   const [selectedReturn, setSelectedReturn] = useState<any>(null);
+  const [approvedOtp, setApprovedOtp] = useState<{ otp: string; orderNumber: string; productName: string } | null>(null);
 
   useEffect(() => {
     fetchReturns();
@@ -41,7 +42,15 @@ export default function WholesalerReturnInbox() {
     try {
       const res = await api.post(`/returns/workflow/warehouse/review/${selectedReturn.id}`, { action, comment });
       if (res.data.success) {
-        toast.success(`Return request ${action}d successfully`);
+        if (action === 'Approve' && res.data.data?.warehouseVerificationOtp) {
+          setApprovedOtp({
+            otp: res.data.data.warehouseVerificationOtp,
+            orderNumber: selectedReturn.orderId || '',
+            productName: selectedReturn.productName || '',
+          });
+        } else {
+          toast.success(`Return request ${action}d successfully`);
+        }
         setSelectedReturn(null);
         fetchReturns();
       }
@@ -58,6 +67,33 @@ export default function WholesalerReturnInbox() {
 
   return (
     <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+      {/* OTP popup after approval */}
+      {approvedOtp && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setApprovedOtp(null)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">✓</span>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Return Approved</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {approvedOtp.productName} · {approvedOtp.orderNumber}
+            </p>
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">Return OTP</p>
+            <div className="bg-gray-50 border-2 border-dashed border-green-300 rounded-xl px-6 py-4 mb-4">
+              <span className="text-4xl font-black tracking-[0.4em] text-green-700">{approvedOtp.otp}</span>
+            </div>
+            <p className="text-sm text-gray-600 mb-5">
+              Share this OTP with the delivery boy to complete the return.
+            </p>
+            <button
+              onClick={() => setApprovedOtp(null)}
+              className="w-full bg-green-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-green-700 transition-colors">
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Return Requests Inbox</h1>
