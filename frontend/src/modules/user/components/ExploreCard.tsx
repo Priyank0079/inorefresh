@@ -49,7 +49,7 @@ const ExploreCard: React.FC<ExploreCardProps> = ({ id, name, image, iconName, li
                     <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
 
                     {/* Icon/Image Container */}
-                    <div className="relative aspect-square flex items-center justify-center overflow-hidden">
+                    <div className="relative aspect-[16/10] flex items-center justify-center overflow-hidden">
                         <div className="relative w-full h-full flex items-center justify-center">
                             {/* Background Glow - only visible for icons or transparent images */}
                             <div className="absolute inset-0 bg-[#6FD3FF]/20 blur-[30px] rounded-full scale-0 group-hover:scale-100 transition-transform duration-500" />
@@ -58,7 +58,7 @@ const ExploreCard: React.FC<ExploreCardProps> = ({ id, name, image, iconName, li
                                 <img
                                     src={image}
                                     alt={name}
-                                    className="w-full h-full object-contain relative z-10 transition-transform duration-500 group-hover:scale-110"
+                                    className="w-full h-full object-cover relative z-10 transition-transform duration-500 group-hover:scale-110"
                                     loading="lazy"
                                     decoding="async"
                                     onError={(e) => {

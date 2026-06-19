@@ -25,7 +25,10 @@ async function fix() {
     const fixes = [
         { oldSlug: "auqa-fish", newSlug: "aqua-fish", oldName: "Auqa fish", newName: "Aqua Fish" },
         { oldSlug: "marin-fish", newSlug: "marine-fish", oldName: "marin fish", newName: "Marine Fish" },
-        { oldSlug: "bengoli-fish", newSlug: "bangali-fish", oldName: "Bengoli fish", newName: "Bangali Fish" }
+        { oldSlug: "bengoli-fish", newSlug: "bangali-fish", oldName: "Bengoli fish", newName: "Bangali Fish" },
+        { oldSlug: "grouper", newSlug: "aquaculture", oldName: "Aqcaculture", newName: "Aquaculture" },
+        { oldSlug: "silver", newSlug: "frozen-cleaned", oldName: "Forzen Cleaned", newName: "Frozen Cleaned" },
+        { oldSlug: "marinated-fish", newSlug: "marinated-fish", oldName: "MARINATED FISH", newName: "Marinated Fish" }
     ];
 
     for (const f of fixes) {
