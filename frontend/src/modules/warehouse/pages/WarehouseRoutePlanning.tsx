@@ -173,8 +173,8 @@ export default function WarehouseRoutePlanning() {
       setMsg({ text: "Enter a vehicle number", type: "error" });
       return;
     }
-    if (selectedIds.length < 10) {
-      setMsg({ text: `Select at least 10 orders (selected ${selectedIds.length}).`, type: "error" });
+    if (selectedIds.length === 0) {
+      setMsg({ text: "Select at least 1 order.", type: "error" });
       return;
     }
     if (selectedIds.length > 10) {
@@ -300,7 +300,7 @@ export default function WarehouseRoutePlanning() {
               <div className="px-5 pb-5">
                 <button
                   onClick={handleCreate}
-                  disabled={submitting || selectedIds.length !== 10}
+                  disabled={submitting || selectedIds.length === 0 || selectedIds.length > 10}
                   className="w-full md:w-auto px-6 py-2.5 rounded-lg bg-green-600 text-white text-sm font-bold hover:bg-green-700 disabled:opacity-60">
                   {submitting ? "Creating…" : `Create Route (${selectedIds.length}/10)`}
                 </button>

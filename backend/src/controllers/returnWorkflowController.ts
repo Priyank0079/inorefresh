@@ -531,41 +531,10 @@ export const reviewReturnRequest = asyncHandler(async (req: Request, res: Respon
 
   await returnReq.save();
 
-  // Notify Rider + Warehouse
+  // Notify Rider
   if (returnReq.deliveryBoy) {
     if (action === 'Approve') {
-      const returnOtp = returnReq.warehouseVerificationOtp;
-
-      // Send OTP to warehouse bell too (so they can find it later)
-      const warehouseId = returnReq.warehouse?.toString();
-      if (warehouseId) {
-        await sendNotification(
-          "Warehouse",
-          warehouseId,
-          `🔐 Return OTP: ${returnOtp}`,
-          `Return approved for Order #${order.orderNumber}. OTP: ${returnOtp}. Share with delivery boy.`,
-          { type: "Order", priority: "Urgent", link: "/warehouse/return/inbox" }
-        );
-      }
-      // Also notify ALL warehouses (in case the item's warehouse was deleted)
-      const allWarehouses = await Warehouse.find({ status: "ACTIVE" }).select("_id").lean();
-      for (const wh of allWarehouses) {
-        if (String(wh._id) !== warehouseId) {
-          try {
-            await sendNotification(
-              "Warehouse",
-              String(wh._id),
-              `🔐 Return OTP: ${returnOtp}`,
-              `Return approved for Order #${order.orderNumber}. OTP: ${returnOtp}. Share with delivery boy.`,
-              { type: "Order", priority: "High", link: "/warehouse/return/inbox" }
-            );
-          } catch (e: any) {
-            console.error(`[Return OTP] Failed to notify warehouse ${wh._id}:`, e?.message);
-          }
-        }
-      }
-
-      // Notify delivery boy that return is approved (NO OTP — driver gets it from warehouse)
+      // NO OTP sent now — OTP only sent when driver clicks "Get OTP from Warehouse"
       await sendNotification(
         "Delivery",
         returnReq.deliveryBoy.toString(),
@@ -574,7 +543,6 @@ export const reviewReturnRequest = asyncHandler(async (req: Request, res: Respon
         { type: "Order", priority: "High" }
       );
 
-      // Socket popup (NO OTP — just tells driver return was approved)
       try {
         const io = getIO();
         io.to(`delivery-${returnReq.deliveryBoy.toString()}`).emit('return-pickup-alert', {

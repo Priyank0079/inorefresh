@@ -210,13 +210,11 @@ export const createRoute = asyncHandler(
       return;
     }
 
-    // Min orders per route (configurable, default 10)
-    const settings = await (AppSettings as any).getSettings();
-    const minOrders = settings?.minOrdersPerRoute ?? 10;
-    if (orderIds.length < minOrders) {
+    // Max 10 orders per route
+    if (orderIds.length > 10) {
       res.status(400).json({
         success: false,
-        message: `A route needs at least ${minOrders} orders (got ${orderIds.length}).`,
+        message: `Maximum 10 orders per route (got ${orderIds.length}).`,
       });
       return;
     }

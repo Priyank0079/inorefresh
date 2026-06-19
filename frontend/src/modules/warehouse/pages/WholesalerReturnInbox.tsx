@@ -42,15 +42,9 @@ export default function WholesalerReturnInbox() {
     try {
       const res = await api.post(`/returns/workflow/warehouse/review/${selectedReturn.id}`, { action, comment });
       if (res.data.success) {
-        if (action === 'Approve' && res.data.data?.warehouseVerificationOtp) {
-          setApprovedOtp({
-            otp: res.data.data.warehouseVerificationOtp,
-            orderNumber: selectedReturn.orderId || '',
-            productName: selectedReturn.productName || '',
-          });
-        } else {
-          toast.success(`Return request ${action}d successfully`);
-        }
+        toast.success(action === 'Approve'
+          ? 'Return approved. Delivery boy will request OTP when ready.'
+          : `Return request ${action}d successfully`);
         setSelectedReturn(null);
         fetchReturns();
       }
