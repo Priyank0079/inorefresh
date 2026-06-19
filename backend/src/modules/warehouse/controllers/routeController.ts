@@ -4,7 +4,6 @@ import { asyncHandler } from "../../../utils/asyncHandler";
 import DeliveryRoute from "../../../models/DeliveryRoute";
 import RouteStop from "../../../models/RouteStop";
 import Order from "../../../models/Order";
-import AppSettings from "../../../models/AppSettings";
 import Delivery from "../../../models/Delivery";
 import { sendNotification } from "../../../services/notificationService";
 import { computeOrderWeights } from "../../../utils/orderWeight";
