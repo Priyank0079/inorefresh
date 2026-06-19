@@ -43,3 +43,5 @@ CHECK_RESULTS_UTF8.md
 # Large asset directories (if not needed in repo)
 # assets/Image-20251130T081301Z-1-001/Image/product.zip
 
+.vercel
+.env*
