@@ -20,6 +20,7 @@ export default function WarehouseStockOverview() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { const i = setInterval(load, 60000); return () => clearInterval(i); }, []);
 
   const summary = data?.summary;
   const products: any[] = data?.products || [];

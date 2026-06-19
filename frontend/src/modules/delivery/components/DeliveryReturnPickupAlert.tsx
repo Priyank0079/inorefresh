@@ -18,19 +18,15 @@ const DeliveryReturnPickupAlert: React.FC<DeliveryReturnPickupAlertProps> = ({ a
 
   useEffect(() => {
     if (!alert) return;
-    // requestAnimationFrame lets the <audio> element mount before we call play()
     const raf = requestAnimationFrame(() => {
       if (audioRef.current) {
         audioRef.current.volume = volume;
         const p = audioRef.current.play();
-        if (p !== undefined) {
-          p.catch((err) =>
-            console.error('❌ Error playing return-pickup sound:', err?.name, err?.message)
-          );
-        }
+        if (p !== undefined) p.catch(() => {});
       }
     });
-    return () => cancelAnimationFrame(raf);
+    const timer = setTimeout(() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; } }, 15000);
+    return () => { cancelAnimationFrame(raf); clearTimeout(timer); };
   }, [alert, volume]);
 
   useEffect(() => {

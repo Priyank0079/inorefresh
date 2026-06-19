@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "mcp__code-review-graph__semantic_search_nodes_tool",
-      "Bash(sed -n '636,660p' modules/customer/controllers/customerOrderController.ts)",
-      "Bash(sed -n '60,125p' services/warehouseNotificationService.ts)"
-    ]
-  }
-}

@@ -15,16 +15,14 @@ const WarehouseReturnOtpAlert: React.FC<WarehouseReturnOtpAlertProps> = ({ alert
   const [volume, setVolume] = useState(0.8);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Play looping alert sound while the OTP popup is open.
+  // Play looping alert sound, auto-stop after 15s.
   useEffect(() => {
     if (alert && audioRef.current) {
       audioRef.current.volume = volume;
       const p = audioRef.current.play();
-      if (p !== undefined) {
-        p.catch((err) =>
-          console.error('❌ Error playing return-OTP sound:', err?.name, err?.message)
-        );
-      }
+      if (p !== undefined) p.catch(() => {});
+      const timer = setTimeout(() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; } }, 15000);
+      return () => clearTimeout(timer);
     }
   }, [alert, volume]);
 

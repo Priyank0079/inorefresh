@@ -87,6 +87,23 @@ export default function WarehouseOrders() {
     fetchOrders();
   }, [dateRange, status, entriesPerPage, debouncedSearch, currentPage, sortField, sortDirection]);
 
+  // Auto-refresh every 30s
+  useEffect(() => {
+    const i = setInterval(() => {
+      const fetchSilent = async () => {
+        try {
+          const params: GetOrdersParams = { page: currentPage, limit: parseInt(entriesPerPage), sortBy: sortField || 'orderDate', sortOrder: sortDirection };
+          if (status !== 'All Status') params.status = status;
+          if (debouncedSearch) params.search = debouncedSearch;
+          const response = await getOrders(params);
+          if (response.success && response.data) setOrders(response.data);
+        } catch {}
+      };
+      fetchSilent();
+    }, 30000);
+    return () => clearInterval(i);
+  }, [currentPage, entriesPerPage, status, debouncedSearch, sortField, sortDirection]);
+
   const handleClearDate = () => {
     setDateRange('');
     setCurrentPage(1);

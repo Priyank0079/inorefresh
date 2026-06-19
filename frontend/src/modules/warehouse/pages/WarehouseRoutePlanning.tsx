@@ -79,6 +79,7 @@ export default function WarehouseRoutePlanning() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { const i = setInterval(load, 30000); return () => clearInterval(i); }, []);
 
   const selectedIds = useMemo(
     () => Object.keys(selected).filter((id) => selected[id]),
