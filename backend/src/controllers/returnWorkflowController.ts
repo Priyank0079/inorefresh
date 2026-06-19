@@ -565,16 +565,16 @@ export const reviewReturnRequest = asyncHandler(async (req: Request, res: Respon
         }
       }
 
-      // Send OTP to delivery boy
+      // Notify delivery boy that return is approved (NO OTP — driver gets it from warehouse)
       await sendNotification(
         "Delivery",
         returnReq.deliveryBoy.toString(),
-        `🔐 Return OTP: ${returnOtp}`,
-        `Return approved for Order #${order.orderNumber}. Enter OTP ${returnOtp} to confirm return & process refund.`,
-        { type: "Order", priority: "Urgent" }
+        "Return Approved",
+        `Return approved for Order #${order.orderNumber}. Tap "Get OTP from Warehouse" to confirm return.`,
+        { type: "Order", priority: "High" }
       );
 
-      // Socket popup with sound
+      // Socket popup (NO OTP — just tells driver return was approved)
       try {
         const io = getIO();
         io.to(`delivery-${returnReq.deliveryBoy.toString()}`).emit('return-pickup-alert', {
@@ -582,14 +582,11 @@ export const reviewReturnRequest = asyncHandler(async (req: Request, res: Respon
           orderId: order._id?.toString(),
           orderNumber: order.orderNumber,
           customerName: order.customerName || 'Customer',
-          otp: returnOtp,
           timestamp: new Date(),
         });
       } catch (e) {
         console.error('[Return Pickup] socket emit failed:', e);
       }
-
-      // FCM push handled by sendNotification above — no duplicate needed
     } else {
       await sendNotification(
         "Delivery",

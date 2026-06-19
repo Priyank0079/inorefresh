@@ -64,6 +64,7 @@ const AdminTeamManagement = lazy(() => import("./pages/AdminTeamManagement"));
 // Shared route-planning page (reused from warehouse module, layout-agnostic)
 const RoutePlanning = lazy(() => import("../warehouse/pages/WarehouseRoutePlanning"));
 const LiveTracking = lazy(() => import("../warehouse/pages/WarehouseLiveTracking"));
+const StockOverview = lazy(() => import("../warehouse/pages/WarehouseStockOverview"));
 
 export default function AdminRoutes() {
   return (
@@ -99,6 +100,7 @@ export default function AdminRoutes() {
           <Route path="manage-location/warehouse-location" element={<PermissionGuard module="delivery"><AdminSellerLocation /></PermissionGuard>} />
           <Route path="route-planning" element={<PermissionGuard module="delivery"><RoutePlanning /></PermissionGuard>} />
           <Route path="live-tracking" element={<PermissionGuard module="delivery"><LiveTracking /></PermissionGuard>} />
+          <Route path="stock-overview" element={<PermissionGuard module="delivery"><StockOverview /></PermissionGuard>} />
           {/* Marketing */}
           <Route path="coupon" element={<PermissionGuard module="marketing"><AdminCoupon /></PermissionGuard>} />
           <Route path="home-section" element={<PermissionGuard module="marketing"><AdminHomeSection /></PermissionGuard>} />

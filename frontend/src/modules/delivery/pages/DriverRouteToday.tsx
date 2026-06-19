@@ -18,8 +18,8 @@ export default function DriverRouteToday() {
     try {
       setLoading(true);
       setRoute(await getTodayRoute());
-    } catch (e: any) {
-      setMsg(e?.response?.data?.message || "Failed to load route");
+    } catch {
+      // No route or server error — just show empty state, no error toast
     } finally {
       setLoading(false);
     }

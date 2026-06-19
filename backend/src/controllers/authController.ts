@@ -5,11 +5,11 @@ import { uploadDocumentFromBuffer } from '../services/cloudinaryService';
 import { CLOUDINARY_FOLDERS } from '../config/cloudinary';
 import { generateToken } from '../services/jwtService';
 import Admin from '../models/Admin';
+import Customer from '../models/Customer';
 import { sendNotification } from '../services/notificationService';
 
 
-// Mock SMS OTP integration
-const MOCK_OTP = "1234";
+import { sendSmsOtp, verifySmsOtp } from '../services/otpService';
 
 export const login = async (req: Request, res: Response): Promise<any> => {
     try {
@@ -18,37 +18,58 @@ export const login = async (req: Request, res: Response): Promise<any> => {
         if (!phone || !userType) return res.status(400).json({ success: false, message: 'Phone and userType required' });
 
         let user;
+        let resolvedUserType = userType;
         if (userType === 'horeca') {
             user = await HorecaUser.findOne({ $or: [{ ownerPhone: phone }, { shopPhone: phone }] });
-        } else {
+        } else if (userType === 'retailer') {
             user = await RetailerUser.findOne({ $or: [{ ownerPhone: phone }, { shopPhone: phone }] });
+        }
+
+        // Fallback: search across all user types if not found
+        if (!user) {
+            const horecaUser = await HorecaUser.findOne({ $or: [{ ownerPhone: phone }, { shopPhone: phone }] });
+            if (horecaUser) { user = horecaUser; resolvedUserType = 'horeca'; }
+        }
+        if (!user) {
+            const retailerUser = await RetailerUser.findOne({ $or: [{ ownerPhone: phone }, { shopPhone: phone }] });
+            if (retailerUser) { user = retailerUser; resolvedUserType = 'retailer'; }
+        }
+        if (!user) {
+            const customer = await Customer.findOne({ phone });
+            if (customer) { user = customer; resolvedUserType = 'Customer'; }
         }
 
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found. Please sign up.' });
         }
 
-        // Verify OTP - require OTP if not provided initially
+        // Step 1: No OTP provided — send OTP via SMS
         if (!otp) {
+            const otpUserType = resolvedUserType === 'Customer' ? 'Customer' : 'Customer';
+            await sendSmsOtp(phone, otpUserType as any);
             return res.json({
                 success: true,
-                message: 'User found. Please enter 4-digit OTP sent to your number.'
+                message: 'OTP sent to your phone number.',
+                sessionId: 'DB_VERIFIED_' + phone,
             });
         }
 
-        if (otp !== MOCK_OTP) {
-            return res.status(400).json({ success: false, message: 'Invalid OTP' });
+        // Step 2: Verify OTP
+        const otpUserType = resolvedUserType === 'Customer' ? 'Customer' : 'Customer';
+        const isValid = await verifySmsOtp('DB_VERIFIED_' + phone, otp, phone, otpUserType as any);
+        if (!isValid) {
+            return res.status(400).json({ success: false, message: 'Invalid or expired OTP. Please try again.' });
         }
 
-        const token = generateToken(user._id.toString(), userType as any);
+        const token = generateToken(user._id.toString(), resolvedUserType as any);
 
-        res.json({ 
-            success: true, 
-            token, 
+        res.json({
+            success: true,
+            token,
             user: {
                 ...user.toObject(),
-                userType
-            } 
+                userType: resolvedUserType
+            }
         });
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });

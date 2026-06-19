@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import DeliveryBottomNav from "../components/DeliveryBottomNav";
 import {
   getTodayRoute,
@@ -15,6 +18,42 @@ import {
 } from "../../../services/api/delivery/driverRouteService";
 
 const ASSET_TYPES = ["Fish Crate", "Ice Box", "Thermocol Box", "Plastic Tub"];
+
+const driverIcon = L.divIcon({
+  className: "",
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  html: `<div style="width:32px;height:32px;border-radius:50%;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)">🚚</div>`,
+});
+const shopIcon = L.divIcon({
+  className: "",
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  html: `<div style="width:32px;height:32px;border-radius:50% 50% 50% 0;background:#dc2626;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);transform:rotate(-45deg)"><span style="transform:rotate(45deg)">📍</span></div>`,
+});
+
+function FitMapBounds({ points }: { points: [number, number][] }) {
+  const map = useMap();
+  const fitted = useRef(false);
+  useEffect(() => {
+    if (points.length >= 2 && !fitted.current) {
+      map.fitBounds(L.latLngBounds(points.map(p => L.latLng(p[0], p[1]))), { padding: [40, 40], maxZoom: 15 });
+      fitted.current = true;
+    } else if (points.length === 1 && !fitted.current) {
+      map.setView(points[0], 15);
+      fitted.current = true;
+    }
+  }, [map, points]);
+  return null;
+}
+
+function UpdateDriverMarker({ pos }: { pos: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.panTo(pos, { animate: true, duration: 0.5 });
+  }, [map, pos]);
+  return null;
+}
 
 export default function DriverStopDetail() {
   const { stopId } = useParams();
@@ -33,6 +72,8 @@ export default function DriverStopDetail() {
   const [payRef, setPayRef] = useState("");
   const [assetType, setAssetType] = useState(ASSET_TYPES[0]);
   const [assetQty, setAssetQty] = useState("");
+  const [driverPos, setDriverPos] = useState<[number, number] | null>(null);
+  const watchRef = useRef<number | null>(null);
 
   // Returns
   const [returns, setReturns] = useState<any[]>([]);
@@ -59,6 +100,17 @@ export default function DriverStopDetail() {
   };
 
   useEffect(() => { load(); }, [stopId]);
+
+  // Live GPS tracking
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    watchRef.current = navigator.geolocation.watchPosition(
+      (p) => setDriverPos([p.coords.latitude, p.coords.longitude]),
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 3000 },
+    );
+    return () => { if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current); };
+  }, []);
 
   // Redirect delivered stops to the verification/return page
   useEffect(() => {
@@ -268,6 +320,35 @@ export default function DriverStopDetail() {
           )}
         </div>
       </div>
+
+      {/* Live Map: Driver → Shop */}
+      {(() => {
+        const loc = stop.retailer?.location;
+        const shopPos: [number, number] | null = loc?.coordinates?.length === 2 ? [loc.coordinates[1], loc.coordinates[0]] : null;
+        if (!shopPos && !driverPos) return null;
+        const mapPoints: [number, number][] = [];
+        if (driverPos) mapPoints.push(driverPos);
+        if (shopPos) mapPoints.push(shopPos);
+        const center = mapPoints[0] || [22.72, 75.87];
+        return (
+          <div className="h-48 w-full relative z-10">
+            <MapContainer center={center} zoom={14} className="h-full w-full" scrollWheelZoom={true} zoomControl={true}>
+              <TileLayer attribution='&copy; OSM' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              {mapPoints.length >= 2 && <FitMapBounds points={mapPoints} />}
+              {driverPos && (
+                <>
+                  <Marker position={driverPos} icon={driverIcon} />
+                  <UpdateDriverMarker pos={driverPos} />
+                </>
+              )}
+              {shopPos && <Marker position={shopPos} icon={shopIcon} />}
+              {driverPos && shopPos && (
+                <Polyline positions={[driverPos, shopPos]} color="#2563eb" weight={4} opacity={0.8} dashArray="8 6" />
+              )}
+            </MapContainer>
+          </div>
+        );
+      })()}
 
       <div className="px-3 py-3 space-y-2.5">
         {msg && (
