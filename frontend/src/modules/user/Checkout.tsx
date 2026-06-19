@@ -2355,7 +2355,7 @@ export default function Checkout() {
       {/* Delivery info + Contact */}
       <div className="px-4 md:px-6 pb-20 pt-2">
         <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-2.5 text-[11px] text-neutral-600 space-y-1">
-          <p><strong>📋 Note:</strong> All orders will be delivered by <strong>next day morning</strong>. Orders after 8 PM will not be accepted.</p>
+          <p><strong>📋 Note:</strong> Orders placed after 8 PM will be delivered the next day.</p>
           <p>📞 <a href="tel:+919481214922" className="text-green-700 font-semibold">9481214922</a> · ✉ <a href="mailto:support@inorfresh.com" className="text-blue-700 font-semibold">support@inorfresh.com</a></p>
         </div>
       </div>
