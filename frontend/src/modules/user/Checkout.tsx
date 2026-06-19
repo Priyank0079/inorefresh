@@ -2069,24 +2069,6 @@ export default function Checkout() {
         </button>
       </div>
 
-      {/* Made with love by Inor Fresh */}
-      <div className="px-4 py-2">
-        <div className="w-full flex flex-col items-center justify-center">
-          <div className="flex items-center gap-1.5 text-neutral-500">
-            <span className="text-[10px] font-medium">Made with</span>
-            <motion.span
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
-              className="text-red-500 text-sm">
-              ❤️
-            </motion.span>
-            <span className="text-[10px] font-medium">by</span>
-            <span className="text-[10px] font-semibold text-green-600">
-              Inor Fresh
-            </span>
-          </div>
-        </div>
-      </div>
 
       {/* GSTIN Sheet Modal */}
       <Sheet open={showGstinSheet} onOpenChange={setShowGstinSheet}>
@@ -2203,34 +2185,31 @@ export default function Checkout() {
                 <h3 className="font-bold text-neutral-900 mb-2">
                   Order Cancellation
                 </h3>
-                <p className="mb-2">
-                  You can cancel your order before it is confirmed by the
-                  seller. Once confirmed, cancellation may not be possible.
+                <p>
+                  You can cancel your order before it is confirmed by the warehouse. Once confirmed, cancellation may not be possible.
                 </p>
               </div>
 
               <div>
                 <h3 className="font-bold text-neutral-900 mb-2">
-                  Refund Policy
+                  Return & Refund Policy
                 </h3>
                 <ul className="list-disc list-inside space-y-1 ml-2">
-                  <li>Refunds will be processed within 5-7 business days</li>
-                  <li>
-                    Refund amount will be credited to your original payment
-                    method
-                  </li>
+                  <li>After delivery, you get a <strong>10-minute inspection window</strong> to verify items</li>
+                  <li>If any item is damaged, spoiled or wrong — submit a return request with photo proof</li>
+                  <li>Warehouse will review and approve/reject the return</li>
+                  <li>Once approved, <strong>refund is instantly credited to your InorFresh Wallet</strong></li>
+                  <li>You can use the wallet balance in your <strong>next order</strong></li>
                   <li>Delivery charges are non-refundable</li>
                 </ul>
               </div>
 
               <div>
                 <h3 className="font-bold text-neutral-900 mb-2">
-                  Partial Cancellation
+                  Partial Return
                 </h3>
                 <p>
-                  Partial cancellation of items in an order is not allowed. You
-                  can cancel the entire order or contact customer support for
-                  assistance.
+                  You can return individual items from your order. Accepted items will be delivered normally, and only returned items will be refunded to your wallet.
                 </p>
               </div>
 
@@ -2239,10 +2218,12 @@ export default function Checkout() {
                   Contact Support
                 </h3>
                 <p>
-                  For any cancellation requests or queries, please contact our
-                  customer support team at support@dhakadsnazzy.com or call
-                  +91-XXXXX-XXXXX
+                  For any queries, cancellation or return requests, contact us:
                 </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <a href="tel:+919481214922" className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1.5 rounded-full">📞 9481214922</a>
+                  <a href="mailto:support@inorfresh.com" className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-full">✉ support@inorfresh.com</a>
+                </div>
               </div>
             </div>
           </div>
@@ -2370,6 +2351,14 @@ export default function Checkout() {
           {checkoutError}
         </div>
       )}
+
+      {/* Delivery info + Contact */}
+      <div className="px-4 md:px-6 pb-20 pt-2">
+        <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-2.5 text-[11px] text-neutral-600 space-y-1">
+          <p><strong>📋 Note:</strong> All orders will be delivered by <strong>next day morning</strong>. Orders after 8 PM will not be accepted.</p>
+          <p>📞 <a href="tel:+919481214922" className="text-green-700 font-semibold">9481214922</a> · ✉ <a href="mailto:support@inorfresh.com" className="text-blue-700 font-semibold">support@inorfresh.com</a></p>
+        </div>
+      </div>
 
       {/* Daily ordering cut-off banner */}
       {orderingClosed && (
