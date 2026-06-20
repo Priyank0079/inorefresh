@@ -210,9 +210,6 @@ export default function AdminLogin() {
                   Mobile Number
                 </label>
                 <div className="flex items-center bg-white border border-neutral-300 rounded-lg overflow-hidden focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-200 transition-all">
-                  <div className="px-3 py-2.5 text-sm font-medium text-neutral-600 border-r border-neutral-300 bg-neutral-50">
-                    +91
-                  </div>
                   <input
                     type="tel"
                     value={mobileNumber}
@@ -252,12 +249,16 @@ export default function AdminLogin() {
                 <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${activeRole?.badgeClass}`}>
                   {selectedRole}
                 </span>
-                <span className="text-xs text-neutral-500">+91 {mobileNumber}</span>
+                <span className="text-xs text-neutral-500">
+                  {`+91 ${mobileNumber}`}
+                </span>
               </div>
 
               <div className="text-center">
                 <p className="text-sm text-neutral-600 mb-1">Enter the 4-digit OTP sent to</p>
-                <p className="text-sm font-semibold text-neutral-800">+91 {mobileNumber}</p>
+                <p className="text-sm font-semibold text-neutral-800">
+                  {`+91 ${mobileNumber}`}
+                </p>
               </div>
 
               <OTPInput onComplete={handleOTPComplete} disabled={loading} />

@@ -136,19 +136,29 @@ export const getProducts = async (req: Request, res: Response) => {
       dateTo,
     } = req.query;
 
+    const { latitude, longitude } = req.query;
+
     const query: any = {
       status: "Active",
       publish: true,
-      // Exclude shop-by-store-only products from category pages
       $or: [
         { isShopByStoreOnly: { $ne: true } },
         { isShopByStoreOnly: { $exists: false } },
       ],
     };
 
-    // Location inputs are accepted, but product listing is not hard-filtered by
-    // proximity so users can still browse all active/published products.
-    // Removed redundant findSellersWithinRange call to optimize performance
+    // Filter products by warehouse proximity — only show products from
+    // warehouses within their serviceRadiusKm of the user's location.
+    if (latitude && longitude) {
+      const lat = parseFloat(latitude as string);
+      const lng = parseFloat(longitude as string);
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        const nearbyIds = await findSellersWithinRange(lat, lng);
+        if (nearbyIds.length > 0) {
+          query.warehouse = { $in: nearbyIds };
+        }
+      }
+    }
     // Helper to resolve category/subcategory ID from slug or ID
     const resolveId = async (
       model: any,

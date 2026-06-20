@@ -154,12 +154,12 @@ export async function findSellersWithinRange(
         warehouseLng
       );
 
-      // Default warehouse service radius: 50km (configurable if present on doc)
+      // Use warehouse's configured serviceRadiusKm (default 10km matching schema)
       const serviceRadius =
         typeof (warehouse as any).serviceRadiusKm === "number" &&
         !isNaN((warehouse as any).serviceRadiusKm)
           ? (warehouse as any).serviceRadiusKm
-          : 50;
+          : 10;
 
       if (distance <= serviceRadius) {
         nearbySellerIds.push(warehouse._id as mongoose.Types.ObjectId);

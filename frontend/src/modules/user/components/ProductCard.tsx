@@ -64,7 +64,10 @@ function ProductCard({ product, badgeText = '' }: ProductCardProps) {
     (product.categoryId || '').toLowerCase().includes(kw)
   );
 
-  const isSoldOut = product.isAvailable === false || product.stock === 0;
+  // Hide products that are out of range — don't render at all
+  if (product.isAvailable === false) return null;
+
+  const isSoldOut = product.stock === 0;
 
   const handleAdd = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -136,7 +139,7 @@ function ProductCard({ product, badgeText = '' }: ProductCardProps) {
         {isSoldOut && (
           <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] flex items-center justify-center z-10">
             <span className="px-2.5 py-1 bg-neutral-900/85 text-white text-[9px] font-black rounded-full tracking-widest uppercase shadow-xl">
-              {product.isAvailable === false ? 'Out of Range' : 'Sold Out'}
+              Sold Out
             </span>
           </div>
         )}

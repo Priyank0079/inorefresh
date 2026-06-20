@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import GoogleMapsAutocomplete from '../../../components/GoogleMapsAutocomplete';
 import {
     getAllWarehouses,
     deleteWarehouse as deleteWarehouseApi,
@@ -37,6 +38,8 @@ interface EditWarehouseState {
     email: string;
     password: string;
     address: string;
+    latitude: string;
+    longitude: string;
 }
 
 const mapWarehouseToFrontend = (warehouse: WarehouseType): Warehouse => {
@@ -149,6 +152,7 @@ export default function AdminManageWarehouseList() {
     };
 
     const openEditModal = (warehouse: Warehouse) => {
+        const loc = (warehouse as any).location?.coordinates || [];
         setEditWarehouse({
             id: warehouse._id,
             warehouseName: warehouse.warehouseName || '',
@@ -157,6 +161,8 @@ export default function AdminManageWarehouseList() {
             email: warehouse.email || '',
             password: '',
             address: warehouse.address || '',
+            latitude: (warehouse as any).latitude || (loc[1]?.toString() || ''),
+            longitude: (warehouse as any).longitude || (loc[0]?.toString() || ''),
         });
     };
 
@@ -205,6 +211,8 @@ export default function AdminManageWarehouseList() {
                 mobile: editWarehouse.mobile.trim(),
                 email: editWarehouse.email.trim(),
                 address: editWarehouse.address.trim(),
+                latitude: editWarehouse.latitude || undefined,
+                longitude: editWarehouse.longitude || undefined,
             };
             if (editWarehouse.password.trim()) {
                 payload.password = editWarehouse.password.trim();
@@ -427,13 +435,23 @@ export default function AdminManageWarehouseList() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-neutral-700 mb-1">Address</label>
-                                    <input
-                                        type="text"
-                                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                        placeholder="Address"
+                                    <GoogleMapsAutocomplete
                                         value={editWarehouse.address}
-                                        onChange={(e) => setEditWarehouse((prev) => prev ? { ...prev, address: e.target.value } : prev)}
+                                        onChange={(address: string, lat: number, lng: number) => {
+                                            setEditWarehouse((prev) => prev ? {
+                                                ...prev,
+                                                address,
+                                                latitude: lat.toString(),
+                                                longitude: lng.toString(),
+                                            } : prev);
+                                        }}
+                                        placeholder="Search location..."
                                     />
+                                    {editWarehouse.latitude && editWarehouse.longitude && (
+                                        <p className="text-[10px] text-neutral-400 mt-1">
+                                            📍 {parseFloat(editWarehouse.latitude).toFixed(4)}, {parseFloat(editWarehouse.longitude).toFixed(4)}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 

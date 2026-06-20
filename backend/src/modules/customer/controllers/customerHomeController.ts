@@ -136,12 +136,12 @@ async function fetchSectionData(
         ],
       };
 
-      // We fetch these irrespective of location radius to show preview images on home page
-      // Location validation still happens at cart/order level
+      // Only show products from warehouses/sellers within range
       if (nearbySellerIds && nearbySellerIds.length > 0) {
-        // If we have nearby sellers, we can still filter by them if we want to prioritize
-        // But the user requested to show them irrespective of location radius
-        // For now, let's keep it simple and show all active products for the section
+        query.$and = [
+          ...(query.$and || []),
+          { $or: [{ seller: { $in: nearbySellerIds } }, { warehouse: { $in: nearbySellerIds } }] },
+        ];
       }
 
       if (categories && categories.length > 0) {
@@ -170,11 +170,9 @@ async function fetchSectionData(
         .select("productName mainImage price mrp discount rating reviewsCount pack seller warehouse variations")
         .lean();
 
+      // Products already filtered by warehouse query — all are available
       return products.map((p: any) => {
-        const ownerId = p.seller || p.warehouse;
-        const isAvailable = nearbySellerIds && nearbySellerIds.length > 0 && ownerId
-          ? nearbySellerIds.some(id => id.toString() === ownerId.toString())
-          : false;
+        const isAvailable = true;
 
         return {
           id: p._id.toString(),
@@ -327,15 +325,17 @@ export const getHomeContent = async (req: Request, res: Response) => {
       })
     );
 
-    // Transform lowest prices
+    // Transform lowest prices — filter by location
     const validLowestPricesProducts = lowestPricesProducts
-      .filter((item: any) => item.product !== null)
+      .filter((item: any) => {
+        if (!item.product) return false;
+        if (!nearbySellerIds || nearbySellerIds.length === 0) return true;
+        const ownerId = item.product.seller || item.product.warehouse;
+        return ownerId && nearbySellerIds.some(id => id.toString() === ownerId.toString());
+      })
       .map((item: any) => {
         const product = item.product;
-        const ownerId = product.seller || product.warehouse;
-        const isAvailable = nearbySellerIds && nearbySellerIds.length > 0 && ownerId
-          ? nearbySellerIds.some(id => id.toString() === ownerId.toString())
-          : false;
+        const isAvailable = true;
 
         return {
           id: product._id.toString(),
@@ -574,13 +574,13 @@ export const getHomeContent = async (req: Request, res: Response) => {
 
       // If we have promoStrip, add availability flag to featured products
       if (promoStrip && (promoStrip as any).featuredProducts) {
-        (promoStrip as any).featuredProducts = (promoStrip as any).featuredProducts.map((p: any) => {
-          const ownerId = p.seller || p.warehouse;
-          const isAvailable = nearbySellerIds && nearbySellerIds.length > 0 && ownerId
-            ? nearbySellerIds.some(id => id.toString() === ownerId.toString())
-            : false;
-          return { ...p, isAvailable };
-        });
+        (promoStrip as any).featuredProducts = (promoStrip as any).featuredProducts
+          .filter((p: any) => {
+            if (!nearbySellerIds || nearbySellerIds.length === 0) return true;
+            const ownerId = p.seller || p.warehouse;
+            return ownerId && nearbySellerIds.some(id => id.toString() === ownerId.toString());
+          })
+          .map((p: any) => ({ ...p, isAvailable: true }));
       }
 
       // Cache for 3 minutes (PromoStrip data doesn't change frequently)
