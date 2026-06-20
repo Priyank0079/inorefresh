@@ -3,7 +3,7 @@ import { getAuthToken } from './api/config';
 
 // VAPID key must match the dhakadsnazzy2 Firebase project.
 // Get it from: Firebase Console → dhakadsnazzy2 → Project Settings → Cloud Messaging → Web Push certificates
-const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
+const VAPID_KEY = 'BNtQ-yWzXEuz_T9O0xQeEGi52R4-8nNjVbBao1oT4VuASPq0uiLhfPk81_ULMXl3eTsmpMQDhzKDSk47fgohgVQ';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.inorfresh.com/api/v1';
 
 // ─────────────────────────────────────────────────────────────────────────────

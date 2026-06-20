@@ -5,13 +5,13 @@ import { getMessaging, getToken, onMessage } from "firebase/messaging";
 // Admin SDK (both use the dhakadsnazzy2 project). Hardcoded values are used as
 // the source of truth so a misconfigured server env cannot cause a project mismatch.
 const firebaseConfig = {
-  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY            || 'AIzaSyDdzURk5KJykQwmtUdOg-Lbdj4HjUT9G8g',
-  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN        || 'dhakadsnazzy2.firebaseapp.com',
-  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID         || 'dhakadsnazzy2',
-  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET     || 'dhakadsnazzy2.firebasestorage.app',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '88524532800',
-  appId:             import.meta.env.VITE_FIREBASE_APP_ID             || '1:88524532800:web:347183dc062e619a48c3a5',
-  measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID     || 'G-GCPBFW3F1B',
+  apiKey:            'AIzaSyDdzURk5KJykQwmtUdOg-Lbdj4HjUT9G8g',
+  authDomain:        'dhakadsnazzy2.firebaseapp.com',
+  projectId:         'dhakadsnazzy2',
+  storageBucket:     'dhakadsnazzy2.firebasestorage.app',
+  messagingSenderId: '88524532800',
+  appId:             '1:88524532800:web:347183dc062e619a48c3a5',
+  measurementId:     'G-GCPBFW3F1B',
 };
 
 // Initialize Firebase
