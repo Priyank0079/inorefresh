@@ -78,23 +78,38 @@ export async function sendPushNotification(
             };
         }
 
-        // dataOnly=true: no notification key so service worker handles display
-        // with custom urgency (requireInteraction, vibration).
-        // Always include title/body in data so SW can read them for data-only messages.
+        // Always include notification key so Android/iOS show the push natively.
+        // dataOnly was previously used for web service worker — but it breaks
+        // mobile push (data-only = silent on Android/iOS). Now we ALWAYS send
+        // the notification key and ALSO include data for the service worker.
         const message: any = {
-            ...(payload.dataOnly ? {} : {
-                notification: {
-                    title: payload.title,
-                    body: payload.body
-                }
-            }),
+            notification: {
+                title: payload.title,
+                body: payload.body,
+            },
             data: {
                 title: payload.title,
                 body: payload.body,
                 ...(payload.data || {}),
-                ...(payload.icon && { icon: payload.icon })
+                ...(payload.icon && { icon: payload.icon }),
             },
-            tokens: tokens
+            android: {
+                priority: 'high' as const,
+                notification: {
+                    channelId: 'inorfresh_default',
+                    priority: 'high' as const,
+                    sound: 'default',
+                },
+            },
+            apns: {
+                payload: {
+                    aps: {
+                        sound: 'default',
+                        badge: 1,
+                    },
+                },
+            },
+            tokens: tokens,
         };
 
         const response = await admin.messaging().sendEachForMulticast(message);
