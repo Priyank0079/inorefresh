@@ -180,27 +180,34 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Create new delivery partner
-  await Delivery.create({
-    name,
-    mobile,
-    email,
-    dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-    password,
-    address,
-    city,
-    pincode,
-    drivingLicense,
-    nationalIdentityCard,
-    accountName,
-    bankName,
-    accountNumber,
-    ifscCode,
-    bonusType,
-    status: "Inactive", // New delivery partners start as Inactive
-    balance: 0,
-    cashCollected: 0,
-  } as any);
+  // Create new delivery partner (with duplicate key handling)
+  try {
+    await Delivery.create({
+      name,
+      mobile,
+      email,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+      password,
+      address,
+      city,
+      pincode,
+      drivingLicense,
+      nationalIdentityCard,
+      accountName,
+      bankName,
+      accountNumber,
+      ifscCode,
+      bonusType,
+      status: "Inactive",
+      balance: 0,
+      cashCollected: 0,
+    } as any);
+  } catch (createErr: any) {
+    if (createErr.code === 11000) {
+      return res.status(409).json({ success: false, message: "Delivery partner already exists with this mobile or email" });
+    }
+    throw createErr;
+  }
 
   // Generate token (Optional: usually registration doesn't login immediately if approval needed, but for seamless UX we can)
   // However, FE Flow: Register -> OTP -> Login. So we return success, then FE calls sendSmsOtp.

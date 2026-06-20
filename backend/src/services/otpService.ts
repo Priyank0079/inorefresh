@@ -198,8 +198,8 @@ async function verifyOtpFromDb(mobile: string, otp: string, userType: UserType):
 /**
  * Check if special bypass should be used
  */
-function isSpecialBypass(mobile: string): boolean {
-  return mobile === '9111966732';
+function isSpecialBypass(_mobile: string): boolean {
+  return false;
 }
 
 /**
@@ -290,9 +290,7 @@ export async function verifySmsOtp(
   mobile?: string,
   userType: 'Customer' | 'Delivery' = 'Delivery'
 ): Promise<boolean> {
-  if (isDeveloperBypass(otpInput)) {
-    return true;
-  }
+  // No bypass for Customer/Delivery — real SMS OTP only
 
   // Normalize OTP input (remove spaces, ensure it's a string)
   const normalizedOtp = String(otpInput).trim().replace(/\s/g, '');
@@ -395,12 +393,8 @@ export async function verifyOTP(
   otpInput: string,
   userType: 'warehouse' | 'Admin' | 'Customer' | 'Delivery' | 'Port'
 ): Promise<boolean> {
-  console.log(`[OTP DEBUG] verifyOTP called: mobile=${mobile}, otp=${otpInput}, type=${userType}`);
-  // Allow 1234 for testing purposes as requested (robust check)
-  if (String(otpInput).trim() === '1234') {
-    return true;
-  }
-  if (isDeveloperBypass(otpInput)) {
+  // Admin keeps dev bypass in non-production; all others verify via DB
+  if (userType === 'Admin' && isDeveloperBypass(otpInput)) {
     return true;
   }
 

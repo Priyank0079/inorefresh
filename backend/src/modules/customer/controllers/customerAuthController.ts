@@ -78,22 +78,32 @@ export const verifySmsOtp = asyncHandler(
       });
     }
 
-    // Find or create customer
+    // Find or create customer (atomic — handles concurrent registrations)
     let customer = await Customer.findOne({ phone: mobile });
     let isNewUser = false;
 
     if (!customer) {
-      // Auto-create new customer with placeholder data
-      customer = await Customer.create({
-        phone: mobile,
-        name: "User",
-        email: `${mobile}@dhakadsnazzy.temp`,
-        status: "Active",
-        walletAmount: 0,
-        totalOrders: 0,
-        totalSpent: 0,
-      });
-      isNewUser = true;
+      try {
+        customer = await Customer.create({
+          phone: mobile,
+          name: "User",
+          email: `${mobile}@dhakadsnazzy.temp`,
+          status: "Active",
+          walletAmount: 0,
+          totalOrders: 0,
+          totalSpent: 0,
+        });
+        isNewUser = true;
+      } catch (createErr: any) {
+        if (createErr.code === 11000) {
+          customer = await Customer.findOne({ phone: mobile });
+          if (!customer) {
+            return res.status(500).json({ success: false, message: "Registration failed. Please try again." });
+          }
+        } else {
+          throw createErr;
+        }
+      }
 
       // Notify all admins: new customer registered (DB persist + live socket
       // popup + push, matching the delivery-boy registration pattern so the

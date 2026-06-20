@@ -364,4 +364,55 @@ router.post("/test", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+/**
+ * Diagnostic: check FCM token status for authenticated user
+ * GET /api/v1/fcm-tokens/status
+ */
+router.get("/status", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const userType = req.user?.userType;
+
+    if (!userId || !userType) {
+      res.status(401).json({ success: false, message: "Not authenticated" });
+      return;
+    }
+
+    let UserModel: any;
+    switch (userType) {
+      case "Customer": UserModel = Customer; break;
+      case "Admin": UserModel = Admin; break;
+      case "Warehouse": UserModel = Warehouse; break;
+      case "Delivery": UserModel = Delivery; break;
+      case "horeca": UserModel = HorecaUser; break;
+      case "retailer": UserModel = RetailerUser; break;
+      case "Port": UserModel = PortUser; break;
+      default:
+        res.status(400).json({ success: false, message: "Invalid user type" });
+        return;
+    }
+
+    const user = await UserModel.findById(userId).select("fcmTokens fcmTokenMobile name").lean();
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        userId,
+        userType,
+        name: (user as any).name,
+        webTokens: (user as any).fcmTokens?.length || 0,
+        mobileTokens: (user as any).fcmTokenMobile?.length || 0,
+        hasWebToken: ((user as any).fcmTokens?.length || 0) > 0,
+        hasMobileToken: ((user as any).fcmTokenMobile?.length || 0) > 0,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;

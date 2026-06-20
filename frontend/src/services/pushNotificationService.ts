@@ -47,43 +47,42 @@ export function exposeFlutterBridge(): void {
     if ((window as any).registerNativeFCMToken) return;
 
     (window as any).registerNativeFCMToken = async (token: string): Promise<boolean> => {
+        console.log('[FCM-BRIDGE] called, token length:', token?.length || 0);
         if (!token) {
-            console.warn('⚠️ registerNativeFCMToken called with empty token');
+            console.warn('[FCM-BRIDGE] empty token');
             return false;
         }
 
         const authToken = getAuthToken();
+        console.log('[FCM-BRIDGE] auth token exists:', !!authToken);
         if (!authToken) {
-            console.warn('⚠️ registerNativeFCMToken: user not authenticated yet, token will be stored and sent on next login');
-            // Store for later — AuthContext.login() will call registerFCMToken(true)
-            // which will pick this up via localStorage.
             localStorage.setItem('flutter_pending_fcm_token', token);
+            console.log('[FCM-BRIDGE] stored pending token for later');
             return false;
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/fcm-tokens/save`, {
+            const url = `${API_BASE_URL}/fcm-tokens/save`;
+            console.log('[FCM-BRIDGE] POST', url);
+            const response = await fetch(url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
                 body: JSON.stringify({ token, platform: 'mobile' })
             });
+            const data = await response.json().catch(() => ({}));
+            console.log('[FCM-BRIDGE] response:', response.status, data);
 
-            if (response.ok) {
+            if (response.ok && data.success) {
                 localStorage.setItem('fcm_token_mobile', token);
                 localStorage.removeItem('flutter_pending_fcm_token');
                 (window as any).__awaitingNativeFCMToken = false;
-                console.log('✅ Native FCM token registered from Flutter bridge');
+                console.log('[FCM-BRIDGE] SUCCESS');
                 return true;
-            } else {
-                const err = await response.json();
-                console.error('❌ Failed to register Flutter FCM token with backend:', err);
-                return false;
             }
+            console.error('[FCM-BRIDGE] FAILED:', data.message || response.status);
+            return false;
         } catch (err) {
-            console.error('❌ registerNativeFCMToken network error:', err);
+            console.error('[FCM-BRIDGE] NETWORK ERROR:', err);
             return false;
         }
     };
