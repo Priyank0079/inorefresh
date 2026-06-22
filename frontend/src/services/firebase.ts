@@ -1,17 +1,15 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
-// Firebase configuration — must match firebase-messaging-sw.js and the backend
-// Admin SDK (both use the dhakadsnazzy2 project). Hardcoded values are used as
-// the source of truth so a misconfigured server env cannot cause a project mismatch.
+// Firebase configuration — pulls from .env so we can switch between local/live projects
 const firebaseConfig = {
-  apiKey:            'AIzaSyDdzURk5KJykQwmtUdOg-Lbdj4HjUT9G8g',
-  authDomain:        'dhakadsnazzy2.firebaseapp.com',
-  projectId:         'dhakadsnazzy2',
-  storageBucket:     'dhakadsnazzy2.firebasestorage.app',
-  messagingSenderId: '88524532800',
-  appId:             '1:88524532800:web:347183dc062e619a48c3a5',
-  measurementId:     'G-GCPBFW3F1B',
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase

@@ -5,13 +5,13 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-comp
 
 // Firebase configuration (Production credentials)
 const firebaseConfig = {
-    apiKey: 'AIzaSyDdzURk5KJykQwmtUdOg-Lbdj4HjUT9G8g',
-    authDomain: 'dhakadsnazzy2.firebaseapp.com',
-    projectId: 'dhakadsnazzy2',
-    storageBucket: 'dhakadsnazzy2.firebasestorage.app',
-    messagingSenderId: '88524532800',
-    appId: '1:88524532800:web:347183dc062e619a48c3a5',
-    measurementId: 'G-GCPBFW3F1B'
+    apiKey: 'AIzaSyAPTn50IjEDQpQ5r4b6DdDw-ME6zrwAURo',
+    authDomain: 'inor-fresh.firebaseapp.com',
+    projectId: 'inor-fresh',
+    storageBucket: 'inor-fresh.firebasestorage.app',
+    messagingSenderId: '472804365462',
+    appId: '1:472804365462:web:4510c7ec5c93f4a80d5eb7',
+    measurementId: 'G-RSGK1SFR01'
 };
 
 // Initialize Firebase in service worker
