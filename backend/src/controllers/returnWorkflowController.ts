@@ -90,14 +90,14 @@ function computeReturnRefundAmount(
   );
   const baseOrderedQty = orderedQty || orderItem?.quantity || returnQty;
   if (tb && baseOrderedQty > 0) {
-    taxShare = (Number(tb.amount) || 0) * (returnQty / baseOrderedQty);
+    taxShare = Math.round((Number(tb.amount) || 0) * (returnQty / baseOrderedQty) * 100) / 100;
   }
 
   // Coupon discount: refund only the line's proportional share so we never
   // over-refund a discounted order.
   let discountShare = 0;
   if (order && Number(order.discount) > 0 && Number(order.subtotal) > 0) {
-    discountShare = Number(order.discount) * (base / Number(order.subtotal));
+    discountShare = Math.round(Number(order.discount) * (base / Number(order.subtotal)) * 100) / 100;
   }
 
   return Math.max(0, Number((base + taxShare - discountShare).toFixed(2)));

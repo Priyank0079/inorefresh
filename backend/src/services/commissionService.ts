@@ -161,9 +161,9 @@ export const calculateOrderCommissions = async (orderId: string) => {
       const warehouseId = orderItem.warehouse.toString();
       const itemTotal = orderItem.total;
 
-      // Get commission rate for this warehouse
-      const commissionRate = await getwarehouseCommissionRate(warehouseId);
-      const commissionAmount = (itemTotal * commissionRate) / 100;
+      // Get commission rate for this warehouse (clamped 0-100%)
+      const commissionRate = Math.min(100, Math.max(0, await getwarehouseCommissionRate(warehouseId)));
+      const commissionAmount = Math.round((itemTotal * commissionRate) / 100 * 100) / 100;
 
       if (warehouseCommissions.has(warehouseId)) {
         const existing = warehouseCommissions.get(warehouseId)!;
@@ -278,8 +278,8 @@ export const createPendingCommissions = async (orderId: string) => {
         item.product.toString(),
         item.warehouse.toString()
       );
-      const commissionAmount = (item.total * commissionRate) / 100;
-      const netEarning = item.total - commissionAmount;
+      const commissionAmount = Math.round((item.total * commissionRate) / 100 * 100) / 100;
+      const netEarning = Math.round((item.total - commissionAmount) * 100) / 100;
 
       console.log(
         `[Commission] Item: ${item.product}, Rate: ${commissionRate}%, Amount: ${commissionAmount}, Net: ${netEarning}`,
@@ -884,8 +884,8 @@ export const calculateCODOrderBreakdown = async (
       );
 
       // Calculate commission and warehouse earning for this item
-      const itemCommission = (item.total * commissionRate) / 100;
-      const itemwarehouseEarning = item.total - itemCommission;
+      const itemCommission = Math.round((item.total * commissionRate) / 100 * 100) / 100;
+      const itemwarehouseEarning = Math.round((item.total - itemCommission) * 100) / 100;
 
       breakdown.adminProductCommission += itemCommission;
 
@@ -1063,12 +1063,11 @@ export const processCODOrderDelivery = async (
         deliveryBoy: order.deliveryBoy,
         type: "DELIVERY_BOY",
         orderAmount: breakdown.deliveryDistanceKm || breakdown.totalDeliveryCharge || breakdown.productCost,
-        commissionRate: breakdown.deliveryDistanceKm
-          ? breakdown.deliveryBoyCommission / breakdown.deliveryDistanceKm
-          // BUG FIX: guard against division by zero when delivery is free (totalDeliveryCharge = 0)
-          : breakdown.totalDeliveryCharge > 0
-            ? (breakdown.deliveryBoyCommission / breakdown.totalDeliveryCharge) * 100
-            : 5, // fallback to default 5% rate
+        commissionRate: breakdown.deliveryDistanceKm && breakdown.deliveryDistanceKm > 0
+          ? Math.round((breakdown.deliveryBoyCommission / breakdown.deliveryDistanceKm) * 100) / 100
+          : breakdown.totalDeliveryCharge && breakdown.totalDeliveryCharge > 0
+            ? Math.round((breakdown.deliveryBoyCommission / breakdown.totalDeliveryCharge) * 100 * 100) / 100
+            : 5,
         commissionAmount: breakdown.deliveryBoyCommission,
         status: "Paid", // Delivery boy gets paid immediately
         paidAt: new Date(),

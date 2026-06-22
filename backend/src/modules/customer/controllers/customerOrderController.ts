@@ -311,8 +311,8 @@ export const createOrder = async (req: Request, res: Response) => {
             calculatedSubtotal += itemTotal;
 
             // Calculate commission rate snapshot
-            const commRate = await getOrderItemCommissionRate(product._id.toString(), product.warehouse.toString());
-            const commAmount = (itemTotal * commRate) / 100;
+            const commRate = Math.min(100, Math.max(0, await getOrderItemCommissionRate(product._id.toString(), product.warehouse.toString())));
+            const commAmount = Math.round((itemTotal * commRate) / 100 * 100) / 100;
 
             // Create OrderItem
             const newOrderItemData = {

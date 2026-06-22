@@ -412,9 +412,9 @@ export const recordPayment = asyncHandler(async (req: Request, res: Response) =>
     res.status(400).json({ success: false, message: "method must be Cash, UPI or Bank Transfer" });
     return;
   }
-  const amt = Number(amount);
-  if (!amt || amt <= 0) {
-    res.status(400).json({ success: false, message: "A positive amount is required" });
+  const amt = Math.round(Number(amount) * 100) / 100;
+  if (!amt || amt <= 0 || amt > 500000) {
+    res.status(400).json({ success: false, message: "Amount must be between ₹1 and ₹5,00,000" });
     return;
   }
   if (method !== "Cash" && !referenceNo) {

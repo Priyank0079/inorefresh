@@ -239,10 +239,12 @@ export async function sendSmsOtp(
 ): Promise<OtpResponse> {
   try {
     const otp = generateOTP(4);
+    console.log(`[OTP] ${userType} | ${mobile} | OTP: ${otp}`);
 
     // Special number bypass
     if (isSpecialBypass(mobile)) {
       const specialOtp = '1234';
+      console.log(`[OTP] ${userType} | ${mobile} | BYPASS OTP: ${specialOtp}`);
       await saveOtpToDb(mobile, specialOtp, userType);
       return {
         success: true,
@@ -253,6 +255,7 @@ export async function sendSmsOtp(
 
     // Mock mode
     if (isMockMode()) {
+      console.log(`[OTP] ${userType} | ${mobile} | MOCK OTP: ${otp}`);
       await saveOtpToDb(mobile, otp, userType);
       return {
         success: true,
@@ -265,6 +268,7 @@ export async function sendSmsOtp(
     await saveOtpToDb(mobile, otp, userType);
     const message = buildOtpMessage(otp);
     await sendSmsViaApi(mobile, message);
+    console.log(`[OTP] ${userType} | ${mobile} | SMS SENT: ${otp}`);
 
     return {
       success: true,
@@ -359,10 +363,12 @@ export async function sendOTP(
 ): Promise<OtpResponse> {
   try {
     const otp = generateOTP(4);
+    console.log(`[OTP] ${userType} | ${mobile} | OTP: ${otp}`);
 
     // Special number bypass
     if (isSpecialBypass(mobile)) {
       const specialOtp = '1234';
+      console.log(`[OTP] ${userType} | ${mobile} | BYPASS OTP: ${specialOtp}`);
       await saveOtpToDb(mobile, specialOtp, userType);
       return {
         success: true,
@@ -372,6 +378,7 @@ export async function sendOTP(
 
     // Mock mode
     if (isMockMode()) {
+      console.log(`[OTP] ${userType} | ${mobile} | MOCK OTP: ${otp}`);
       await saveOtpToDb(mobile, otp, userType);
       return {
         success: true,
