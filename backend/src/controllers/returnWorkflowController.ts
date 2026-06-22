@@ -813,12 +813,16 @@ export const sendWarehouseOtp = asyncHandler(async (req: Request, res: Response)
   }
 
   // 2) Persisted in-app notification (bell) + push so it is never missed.
+  // NOTE: The OTP is intentionally NOT included in the notification body here because
+  // this record is stored in the DB and visible to admins who can read all notifications.
+  // The OTP is delivered securely via the real-time 'return-otp-alert' socket event above
+  // (which only goes to the warehouse's live dashboard) and via SMS.
   try {
     await sendNotification(
       'Warehouse',
       warehouseId,
-      '🔐 Return Pickup OTP',
-      `Rider has arrived to deliver returned goods for Order #${orderNumber}. Your OTP is ${otp}. Share it with the rider to confirm receipt.`,
+      '🔐 Return Pickup OTP Ready',
+      `Rider has arrived to deliver returned goods for Order #${orderNumber}. Check your dashboard popup or SMS for the OTP to share with the rider.`,
       { type: 'Order', priority: 'Urgent' }
     );
   } catch (e) {

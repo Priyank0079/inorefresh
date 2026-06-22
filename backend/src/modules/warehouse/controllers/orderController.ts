@@ -100,6 +100,20 @@ export const getOrders = asyncHandler(
     const routeMap = new Map(routeDocs.map((r: any) => [String(r._id), r]));
     const stopByOrder = new Map(routeStops.map((rs: any) => [String(rs.order), rs]));
 
+    // Sum per-order totals for THIS warehouse only
+    // (order.total includes ALL warehouses — we must use OrderItem data)
+    const allWarehouseItems = await OrderItem.find({
+      order: { $in: orderIds },
+      warehouse: WarehouseId,
+    }).select('order total').lean();
+
+    // Build a map: orderId -> sum of this warehouse's item totals
+    const warehouseAmountByOrder = new Map<string, number>();
+    for (const item of allWarehouseItems) {
+      const key = item.order.toString();
+      warehouseAmountByOrder.set(key, (warehouseAmountByOrder.get(key) || 0) + (item.total || 0));
+    }
+
     // Format response for frontend
     const formattedOrders = orders.map(order => {
       const rs = stopByOrder.get(String(order._id)) as any;
@@ -113,7 +127,8 @@ export const getOrders = asyncHandler(
           : order.orderDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
         orderDate: order.orderDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
         status: order.status === 'On the way' ? 'On the way' : order.status,
-        amount: order.total,
+        // Use warehouse-specific total, not the full order.total (which includes other warehouses)
+        amount: warehouseAmountByOrder.get(String(order._id)) || 0,
         customerName: (order.customer as any)?.name || order.customerName || '',
         customerPhone: (order.customer as any)?.phone || order.customerPhone || '',
         deliveryBoyName: (order.deliveryBoy as any)?.name || '',
@@ -233,6 +248,14 @@ export const getOrderById = asyncHandler(
     });
 
     // Format order data for frontend
+    // Compute warehouse-specific totals from only THIS warehouse's items.
+    // OrderItem has no taxRate/taxAmount fields, so we cannot attribute the order-level
+    // tax to a specific warehouse. Setting tax=0 ensures the three displayed numbers are
+    // always mathematically consistent: Subtotal + Tax = Grand Total.
+    const warehouseSubtotal = formattedItems.reduce((sum, item) => sum + item.subtotal, 0);
+    const warehouseTax = 0;
+    const warehouseGrandTotal = Math.round((warehouseSubtotal + warehouseTax) * 100) / 100;
+
     const orderDetail = {
       id: order._id,
       invoiceNumber: order.invoiceNumber || order.orderNumber || 'N/A',
@@ -247,9 +270,9 @@ export const getOrderById = asyncHandler(
       deliveryBoyName: (order.deliveryBoy as any)?.name || '',
       deliveryBoyPhone: (order.deliveryBoy as any)?.mobile || '',
       items: formattedItems,
-      subtotal: order.subtotal || 0,
-      tax: order.tax || 0,
-      grandTotal: order.total || 0,
+      subtotal: warehouseSubtotal,
+      tax: warehouseTax,
+      grandTotal: warehouseGrandTotal,
       paymentMethod: order.paymentMethod || 'N/A',
       paymentStatus: order.paymentStatus || 'Pending',
       deliveryAddress: order.deliveryAddress || {},

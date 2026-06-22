@@ -30,8 +30,37 @@ const formatDate = (dateString: string) => {
 };
 
 export default function Orders() {
-  const { orders } = useOrders();
+  const { orders, loading } = useOrders();
   const { currentTheme } = useThemeContext();
+
+  // Show a skeleton while the API is fetching so the user never sees the
+  // empty "No orders" state during loading — which caused the back-glitch.
+  if (loading) {
+    return (
+      <div className="pb-4 md:pb-8">
+        <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6 bg-white border-b border-neutral-200 mb-4 md:mb-6 sticky top-0 z-10">
+          <h1 className="text-xl md:text-2xl font-bold text-neutral-900">My Orders</h1>
+        </div>
+        <div className="px-4 md:px-6 lg:px-8 space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white rounded-xl border border-neutral-200 p-4 animate-pulse">
+              <div className="flex items-start justify-between mb-3">
+                <div className="space-y-2">
+                  <div className="h-4 w-32 bg-neutral-200 rounded" />
+                  <div className="h-3 w-24 bg-neutral-100 rounded" />
+                </div>
+                <div className="h-6 w-20 bg-neutral-100 rounded-full" />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-16 bg-neutral-100 rounded" />
+                <div className="h-5 w-20 bg-neutral-200 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (orders.length === 0) {
     return (

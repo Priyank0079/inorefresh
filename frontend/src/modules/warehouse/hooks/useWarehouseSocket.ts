@@ -104,17 +104,23 @@ export const useWarehouseSocket = (
                 api.get('/warehouse/notifications?limit=5')
                     .then((res: any) => {
                         const list: any[] = res?.data?.data || [];
-                        const recent = list.filter((n: any) =>
-                            !n.isRead &&
-                            n.type === 'Order' &&
-                            n.title?.includes('New Order')
-                        );
+                        const recent = list.filter((n: any) => {
+                            if (n.isRead) return false;
+                            if (n.type !== 'Order') return false;
+                            if (!n.title?.includes('New Order')) return false;
+                            // Extract orderId from link (/warehouse/orders/:id) to deduplicate
+                            const orderId = n.link?.split('/').pop() || n._id;
+                            if (shownReturnOrdersRef.current.has(`order-popup-${orderId}`)) return false;
+                            return true;
+                        });
                         if (recent.length === 0) return;
-                        // Surface a synthetic notification for the newest unread order alert
+                        // Surface a synthetic notification for the newest unseen order alert
                         const newest = recent[0];
+                        const orderId = newest.link?.split('/').pop() || newest._id;
+                        shownReturnOrdersRef.current.add(`order-popup-${orderId}`);
                         onNotificationReceived({
                             type: 'NEW_ORDER',
-                            orderId: newest.link?.split('/').pop() || '',
+                            orderId,
                             orderNumber: newest.message?.match(/#(\S+)/)?.[1] || '',
                             status: 'Pending',
                             paymentStatus: '',

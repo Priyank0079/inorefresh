@@ -165,6 +165,13 @@ export const useDeliveryOrderNotifications = () => {
             setState(prev => ({ ...prev, returnPickupAlert: data }));
         });
 
+        // ---- Bell notifications for delivery (new-notification) ----
+        // NotificationContext skips socket creation for Delivery to avoid duplicate
+        // room joins. We handle new-notification here and broadcast a DOM event so
+        // NotificationContext can refetch its list without knowing about sockets.
+        socket.on('new-notification', () => {
+            window.dispatchEvent(new CustomEvent('delivery:bell-refresh'));
+        });
         socket.on('error', (err: any) => {
             console.error('Socket error:', err);
         });

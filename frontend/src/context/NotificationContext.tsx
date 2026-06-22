@@ -1,8 +1,28 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import api, { getSocketBaseURL } from '../services/api/config';
 import { io, Socket } from 'socket.io-client';
 import { useToast } from './ToastContext';
+
+// Module-level singleton AudioContext — avoids the "new context per notification"
+// anti-pattern that browsers block when no user gesture has occurred yet.
+let _audioCtx: AudioContext | null = null;
+function getAudioContext(): AudioContext | null {
+  try {
+    if (!_audioCtx) {
+      const Cls = window.AudioContext || (window as any).webkitAudioContext;
+      if (!Cls) return null;
+      _audioCtx = new Cls();
+    }
+    // Resume suspended context (required after first user interaction)
+    if (_audioCtx.state === 'suspended') {
+      _audioCtx.resume().catch(() => {});
+    }
+    return _audioCtx;
+  } catch {
+    return null;
+  }
+}
 
 interface Notification {
   _id: string;
@@ -130,10 +150,34 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [token, user, notifications]);
 
+  // Keep a ref to detect if we've mounted for audio context priming on first interaction
+  const audioCtxPrimedRef = useRef(false);
+
+  useEffect(() => {
+    // Prime AudioContext on first user interaction so subsequent beeps work immediately
+    const primeAudio = () => {
+      if (!audioCtxPrimedRef.current) {
+        audioCtxPrimedRef.current = true;
+        getAudioContext(); // Creates + resumes context while user gesture is active
+      }
+    };
+    document.addEventListener('click', primeAudio, { once: true, passive: true });
+    document.addEventListener('touchstart', primeAudio, { once: true, passive: true });
+    return () => {
+      document.removeEventListener('click', primeAudio);
+      document.removeEventListener('touchstart', primeAudio);
+    };
+  }, []);
+
   useEffect(() => {
     if (token && user) {
       fetchNotifications();
-      
+
+      // Delivery users have a dedicated socket in useDeliveryOrderNotifications.
+      // Creating a second socket here causes duplicate room joins and intermittent
+      // missed events, so we skip socket setup for Delivery entirely.
+      if (user.userType === 'Delivery') return;
+
       let newSocket: Socket | null = null;
       
       // Delay connection slightly to avoid React 18 Strict Mode double-invoke WebSocket errors
@@ -162,8 +206,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             newSocket?.emit('join-port-room', userId);
           } else if (user.userType === 'Customer' || user.userType === 'horeca' || user.userType === 'retailer') {
             newSocket?.emit('join-customer-room', userId);
-          } else if (user.userType === 'Delivery') {
-            newSocket?.emit('join-delivery-notifications', userId);
           }
         });
 
@@ -175,29 +217,23 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           // Show a toast when a new notification is received
           showToast(notification.title, 'info');
 
-          // Play notification beep sound using Web Audio API
+          // Play notification beep using the singleton AudioContext
           try {
-            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-            if (AudioContextClass) {
-              const audioCtx = new AudioContextClass();
+            const audioCtx = getAudioContext();
+            if (audioCtx && audioCtx.state === 'running') {
               const oscillator = audioCtx.createOscillator();
               const gainNode = audioCtx.createGain();
-              
               oscillator.connect(gainNode);
               gainNode.connect(audioCtx.destination);
-              
               oscillator.type = 'sine';
-              oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+              oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
               gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
-              
               oscillator.start();
               oscillator.stop(audioCtx.currentTime + 0.18);
             }
           } catch (audioErr) {
-            console.error("Audio beep failed:", audioErr);
+            console.error('Audio beep failed:', audioErr);
           }
-
-          // AI voice removed — sound-only alerts
         });
 
         setSocket(newSocket);
@@ -209,6 +245,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       };
     }
   }, [token, user, fetchNotifications]);
+
+  // For Delivery users: their dedicated socket (useDeliveryOrderNotifications) dispatches
+  // 'delivery:bell-refresh' when a new-notification arrives. We listen here and refetch
+  // so the bell icon and unread count stay accurate without a second socket connection.
+  useEffect(() => {
+    if (user?.userType !== 'Delivery') return;
+    const onBellRefresh = () => fetchNotifications();
+    window.addEventListener('delivery:bell-refresh', onBellRefresh);
+    return () => window.removeEventListener('delivery:bell-refresh', onBellRefresh);
+  }, [user?.userType, fetchNotifications]);
 
   const contextValue = React.useMemo(() => ({ 
     notifications, 

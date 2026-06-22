@@ -11,20 +11,17 @@ export const getNotifications = asyncHandler(async (req: Request, res: Response)
     const deliveryId = req.user?.userId;
 
     const notifications = await Notification.find({
-        $and: [
-            { recipientType: { $in: ["Delivery", "All"] } },
-            {
-                $or: [
-                    { recipientId: deliveryId },
-                    { recipientId: { $exists: false } },
-                    { recipientId: null },
-                    { recipientType: "All" }
-                ]
-            }
+        recipientType: { $in: ["Delivery", "All"] },
+        $or: [
+            // Notifications targeted specifically to this delivery boy
+            { recipientId: deliveryId },
+            // Broadcast notifications with no specific recipient
+            { recipientId: { $exists: false } },
+            { recipientId: null },
         ]
     })
         .sort({ createdAt: -1 })
-        .limit(50); // Limit to last 50 notifications
+        .limit(50);
 
     return res.status(200).json({
         success: true,
