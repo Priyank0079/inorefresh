@@ -7,6 +7,7 @@ import { useDeliveryOrderNotifications } from '../../../hooks/useDeliveryOrderNo
 // OrderNotificationCard (instant on-demand order popup) retired — drivers now
 // receive a planned Route instead of accepting/rejecting individual orders.
 import DeliveryReturnPickupAlert from './DeliveryReturnPickupAlert';
+import DeliveryRouteAssignmentAlert from './DeliveryRouteAssignmentAlert';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../../../context/AuthContext';
 import { registerFCMToken, setupForegroundNotificationHandler } from '../../../services/pushNotificationService';
@@ -22,6 +23,8 @@ function DeliveryLayoutContent({ children }: DeliveryLayoutContentProps) {
   const {
     returnPickupAlert,
     clearReturnPickupAlert,
+    routeAssignmentAlert,
+    clearRouteAssignmentAlert,
     isConnected,
     error: socketError,
   } = useDeliveryOrderNotifications();
@@ -69,8 +72,18 @@ function DeliveryLayoutContent({ children }: DeliveryLayoutContentProps) {
     // while the tab is open (socket momentarily down) still trigger the popup.
     setupForegroundNotificationHandler((payload) => {
       const type = payload.data?.type;
+      const title = payload.notification?.title || payload.data?.title || '';
+      const body = payload.notification?.body || payload.data?.body || payload.data?.message || '';
+
       if (type === 'return_pickup') {
         window.dispatchEvent(new CustomEvent('fcm:return-pickup', { detail: payload.data }));
+      } else if (title.includes('Route Assigned') || title.includes('New Route') || body.includes('Route Assigned') || body.includes('New Route')) {
+        window.dispatchEvent(new CustomEvent('fcm:route-assigned', {
+          detail: {
+            message: body,
+            link: payload.data?.link || '/delivery/route/today'
+          }
+        }));
       } else if (type === 'new_order') {
         // New-order foreground push: socket normally handles this, but dispatch
         // a fallback refresh event so dashboard counts stay accurate.
@@ -120,6 +133,12 @@ function DeliveryLayoutContent({ children }: DeliveryLayoutContentProps) {
       <DeliveryReturnPickupAlert
         alert={returnPickupAlert}
         onClose={clearReturnPickupAlert}
+      />
+
+      {/* New Route Assignment popup */}
+      <DeliveryRouteAssignmentAlert
+        alert={routeAssignmentAlert}
+        onClose={clearRouteAssignmentAlert}
       />
     </div>
   );
