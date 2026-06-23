@@ -5,6 +5,8 @@ import { OrderNotificationData } from '../services/api/delivery/deliveryOrderNot
 import { acceptOrder, rejectOrder } from '../services/api/delivery/deliveryOrderNotificationService';
 import { getSocketBaseURL } from '../services/api/config';
 
+import { RouteAssignmentAlertData } from '../modules/delivery/components/DeliveryRouteAssignmentAlert';
+
 export interface ReturnPickupAlert {
     returnId: string;
     orderId: string;
@@ -18,6 +20,7 @@ interface NotificationState {
     currentNotification: OrderNotificationData | null;
     notificationQueue: OrderNotificationData[];
     returnPickupAlert: ReturnPickupAlert | null;
+    routeAssignmentAlert: RouteAssignmentAlertData | null;
     isConnected: boolean;
     error: string | null;
 }
@@ -28,6 +31,7 @@ export const useDeliveryOrderNotifications = () => {
         currentNotification: null,
         notificationQueue: [],
         returnPickupAlert: null,
+        routeAssignmentAlert: null,
         isConnected: false,
         error: null,
     });
@@ -171,6 +175,22 @@ export const useDeliveryOrderNotifications = () => {
         // NotificationContext can refetch its list without knowing about sockets.
         socket.on('new-notification', (data: any) => {
             window.dispatchEvent(new CustomEvent('delivery:bell-refresh', { detail: data }));
+
+            // Check if this is a route assignment notification
+            if (data && data.title && (data.title.includes('Route Assigned') || data.title.includes('New Route'))) {
+                setState(prev => {
+                    const routeNo = data.message?.match(/Route\s+([A-Za-z0-9-]+)/)?.[1] || 'New Route';
+                    return {
+                        ...prev,
+                        routeAssignmentAlert: {
+                            routeNumber: routeNo,
+                            message: data.message || 'A new route has been assigned to you.',
+                            link: data.link || '/delivery/route/today',
+                            timestamp: new Date(),
+                        }
+                    };
+                });
+            }
         });
         socket.on('error', (err: any) => {
             console.error('Socket error:', err);
@@ -269,6 +289,10 @@ export const useDeliveryOrderNotifications = () => {
         setState(prev => ({ ...prev, returnPickupAlert: null }));
     }, []);
 
+    const clearRouteAssignmentAlert = useCallback(() => {
+        setState(prev => ({ ...prev, routeAssignmentAlert: null }));
+    }, []);
+
     // Listen for FCM foreground return-pickup events dispatched by DeliveryLayout.
     // This fires when the socket is momentarily down but FCM still delivers the push.
     useEffect(() => {
@@ -290,16 +314,39 @@ export const useDeliveryOrderNotifications = () => {
         return () => window.removeEventListener('fcm:return-pickup', handleFcmReturnPickup);
     }, []);
 
+    // Listen for FCM foreground route assignment events dispatched by DeliveryLayout.
+    useEffect(() => {
+        const handleFcmRouteAssigned = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            setState(prev => {
+                const routeNo = detail.message?.match(/Route\s+([A-Za-z0-9-]+)/)?.[1] || 'New Route';
+                return {
+                    ...prev,
+                    routeAssignmentAlert: {
+                        routeNumber: routeNo,
+                        message: detail.message || 'A new route has been assigned to you.',
+                        link: detail.link || '/delivery/route/today',
+                        timestamp: new Date(),
+                    },
+                };
+            });
+        };
+        window.addEventListener('fcm:route-assigned', handleFcmRouteAssigned);
+        return () => window.removeEventListener('fcm:route-assigned', handleFcmRouteAssigned);
+    }, []);
+
     return {
         currentNotification: state.currentNotification,
         notificationQueue: state.notificationQueue,
         returnPickupAlert: state.returnPickupAlert,
+        routeAssignmentAlert: state.routeAssignmentAlert,
         isConnected: state.isConnected,
         error: state.error,
         acceptOrder: handleAccept,
         rejectOrder: handleReject,
         clearNotification: clearCurrentNotification,
         clearReturnPickupAlert,
+        clearRouteAssignmentAlert,
         socket: socketRef.current,
     };
 };
