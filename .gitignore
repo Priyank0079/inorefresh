@@ -2,7 +2,6 @@
 .code-review-graph/
 .claude/
 .qoder/
-.vscode/mcp.json
 .opencode.json
 .mcp.json
 .cursorrules
@@ -40,3 +39,5 @@ test_notifs.js
 .windsurfrules
 .mcp.json
 .opencodecsejson
+config.bat
+node_modules
