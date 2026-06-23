@@ -173,10 +173,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (token && user) {
       fetchNotifications();
 
-      // Delivery users have a dedicated socket in useDeliveryOrderNotifications.
+      // Delivery and Warehouse users have dedicated sockets.
       // Creating a second socket here causes duplicate room joins and intermittent
-      // missed events, so we skip socket setup for Delivery entirely.
-      if (user.userType === 'Delivery') return;
+      // missed events, so we skip socket setup for them entirely.
+      if (user.userType === 'Delivery' || user.userType === 'Warehouse') return;
 
       let newSocket: Socket | null = null;
       
@@ -246,15 +246,41 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [token, user, fetchNotifications]);
 
-  // For Delivery users: their dedicated socket (useDeliveryOrderNotifications) dispatches
-  // 'delivery:bell-refresh' when a new-notification arrives. We listen here and refetch
-  // so the bell icon and unread count stay accurate without a second socket connection.
   useEffect(() => {
-    if (user?.userType !== 'Delivery') return;
-    const onBellRefresh = () => fetchNotifications();
-    window.addEventListener('delivery:bell-refresh', onBellRefresh);
-    return () => window.removeEventListener('delivery:bell-refresh', onBellRefresh);
-  }, [user?.userType, fetchNotifications]);
+    if (user?.userType !== 'Delivery' && user?.userType !== 'Warehouse') return;
+    const onBellRefresh = (e: any) => {
+      fetchNotifications();
+      const notification = e.detail;
+      if (notification && notification.title) {
+        showToast(notification.title, 'info');
+        
+        try {
+          const audioCtx = getAudioContext();
+          if (audioCtx && audioCtx.state === 'running') {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.18);
+          }
+        } catch (audioErr) {
+          console.error('Audio beep failed:', audioErr);
+        }
+      }
+    };
+    
+    if (user?.userType === 'Delivery') {
+      window.addEventListener('delivery:bell-refresh', onBellRefresh);
+      return () => window.removeEventListener('delivery:bell-refresh', onBellRefresh);
+    } else if (user?.userType === 'Warehouse') {
+      window.addEventListener('warehouse:bell-refresh', onBellRefresh);
+      return () => window.removeEventListener('warehouse:bell-refresh', onBellRefresh);
+    }
+  }, [user?.userType, fetchNotifications, showToast]);
 
   const contextValue = React.useMemo(() => ({ 
     notifications, 

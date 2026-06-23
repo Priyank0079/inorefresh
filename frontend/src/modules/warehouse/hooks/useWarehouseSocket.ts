@@ -178,6 +178,11 @@ export const useWarehouseSocket = (
             }
         });
 
+        // Broadcast standard notifications to the NotificationContext
+        newSocket.on('new-notification', (data: any) => {
+            window.dispatchEvent(new CustomEvent('warehouse:bell-refresh', { detail: data }));
+        });
+
         newSocket.on('return-otp-alert', (alert: ReturnOtpAlert) => {
             console.log('🔐 Return pickup OTP received:', {
                 orderNumber: alert.orderNumber,

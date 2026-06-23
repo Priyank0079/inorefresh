@@ -36,13 +36,12 @@ export default function DeliveryLogin() {
         setError(response.message || 'Failed to initiate OTP');
       }
     } catch (err: any) {
-      const status = err.response?.status;
-      const message = err.response?.data?.message || 'Failed to send OTP. Please try again.';
+      const message = err.message || 'Failed to send OTP. Please try again.';
 
       setError(message);
 
-      // Check for 400 Bad Request specific to user not found (or based on message content)
-      if (status === 400 && (message.toLowerCase().includes('not found') || message.toLowerCase().includes('register'))) {
+      // Check for user not found (based on message content)
+      if (message.toLowerCase().includes('not found') || message.toLowerCase().includes('register')) {
         setIsNotRegistered(true);
       }
     } finally {
@@ -66,7 +65,7 @@ export default function DeliveryLogin() {
       }
     } catch (err: any) {
       // Also handle 401 Unauthorized for verify step
-      const message = err.response?.data?.message || 'Invalid OTP. Please try again.';
+      const message = err.message || 'Invalid OTP. Please try again.';
       setError(message);
     } finally {
       setLoading(false);
